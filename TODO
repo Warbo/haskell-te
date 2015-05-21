@@ -1,0 +1,11 @@
+ - Scan a directory for .lhs and .hs files
+ - Send them to HS2AST
+ - Run TreeFeatures on each
+ - Build CSV file
+ - Send to Weka
+  cat aux_files/headers.txt temp.csv > temp3.arff
+  java -classpath weka-dir weka.filters.unsupervised.attribute.AddCluster \
+    -W "weka.clusterers.ALG -N n -S 42" -I last -i temp3.arff -o out.arff
+  tail -n +37 out.arff > out_bis.arff
+  java -classpath weka-dir weka.attributeSelection.CfsSubsetEval -M \
+    -s "weka.attributeSelection.BestFirst -D 1 -N 5" -i temp3.arff > res.txt
