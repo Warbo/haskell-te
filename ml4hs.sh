@@ -2,11 +2,13 @@
 
 # Main ML4HS script
 
+shopt -s nullglob
+
 # Check invocation
 
 if [ "$#" -lt 1 ]
 then
-    echo "Please provide a source of Haskell files"
+    echo "Please provide the location of a Haskell project"
     exit 1
 fi
 
@@ -14,51 +16,61 @@ SOURCE=$1
 
 if [ ! -d "$SOURCE" ]
 then
-    echo "Argument should be a directory (hopefully containing Haskell files)"
+    echo "Argument should be a directory containing a Haskell project"
+    exit 1
+fi
+
+INVALID=1
+for CABAL in "$SOURCE"/*.cabal
+do
+    echo "Found cabal"
+    INVALID=0
+done
+
+if [ $INVALID -eq 1 ]
+then
+    echo "No .cabal file found in the given directory"
     exit 1
 fi
 
 # Set up temp directory to work in
 
-function tmpdir {
-    # First mktemp call works on Linux, second should handle OSX
-    mktemp -d 2>/dev/null || mktemp -d -t 'ml4hs'
-}
+# First mktemp call works on Linux, second should handle OSX
+TEMP=$(mktemp -d 2>/dev/null || mktemp -d -t 'ml4hs')
 
-TEMP=$(tmpdir)
+# Duplicate the source (to avoid side-effects)
 
-# List Haskell filenames
+cp -rL "$SOURCE" "$TEMP/source"
 
-function files {
-  # List all .hs and .lhs files in $SOURCE
-  #OLD=$PWD
-  #cd "$SOURCE"
-  # Regular Haskell OR literate Haskell
-  find "$SOURCE" \( -name "*.hs" -o -name "*.lhs" \) > "$TEMP/files"
-  #cd "$OLD"
-}
+# Extract Haskell ASTs
 
-files
-
-# Extract ASTs
-
-mkdir -p "$TEMP/asts"
+mkdir "$TEMP/asts"
 OLD=$PWD
-cd "$TEMP/asts"
-while read line
-do
-    echo "$line" | HS2AST
-done < "$TEMP/files"
-cd "$OLD"
+(cd "$TEMP/source"
+
+ # Create a Nix expression from the .cabal file, if there isn't one already
+ if [ ! -f "shell.nix" ]
+ then
+     cabal2nix --shell . > shell.nix
+ fi
+
+ # Wrap shell.nix with an expression including HS2AST's dependencies
+ mv shell.nix shell2.nix
+ cat << EOF > shell.nix
+with import <nixpkgs> {};
+import (shell2.nix).override (old: {
+  buildDepends = old.buildDepends // hs2ast.buildDepends;
+})
+EOF
+
+ nix-shell -I ~/Programming -p hs2ast --command "$OLD/extractAsts.sh \"$TEMP/asts\"")
 
 # Extract features
 
 mkdir -p "$TEMP/csvs"
-OLD=$PWD
-cd "$TEMP/csvs"
-"$OLD/extractFeatures.sh" "$TEMP/asts" "$TEMP/csvs"
-cd "$OLD"
-
-#./cluster.sh "$TEMP"
+(cd "$TEMP/csvs"
+ nix-shell -I ~/Programming -p treefeats --command "$OLD/extractFeatures.sh \"$TEMP/asts\" \"$TEMP/csvs\""
+)
+ #./cluster.sh "$TEMP"
 
 #rm -rf "$TEMP"
