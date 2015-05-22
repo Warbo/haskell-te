@@ -11,13 +11,13 @@ fi
 SOURCE=$1
 DEST=$2
 
-for PKG in $SOURCE
+for PKG in "$SOURCE"
 do
     mkdir -p "$DEST/$PKG"
     for MOD in "$SOURCE/$PKG"
     do
         mkdir -p "$DEST/$PKG/$MOD"
-        for $NAME in "$SOURCE/$PKG/$MOD"
+        for NAME in "$SOURCE/$PKG/$MOD"
         do
             MODE=sexpr BITS=30 TreeFeatures < "$SOURCE/$PKG/$MOD/$NAME" > "$DEST/$PKG/$MOD/$NAME"
-done
+        done
