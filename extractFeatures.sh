@@ -11,13 +11,21 @@ fi
 SOURCE=$1
 DEST=$2
 
-for PKG in "$SOURCE"
+echo "Extracting from $SOURCE to $DEST"
+
+shopt -s nullglob
+for PKG in "$SOURCE/"*
 do
+    echo "Found package $PKG"
     mkdir -p "$DEST/$PKG"
-    for MOD in "$SOURCE/$PKG"
+    for MOD in "$SOURCE/$PKG/"*
     do
+        echo "Found module $MOD"
         mkdir -p "$DEST/$PKG/$MOD"
-        for NAME in "$SOURCE/$PKG/$MOD"
+        for NAME in "$SOURCE/$PKG/$MOD/"*
         do
+            echo "Found name $NAME"
             MODE=sexpr BITS=30 TreeFeatures < "$SOURCE/$PKG/$MOD/$NAME" > "$DEST/$PKG/$MOD/$NAME"
         done
+    done
+done

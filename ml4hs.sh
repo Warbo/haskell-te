@@ -31,11 +31,11 @@ TEMP=$(tmpdir)
 
 function files {
   # List all .hs and .lhs files in $SOURCE
-  OLD=$PWD
-  cd "$SOURCE"
+  #OLD=$PWD
+  #cd "$SOURCE"
   # Regular Haskell OR literate Haskell
-  find . \( -name "*.hs" -o -name "*.lhs" \) > "$TEMP/files"
-  cd "$OLD"
+  find "$SOURCE" \( -name "*.hs" -o -name "*.lhs" \) > "$TEMP/files"
+  #cd "$OLD"
 }
 
 files
@@ -45,7 +45,10 @@ files
 mkdir -p "$TEMP/asts"
 OLD=$PWD
 cd "$TEMP/asts"
-HS2AST < "$TEMP/files"
+while read line
+do
+    echo "$line" | HS2AST
+done < "$TEMP/files"
 cd "$OLD"
 
 # Extract features
@@ -53,9 +56,9 @@ cd "$OLD"
 mkdir -p "$TEMP/csvs"
 OLD=$PWD
 cd "$TEMP/csvs"
-./extractAsts.sh "$SOURCE" "$TEMP"
+"$OLD/extractFeatures.sh" "$TEMP/asts" "$TEMP/csvs"
 cd "$OLD"
 
-./cluster.sh "$TEMP"
+#./cluster.sh "$TEMP"
 
-rm -rf "$TEMP"
+#rm -rf "$TEMP"
