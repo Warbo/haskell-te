@@ -2,11 +2,7 @@
 
 # Cluster the features extracted by TreeFeatures
 
-if [ "$#" -lt 1 ]
-then
-    echo "Please provide a source of features"
-    exit 1
-fi
+test "$#" -lt 1 && echo "Please provide a source of features" && exit 1
 
 SOURCE=$1
 

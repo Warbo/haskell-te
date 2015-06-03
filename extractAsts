@@ -2,11 +2,7 @@
 
 # Extract ASTs from Haskell projects
 
-if [ "$#" -lt 1 ]
-then
-    echo "Please provide a destination"
-    exit 1
-fi
+test "$#" -lt 1 && echo "Please provide a destination" && exit 1
 
 function abs_dir {
     (cd "$1" &>/dev/null && printf "%s" "$PWD")
@@ -16,11 +12,7 @@ DEST=$(abs_dir $1)
 
 echo "Writing to $1 ($DEST)"
 
-if [ ! -d "$DEST" ]
-then
-    echo "Dest must be a directory ($DEST)"
-    exit 1
-fi
+test ! -d "$DEST" && echo "Dest must be a directory ($DEST)" && exit 1
 
 find . -iname "*.hs" -o -iname "*.lhs" | while read LINE
                                          do

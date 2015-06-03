@@ -2,11 +2,11 @@
 
 # Perform feature extraction on ASTs from HS2AST
 
-if [ "$#" -lt 2 ]
-then
-    echo "Please provide a source and a destination"
-    exit 1
-fi
+test "$#" -lt 2 && echo "Please provide a source and a destination" && exit 1
+
+function is_dir {
+    test ! -d "$2" && echo "$1 must be a directory" && exit 1
+}
 
 function abs_dir {
     (cd "$1" &>/dev/null && printf "%s" "$PWD")
@@ -15,17 +15,8 @@ function abs_dir {
 SOURCE=$(abs_dir "$1")
 DEST=$(abs_dir "$2")
 
-if [ ! -d "$SOURCE" ]
-then
-    echo "Source must be a directory"
-    exit 1
-fi
-
-if [ ! -d "$DEST" ]
-then
-    echo "Destination must be a directory"
-    exit 1
-fi
+is_dir("Source"       "$SOURCE")
+is_dir("Destination", "$DEST")
 
 echo "Extracting from $SOURCE to $DEST"
 
