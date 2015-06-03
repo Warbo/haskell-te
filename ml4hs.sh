@@ -71,6 +71,7 @@ mkdir -p "$TEMP/csvs"
 (cd "$TEMP/csvs"
  nix-shell -I ~/Programming -p treefeats --command "$OLD/extractFeatures.sh \"$TEMP/asts\" \"$TEMP/csvs\""
 )
- #./cluster.sh "$TEMP"
+
+./cluster.sh "$TEMP/csvs"
 
 #rm -rf "$TEMP"
