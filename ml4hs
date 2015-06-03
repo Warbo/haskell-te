@@ -63,15 +63,15 @@ import (shell2.nix).override (old: {
 })
 EOF
 
- nix-shell -I ~/Programming -p hs2ast --command "$OLD/extractAsts.sh \"$TEMP/asts\"")
+ nix-shell -I ~/Programming -p hs2ast --command "$OLD/extractAsts \"$TEMP/asts\"")
 
 # Extract features
 
 mkdir -p "$TEMP/csvs"
 (cd "$TEMP/csvs"
- nix-shell -I ~/Programming -p treefeats --command "$OLD/extractFeatures.sh \"$TEMP/asts\" \"$TEMP/csvs\""
+ nix-shell -I ~/Programming -p treefeats --command "$OLD/extractFeatures \"$TEMP/asts\" \"$TEMP/csvs\""
 )
 
-./cluster.sh "$TEMP/csvs"
+./cluster "$TEMP/csvs"
 
 #rm -rf "$TEMP"
