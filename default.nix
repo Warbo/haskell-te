@@ -5,7 +5,7 @@ stdenv.mkDerivation {
   src  = ./.;
   buildInputs = [
     hs2ast
-    treefeats
+    treefeatures
     weka
     openjre
   ];
