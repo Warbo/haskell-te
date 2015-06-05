@@ -1,6 +1,6 @@
 with import <nixpkgs> {};
 
-{treefeatures, hs2ast}
+{treefeatures, hs2ast}:
 stdenv.mkDerivation {
   name = "ml4hs";
   src  = ./.;
