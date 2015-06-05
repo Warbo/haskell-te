@@ -1,11 +1,12 @@
 with import <nixpkgs> {};
 
+{treefeatures, hs2ast}
 stdenv.mkDerivation {
   name = "ml4hs";
   src  = ./.;
   buildInputs = [
     hs2ast
-    treefeats
+    treefeatures
     weka
     openjre
   ];
