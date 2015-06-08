@@ -45,32 +45,16 @@ cp -rL "$SOURCE" "$TEMP/source"
 # Extract Haskell ASTs
 
 mkdir "$TEMP/asts"
-OLD=$PWD
+
 (cd "$TEMP/source"
-
- # Create a Nix expression from the .cabal file, if there isn't one already
- if [ ! -f "shell.nix" ]
- then
-     cabal2nix --shell . > shell.nix
- fi
-
- # Wrap shell.nix with an expression including HS2AST's dependencies
- mv shell.nix shell2.nix
- cat << EOF > shell.nix
-with import <nixpkgs> {};
-import (shell2.nix).override (old: {
-  buildDepends = old.buildDepends // hs2ast.buildDepends;
-})
-EOF
-
- nix-shell -I ~/Programming -p hs2ast --command "$OLD/extractAsts.sh \"$TEMP/asts\"")
+ extractAsts "$TEMP/asts")
 
 # Extract features
 
 mkdir -p "$TEMP/csvs"
 (cd "$TEMP/csvs"
- nix-shell -I ~/Programming -p treefeats --command "$OLD/extractFeatures.sh \"$TEMP/asts\" \"$TEMP/csvs\""
-)
- #./cluster.sh "$TEMP"
+ extractFeatures "$TEMP/asts" "$TEMP/csvs")
+
+cluster "$TEMP/csvs"
 
 #rm -rf "$TEMP"
