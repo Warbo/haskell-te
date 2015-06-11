@@ -2,7 +2,7 @@
 
 RESULT=""
 
-for pkg in unification-fd hipspec #QuickCheck hipspecifyer structural-induction
+for pkg in hipspecifyer haskell-src-exts hipspec QuickCheck structural-induction
 do
     for ghc in 784 7101
     do

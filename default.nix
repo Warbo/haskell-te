@@ -1,7 +1,12 @@
 with import <nixpkgs> {};
 
+    # Lets us override cabal settings
+let hsTools = import "${<nixpkgs>}/pkgs/development/haskell-modules/lib.nix" {
+      pkgs = import <nixpkgs> {};
+    };
+
     # Generate a .nix file from a .cabal file, by calling the cabal2nix command
-let nixFromCabal = {name, src, preConfig ? "", preInstall? "", cbl? "."}:
+    nixFromCabal = {name, src, preConfig ? "", preInstall? "", cbl? "."}:
       stdenv.mkDerivation {
         inherit name src;
         buildInputs    = [ haskellPackages.cabal2nix ];
@@ -31,34 +36,26 @@ in haskellPkgs: haskellPkgs.override { overrides = (self: (super: {
   exceptions = hsTools.doJailbreak haskellPkgs.exceptions;
 
   # We need >= 2.8
-  QuickCheck = self.callPackage (nixFromCabal {
-    name = "quickcheck-src";
-    src  = fetchgit {
-      url    = https://github.com/nick8325/quickcheck.git;
-      rev    = "98766f5fbe";
-      sha256 = "0vz33adwpjfakj0hq8wlsclf6jhg59f6aa5qdyg5wxzn2fd3j0fg";
-    };
-    preConfig = asciifyCabal;
-  }) {};
+  QuickCheck = self.callPackage (import ./quickcheck.nix) {};
 
-  hipspec = hsTools.doJailbreak (self.callPackage (nixFromCabal {
+  hipspec = self.callPackage (nixFromCabal {
     name = "hipspec-src";
     src  = fetchgit {
       name   = "hipspec-src";
-      #url    = https://github.com/danr/hipspec.git;
-      url    =  /home/chris/Programming/Haskell/hipspec;
-      rev    = "a695769";
-      sha256 = "0f7wzpapzrm1z22437fqgz3pg96xb9mgbpq4snxbj5hg1h2dpwbd";
+      url    = https://github.com/danr/hipspec.git;
+      rev    = "19e11613fc";
+      sha256 = "0m0kmkjn6w2h4d62swnhzj6la8041mvvcm2sachbng5hzkw6l8hf";
     };
     preConfig = asciifyCabal;
-  }) {});
+  }) {}
+  ;
 
   hipspecifyer = self.callPackage (nixFromCabal {
     name = "hipspecifyer-src";
     src  = fetchgit {
       url    = "https://github.com/moajohansson/IsaHipster.git";
-      rev    = "ec44cfa";
-      sha256 = "0605g8py6kwrkbjahhkl0pmlbz8q46sfcahxjpijsl0i3mafwjf3";
+      rev    = "f81eb6d630";
+      sha256 = "1hb0mlds91fv3nxc0cppq48zfwcpkk5p2bmix75mmsnichkp8ncc";
     };
     preConfig  = "cd hipspecifyer";
     preInstall = "cd hipspecifyer";
@@ -74,5 +71,5 @@ in haskellPkgs: haskellPkgs.override { overrides = (self: (super: {
     preConfig = asciifyCabal;
   }) {});
 
-  unification-fd = self.callPackage (import ./unification-fd.nix) {};
+  haskell-src-exts = self.callPackage (import ./haskell-src-exts.nix) {};
 })); }
