@@ -2,18 +2,18 @@
 
 RESULT=""
 
-for pkg in hipspecifyer haskell-src-exts hipspec QuickCheck structural-induction
+# Test each package we care about (dependencies will take care of themselves)
+for pkg in hipspecifyer hipspec treefeatures hs2ast ml4hs
 do
-    for ghc in 784 7101
-    do
-        RESULT="$RESULT\nTesting $pkg $ghc: "
-        if nix-shell -p "(import ./. haskell.packages.ghc${ghc}).$pkg" \
-                     --command 'true'
-        then
-            RESULT="$RESULT PASS"
-        else
-            RESULT="$RESULT FAIL"
-        fi
-        echo -e "$RESULT"
-    done
+    RESULT="${RESULT}Testing $pkg: "
+    if nix-shell \
+           -p "(import ./. {}).$pkg" \
+           --command 'true' \
+           --show-trace
+    then
+        RESULT="$RESULT PASS\n"
+    else
+        RESULT="$RESULT FAIL\n"
+    fi
+    echo -e "Results so far:\n$RESULT"
 done
