@@ -58,6 +58,10 @@ in ({
   ml4hs ? {
     rev    = "2797f11";
     sha256 = "1q27a4ly1f5qqy18gs40ci01cvhxkahrhh6jighk60drprwv0fg1";
+  },
+  mlspec ? {
+    rev    = "3ead342";
+    sha256 = "04w3n080wwnfmpan1v9vc9g22zss6hx4jlwl6kraqpg64g5fjj78";
   }
 }: hsPkgs.override { overrides = (self: (super: {
 
@@ -115,5 +119,10 @@ in ({
     treefeatures = self.treefeatures;
     hs2ast = self.hs2ast;
   };
+
+  mlspec = self.callPackage (fetchgit (mlspec // {
+    name   = "mlspec";
+    url    = http://chriswarbo.net/git/mlspec.git;
+  })) {};
 
 })); })

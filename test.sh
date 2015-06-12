@@ -3,7 +3,7 @@
 RESULT=""
 
 # Test each package we care about (dependencies will take care of themselves)
-for pkg in hipspecifyer hipspec treefeatures hs2ast ml4hs
+for pkg in hipspecifyer hipspec treefeatures hs2ast ml4hs mlspec
 do
     RESULT="${RESULT}Testing $pkg: "
     if nix-shell \
