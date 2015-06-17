@@ -1,6 +1,6 @@
 with import <nixpkgs> {};
 
-{treefeatures, hs2ast}:
+{treefeatures, hs2ast, test? false}:
 stdenv.mkDerivation {
   name = "ml4hs";
   src  = ./.;
@@ -8,8 +8,10 @@ stdenv.mkDerivation {
     hs2ast
     treefeatures
     weka
-    openjre
-  ];
+    jre
+  ] ++ (if test then [ ((haskellPackages.ghcWithPackages (p:
+                        [p.tasty-quickcheck]))) ]
+                else []);
   installPhase = ''
     # Put scripts in $PATH
     mkdir -p "$out/bin"
@@ -22,14 +24,14 @@ stdenv.mkDerivation {
     # Make it easy to run Weka
     cat <<'EOF' > "$out/bin/weka-cli"
       #!/bin/sh
-      ${openjre}/bin/java -Xmx1000M -cp ${weka}/share/weka/weka.jar "$@"
+      ${jre}/bin/java -Xmx1000M -cp ${weka}/share/weka/weka.jar "$@"
     EOF
     chmod +x "$out/bin/weka-cli"
   '';
   shellHook = ''
     # -jar weka.jar launches the GUI, -cp weka.jar runs from CLI
     function weka-cli {
-      ${openjre}/bin/java -Xmx1000M -cp ${weka}/share/weka/weka.jar "$@"
+      ${jre}/bin/java -Xmx1000M -cp ${weka}/share/weka/weka.jar "$@"
     }
   '';
 }
