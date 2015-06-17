@@ -19,19 +19,20 @@ with import <nixpkgs> {};
     sha256 = "1w71h7b1i91fdbxv62m3cbq045n1fdfp54h6bra2ccdj2snibx3y";
   },
   hs2ast ? {
-    sha256 = "1lg8p0p30dp6pvbi007hlpxk1bnyxhfazzvgyqrx837da43ymm7f";
+    rev    = "94172e3";
+    sha256 = "0gbcidzk6f0q5vw8cb8a06xz3cczm2g0hvsj3xksjzswiiwd6qnz";
   },
   ml4hs ? {
-    rev    = "2797f11";
-    sha256 = "1q27a4ly1f5qqy18gs40ci01cvhxkahrhh6jighk60drprwv0fg1";
+    rev    = "20addf7";
+    sha256 = "17217j75i1w0hfrjrs0slxskw8hv2kqspy77fzkm0vvhzma9m29d";
   },
   mlspec ? {
     rev    = "3ead342";
     sha256 = "04w3n080wwnfmpan1v9vc9g22zss6hx4jlwl6kraqpg64g5fjj78";
   },
   ArbitraryHaskell ? {
-    rev    = "035ef80";
-    sha256 = "0q3xv8bcxc7yvpv8pfk593q64z93bzs4aha85i2n4zivwn5xl10h";
+    rev    = "72b8f4c";
+    sha256 = "026i8hksy41kzjalhi8yld2sd2sm6r4fwdbmlar5cf76jhpahswp";
   }
 }:
 
