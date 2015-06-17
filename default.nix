@@ -1,46 +1,12 @@
 # Theory Exploration tools for Haskell; packaged for Nix
+with import <nixpkgs> {};
 
-# First we make some helper functions
-with import <nixpkgs> {}; let
-
-# Lets us override cabal settings
-hsTools = import "${<nixpkgs>}/pkgs/development/haskell-modules/lib.nix" {
-  pkgs = import <nixpkgs> {};
-};
-
-# Generates a .nix file from a .cabal file, by calling the cabal2nix command
-# preConfig and preInstall are shell commands to run before and after cabal2nix
-# cbl tells cabal2nix where to read settings from (see cabal2nix documentation)
-nixFromCabal = {name, src, preConfig ? "", preInstall? "", cbl? "."}:
-  stdenv.mkDerivation {
-    inherit name src;
-    buildInputs    = [ haskellPackages.cabal2nix ];
-    configurePhase = ''
-      (${preConfig}
-       cabal2nix ${cbl} > default.nix)
-    '';
-    installPhase = ''
-      (${preInstall}
-       cp -r . "$out")
-    '';
-  };
-
-# Shell script to strip non-ASCII chars from .cabal files (they kill cabal2nix)
-asciifyCabal = ''
-  for cbl in *.cabal
-  do
-    NAME=$(basename "$cbl" .cabal)
-    mv "$cbl" "$NAME.nonascii"
-    tr -cd '[:print:][:cntrl:]' < "$NAME.nonascii" > "$cbl"
-  done
-'';
-
-# Return a function for generating theory exploration packages
-in ({
-   # Haskell packages to use; eg. haskell.packages.ghc784
+# Allow package versions (git revisions) to be overridden, so we can reproduce
+# old experiments
+{
+  # Haskell packages to use; eg. haskell.packages.ghc784 for GHC 7.8.4
   hsPkgs ? haskellPackages,
 
-  # Allow experiments to specify particular versions
   hipspec ? {
     rev    = "19e11613fc";
     sha256 = "0m0kmkjn6w2h4d62swnhzj6la8041mvvcm2sachbng5hzkw6l8hf";
@@ -63,9 +29,45 @@ in ({
     rev    = "3ead342";
     sha256 = "04w3n080wwnfmpan1v9vc9g22zss6hx4jlwl6kraqpg64g5fjj78";
   }
-}: hsPkgs.override { overrides = (self: (super: {
+}:
 
-  # Dependencies: we need these, but don't really care about them
+# Define some helper functions
+
+    # Lets us override cabal settings (haddock, tests, dependencies, etc.)
+let hsTools = import "${<nixpkgs>}/pkgs/development/haskell-modules/lib.nix" {
+      pkgs = import <nixpkgs> {};
+    };
+
+    # Generates a .nix file from a .cabal file, using the cabal2nix command
+    # preConfig and preInstall are run before and after cabal2nix
+    # cbl tells cabal2nix where to look (see cabal2nix documentation)
+    nixFromCabal = {name, src, preConfig ? "", preInstall? "", cbl? "."}:
+      stdenv.mkDerivation {
+        inherit name src;
+        buildInputs    = [ haskellPackages.cabal2nix ];
+        configurePhase = ''
+          (${preConfig}
+           cabal2nix ${cbl} > default.nix)
+        '';
+        installPhase = ''
+          (${preInstall}
+           cp -r . "$out")
+        '';
+      };
+
+    # Script to strip non-ASCII chars from .cabal files (they kill cabal2nix)
+    asciifyCabal = ''
+      for cbl in *.cabal
+      do
+        NAME=$(basename "$cbl" .cabal)
+        mv "$cbl" "$NAME.nonascii"
+        tr -cd '[:print:][:cntrl:]' < "$NAME.nonascii" > "$cbl"
+      done
+    '';
+
+# Return a set of packages which includes theory exploration tools
+in (hsPkgs.override { overrides = (self: (super: {
+  # DEPENDENCIES
 
   # We need < 0.16
   haskell-src-exts = self.callPackage (import ./haskell-src-exts.nix) {};
@@ -81,7 +83,13 @@ in ({
     preConfig = asciifyCabal;
   }) {});
 
-  # Theory exploration: these are the things we care about
+  ArbitraryHaskell = self.callPackage (fetchgit {
+    url    = "http://chriswarbo.net/git/arbitrary-haskell.git";
+    rev    = "035ef80";
+    sha256 = "0q3xv8bcxc7yvpv8pfk593q64z93bzs4aha85i2n4zivwn5xl10h";
+  }) {};
+
+  # THEORY EXPLORATION TOOLS (uses "//" to merge in version arguments)
 
   hipspec = self.callPackage (nixFromCabal {
     name = "hipspec-src";
