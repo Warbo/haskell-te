@@ -28,6 +28,10 @@ with import <nixpkgs> {};
   mlspec ? {
     rev    = "3ead342";
     sha256 = "04w3n080wwnfmpan1v9vc9g22zss6hx4jlwl6kraqpg64g5fjj78";
+  },
+  ArbitraryHaskell ? {
+    rev    = "035ef80";
+    sha256 = "0q3xv8bcxc7yvpv8pfk593q64z93bzs4aha85i2n4zivwn5xl10h";
   }
 }:
 
@@ -65,6 +69,11 @@ let hsTools = import "${<nixpkgs>}/pkgs/development/haskell-modules/lib.nix" {
       done
     '';
 
+    # Merge or override defaults with given arguments
+    mkSrc = given: defs: if (given ? sha256)
+                         then fetchgit (defs // given)
+                         else given;
+
 # Return a set of packages which includes theory exploration tools
 in (hsPkgs.override { overrides = (self: (super: {
   # DEPENDENCIES
@@ -83,54 +92,52 @@ in (hsPkgs.override { overrides = (self: (super: {
     preConfig = asciifyCabal;
   }) {});
 
-  ArbitraryHaskell = self.callPackage (fetchgit {
-    url    = "http://chriswarbo.net/git/arbitrary-haskell.git";
-    rev    = "035ef80";
-    sha256 = "0q3xv8bcxc7yvpv8pfk593q64z93bzs4aha85i2n4zivwn5xl10h";
+  ArbitraryHaskell = self.callPackage (mkSrc ArbitraryHaskell {
+    url = "http://chriswarbo.net/git/arbitrary-haskell.git";
   }) {};
 
   # THEORY EXPLORATION TOOLS (uses "//" to merge in version arguments)
 
   hipspec = self.callPackage (nixFromCabal {
     name = "hipspec-src";
-    src  = fetchgit (hipspec // {
+    src  = mkSrc hipspec {
       name   = "hipspec-src";
       url    = https://github.com/danr/hipspec.git;
-    });
+    };
     preConfig = asciifyCabal;
   }) {};
 
   hipspecifyer = self.callPackage (nixFromCabal {
     name = "hipspecifyer-src";
-    src  = fetchgit (hipspecifyer // {
-      url    = https://github.com/moajohansson/IsaHipster.git;
-    });
+    src  = mkSrc hipspecifyer {
+      url = https://github.com/moajohansson/IsaHipster.git;
+    };
     # The cabal project lives in the "hipspecifyer" directory
     preConfig  = "cd hipspecifyer";
     preInstall = "cd hipspecifyer";
   }) {};
 
-  treefeatures = self.callPackage (fetchgit (treefeatures // {
+  treefeatures = self.callPackage (mkSrc treefeatures {
     name = "tree-features";
     url  = http://chriswarbo.net/git/tree-features.git;
-  })) {};
+  }) {};
 
-  hs2ast = self.callPackage (fetchgit (hs2ast // {
+  hs2ast = self.callPackage (mkSrc hs2ast {
     name = "hs2ast";
     url  = http://chriswarbo.net/git/hs2ast.git;
-  })) {};
+  }) {};
 
-  ml4hs = (import (fetchgit (ml4hs // {
+  ml4hs = (import (mkSrc ml4hs {
     name = "ml4hs";
     url  = http://chriswarbo.net/git/ml4hs.git;
-  }))) {
+  })) {
     treefeatures = self.treefeatures;
     hs2ast = self.hs2ast;
   };
 
-  mlspec = self.callPackage (fetchgit (mlspec // {
+  mlspec = self.callPackage (mkSrc mlspec {
     name   = "mlspec";
     url    = http://chriswarbo.net/git/mlspec.git;
-  })) {};
+  }) {};
 
 })); })
