@@ -38,12 +38,7 @@ with import <nixpkgs> {};
 
 # Define some helper functions
 
-    # Lets us override cabal settings (haddock, tests, dependencies, etc.)
-let hsTools = import "${<nixpkgs>}/pkgs/development/haskell-modules/lib.nix" {
-      pkgs = import <nixpkgs> {};
-    };
-
-    # Generates a .nix file from a .cabal file, using the cabal2nix command
+let # Generates a .nix file from a .cabal file, using the cabal2nix command
     # preConfig and preInstall are run before and after cabal2nix
     # cbl tells cabal2nix where to look (see cabal2nix documentation)
     nixFromCabal = {name, src, preConfig ? "", preInstall? "", cbl? "."}:
@@ -83,7 +78,7 @@ in (hsPkgs.override { overrides = (self: (super: {
   haskell-src-exts = self.callPackage (import ./haskell-src-exts.nix) {};
 
   # Hackage version is buggy
-  structural-induction = hsTools.dontCheck (self.callPackage (nixFromCabal {
+  structural-induction = haskell.lib.dontCheck (self.callPackage (nixFromCabal {
     name = "structural-induction-src";
     src  = fetchgit {
       url    = "https://github.com/danr/structural-induction.git";
