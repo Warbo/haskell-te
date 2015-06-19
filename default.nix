@@ -1,6 +1,6 @@
 with import <nixpkgs> {};
 
-{treefeatures, hs2ast, test? false}:
+{treefeatures, hs2ast, ArbitraryHaskell? {}, doCheck? false}:
 stdenv.mkDerivation {
   name = "ml4hs";
   src  = ./.;
@@ -9,9 +9,17 @@ stdenv.mkDerivation {
     treefeatures
     weka
     jre
-  ] ++ (if test then [ ((haskellPackages.ghcWithPackages (p:
-                        [p.tasty-quickcheck]))) ]
-                else []);
+  ] ++ (if doCheck then [(haskellPackages.ghcWithPackages (p: [
+                            p.tasty-quickcheck
+                            ArbitraryHaskell
+                        ]))]
+                   else []);
+
+  inherit doCheck;
+  checkPhase = ''
+    ./test.hs
+  '';
+
   installPhase = ''
     # Put scripts in $PATH
     mkdir -p "$out/bin"

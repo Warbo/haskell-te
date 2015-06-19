@@ -7,4 +7,7 @@
 # http://chriswarbo.net/git/haskell-te , which defines these expressions.
 
 with import <nixpkgs> {};
-callPackage ./. { inherit treefeatures hs2ast; test = true; }
+callPackage ./. {
+  inherit treefeatures hs2ast ArbitraryHaskell;
+  doCheck = true;
+}
