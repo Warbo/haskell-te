@@ -1,11 +1,11 @@
 with import <nixpkgs> {};
 
-{treefeatures, hs2ast, ArbitraryHaskell? {}, doCheck? false}:
+{treefeatures, HS2AST, ArbitraryHaskell? {}, doCheck? false}:
 stdenv.mkDerivation {
   name = "ml4hs";
   src  = ./.;
   propagatedBuildInputs = [
-    hs2ast
+    HS2AST
     treefeatures
     weka
     jre

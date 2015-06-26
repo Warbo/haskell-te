@@ -57,4 +57,4 @@ mkdir -p "$TEMP/csvs"
 
 cluster "$TEMP/csvs"
 
-#rm -rf "$TEMP"
+rm -rf "$TEMP"

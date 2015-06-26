@@ -8,6 +8,6 @@
 
 with import <nixpkgs> {};
 callPackage ./. {
-  inherit treefeatures hs2ast ArbitraryHaskell;
+  inherit treefeatures HS2AST ArbitraryHaskell;
   doCheck = true;
 }
