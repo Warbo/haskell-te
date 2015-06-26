@@ -18,7 +18,7 @@ with import <nixpkgs> {};
   treefeatures ? {
     sha256 = "1w71h7b1i91fdbxv62m3cbq045n1fdfp54h6bra2ccdj2snibx3y";
   },
-  hs2ast ? {
+  HS2AST ? {
     rev    = "7819c79";
     sha256 = "1900mjmv64dashfnimwb2dl5b2z7fk2j9xs0khgfnqgssx787ydy";
   },
@@ -130,8 +130,8 @@ in (hsPkgs.override { overrides = (self: (super: {
     url  = http://chriswarbo.net/git/tree-features.git;
   }) {};
 
-  hs2ast = self.callPackage (mkSrc hs2ast {
-    name = "hs2ast";
+  HS2AST = self.callPackage (mkSrc HS2AST {
+    name = "HS2AST";
     url  = http://chriswarbo.net/git/hs2ast.git;
   }) {};
 
@@ -140,7 +140,7 @@ in (hsPkgs.override { overrides = (self: (super: {
     url  = http://chriswarbo.net/git/ml4hs.git;
   })) {
     treefeatures = self.treefeatures;
-    hs2ast = self.hs2ast;
+    HS2AST = self.HS2AST;
   };
 
   mlspec = self.callPackage (mkSrc mlspec {
@@ -151,5 +151,7 @@ in (hsPkgs.override { overrides = (self: (super: {
   ast-plugin = self.callPackage (mkSrc ast-plugin {
     name = "ast-plugin";
     url  =  http://chriswarbo.net/git/ast-plugin.git;
-  }) {};
+  }) {
+    HS2AST = HS2AST;
+  };
 })); })
