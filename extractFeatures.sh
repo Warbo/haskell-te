@@ -1,50 +1,10 @@
-#!/bin/sh
+#! /usr/bin/env nix-shell
+#! nix-shell -p treefeatures -p bash -i bash
 
-# Perform feature extraction on ASTs from HS2AST
-
-if [ "$#" -lt 2 ]
-then
-    echo "Please provide a source and a destination"
-    exit 1
-fi
-
-function abs_dir {
-    (cd "$1" &>/dev/null && printf "%s" "$PWD")
-}
-
-SOURCE=$(abs_dir "$1")
-DEST=$(abs_dir "$2")
-
-if [ ! -d "$SOURCE" ]
-then
-    echo "Source must be a directory"
-    exit 1
-fi
-
-if [ ! -d "$DEST" ]
-then
-    echo "Destination must be a directory"
-    exit 1
-fi
-
-echo "Extracting from $SOURCE to $DEST"
-
-shopt -s nullglob
-for PKG2 in "$SOURCE/"*
+while read LINE
 do
-    PKG=$(basename "$PKG2")
-    echo "Found package $PKG"
-    mkdir -p "$DEST/$PKG"
-    for MOD2 in "$SOURCE/$PKG/"*
-    do
-        MOD=$(basename "$MOD2")
-        echo "Found module $MOD"
-        mkdir -p "$DEST/$PKG/$MOD"
-        for NAME2 in "$SOURCE/$PKG/$MOD/"*
-        do
-            NAME=$(basename "$NAME2")
-            echo "Found name $NAME"
-            MODE=sexpr BITS=30 TreeFeatures < "$SOURCE/$PKG/$MOD/$NAME" > "$DEST/$PKG/$MOD/$NAME"
-        done
-    done
+    NAME=$(echo "$LINE" | cut -d ' ' -f 1)
+    AST=$(echo "$LINE" | cut -d ' ' -f 2-)
+    FEATURES=$(echo "$AST" | BITS=30 MODE=sexpr TreeFeatures)
+    echo "$NAME $FEATURES"
 done
