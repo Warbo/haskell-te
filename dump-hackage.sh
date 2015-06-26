@@ -4,7 +4,7 @@ REL=$(dirname "$0")
 ABS=$(readlink -f "$REL")
 DIR=$(mktemp -d)
 cd "$DIR"
-cabal get "$@"
+nix-shell -p haskellPackages.cabal-install --run "cabal get $1"
 cd *
 "$ABS/dump-package.sh"
 cd
