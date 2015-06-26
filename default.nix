@@ -23,8 +23,8 @@ with import <nixpkgs> {};
     sha256 = "1900mjmv64dashfnimwb2dl5b2z7fk2j9xs0khgfnqgssx787ydy";
   },
   ml4hs ? {
-    rev    = "20addf7";
-    sha256 = "17217j75i1w0hfrjrs0slxskw8hv2kqspy77fzkm0vvhzma9m29d";
+    rev    = "c5df2cc";
+    sha256 = "0fb2zrpm649gwn64qw4pzby7wpgcvkkrclx83dn2rnz121k103yf";
   },
   mlspec ? {
     rev    = "3ead342";
@@ -34,9 +34,9 @@ with import <nixpkgs> {};
     rev    = "8852569";
     sha256 = "0gs0dlqjj34nsqv4bx8mfjfqk5aa4i2wkqwl41mhc040xvxsxkhr";
   },
-  ast-plugin ? {
-    rev    = "c8d673b";
-    sha256 = "1zgxk3i2klc189a2gyw2m5g40v6pfhfi0kp74rg2xzrwmmjgdh05";
+  AstPlugin ? {
+    rev    = "1568dd5";
+    sha256 = "0h1wg3j4wfmmbc14x36mck1lzfxmpavpc0paf2xh6cgqnssqb2df";
   }
 }:
 
@@ -148,10 +148,10 @@ in (hsPkgs.override { overrides = (self: (super: {
     url    = http://chriswarbo.net/git/mlspec.git;
   }) {};
 
-  ast-plugin = self.callPackage (mkSrc ast-plugin {
-    name = "ast-plugin";
+  AstPlugin = self.callPackage (mkSrc AstPlugin {
+    name = "AstPlugin";
     url  =  http://chriswarbo.net/git/ast-plugin.git;
   }) {
-    HS2AST = HS2AST;
+    HS2AST = self.HS2AST;
   };
 })); })
