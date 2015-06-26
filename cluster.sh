@@ -1,12 +1,18 @@
 #! /usr/bin/env nix-shell
 #! nix-shell -p weka-cli -p bash -i bash
 
+VERBOSE=0
+
+function vDebug {
+    test "$VERBOSE" -eq 0 || cat > /dev/stderr
+}
+
 # Cluster the features extracted by TreeFeatures
 
 INLINES=$(cat)
 
-echo "INLINES"  > /dev/stderr
-echo "$INLINES" > /dev/stderr
+echo "INLINES"  | vDebug
+echo "$INLINES" | vDebug
 
 NAMES=""
 CSV=""
@@ -16,8 +22,8 @@ function getNames {
     then
         NAMES=$(echo "$INLINES" | cut -d ' ' -f 1)
     fi
-    echo "getNames" > /dev/stderr
-    echo "$NAMES"   > /dev/stderr
+    echo "getNames" | vDebug
+    echo "$NAMES"   | vDebug
     echo "$NAMES"
 }
 
@@ -26,16 +32,16 @@ function getCsv {
     then
         CSV=$(echo "$INLINES" | cut -d ' ' -f 2-)
     fi
-    echo "getCsv" > /dev/stderr
-    echo "$CSV"   > /dev/stderr
+    echo "getCsv" | vDebug
+    echo "$CSV"   | vDebug
     echo "$CSV"
 }
 
 function elemCount {
     # Count the commas in the first row and add 1
     NUMS=$(getCsv | head -n 1 | sed -e 's/[^,]//g' | awk '{ print length; }')
-    echo "elemCount" > /dev/stderr
-    echo $(($NUMS + 1)) > /dev/stderr
+    echo "elemCount" | vDebug
+    echo $(($NUMS + 1)) | vDebug
     echo $(($NUMS + 1))
 }
 
@@ -45,8 +51,8 @@ function getArff {
 
     # Type annotations for columns (they're all real numbers)
     COUNT=$(elemCount)
-    echo "getArff" > /dev/stderr
-    echo "$COUNT"  > /dev/stderr
+    echo "getArff" | vDebug
+    echo "$COUNT"  | vDebug
     for (( i=1; i<=$COUNT; i++ ))
     do
         echo "@attribute '$i' real"
@@ -60,8 +66,8 @@ function getArff {
 function runWeka {
     CLUSTERS=4
     INPUT=$(cat)
-    echo "runWeka" > /dev/stderr
-    echo "$INPUT"  > /dev/stderr
+    echo "runWeka" | vDebug
+    echo "$INPUT"  | vDebug
     echo "$INPUT" |
         weka-cli weka.filters.unsupervised.attribute.AddCluster \
                  -W "weka.clusterers.SimpleKMeans -N $CLUSTERS -S 42" -I last
