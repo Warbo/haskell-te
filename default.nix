@@ -19,8 +19,8 @@ with import <nixpkgs> {};
     sha256 = "1w71h7b1i91fdbxv62m3cbq045n1fdfp54h6bra2ccdj2snibx3y";
   },
   hs2ast ? {
-    rev    = "94172e3";
-    sha256 = "0gbcidzk6f0q5vw8cb8a06xz3cczm2g0hvsj3xksjzswiiwd6qnz";
+    rev    = "7819c79";
+    sha256 = "1900mjmv64dashfnimwb2dl5b2z7fk2j9xs0khgfnqgssx787ydy";
   },
   ml4hs ? {
     rev    = "20addf7";
@@ -33,6 +33,10 @@ with import <nixpkgs> {};
   ArbitraryHaskell ? {
     rev    = "8852569";
     sha256 = "0gs0dlqjj34nsqv4bx8mfjfqk5aa4i2wkqwl41mhc040xvxsxkhr";
+  },
+  ast-plugin ? {
+    rev    = "c8d673b";
+    sha256 = "1zgxk3i2klc189a2gyw2m5g40v6pfhfi0kp74rg2xzrwmmjgdh05";
   }
 }:
 
@@ -103,7 +107,15 @@ in (hsPkgs.override { overrides = (self: (super: {
     preConfig = asciifyCabal;
   }) {};
 
-  hipspecifyer = self.callPackage (nixFromCabal {
+  # Hipspecifyer doesn't like haskell-src-exts >= 1.16, but hlint does.
+  # We use an older version of hlint, but that doesn't work with GHC 7.10, so we
+  # use GHC 7.8.4
+  hipspecifyer = (haskell.packages.ghc784.override {
+    overrides = (self: super: {
+      hlint = haskell.packages.ghc784.callPackage ./hlint-1.9.4.nix {};
+      haskell-src-exts = self.callPackage ./haskell-src-exts-1.15.0.1.nix {};
+    });
+  }).callPackage (nixFromCabal {
     name = "hipspecifyer-src";
     src  = mkSrc hipspecifyer {
       url = https://github.com/moajohansson/IsaHipster.git;
@@ -136,4 +148,8 @@ in (hsPkgs.override { overrides = (self: (super: {
     url    = http://chriswarbo.net/git/mlspec.git;
   }) {};
 
+  ast-plugin = self.callPackage (mkSrc ast-plugin {
+    name = "ast-plugin";
+    url  =  http://chriswarbo.net/git/ast-plugin.git;
+  }) {};
 })); })

@@ -3,13 +3,10 @@
 RESULT=""
 
 # Test each package we care about (dependencies will take care of themselves)
-for pkg in ArbitraryHaskell hipspecifyer hipspec treefeatures hs2ast ml4hs mlspec
+for pkg in ArbitraryHaskell hipspecifyer hipspec treefeatures hs2ast ml4hs mlspec ast-plugin
 do
     RESULT="${RESULT}Testing $pkg: "
-    if nix-shell \
-           -p "(import ./. {}).$pkg" \
-           --command 'true' \
-           --show-trace
+    if ./one.sh "$pkg"
     then
         RESULT="$RESULT PASS\n"
     else
