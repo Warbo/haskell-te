@@ -3,7 +3,7 @@
 RESULT=""
 
 # Test each package we care about (dependencies will take care of themselves)
-for pkg in ArbitraryHaskell hipspecifyer hipspec treefeatures HS2AST ml4hs mlspec AstPlugin
+for pkg in ArbitraryHaskell hipspec treefeatures HS2AST ml4hs mlspec AstPlugin
 do
     RESULT="${RESULT}Testing $pkg: "
     if ./one.sh "$pkg"

@@ -11,10 +11,6 @@ with import <nixpkgs> {};
     rev    = "19e11613fc";
     sha256 = "0m0kmkjn6w2h4d62swnhzj6la8041mvvcm2sachbng5hzkw6l8hf";
   },
-  hipspecifyer ? {
-    rev    = "f81eb6d630";
-    sha256 = "1hb0mlds91fv3nxc0cppq48zfwcpkk5p2bmix75mmsnichkp8ncc";
-  },
   treefeatures ? {
     sha256 = "1w71h7b1i91fdbxv62m3cbq045n1fdfp54h6bra2ccdj2snibx3y";
   },
@@ -27,8 +23,8 @@ with import <nixpkgs> {};
     sha256 = "0fb2zrpm649gwn64qw4pzby7wpgcvkkrclx83dn2rnz121k103yf";
   },
   mlspec ? {
-    rev    = "3ead342";
-    sha256 = "04w3n080wwnfmpan1v9vc9g22zss6hx4jlwl6kraqpg64g5fjj78";
+    rev    = "2dc7d9b";
+    sha256 = "0k68b00pi22rjxr2iqx1zzmygkxxydy89f0fsmqqg2lz4v0970bm";
   },
   ArbitraryHaskell ? {
     rev    = "8852569";
@@ -105,24 +101,6 @@ in (hsPkgs.override { overrides = (self: (super: {
       url    = https://github.com/danr/hipspec.git;
     };
     preConfig = asciifyCabal;
-  }) {};
-
-  # Hipspecifyer doesn't like haskell-src-exts >= 1.16, but hlint does.
-  # We use an older version of hlint, but that doesn't work with GHC 7.10, so we
-  # use GHC 7.8.4
-  hipspecifyer = (haskell.packages.ghc784.override {
-    overrides = (self: super: {
-      hlint = haskell.packages.ghc784.callPackage ./hlint-1.9.4.nix {};
-      haskell-src-exts = self.callPackage ./haskell-src-exts-1.15.0.1.nix {};
-    });
-  }).callPackage (nixFromCabal {
-    name = "hipspecifyer-src";
-    src  = mkSrc hipspecifyer {
-      url = https://github.com/moajohansson/IsaHipster.git;
-    };
-    # The cabal project lives in the "hipspecifyer" directory
-    preConfig  = "cd hipspecifyer";
-    preInstall = "cd hipspecifyer";
   }) {};
 
   treefeatures = self.callPackage (mkSrc treefeatures {
