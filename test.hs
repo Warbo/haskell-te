@@ -15,6 +15,16 @@ import Test.QuickCheck.Monadic
 import Test.Tasty (defaultMain, testGroup, localOption)
 import Test.Tasty.QuickCheck
 
+main = defaultMain $ withOptions $ testGroup "All tests" [
+    testGroup "dump-package.sh tests" [
+      ]
+  , testGroup "dump-hackage.sh tests" [
+      ]
+  , testGroup "extractFeatures.sh tests" [
+      ]
+  ,
+  ]
+
 --ml4hs src = call "ml4hs.sh" src
 
 -- | Call a script, with arguments args and working directory dir
@@ -36,12 +46,6 @@ withProject p f = do dir <- run $ makeProject tmpDir p
                      run rmTmpDir
                      return result
 
-ml4hsNeedsCabal = monadicIO $ do code <- run $ rawSystem "./ml4hs.sh" ["/"]
-                                 assert (code /= ExitSuccess)
-
 mkDir path = createDirectoryIfMissing True (tmpDir ++ "/" ++ path)
 
 withOptions = localOption (QuickCheckTests 10)
-
-main = defaultMain $ withOptions $ testGroup "All tests" [
-         ]

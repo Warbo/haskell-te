@@ -84,10 +84,11 @@ function extractClusters {
     CLUSTERS=$(showClusters | grep -A "$LINES" "^@data" | grep -o "cluster[0-9]*$")
 
     # Interleave with input CSV filenames
-    mkfifo fifo
-    getNames > fifo &
-    echo "$CLUSTERS" | paste - fifo
-    rm fifo
+    FIFO=$(mktemp -u)
+    mkfifo -m 600 "$FIFO"
+    getNames > "$FIFO" &
+    echo "$CLUSTERS" | paste - "$FIFO"
+    rm "$FIFO"
 }
 
 extractClusters
