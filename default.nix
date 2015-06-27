@@ -15,12 +15,12 @@ with import <nixpkgs> {};
     sha256 = "1w71h7b1i91fdbxv62m3cbq045n1fdfp54h6bra2ccdj2snibx3y";
   },
   HS2AST ? {
-    rev    = "0d31bdc";
-    sha256 = "1dnl1kkblbjyywfh2i0y1wr3a0p9sqbdd9llij80h4mph1856lcs";
+    rev    = "73248d8";
+    sha256 = "1i1grck4zq1pjj1jvvy26lw8wizbwh3hj4vsvr3z216ahlj7bkn3";
   },
   ml4hs ? {
-    rev    = "c5df2cc";
-    sha256 = "0fb2zrpm649gwn64qw4pzby7wpgcvkkrclx83dn2rnz121k103yf";
+    rev    = "84501ba";
+    sha256 = "188711s0hjb6l1li45jik4qw3kika89ly3909c2xsdrqbrs1rkmq";
   },
   mlspec ? {
     rev    = "2dc7d9b";
@@ -113,13 +113,10 @@ in (hsPkgs.override { overrides = (self: (super: {
     url  = http://chriswarbo.net/git/hs2ast.git;
   }) {};
 
-  ml4hs = (import (mkSrc ml4hs {
+  ml4hs = import (mkSrc ml4hs {
     name = "ml4hs";
     url  = http://chriswarbo.net/git/ml4hs.git;
-  })) {
-    treefeatures = self.treefeatures;
-    HS2AST = self.HS2AST;
-  };
+  });
 
   mlspec = self.callPackage (mkSrc mlspec {
     name   = "mlspec";
