@@ -19,8 +19,8 @@ with import <nixpkgs> {};
     sha256 = "1i1grck4zq1pjj1jvvy26lw8wizbwh3hj4vsvr3z216ahlj7bkn3";
   },
   ml4hs ? {
-    rev    = "84501ba";
-    sha256 = "188711s0hjb6l1li45jik4qw3kika89ly3909c2xsdrqbrs1rkmq";
+    rev    = "237804e";
+    sha256 = "0arb4fj6k5div6sypq7vlzid1bs1y4kmckg05002bfbhn8f55amq";
   },
   mlspec ? {
     rev    = "2dc7d9b";
