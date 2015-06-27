@@ -22,7 +22,10 @@ main = defaultMain $ withOptions $ testGroup "All tests" [
       ]
   , testGroup "extractFeatures.sh tests" [
       ]
-  ,
+  , testGroup "cluster.sh tests" [
+      ]
+  , testGroup "ml4hs.sh tests" [
+      ]
   ]
 
 --ml4hs src = call "ml4hs.sh" src
