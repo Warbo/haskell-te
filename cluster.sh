@@ -91,4 +91,4 @@ function extractClusters {
     rm "$FIFO"
 }
 
-extractClusters
+extractClusters | sort
