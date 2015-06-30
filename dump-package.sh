@@ -10,7 +10,7 @@ function packageName {
      done)
 }
 
-function extractAsts {
+function runPlugin {
     PKG=$(packageName)
     nix-shell -E "with import <nixpkgs> {}; ghcWithPlugin \"$PKG\"" \
               --run "sh" <<'EOF'
@@ -29,4 +29,20 @@ cabal --ghc-options="$OPTIONS" build 2>&1 1>/dev/null
 EOF
 }
 
-extractAsts | grep "^FOUNDAST" | cut -d ' ' -f 2-
+function extractAsts {
+    runPlugin | grep "^FOUNDAST" | cut -d ' ' -f 2-
+}
+
+function fixPackageName {
+    # FIXME: This is a hack. AstPlugin should get the package name and include
+    # it in the output, but we seem to get "(unknown):Foo.bar (ast)".
+    # The easy workaround is to replace "(unknown)" with the given package name.
+    # Longer-term, it would be better to fix this in AstPlugin itself.
+    PKG=$(packageName)
+    cut -d ':' -f 2- | while read LINE
+                       do
+                           echo "$PKG:$LINE"
+                       done
+}
+
+extractAsts | fixPackageName
