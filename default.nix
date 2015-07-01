@@ -12,27 +12,28 @@ with import <nixpkgs> {};
     sha256 = "0m0kmkjn6w2h4d62swnhzj6la8041mvvcm2sachbng5hzkw6l8hf";
   },
   treefeatures ? {
+    rev = "1bc0397";
     sha256 = "1w71h7b1i91fdbxv62m3cbq045n1fdfp54h6bra2ccdj2snibx3y";
   },
   HS2AST ? {
-    rev    = "73248d8";
+    rev = "73248d8";
     sha256 = "1i1grck4zq1pjj1jvvy26lw8wizbwh3hj4vsvr3z216ahlj7bkn3";
   },
   ml4hs ? {
-    rev    = "237804e";
-    sha256 = "0arb4fj6k5div6sypq7vlzid1bs1y4kmckg05002bfbhn8f55amq";
+    rev = "8780955";
+    sha256 = "1sl7hliv51ijnay5jqp11pwq1iqdfbkw5pf9lgi1fdb580n6blpm";
   },
   mlspec ? {
-    rev    = "e6504e5";
+    rev = "e6504e5";
     sha256 = "0aswp05i524swrvd950dqyl1361bdjmhl0hdqfz8j0xyjif57nmf";
   },
   ArbitraryHaskell ? {
-    rev    = "8852569";
-    sha256 = "0gs0dlqjj34nsqv4bx8mfjfqk5aa4i2wkqwl41mhc040xvxsxkhr";
+    rev = "f2a2207";
+    sha256 = "0jjybdbf5k9fivqx3agcridzslq6b9a69fyjw1zhvvkk1npy9316";
   },
   AstPlugin ? {
-    rev    = "1568dd5";
-    sha256 = "0h1wg3j4wfmmbc14x36mck1lzfxmpavpc0paf2xh6cgqnssqb2df";
+    rev = "7c5d495";
+    sha256 = "1da90hxwscgigak5jfjbzf9dyvc546dw4qm80rqcjilf7m7aic0x";
   }
 }:
 
