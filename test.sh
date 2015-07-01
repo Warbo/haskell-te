@@ -28,6 +28,31 @@ function getFeatures {
     cat "test-data/$1.features"
 }
 
+function getClusterData {
+    if [[ ! -e "test-data/$1.clusterdata" ]]
+    then
+        getFeatures "$1" | ./cluster.sh > "test-data/$1.clusterdata"
+    fi
+    cat "test-data/$1.clusterdata"
+}
+
+function getClusters {
+    if [[ ! -e "test-data/$1.clusters" ]]
+    then
+        getClusterData "$1" | ./lineUp.sh > "test-data/$1.clusters"
+    fi
+    cat "test-data/$1.clusters"
+}
+
+function getProjects {
+    if [[ ! -e "test-data/$1.projects" ]]
+    then
+        mkdir -p "test-data/projects"
+        getClusters "$1" | ./make-projects.sh "test-data/projects" > "test-data/$1.projects"
+    fi
+    cat "test-data/$1.projects"
+}
+
 function assertNotEmpty {
     COUNT=$(grep -c ^)
     if [[ "$COUNT" -eq 0 ]]
@@ -45,6 +70,14 @@ function testAstLabelled {
     if [[ "$COUNT" -eq 0 ]]
     then
         fail "ASTs aren't labelled with '$1'"
+    fi
+}
+
+function testNoCoreNames {
+    COUNT=$(getAst "$1" | grep -c '\.\$')
+    if [[ "$COUNT" -ne 0 ]]
+    then
+        fail "ASTs for '$1' contain Core names beginning with \$"
     fi
 }
 
@@ -68,11 +101,76 @@ function testFeaturesUniform {
                        done
 }
 
+function testHaveAllClusters {
+    # FIXME: Make cluster number configurable (eg. so we can have it vary based
+    # on the number of definitions)
+    COUNT=$(getClusterData "$1" | cut -f 1 | sort -u | wc -l)
+    if [[ "$COUNT" -ne 4 ]]
+    then
+        fail "Found $COUNT clusters for '$1' instead of 4"
+    fi
+}
+
+function absent {
+    while read LINE
+    do
+        if [[ "x$LINE" = "x$1" ]]
+        then
+            return 1
+        fi
+    done
+    return 0
+}
+
+function testClusterAllNames {
+    INNAMES=$(getAst "$1" | cut -d ' ' -f 1)
+    OUTNAMES=$(getClusterData "$1" | cut -f 2)
+    echo "$INNAMES"  | while read NAME
+                       do
+                           if echo "$OUTNAMES" | absent "$NAME"
+                           then
+                               fail "'$NAME' occurs in '$1' ASTs but not features"
+                           fi
+                       done
+    echo "$OUTNAMES" | while read NAME
+                       do
+                           if echo "$INNAMES"  | absent "$NAME"
+                           then
+                               fail "'$NAME' occurs in '$1' features but not ASTs"
+                           fi
+                       done
+}
+
+function testGetClusterCount {
+    # NOTE: `wc -l` counts \n characters, so we subtract 1
+    # FIXME: Make 4 configurable via and environment variable
+    COUNT=$(getClusters "$1" | wc -l)
+    if [[ "$COUNT" -ne 3 ]]
+    then
+        fail "Not enough clusters for '$1' (got $COUNT expected 4)"
+    fi
+}
+
+function testProjectsMade {
+    getProjects "$1" | while read PROJECT
+                       do
+                           if [ -e "$PROJECT" ]
+                           then
+                               fail "Directory '$PROJECT' not made for '$1'"
+                           fi
+                       done
+}
+
 function testPackage {
     testGetAst          "$1"
     testAstLabelled     "$1"
+    testNoCoreNames     "$1"
     testGetFeatures     "$1"
     testFeaturesUniform "$1"
+    testHaveAllClusters "$1"
+    testClusterAllNames "$1"
+    testGetClusterCount "$1"
+    testProjectsMade    "$1"
 }
 
 testPackage "directory"
