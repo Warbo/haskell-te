@@ -1,20 +1,30 @@
 with import <nixpkgs> {};
 
-{treefeatures, hs2ast}:
 stdenv.mkDerivation {
   name = "ml4hs";
   src  = ./.;
-  buildInputs = [
-    hs2ast
-    treefeatures
-    weka
-    openjre
-  ];
 
-  shellHook = ''
-    # -jar weka.jar launches the GUI, -cp weka.jar runs from CLI
-    function weka-cli {
-      ${openjre}/bin/java -Xmx1000M -cp ${weka}/share/weka/weka.jar "$@"
-    }
+  # Used for testing script
+  propagatedBuildInputs = [
+    (haskellPackages.ghcWithPackages (p: [
+      p.QuickCheck
+      p.tasty
+      p.tasty-hunit
+      p.tasty-quickcheck
+      ArbitraryHaskell
+    ]))
+  ];
+  installPhase = ''
+    # Put scripts in place
+    mkdir -p "$out/lib/ml4hs"
+    for SCRIPT in cluster.sh  dump-hackage.sh  dump-package.sh  extractFeatures.sh  ml4hs.sh
+    do
+      cp "$SCRIPT" "$out/lib/ml4hs/"
+    done
+
+    # Install a top-level entry point
+    mkdir -p "$out/bin"
+    printf "#!/bin/sh\ncd $out/lib/ml4hs\n./ml4hs.sh \"\$@\"\n" > "$out/bin/ml4hs"
+    chmod +x "$out/bin/ml4hs"
   '';
 }
