@@ -41,7 +41,13 @@ function fixPackageName {
     PKG=$(packageName)
     cut -d ':' -f 2- | while read LINE
                        do
-                           echo "$PKG:$LINE"
+                           if echo "$LINE" | grep '\.\$' > /dev/null
+                           then
+                               # Skip Core names beginnning with $
+                               true
+                           else
+                               echo "$PKG:$LINE"
+                           fi
                        done
 }
 
