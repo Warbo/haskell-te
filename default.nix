@@ -24,8 +24,8 @@ with import <nixpkgs> {};
     sha256 = "1br0hk3323l33a43x2znj7nsf9bsrm60kbvijr867bs2dc322ncv";
   },
   mlspec ? {
-    rev = "d845a11";
-    sha256 = "0a8pkvkqksf6waprsrajpy03i9vl8b3r4nqhkf8laz8923lv2025";
+    rev = "1431721";
+    sha256 = "0cgqld6cya3vqcz9frycl6ga87qnzdy6a4m9pagdcp6xqwv3ihgd";
   },
   ArbitraryHaskell ? {
     rev = "f2a2207";
