@@ -20,8 +20,8 @@ with import <nixpkgs> {};
     sha256 = "1i1grck4zq1pjj1jvvy26lw8wizbwh3hj4vsvr3z216ahlj7bkn3";
   },
   ml4hs ? {
-    rev = "357d863";
-    sha256 = "1br0hk3323l33a43x2znj7nsf9bsrm60kbvijr867bs2dc322ncv";
+    rev = "88e215d";
+    sha256 = "18hry7mgif6n925g023k77kb7rwxiniypkylgmmjc56clw3i44lh";
   },
   mlspec ? {
     rev = "1431721";
@@ -32,8 +32,8 @@ with import <nixpkgs> {};
     sha256 = "0jjybdbf5k9fivqx3agcridzslq6b9a69fyjw1zhvvkk1npy9316";
   },
   AstPlugin ? {
-    rev = "7c5d495";
-    sha256 = "1da90hxwscgigak5jfjbzf9dyvc546dw4qm80rqcjilf7m7aic0x";
+    rev = "b34eb0e";
+    sha256 = "05xndmss9p15bdn72lz39id660wyw12d0mcm1xai0bwj2z0dfz7b";
   }
 }:
 
