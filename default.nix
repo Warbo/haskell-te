@@ -20,12 +20,12 @@ with import <nixpkgs> {};
     sha256 = "1i1grck4zq1pjj1jvvy26lw8wizbwh3hj4vsvr3z216ahlj7bkn3";
   },
   ml4hs ? {
-    rev = "8780955";
-    sha256 = "1sl7hliv51ijnay5jqp11pwq1iqdfbkw5pf9lgi1fdb580n6blpm";
+    rev = "357d863";
+    sha256 = "1br0hk3323l33a43x2znj7nsf9bsrm60kbvijr867bs2dc322ncv";
   },
   mlspec ? {
-    rev = "1c3a31a";
-    sha256 = "0qy62av78c624kfspxzcgc4aym10z0jjdlab0qlgjqnfgi7kwmkf";
+    rev = "d845a11";
+    sha256 = "0a8pkvkqksf6waprsrajpy03i9vl8b3r4nqhkf8laz8923lv2025";
   },
   ArbitraryHaskell ? {
     rev = "f2a2207";
