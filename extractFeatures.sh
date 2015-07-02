@@ -3,8 +3,8 @@
 
 while read LINE
 do
-    NAME=$(echo "$LINE" | cut -d ' ' -f 1)
-    AST=$(echo "$LINE" | cut -d ' ' -f 2-)
+    PREFIX=$(echo "$LINE" | cut -d '"' -f 1-2)
+    AST=$(echo "$LINE" | cut -d '"' -f 3- | grep -o "[^ ].*")
     FEATURES=$(echo "$AST" | BITS=30 MODE=sexpr TreeFeatures)
-    echo "$NAME $FEATURES"
+    echo "$PREFIX\" $FEATURES"
 done

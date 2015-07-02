@@ -15,6 +15,8 @@ function fail {
 function getAst {
     if [[ ! -e "test-data/$1.ast" ]]
     then
+        # We use dump-hackage rather than dump-package directly, since it works
+        # in a temporary directory
         ./dump-hackage.sh "$1" > "test-data/$1.ast"
     fi
     cat "test-data/$1.ast"
@@ -51,6 +53,24 @@ function getProjects {
         getClusters "$1" | ./make-projects.sh "test-data/projects" > "test-data/$1.projects"
     fi
     cat "test-data/$1.projects"
+}
+
+function getNixedProjects {
+    if [[ ! -e "test-data/$1.nixed" ]]
+    then
+        if [[ -e "test-data/nixed" ]]
+        then
+            rm -rf "test-data/nixed"
+        fi
+        cp -r "test-data/projects" "test-data/nixed"
+        (shopt -s nullglob;
+         for PROJECT in test-data/nixed/*
+         do
+             readlink -f "$PROJECT" >> "test-data/$1.nixed"
+         done)
+        ./nix-projects.sh < "test-data/$1.nixed"
+    fi
+    cat "test-data/$1.nixed"
 }
 
 function assertNotEmpty {
@@ -90,10 +110,11 @@ function countCommas {
 }
 
 function testFeaturesUniform {
-    COUNT=$(getFeatures "$1" | head -n 1 | countCommas)
+    COUNT=$(getFeatures "$1" | cut -d '"' -f 3- | head -n 1 | countCommas)
     getFeatures "$1" | while read LINE
                        do
-                           THIS=$(printf "$LINE" | countCommas)
+                           THIS=$(printf "$LINE" | cut -d '"' -f 3- |
+                                         countCommas)
                            if [[ "$THIS" -ne "$COUNT" ]]
                            then
                                fail "'$LINE' doesn't have $COUNT commas"
@@ -123,7 +144,10 @@ function absent {
 }
 
 function testClusterAllNames {
-    INNAMES=$(getAst "$1" | cut -d ' ' -f 1)
+    INNAMES=$(getAst "$1" | cut -d '"' -f 1-2 | while read BIT
+                                                do
+                                                    echo "${BIT}\""
+                                                done)
     OUTNAMES=$(getClusterData "$1" | cut -f 2)
     echo "$INNAMES"  | while read NAME
                        do
@@ -152,13 +176,32 @@ function testGetClusterCount {
 }
 
 function testProjectsMade {
-    getProjects "$1" | while read PROJECT
-                       do
-                           if [ -e "$PROJECT" ]
-                           then
-                               fail "Directory '$PROJECT' not made for '$1'"
-                           fi
-                       done
+    getProjects "$1" |
+        while read PROJECT
+        do
+            if [[ ! -e "$PROJECT" ]]
+            then
+                fail "Directory '$PROJECT' not made for '$1'"
+            fi
+        done
+}
+
+function testNixFilesMade {
+    getNixedProjects "$1" | while read PROJECT
+                            do
+                                if [[ ! -e "$PROJECT" ]]
+                                then
+                                    fail "'$PROJECT' not found for '$1'"
+                                fi
+                                if [[ ! -e "$PROJECT/shell.nix" ]]
+                                then
+                                    fail "'$PROJECT/shell.nix' missing for '$1'"
+                                fi
+                            done
+}
+
+function testNixProjectsRun {
+    getNixedProjects "$1" | ./run-projects.sh
 }
 
 function testPackage {
@@ -171,6 +214,8 @@ function testPackage {
     testClusterAllNames "$1"
     testGetClusterCount "$1"
     testProjectsMade    "$1"
+    testNixFilesMade    "$1"
+    testNixProjectsRun  "$1"
 }
 
 testPackage "directory"

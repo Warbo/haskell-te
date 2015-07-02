@@ -20,7 +20,10 @@ CSV=""
 function getNames {
     if [ -z "$NAMES" ]
     then
-        NAMES=$(echo "$INLINES" | cut -d ' ' -f 1)
+        NAMES=$(echo "$INLINES" | cut -d '"' -f 1-2 | while read BIT
+                                                      do
+                                                          echo "${BIT}\""
+                                                      done)
     fi
     echo "getNames" | vDebug
     echo "$NAMES"   | vDebug
@@ -30,7 +33,7 @@ function getNames {
 function getCsv {
     if [ -z "$CSV" ]
     then
-        CSV=$(echo "$INLINES" | cut -d ' ' -f 2-)
+        CSV=$(echo "$INLINES" | cut -d '"' -f 3- | grep -o "[^ ].*")
     fi
     echo "getCsv" | vDebug
     echo "$CSV"   | vDebug

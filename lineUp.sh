@@ -13,7 +13,7 @@
 
 LINES=$(cat)
 
-# The first line is special, as it has no preceding space
+# The first line is special, as it has no preceding delimiter
 FIRST=$(echo "$LINES"   | head -n 1)
 CLUSTER=$(echo "$FIRST" | cut  -f 1)
 NAME=$(echo "$FIRST"    | cut  -f 2)
@@ -27,7 +27,7 @@ echo "$LINES" | tail -n +2 | while read LINE
                                  # Start a new line if we've hit a new cluster
                                  if [[ "x$THISCLUSTER" = "x$CLUSTER" ]]
                                  then
-                                     printf " $THISNAME"
+                                     printf "	$THISNAME"
                                  else
                                      printf "\n$THISNAME"
                                  fi
