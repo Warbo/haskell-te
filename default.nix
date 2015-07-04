@@ -7,10 +7,6 @@ with import <nixpkgs> {};
   # Haskell packages to use; eg. haskell.packages.ghc784 for GHC 7.8.4
   hsPkgs ? haskellPackages,
 
-  hipspec ? {
-    rev    = "19e11613fc";
-    sha256 = "0m0kmkjn6w2h4d62swnhzj6la8041mvvcm2sachbng5hzkw6l8hf";
-  },
   treefeatures ? {
     rev = "1bc0397";
     sha256 = "1w71h7b1i91fdbxv62m3cbq045n1fdfp54h6bra2ccdj2snibx3y";
@@ -20,8 +16,12 @@ with import <nixpkgs> {};
     sha256 = "1i1grck4zq1pjj1jvvy26lw8wizbwh3hj4vsvr3z216ahlj7bkn3";
   },
   ml4hs ? {
-    rev = "88e215d";
-    sha256 = "18hry7mgif6n925g023k77kb7rwxiniypkylgmmjc56clw3i44lh";
+    rev = "e35015c";
+    sha256 = "0nkcqgrj88yndidm5f2yawfbzxy8qk5xv1lmda47fdqxmazsdg1g";
+  },
+  ML4HSHelper ? {
+    rev = "da4ffe0";
+    sha256 = "";
   },
   mlspec ? {
     rev = "1431721";
@@ -118,6 +118,11 @@ in (hsPkgs.override { overrides = (self: (super: {
     name = "ml4hs";
     url  = http://chriswarbo.net/git/ml4hs.git;
   });
+
+  ML4HSHelper = self.callPackage (mkSrc ML4HSHelper {
+    name = "ML4HSHelper";
+    url  = http://chriswarbo.net/git/ml4hs-helper.git;
+  }) {};
 
   mlspec = self.callPackage (mkSrc mlspec {
     name   = "mlspec";
