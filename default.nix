@@ -8,32 +8,32 @@ with import <nixpkgs> {};
   hsPkgs ? haskellPackages,
 
   treefeatures ? {
-    rev = "1bc0397";
-    sha256 = "1w71h7b1i91fdbxv62m3cbq045n1fdfp54h6bra2ccdj2snibx3y";
+    rev    = import ./treefeatures.rev.nix;
+    sha256 = import ./treefeatures.sha256.nix;
   },
   HS2AST ? {
-    rev = "73248d8";
-    sha256 = "1i1grck4zq1pjj1jvvy26lw8wizbwh3hj4vsvr3z216ahlj7bkn3";
+    rev    = import ./HS2AST.rev.nix;
+    sha256 = import ./HS2AST.sha256.nix;
   },
   ml4hs ? {
-    rev = "e35015c";
-    sha256 = "0nkcqgrj88yndidm5f2yawfbzxy8qk5xv1lmda47fdqxmazsdg1g";
+    rev    = import ./ml4hs.rev.nix;
+    sha256 = import ./ml4hs.sha256.nix;
   },
   ML4HSHelper ? {
-    rev = "8053fb4";
-    sha256 = "";
+    rev    = import ./ML4HSHelper.rev.nix;
+    sha256 = import ./ML4HSHelper.sha256.nix;
   },
   mlspec ? {
-    rev = "1431721";
-    sha256 = "0cgqld6cya3vqcz9frycl6ga87qnzdy6a4m9pagdcp6xqwv3ihgd";
+    rev    = import ./mlspec.rev.nix;
+    sha256 = import ./mlspec.sha256.nix;
   },
   ArbitraryHaskell ? {
-    rev = "f2a2207";
-    sha256 = "0jjybdbf5k9fivqx3agcridzslq6b9a69fyjw1zhvvkk1npy9316";
+    rev    = import ./ArbitraryHaskell.rev.nix;
+    sha256 = import ./ArbitraryHaskell.sha256.nix;
   },
   AstPlugin ? {
-    rev = "b34eb0e";
-    sha256 = "05xndmss9p15bdn72lz39id660wyw12d0mcm1xai0bwj2z0dfz7b";
+    rev    = import ./AstPlugin.rev.nix;
+    sha256 = import ./AstPlugin.sha256.nix;
   }
 }:
 
