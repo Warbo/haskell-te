@@ -20,7 +20,7 @@ with import <nixpkgs> {};
     sha256 = "0nkcqgrj88yndidm5f2yawfbzxy8qk5xv1lmda47fdqxmazsdg1g";
   },
   ML4HSHelper ? {
-    rev = "da4ffe0";
+    rev = "8053fb4";
     sha256 = "";
   },
   mlspec ? {
