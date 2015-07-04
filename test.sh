@@ -218,6 +218,9 @@ function testPackage {
     testNixProjectsRun  "$1"
 }
 
-testPackage "directory"
+for PKG in directory quickspec
+do
+    testPackage "$PKG"
+done
 
 exit "$CODE"
