@@ -1,14 +1,17 @@
 #!/bin/sh
+set -e
 
 # Extract ASTs from a Cabal package
 
-BASE=$(dirname "$0")
+[[ "$#" -eq 0 ]] && echo "Please specify a Cabal project directory" && exit 1
 
-DIR="$PWD"
-if [[ "$#" -gt 0 ]]
-then
-    DIR="$1"
-fi
+DIR="$1"
+
+PHASE="all"
+[[ "$#" -gt 1 ]] && PHASE="$2"
+
+RELBASE=$(dirname "$0")
+BASE=$(readlink -f "$RELBASE")
 
 function packageName {
     (shopt -s nullglob
@@ -22,19 +25,7 @@ function extractAsts {
     PKG=$(packageName)
     (cd "$DIR";
      nix-shell -E "with import <nixpkgs> {}; ghcWithPlugin \"$PKG\"" \
-               --run "$BASE/runPlugin.sh")
+               --run "$BASE/runPlugin.sh $PHASE")
 }
 
-function fixPackageName {
-    # FIXME: This is a hack. AstPlugin should get the package name and include
-    # it in the output, but we seem to get "(unknown):Foo.bar (ast)".
-    # The easy workaround is to replace "(unknown)" with the given package name.
-    # Longer-term, it would be better to fix this in AstPlugin itself.
-    PKG=$(packageName)
-    cut -d ':' -f 2- | while read LINE
-                       do
-                           echo "$PKG:$LINE"
-                       done
-}
-
-extractAsts | fixPackageName
+extractAsts

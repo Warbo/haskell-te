@@ -8,10 +8,6 @@ stdenv.mkDerivation {
   propagatedBuildInputs = [
     (haskellPackages.ghcWithPackages (p: [
       p.QuickCheck
-      p.tasty
-      p.tasty-hunit
-      p.tasty-quickcheck
-      ArbitraryHaskell
     ]))
   ];
   installPhase = ''
