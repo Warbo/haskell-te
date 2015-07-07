@@ -13,31 +13,36 @@
 set -e
 set -x
 
-# How far to go, to allow testing intermediate results
-PHASE="$1"
-
 function typeCommand {
-    getAsts | ML4HSHelper "typeCommand"
+    echo ":m"
+    '"Test.QuickSpec.fun5 \"\" " + $qn'
+    getAsts | while read -r LINE
+              do
+                  QNAME=$(echo "$LINE" | jq -r '.module + "." + .name')
+                  echo ":t ($QNAME)"
+                  mkQuery "$QNAME"
+              done
 }
 
-function ordCommand {
-    getTypes | ML4HSHelper "ordCommand"
+function mkQuery {
+    # Try making QuickSpec signatures
+    for NUM in 5 4 3 2 1 0
+    do
+        printf ':t Test.QuickSpec.fun%d "" %s\n' "$NUM" "$1"
+    done
 }
 
 function cabalLines {
     # Clean up GHCi output
-    while read LINE
+    while IFS= read -r LINE
     do
-        if echo "$LINE" | grep '^Prelude>' > /dev/null
+        if echo "$LINE" | grep '^ ' > /dev/null
         then
-            printf "\n${LINE}"
+            printf  " ${LINE}"
         else
-            printf " ${LINE}"
+            printf "\n${LINE}"
         fi
-    done | grep " :: "          |
-           sed 's/Prelude>//g'  |
-           sed 's/\*[^ >]*>//g' |
-           grep -o "([^)]*) :: .*"
+    done
 }
 
 function pkgName {
@@ -58,67 +63,49 @@ function getType {
     grep -o "::.*" | grep -o "[^ :].*"
 }
 
-function renderAll {
-    # S-exprs for Haskell to read
-    getAsts
-    getTypes | while read LINE
-               do
-                   NAME=$(getName "$")
-                   if getOrdResults | grep "(${NAME}).*::" > /dev/null
-                   then
-                       TYPE=$(getType "$NAME")
-                       echo "(\"::\" \"$NAME\" \"${TYPE}\")"
-                   fi
-               done
-}
-
-function finalLines {
-    renderAll | ML4HSHelper "renderAsts"
-}
-
-# Cache the results of running Cabal and GHC
-PKGCACHE=""
-BUILDCACHE=""
-TYPECACHE=""
-ORDCACHE=""
-
-function ghcPkg {
-    echo "$PKGCACHE" | head -n 1 | tr -d ':'
-}
-
-function ghcPkgFill {
-    # Get a Haskell package database containing project dependencies and plugin
-    PKGCACHE=$(ghc-pkg list)
-}
-
 function getAsts {
     PKG=$(pkgName)
     echo "$BUILDCACHE" | grep "^{" | jq -c ". + {package: \"$PKG\"}"
-}
-
-function buildWithPluginFill {
-    # Override pkg db to get project's dependencies and AstPlugin
-    GHC_PKG=$(ghcPkg)
-    OPTIONS="-package-db=$GHC_PKG -package AstPlugin -fplugin=AstPlugin.Plugin"
-
-    # NOTE: GHC plugins write to stderr!
-    BUILDCACHE=$(cabal --ghc-options="$OPTIONS" build 2>&1 1>/dev/null)
 }
 
 function getTypes {
     echo "$TYPECACHE" | cabalLines
 }
 
-function getTypesFill {
-    TYPECACHE=$(typeCommand | cabal repl)
+function getTyped {
+    getTypes                              |
+        grep -o '([^)]*) ::.*'            |
+        sed -e 's/(\([^)]*\)) :: /\1\t/g' |
+        while read -r LINE
+        do
+            # Reverse 'Mod1.Mod2.name' to get 'eman.2doM.1doM', chop off the
+            # first field, then reverse again to get 'Mod1.Mod2' and 'name'
+            RNAME=$(echo "$LINE" | cut        -f 1  | rev)
+            NAME=$(echo "$RNAME" | cut -d '.' -f 1  | rev)
+            MODS=$(echo "$RNAME" | cut -d '.' -f 2- | rev)
+            TYPE=$(echo "$LINE"  | cut        -f 2)
+            tagType "$MODS" "$NAME" "$TYPE"
+        done
 }
 
-function getOrdResults {
-    echo "$ORDCACHE" | cabalLines
+function getArities {
+    echo "$TYPECACHE" |
+        cabalLines |
+        grep -o
 }
 
-function getOrdResultsFill {
-    ORDCACHE=$(ordCommand | cabal repl)
+function tagType {
+    # Select matching $asts
+    QUERY='select((.module == $given.m) and (.name == $given.n))'
+
+    # Append the type
+    ACTION='. + {type: $given.t}'
+
+    # Our arguments are the module, name and type
+    GIVEN="{\"m\": \"$1\", \"n\": \"$2\", \"t\": \"$3\"}"
+
+    getAsts | jq -c --argfile given <(echo "$GIVEN") \
+                 "$QUERY | $ACTION"
 }
 
 function phaseDump {
@@ -132,20 +119,21 @@ function phaseDump {
     exit 1
 }
 
-ghcPkgFill
-buildWithPluginFill
+# How far to go, to allow testing intermediate results
+PHASE="$1"
+
+BUILDCACHE=$(
+    # Override pkg db to get project's dependencies and AstPlugin
+    GHC_PKG=$(ghc-pkg list | head -n 1 | tr -d ':')
+    OPTIONS="-package-db=$GHC_PKG -package AstPlugin -fplugin=AstPlugin.Plugin"
+    # NOTE: GHC plugins write to stderr!
+    cabal --ghc-options="$OPTIONS" build 2>&1 1>/dev/null)
 
 getAsts     | phaseDump asts    && exit
 typeCommand | phaseDump typeCmd && exit
 
-getTypesFill
+TYPECACHE=$(typeCommand | cabal repl -v0)
 
-getTypes   | phaseDump types  && exit
-ordCommand | phaseDump ordCmd && exit
-
-getOrdResultsFill
-
-getOrdResults | phaseDump ords   && exit
-renderAll     | phaseDump render && exit
-
-finalLines
+echo "$TYPECACHE" | phaseDump typeCache && exit
+getTypes          | phaseDump types  && exit
+getTyped          | phaseDump typed  && exit

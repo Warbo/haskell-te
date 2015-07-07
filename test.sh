@@ -12,10 +12,6 @@ CODE=0
 # just delete it whenever you like.
 mkdir -p test-data
 
-function pass {
-    echo "PASS: $1"
-}
-
 function fail {
     echo "FAIL: $1"
     exit 1
@@ -24,76 +20,101 @@ function fail {
 function getAst {
     # We use dump-hackage rather than dump-package directly, since it works
     # in a temporary directory
-    [[ ! -e "test-data/$1.ast" ]] &&
-        ./dump-hackage.sh "$1" "asts" > "test-data/$1.ast"
-    cat "test-data/$1.ast"
+    F="test-data/$1.ast"
+    [[ ! -e "$F" ]] &&
+        ./dump-hackage.sh "$1" > "$F"
+    cat "$F"
+}
+
+function getRawAst {
+    F="test-data/$1.rawast"
+    [[ ! -e "$F" ]] &&
+        ./dump-hackage.sh "$1" "asts" > "$F"
+    cat "$F"
 }
 
 function getTypeCmd {
-    [[ ! -e "test-data/$1.typeCmd" ]] &&
-        ./dump-hackage.sh "$1" "typeCmd" > "test-data/$1.typeCmd"
-    cat "test-data/$1.typeCmd"
+    F="test-data/$1.typeCmd"
+    [[ ! -e "$F" ]] &&
+        ./dump-hackage.sh "$1" "typeCmd" > "$F"
+    cat "$F"
 }
 
 function getTypes {
-    [[ ! -e "test-data/$1.types" ]] &&
-        ./dump-hackage.sh "$1" "types" > "test-data/$1.types"
-    cat "test-data/$1.types"
+    F="test-data/$1.types"
+    [[ ! -e "$F" ]] &&
+        ./dump-hackage.sh "$1" "types" > "$F"
+    cat "$F"
+}
+
+function getTyped {
+    F="test-data/$1.typed"
+    [[ ! -e "$F" ]] &&
+        ./dump-hackage.sh "$1" "typed" > "$F"
+    cat "$F"
 }
 
 function getOrdCmd {
-    [[ ! -e "test-data/$1.ordCmd" ]] &&
-        ./dump-hackage.sh "$1" "ordCmd" > "test-data/$1.ordCmd"
-    cat "test-data/$1.ordCmd"
+    F="test-data/$1.ordCmd"
+    [[ ! -e "$F" ]] &&
+        ./dump-hackage.sh "$1" "ordCmd" > "$F"
+    cat "$F"
 }
 
 function getOrds {
-    [[ ! -e "test-data/$1.ords" ]] &&
-        ./dump-hackage.sh "$1" "ords" > "test-data/$1.ords"
-    cat "test-data/$1.ords"
+    F="test-data/$1.ords"
+    [[ ! -e "$F" ]] &&
+        ./dump-hackage.sh "$1" "ords" > "$F"
+    cat "$F"
 }
 
-function getOrds {
-    [[ ! -e "test-data/$1.render" ]] &&
-        ./dump-hackage.sh "$1" "render" > "test-data/$1.render"
-    cat "test-data/$1.render"
+function getRendered {
+    F="test-data/$1.render"
+    [[ ! -e "$F" ]] &&
+        ./dump-hackage.sh "$1" "render" > "$F"
+    cat "$F"
 }
 
 function getFeatures {
-    if [[ ! -e "test-data/$1.features" ]]
+    F="test-data/$1.features"
+    if [[ ! -e "$F" ]]
     then
-        getAst "$1" | ./extractFeatures.sh > "test-data/$1.features"
+        getAst "$1" | ./extractFeatures.sh > "$F"
     fi
-    cat "test-data/$1.features"
+    cat "$F"
 }
 
 function getClusterData {
-    if [[ ! -e "test-data/$1.clusterdata" ]]
+    F="test-data/$1.clusterdata"
+    if [[ ! -e "$F" ]]
     then
-        getFeatures "$1" | ./cluster.sh > "test-data/$1.clusterdata"
+        getFeatures "$1" | ./cluster.sh > "$F"
     fi
-    cat "test-data/$1.clusterdata"
+    cat "$F"
 }
 
 function getClusters {
-    if [[ ! -e "test-data/$1.clusters" ]]
+    F="test-data/$1.clusters"
+    if [[ ! -e "$F" ]]
     then
-        getClusterData "$1" | ./lineUp.sh > "test-data/$1.clusters"
+        getClusterData "$1" | ./lineUp.sh > "$F"
     fi
-    cat "test-data/$1.clusters"
+    cat "$F"
 }
 
 function getProjects {
-    if [[ ! -e "test-data/$1.projects" ]]
+    F="test-data/$1.projects"
+    if [[ ! -e "$F" ]]
     then
         mkdir -p "test-data/projects"
-        getClusters "$1" | ./make-projects.sh "test-data/projects" > "test-data/$1.projects"
+        getClusters "$1" | ./make-projects.sh "test-data/projects" > "$F"
     fi
-    cat "test-data/$1.projects"
+    cat "$F"
 }
 
 function getNixedProjects {
-    if [[ ! -e "test-data/$1.nixed" ]]
+    F="test-data/$1.nixed"
+    if [[ ! -e "$F" ]]
     then
         if [[ -e "test-data/nixed" ]]
         then
@@ -103,11 +124,11 @@ function getNixedProjects {
         (shopt -s nullglob;
          for PROJECT in test-data/nixed/*
          do
-             readlink -f "$PROJECT" >> "test-data/$1.nixed"
+             readlink -f "$PROJECT" >> "$F"
          done)
-        ./nix-projects.sh < "test-data/$1.nixed"
+        ./nix-projects.sh < "$F"
     fi
-    cat "test-data/$1.nixed"
+    cat "$F"
 }
 
 function assertNotEmpty {
@@ -126,9 +147,32 @@ function count {
     set -e
 }
 
-function testGetAst {
-    getAst "$1" | assertNotEmpty "Couldn't get ASTs from '$1'"
-    pass "$FUNCNAME '$1'"
+function testGetRawAst {
+    getRawAst "$1"   | assertNotEmpty "Couldn't get raw ASTs from '$1'"
+}
+
+function testGetTypeCmd {
+    getTypeCmd "$1"  | assertNotEmpty "Couldn't get type command from '$1'"
+}
+
+function testGetTypes {
+    getTypes "$1"    | assertNotEmpty "Couldn't get types from '$1'"
+}
+
+function testGetOrdCmd {
+    getOrdCmd "$1"   | assertNotEmpty "Couldn't get ord command from '$1'"
+}
+
+function testGetOrds {
+    getOrds "$1"     | assertNotEmpty "Couldn't get ords from '$1'"
+}
+
+function testGetRendered {
+    getRendered "$1" | assertNotEmpty "Couldn't render '$1'"
+}
+
+function testGetAsts {
+    getAst "$1"     | assertNotEmpty "Couldn't get ASTs from '$1'"
 }
 
 function testAstFields {
@@ -142,16 +186,14 @@ function testAstFields {
     [[ $COUNT -eq $MODS  ]] || fail "$FUNCNAME '$1' mods"
     [[ $COUNT -eq $NAMES ]] || fail "$FUNCNAME '$1' names"
     [[ $COUNT -eq $ASTS  ]] || fail "$FUNCNAME '$1' asts"
-    pass "$FUNCNAME '$1'"
 }
 
 function testAstLabelled {
     getAst "$1" | jq -c '.package' |
-        while read LINE
+        while read -r LINE
         do
             [[ "x$LINE" = "x\"$1\"" ]] || fail "$FUNCNAME $1 $LINE"
         done
-    pass "$FUNCNAME '$1'"
 }
 
 function testAllTypeCmdPresent {
@@ -168,12 +210,10 @@ function testNoCoreNames {
     then
         fail "ASTs for '$1' contain Core names beginning with \$"
     fi
-    pass "$FUNCNAME '$1'"
 }
 
 function testGetFeatures {
     getFeatures "$1" | assertNotEmpty "Couldn't get features from '$1'"
-    pass "$FUNCNAME '$1'"
 }
 
 function countCommas {
@@ -191,7 +231,6 @@ function testFeaturesUniform {
                                fail "'$LINE' doesn't have $COUNT commas"
                            fi
                        done
-    pass "$FUNCNAME '$1'"
 }
 
 function testHaveAllClusters {
@@ -202,7 +241,6 @@ function testHaveAllClusters {
     then
         fail "Found $COUNT clusters for '$1' instead of 4"
     fi
-    pass "$FUNCNAME '$1'"
 }
 
 function absent {
@@ -236,7 +274,6 @@ function testClusterAllNames {
                                fail "'$NAME' occurs in '$1' features but not ASTs"
                            fi
                        done
-    pass "$FUNCNAME '$1'"
 }
 
 function testGetClusterCount {
@@ -247,7 +284,6 @@ function testGetClusterCount {
     then
         fail "Not enough clusters for '$1' (got $COUNT expected 4)"
     fi
-    pass "$FUNCNAME '$1'"
 }
 
 function testProjectsMade {
@@ -259,7 +295,6 @@ function testProjectsMade {
                 fail "Directory '$PROJECT' not made for '$1'"
             fi
         done
-    pass "$FUNCNAME '$1'"
 }
 
 function testNixFilesMade {
@@ -274,27 +309,32 @@ function testNixFilesMade {
                                     fail "'$PROJECT/shell.nix' missing for '$1'"
                                 fi
                             done
-    pass "$FUNCNAME '$1'"
 }
 
 function testNixProjectsRun {
     getNixedProjects "$1" | ./run-projects.sh
-    pass "$FUNCNAME '$1'"
 }
 
 function testPackage {
-    testGetAst          "$1"
-    testAstFields       "$1"
-    testAstLabelled     "$1"
-    testNoCoreNames     "$1"
-    testGetFeatures     "$1"
-    testFeaturesUniform "$1"
-    testHaveAllClusters "$1"
-    testClusterAllNames "$1"
-    testGetClusterCount "$1"
-    testProjectsMade    "$1"
-    testNixFilesMade    "$1"
-    testNixProjectsRun  "$1"
+    testGetRawAst         "$1"
+    testGetTypeCmd        "$1"
+    testGetTypes          "$1"
+    testGetOrdCmd         "$1"
+    testGetOrds           "$1"
+    testGetRendered       "$1"
+    testGetAsts           "$1"
+    testAstFields         "$1"
+    testAstLabelled       "$1"
+    testAllTypeCmdPresent "$1"
+    testNoCoreNames       "$1"
+    testGetFeatures       "$1"
+    testFeaturesUniform   "$1"
+    testHaveAllClusters   "$1"
+    testClusterAllNames   "$1"
+    testGetClusterCount   "$1"
+    testProjectsMade      "$1"
+    testNixFilesMade      "$1"
+    testNixProjectsRun    "$1"
 }
 
 # Run on a selection of packages:
