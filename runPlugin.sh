@@ -1,30 +1,27 @@
 #!/usr/bin/env bash
 
-# Runs AstPlugin, assuming there's a Cabal project in the current directory and
-# that all of its dependencies are available (eg. thanks to nix-shell)
+# Runs AstPlugin. This script makes the following assumptions:
+#  - The current working directory contains a Cabal project
+#  - All of the project's dependencies are in the database of ghc-pkg
+#  - AstPlugin is also in the database of ghc-pkg
+#  - The "ML4HSHelper" Haskell program is in $PATH
+
+# All of these requirements can be satisfied by running in nix-shell
 
 # Since we have the dependencies available, we also use GHCi to inspect types
 
-function getAsts {
-    # FIXME: What about newlines? We should probably just read every s-expr we
-    # can (in Haskell) and filter out those without "FOUNDAST"
-    buildWithPlugin | grep "FOUNDAST"
-    #    while read RAWLINE
-    #    do
-    #        # Send non-AST lines back to stderr
-    #        if ! echo "$RAWLINE" | grep "FOUNDAST"
-    #        then
-    #            echo "$RAWLINE" > /dev/stderr
-    #        fi
-    #    done
-}
+set -e
+set -x
+
+# How far to go, to allow testing intermediate results
+PHASE="$1"
 
 function typeCommand {
-    getAsts | hs "typeCommand"
+    getAsts | ML4HSHelper "typeCommand"
 }
 
 function ordCommand {
-    getTypes | hs "ordCommand"
+    getTypes | ML4HSHelper "ordCommand"
 }
 
 function cabalLines {
@@ -43,6 +40,14 @@ function cabalLines {
            grep -o "([^)]*) :: .*"
 }
 
+function pkgName {
+    for CABAL in *.cabal
+    do
+        grep "name:" < "$CABAL" | grep -o ":.*" | grep -o "[^: ].*"
+        return
+    done
+}
+
 function getName {
     # "(foo) :: Bar" => "foo"
     cut -d ':' -f 1 | grep -o "[^ (].*[^) ]"
@@ -51,12 +56,6 @@ function getName {
 function getType {
     # "(foo) :: Bar" => "Bar"
     grep -o "::.*" | grep -o "[^ :].*"
-}
-
-function hs {
-    # Use Haskell for any nontrivial text processing
-    BASE=$(dirname "$0")
-    "$BASE"/runPlugin.hs "$1"
 }
 
 function renderAll {
@@ -74,7 +73,7 @@ function renderAll {
 }
 
 function finalLines {
-    renderAll | hs "renderAsts"
+    renderAll | ML4HSHelper "renderAsts"
 }
 
 # Cache the results of running Cabal and GHC
@@ -92,8 +91,9 @@ function ghcPkgFill {
     PKGCACHE=$(ghc-pkg list)
 }
 
-function buildWithPlugin {
-    echo "$BUILDCACHE"
+function getAsts {
+    PKG=$(pkgName)
+    echo "$BUILDCACHE" | grep "^{" | jq -c ". + {package: \"$PKG\"}"
 }
 
 function buildWithPluginFill {
@@ -110,7 +110,7 @@ function getTypes {
 }
 
 function getTypesFill {
-    TYPECACHE=$(typeCommand | repl)
+    TYPECACHE=$(typeCommand | cabal repl)
 }
 
 function getOrdResults {
@@ -118,28 +118,34 @@ function getOrdResults {
 }
 
 function getOrdResultsFill {
-    ORDCACHE=$(ordCommand | repl)
+    ORDCACHE=$(ordCommand | cabal repl)
 }
 
-function repl {
-    MACRO="dist/build/autogen/cabal_macros.h"
-    if [ -e "$MACRO" ]
+function phaseDump {
+    # If we've been asked for the given phase, dump stdin and exit success
+    # (Since this is piped, it gets its own sub-shell, hence the exit)
+    if [[ "x$PHASE" = "x$1" ]]
     then
-        cabal --extra-include-dirs="$MACRO" repl
-    else
-        cabal repl
+        cat
+        exit 0
     fi
+    exit 1
 }
 
-# Fill the caches
 ghcPkgFill
 buildWithPluginFill
 
-getAsts
-exit
+getAsts     | phaseDump asts    && exit
+typeCommand | phaseDump typeCmd && exit
+
 getTypesFill
+
+getTypes   | phaseDump types  && exit
+ordCommand | phaseDump ordCmd && exit
+
 getOrdResultsFill
 
-# Print out all ASTs with Ord instances
-renderAll
-#finalLines
+getOrdResults | phaseDump ords   && exit
+renderAll     | phaseDump render && exit
+
+finalLines
