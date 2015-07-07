@@ -1,9 +1,6 @@
 #! /usr/bin/env nix-shell
 #! nix-shell -p treefeatures -p bash -p jq -i bash
 
-set -e
-set -x
-
 while read -r LINE
 do
     # Extract the "ast" value and pipe into TreeFeatures
