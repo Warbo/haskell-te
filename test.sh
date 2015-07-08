@@ -53,10 +53,9 @@ function getTypes {
 }
 
 function getArities {
-    return
     F="test-data/$1.arities"
     [[ ! -e "$F" ]] &&
-        ./dump-hackage.sh "$1" "arities" > "$F"
+        getTypeResults "$1" | ./getArities.sh > "$F"
     cat "$F"
 }
 
@@ -330,9 +329,9 @@ function testPackage {
     testGetTypeCmd        "$1"
     testGetTypeResults    "$1"
     testGetTypes          "$1"
+    testGetArities        "$1"
     return
     testGetTyped          "$1"
-    testGetArities        "$1"
     testGetAsts           "$1"
     testAstFields         "$1"
     testAstLabelled       "$1"
