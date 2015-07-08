@@ -89,10 +89,8 @@ function getAsts {
 
 function getClusters {
     F="test-data/$1.clusters"
-    if [[ ! -e "$F" ]]
-    then
-        getFeatures "$1" | ./cluster.sh > "$F"
-    fi
+    [[ ! -e "$F" ]] &&
+        getAsts "$1" | ./cluster.sh > "$F"
     cat "$F"
 }
 
@@ -246,6 +244,11 @@ function testHaveAllClusters {
     then
         fail "Found $COUNT clusters for '$1' instead of 4"
     fi
+}
+
+function testClusterFields {
+    COUNT=$(getClusters "$1" | jq -r '.[] | length')
+    getClusters "$1" | jq 'map(select(has("")))'
 }
 
 function absent {

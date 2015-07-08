@@ -13,4 +13,4 @@ fi
 
 ./dump-hackage.sh "$1"   |
     ./annotateAsts.sh    |
-    ./lineUp.sh
+    ./cluster.sh

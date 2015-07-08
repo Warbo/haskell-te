@@ -10,5 +10,4 @@ RAWTYPES=$(echo "$INPUT" | jq -r '.result')
 echo "$RAWASTS" |
     ./tagAsts.sh <(echo "$RAWTYPES" | ./getTypes.sh)   |
     ./tagAsts.sh <(echo "$RAWTYPES" | ./getArities.sh) |
-    ./extractFeatures.sh |
-    ./cluster.sh
+    ./extractFeatures.sh
