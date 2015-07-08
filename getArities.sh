@@ -14,4 +14,4 @@ grep 'Test\.QuickSpec\.fun. ""' |
                        grep -o '[0-9]')
 
         echo "{\"module\": \"$MODS\", \"name\": \"$NAME\", \"arity\": \"$ARITY\"}"
-    done
+    done | jq -s '.'
