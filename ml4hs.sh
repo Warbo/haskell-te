@@ -11,9 +11,6 @@ then
     exit 1
 fi
 
-NAMEDASTS=$(./dump-hackage.sh "$1")
-FEATURES=$(echo "$NAMEDASTS" | ./extractFeatures.sh)
-CLUSTERED=$(echo "$FEATURES" | ./cluster.sh)
-LINEDUP=$(echo "$CLUSTERED" | ./lineUp.sh)
-
-echo "$LINEDUP"
+./dump-hackage.sh "$1"   |
+    ./annotateAsts.sh    |
+    ./lineUp.sh

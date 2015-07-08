@@ -73,28 +73,17 @@ function getArityTagged {
     cat "$F"
 }
 
+function getFeatures {
+    F="test-data/$1.features"
+    [[ ! -e "$F" ]] &&
+        getRawAsts "$1" | ./extractFeatures.sh > "$F"
+    cat "$F"
+}
+
 function getAsts {
     F="test-data/$1.asts"
     [[ ! -e "$F" ]] &&
-        getTypeTagged "$1" | ./tagAsts.sh <(getArities "$1") > "$F"
-    cat "$F"
-}
-
-function getFeatures {
-    F="test-data/$1.features"
-    if [[ ! -e "$F" ]]
-    then
-        getAsts "$1" | ./extractFeatures.sh > "$F"
-    fi
-    cat "$F"
-}
-
-function getClusterData {
-    F="test-data/$1.clusterdata"
-    if [[ ! -e "$F" ]]
-    then
-        getFeatures "$1" | ./cluster.sh > "$F"
-    fi
+        getRawData "$1" | ./annotateAsts.sh > "$F"
     cat "$F"
 }
 
@@ -102,7 +91,7 @@ function getClusters {
     F="test-data/$1.clusters"
     if [[ ! -e "$F" ]]
     then
-        getClusterData "$1" | ./lineUp.sh > "$F"
+        getFeatures "$1" | ./cluster.sh > "$F"
     fi
     cat "$F"
 }
@@ -185,20 +174,25 @@ function testGetAsts {
 }
 
 function testAstFields {
-    getAsts "$1" | jq -c '.'
-    COUNT=$(getAsts "$1" | jq -c -s 'length')
-     PKGS=$(getAsts "$1" | jq -c -s 'map(.package) | length')
-     MODS=$(getAsts "$1" | jq -c -s 'map(.module)  | length')
-    NAMES=$(getAsts "$1" | jq -c -s 'map(.name)    | length')
-     ASTS=$(getAsts "$1" | jq -c -s 'map(.ast)     | length')
-    [[ $COUNT -eq $PKGS  ]] || fail "$FUNCNAME '$1' pkgs"
-    [[ $COUNT -eq $MODS  ]] || fail "$FUNCNAME '$1' mods"
-    [[ $COUNT -eq $NAMES ]] || fail "$FUNCNAME '$1' names"
-    [[ $COUNT -eq $ASTS  ]] || fail "$FUNCNAME '$1' asts"
+       COUNT=$(getAsts "$1" | jq -c 'length')
+        PKGS=$(getAsts "$1" | jq -c 'map(.package)  | length')
+        MODS=$(getAsts "$1" | jq -c 'map(.module)   | length')
+       NAMES=$(getAsts "$1" | jq -c 'map(.name)     | length')
+        ASTS=$(getAsts "$1" | jq -c 'map(.ast)      | length')
+       TYPES=$(getAsts "$1" | jq -c 'map(.type)     | length')
+     ARITIES=$(getAsts "$1" | jq -c 'map(.arity)    | length')
+    FEATURES=$(getAsts "$1" | jq -c 'map(.features) | length')
+    [[ $COUNT -eq $PKGS     ]] || fail "$FUNCNAME '$1' pkgs"
+    [[ $COUNT -eq $MODS     ]] || fail "$FUNCNAME '$1' mods"
+    [[ $COUNT -eq $NAMES    ]] || fail "$FUNCNAME '$1' names"
+    [[ $COUNT -eq $ASTS     ]] || fail "$FUNCNAME '$1' asts"
+    [[ $COUNT -eq $TYPES    ]] || fail "$FUNCNAME '$1' types"
+    [[ $COUNT -eq $ARITIES  ]] || fail "$FUNCNAME '$1' arities"
+    [[ $COUNT -eq $FEATURES ]] || fail "$FUNCNAME '$1' features"
 }
 
 function testAstLabelled {
-    getAst "$1" | jq -c '.package' |
+    getAsts "$1" | jq -c '.package' |
         while read -r LINE
         do
             [[ "x$LINE" = "x\"$1\"" ]] || fail "$FUNCNAME $1 $LINE"
@@ -206,15 +200,16 @@ function testAstLabelled {
 }
 
 function testAllTypeCmdPresent {
-    #getAst "$1" | while read LINE
-    #              do
-    #                  getTypeCmd |
-    #getTypeCmd
-    true
+    getAsts "$1" | jq -cr 'map(.module + "." + .name)' |
+        while read -r LINE
+        do
+            getTypeCmd | grep "($LINE)" > /dev/null ||
+                fail "$LINE not in '$1' type command"
+        done
 }
 
 function testNoCoreNames {
-    COUNT=$(getAst "$1" | count '\.\$')
+    COUNT=$(getAsts "$1" | count '\.\$')
     if [[ "$COUNT" -ne 0 ]]
     then
         fail "ASTs for '$1' contain Core names beginning with \$"
@@ -230,22 +225,23 @@ function countCommas {
 }
 
 function testFeaturesUniform {
-    COUNT=$(getFeatures "$1" | cut -d '"' -f 3- | head -n 1 | countCommas)
-    getFeatures "$1" | while read LINE
-                       do
-                           THIS=$(printf "$LINE" | cut -d '"' -f 3- |
-                                         countCommas)
-                           if [[ "$THIS" -ne "$COUNT" ]]
-                           then
-                               fail "'$LINE' doesn't have $COUNT commas"
-                           fi
-                       done
+    RAWFEATURES=$(getFeatures "$1" | jq -r '.[] | .features')
+    COUNT=$(echo "$RAWFEATURES" | head -n 1 | countCommas)
+    echo "$RAWFEATURES" |
+        while read LINE
+        do
+            THIS=$(echo "$LINE" | countCommas)
+            if [[ "$THIS" -ne "$COUNT" ]]
+            then
+                fail "'$LINE' doesn't have $COUNT commas"
+            fi
+        done
 }
 
 function testHaveAllClusters {
     # FIXME: Make cluster number configurable (eg. so we can have it vary based
     # on the number of definitions)
-    COUNT=$(getClusterData "$1" | cut -f 1 | sort -u | wc -l)
+    COUNT=$(getClusters "$1" | jq -r 'map(.cluster) | unique | length')
     if [[ "$COUNT" -ne 4 ]]
     then
         fail "Found $COUNT clusters for '$1' instead of 4"
@@ -264,7 +260,7 @@ function absent {
 }
 
 function testClusterAllNames {
-    INNAMES=$(getAst "$1" | cut -d '"' -f 1-2 | while read BIT
+    INNAMES=$(getAsts "$1" | cut -d '"' -f 1-2 | while read BIT
                                                 do
                                                     echo "${BIT}\""
                                                 done)
@@ -333,7 +329,6 @@ function testPackage {
     testGetTypeTagged     "$1"
     testGetArityTagged    "$1"
     testGetAsts           "$1"
-    return
     testAstFields         "$1"
     testAstLabelled       "$1"
     testAllTypeCmdPresent "$1"
@@ -341,6 +336,7 @@ function testPackage {
     testGetFeatures       "$1"
     testFeaturesUniform   "$1"
     testHaveAllClusters   "$1"
+    return
     testClusterAllNames   "$1"
     testGetClusterCount   "$1"
     testProjectsMade      "$1"
