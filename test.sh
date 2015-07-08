@@ -17,61 +17,71 @@ function fail {
     exit 1
 }
 
-function getAst {
-    # We use dump-hackage rather than dump-package directly, since it works
-    # in a temporary directory
-    F="test-data/$1.ast"
+function getRawData {
+    F="test-data/$1.rawdata"
     [[ ! -e "$F" ]] &&
         ./dump-hackage.sh "$1" > "$F"
     cat "$F"
 }
 
-function getRawAst {
-    F="test-data/$1.rawast"
+function getRawAsts {
+    F="test-data/$1.rawasts"
     [[ ! -e "$F" ]] &&
-        ./dump-hackage.sh "$1" "asts" > "$F"
+        getRawData "$1" | jq '.asts' > "$F"
     cat "$F"
 }
 
 function getTypeCmd {
     F="test-data/$1.typeCmd"
     [[ ! -e "$F" ]] &&
-        ./dump-hackage.sh "$1" "typeCmd" > "$F"
+        getRawData "$1" | jq -r '.cmd' > "$F"
+    cat "$F"
+}
+
+function getTypeResults {
+    F="test-data/$1.typeResults"
+    [[ ! -e "$F" ]] &&
+        getRawData "$1" | jq -r '.result' > "$F"
     cat "$F"
 }
 
 function getTypes {
     F="test-data/$1.types"
     [[ ! -e "$F" ]] &&
-        ./dump-hackage.sh "$1" "types" > "$F"
+        getTypeResults "$1" | ./getTypes.sh > "$F"
     cat "$F"
 }
 
-function getTyped {
-    F="test-data/$1.typed"
+function getArities {
+    return
+    F="test-data/$1.arities"
+    [[ ! -e "$F" ]] &&
+        ./dump-hackage.sh "$1" "arities" > "$F"
+    cat "$F"
+}
+
+function getTypeTagged {
+    return
+    F="test-data/$1.typetagged"
     [[ ! -e "$F" ]] &&
         ./dump-hackage.sh "$1" "typed" > "$F"
     cat "$F"
 }
 
-function getOrdCmd {
-    F="test-data/$1.ordCmd"
+function getArityTagged {
+    return
+    F="test-data/$1.aritytagged"
     [[ ! -e "$F" ]] &&
-        ./dump-hackage.sh "$1" "ordCmd" > "$F"
+        ./dump-hackage.sh "$1" "typed" > "$F"
     cat "$F"
 }
 
-function getOrds {
-    F="test-data/$1.ords"
+function getAsts {
+    # We use dump-hackage rather than dump-package directly, since it works
+    # in a temporary directory
+    F="test-data/$1.asts"
     [[ ! -e "$F" ]] &&
-        ./dump-hackage.sh "$1" "ords" > "$F"
-    cat "$F"
-}
-
-function getRendered {
-    F="test-data/$1.render"
-    [[ ! -e "$F" ]] &&
-        ./dump-hackage.sh "$1" "render" > "$F"
+        ./dump-hackage.sh "$1" "all" > "$F"
     cat "$F"
 }
 
@@ -79,7 +89,7 @@ function getFeatures {
     F="test-data/$1.features"
     if [[ ! -e "$F" ]]
     then
-        getAst "$1" | ./extractFeatures.sh > "$F"
+        getAsts "$1" | ./extractFeatures.sh > "$F"
     fi
     cat "$F"
 }
@@ -147,41 +157,41 @@ function count {
     set -e
 }
 
-function testGetRawAst {
-    getRawAst "$1"   | assertNotEmpty "Couldn't get raw ASTs from '$1'"
+function testGetRawAsts {
+    getRawAsts "$1"   | assertNotEmpty "Couldn't get raw ASTs from '$1'"
 }
 
 function testGetTypeCmd {
-    getTypeCmd "$1"  | assertNotEmpty "Couldn't get type command from '$1'"
+    getTypeCmd "$1"   | assertNotEmpty "Couldn't get type command from '$1'"
+}
+
+function testGetTypeResults {
+    getTypeResults "$1" | assertNotEmpty "Couldn't get type info from '$1'"
 }
 
 function testGetTypes {
     getTypes "$1"    | assertNotEmpty "Couldn't get types from '$1'"
 }
 
-function testGetOrdCmd {
-    getOrdCmd "$1"   | assertNotEmpty "Couldn't get ord command from '$1'"
+function testGetTyped {
+    getTyped "$1"    | assertNotEmpty "Couldn't get typed ASTs from '$1'"
 }
 
-function testGetOrds {
-    getOrds "$1"     | assertNotEmpty "Couldn't get ords from '$1'"
-}
-
-function testGetRendered {
-    getRendered "$1" | assertNotEmpty "Couldn't render '$1'"
+function testGetArities {
+    getArities "$1"  | assertNotEmpty "Couldn't get arities from '$1'"
 }
 
 function testGetAsts {
-    getAst "$1"     | assertNotEmpty "Couldn't get ASTs from '$1'"
+    getAsts "$1"     | assertNotEmpty "Couldn't get ASTs from '$1'"
 }
 
 function testAstFields {
-    getAst "$1" | jq -c '.'
-    COUNT=$(getAst "$1" | jq -c -s 'length')
-     PKGS=$(getAst "$1" | jq -c -s 'map(.package) | length')
-     MODS=$(getAst "$1" | jq -c -s 'map(.module)  | length')
-    NAMES=$(getAst "$1" | jq -c -s 'map(.name)    | length')
-     ASTS=$(getAst "$1" | jq -c -s 'map(.ast)     | length')
+    getAsts "$1" | jq -c '.'
+    COUNT=$(getAsts "$1" | jq -c -s 'length')
+     PKGS=$(getAsts "$1" | jq -c -s 'map(.package) | length')
+     MODS=$(getAsts "$1" | jq -c -s 'map(.module)  | length')
+    NAMES=$(getAsts "$1" | jq -c -s 'map(.name)    | length')
+     ASTS=$(getAsts "$1" | jq -c -s 'map(.ast)     | length')
     [[ $COUNT -eq $PKGS  ]] || fail "$FUNCNAME '$1' pkgs"
     [[ $COUNT -eq $MODS  ]] || fail "$FUNCNAME '$1' mods"
     [[ $COUNT -eq $NAMES ]] || fail "$FUNCNAME '$1' names"
@@ -316,12 +326,13 @@ function testNixProjectsRun {
 }
 
 function testPackage {
-    testGetRawAst         "$1"
+    testGetRawAsts        "$1"
     testGetTypeCmd        "$1"
+    testGetTypeResults    "$1"
     testGetTypes          "$1"
-    testGetOrdCmd         "$1"
-    testGetOrds           "$1"
-    testGetRendered       "$1"
+    return
+    testGetTyped          "$1"
+    testGetArities        "$1"
     testGetAsts           "$1"
     testAstFields         "$1"
     testAstLabelled       "$1"
@@ -343,7 +354,7 @@ function testPackage {
 #  - quickspec because meta
 #  - attoparsec because it's a decent size and exposeis a dependency of our Haskell
 #    code
-for PKG in directory #quickspec attoparsec
+for PKG in data-stringmap #quickspec attoparsec directory
 do
     testPackage "$PKG"
 done
