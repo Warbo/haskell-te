@@ -65,4 +65,4 @@ function extractClusters {
 
 # Reduce an array of ASTs into an object {cluster1: [...], cluster2: [...], ...}
 # Then convert that into an array of clusters (since the keys are meaningless)
-extractClusters | jq 'reduce .[] as $ast ({}; .[$ast.cluster] += [$ast]) | .[]'
+extractClusters | jq 'reduce .[] as $ast ({}; .[$ast.cluster] += [$ast]) | [.[]]'

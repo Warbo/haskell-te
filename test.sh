@@ -241,7 +241,7 @@ function testFeaturesUniform {
 function testHaveAllClusters {
     # FIXME: Make cluster number configurable (eg. so we can have it vary based
     # on the number of definitions)
-    COUNT=$(getClusters "$1" | jq -r 'map(.cluster) | unique | length')
+    COUNT=$(getClusters "$1" | jq -r 'length')
     if [[ "$COUNT" -ne 4 ]]
     then
         fail "Found $COUNT clusters for '$1' instead of 4"
@@ -257,38 +257,6 @@ function absent {
         fi
     done
     return 0
-}
-
-function testClusterAllNames {
-    INNAMES=$(getAsts "$1" | cut -d '"' -f 1-2 | while read BIT
-                                                do
-                                                    echo "${BIT}\""
-                                                done)
-    OUTNAMES=$(getClusterData "$1" | cut -f 2)
-    echo "$INNAMES"  | while read NAME
-                       do
-                           if echo "$OUTNAMES" | absent "$NAME"
-                           then
-                               fail "'$NAME' occurs in '$1' ASTs but not features"
-                           fi
-                       done
-    echo "$OUTNAMES" | while read NAME
-                       do
-                           if echo "$INNAMES"  | absent "$NAME"
-                           then
-                               fail "'$NAME' occurs in '$1' features but not ASTs"
-                           fi
-                       done
-}
-
-function testGetClusterCount {
-    # NOTE: `wc -l` counts \n characters, so we subtract 1
-    # FIXME: Make 4 configurable via and environment variable
-    COUNT=$(getClusters "$1" | wc -l)
-    if [[ "$COUNT" -ne 3 ]]
-    then
-        fail "Not enough clusters for '$1' (got $COUNT expected 4)"
-    fi
 }
 
 function testProjectsMade {
@@ -336,10 +304,8 @@ function testPackage {
     testGetFeatures       "$1"
     testFeaturesUniform   "$1"
     testHaveAllClusters   "$1"
-    return
-    testClusterAllNames   "$1"
-    testGetClusterCount   "$1"
     testProjectsMade      "$1"
+    return
     testNixFilesMade      "$1"
     testNixProjectsRun    "$1"
 }
