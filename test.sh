@@ -60,27 +60,23 @@ function getArities {
 }
 
 function getTypeTagged {
-    return
     F="test-data/$1.typetagged"
     [[ ! -e "$F" ]] &&
-        ./dump-hackage.sh "$1" "typed" > "$F"
+        getRawAsts "$1" | ./tagAsts.sh <(getTypes "$1") > "$F"
     cat "$F"
 }
 
 function getArityTagged {
-    return
     F="test-data/$1.aritytagged"
     [[ ! -e "$F" ]] &&
-        ./dump-hackage.sh "$1" "typed" > "$F"
+        getRawAsts "$1" | ./tagAsts.sh <(getArities "$1") > "$F"
     cat "$F"
 }
 
 function getAsts {
-    # We use dump-hackage rather than dump-package directly, since it works
-    # in a temporary directory
     F="test-data/$1.asts"
     [[ ! -e "$F" ]] &&
-        ./dump-hackage.sh "$1" "all" > "$F"
+        getTypeTagged "$1" | ./tagAsts.sh <(getArities "$1") > "$F"
     cat "$F"
 }
 
@@ -172,12 +168,16 @@ function testGetTypes {
     getTypes "$1"    | assertNotEmpty "Couldn't get types from '$1'"
 }
 
-function testGetTyped {
-    getTyped "$1"    | assertNotEmpty "Couldn't get typed ASTs from '$1'"
-}
-
 function testGetArities {
     getArities "$1"  | assertNotEmpty "Couldn't get arities from '$1'"
+}
+
+function testGetTypeTagged {
+    getTypeTagged "$1" | assertNotEmpty "Couldn't get typed ASTs from '$1'"
+}
+
+function testGetArityTagged {
+    getArityTagged "$1" | assertNotEmpty "Couldn't get ASTs with aritiesfrom '$1'"
 }
 
 function testGetAsts {
@@ -330,9 +330,10 @@ function testPackage {
     testGetTypeResults    "$1"
     testGetTypes          "$1"
     testGetArities        "$1"
-    return
-    testGetTyped          "$1"
+    testGetTypeTagged     "$1"
+    testGetArityTagged    "$1"
     testGetAsts           "$1"
+    return
     testAstFields         "$1"
     testAstLabelled       "$1"
     testAllTypeCmdPresent "$1"

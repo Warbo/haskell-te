@@ -12,4 +12,4 @@ grep -v 'Test\.QuickSpec\.fun. ""'       |
         MODS=$(echo "$RNAME" | cut -d '.' -f 2- | rev)
         TYPE=$(echo "$LINE"  | cut        -f 2)
         echo "{\"module\": \"$MODS\", \"name\": \"$NAME\", \"type\": \"$TYPE\"}"
-    done
+    done | jq -s '.'

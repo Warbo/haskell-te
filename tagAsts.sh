@@ -1,29 +1,15 @@
-function tagArity {
-    # Select matching ASTs
-    QUERY='select((.module == $given.m) and (.name == $given.n))'
+#!/bin/sh
 
-    # Append the arity
-    ACTION='. + {arity: $given.a}'
+# Given JSON objects on stdin, and a file descriptor containing JSON objects as
+# as $1, returns the intersection of the two
 
-    # Our arguments are the qualified name and the arity
-    NAME=$(echo "$1" | rev | cut -d '.' -f 1  | rev)
-    MODS=$(echo "$1" | rev | cut -d '.' -f 2- | rev)
-    GIVEN="{\"m\": \"$MODS\", \"n\": \"$NAME\", \"a\": $2}"
+# Call the current AST $this, then loop over $tags
+INPUT='.[] | . as $this | $tags | .[]'
 
-    getTypes | getTyped | jq -c --argfile given <(echo "$GIVEN") \
-                             "$QUERY | $ACTION"
-}
+# Select $tags matching $this
+QUERY='select((.module == $this.module) and (.name == $this.name))'
 
-function tagType {
-    # Select matching ASTs
-    QUERY='select((.module == $given.m) and (.name == $given.n))'
+# Combine matching $tags with $this
+ACTION='. + $this'
 
-    # Append the type
-    ACTION='. + {type: $given.t}'
-
-    # Our arguments are the module, name and type
-    GIVEN="{\"m\": \"$1\", \"n\": \"$2\", \"t\": \"$3\"}"
-
-    getAsts | jq -c --argfile given <(echo "$GIVEN") \
-                 "$QUERY | $ACTION"
-}
+jq --argfile tags "$1" "[$INPUT | $QUERY | $ACTION]"
