@@ -1,8 +1,8 @@
 #!/bin/sh
 
-grep -v 'Test\.QuickSpec\.fun. ""'    |
-    grep -o '([^)]*) ::.*'            |
-    sed -e 's/(\([^)]*\)) :: /\1\t/g' |
+grep -v 'Test\.QuickSpec\.fun. ""'       |
+    grep -o '([^)]*)[ ]*::.*'            |
+    sed -e 's/(\([^)]*\))[ ]*:: /\1\t/g' |
     while read -r LINE
     do
         # Reverse 'Mod1.Mod2.name' to get 'eman.2doM.1doM', chop off the
