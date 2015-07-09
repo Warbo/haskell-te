@@ -1,17 +1,15 @@
-grep 'Test\.QuickSpec\.fun. ""' |
-    while IFS= read -r LINE
-    do
-        RNAME=$(echo "$LINE"                |
-                       grep -o '"[ ]*(.*)[ ]*::'  |
-                       grep -o '(.*)'       |
-                       grep -o '[^(].*[^)]' |
-                       rev)
-        NAME=$(echo "$RNAME" | cut -d '.' -f 1  | rev)
-        MODS=$(echo "$RNAME" | cut -d '.' -f 2- | rev)
+#! /usr/bin/env nix-shell
+#! nix-shell -i bash -p jq
 
-        ARITY=$(echo "$LINE"                                 |
-                       grep -o 'Test\.QuickSpec\.fun[0-9] "' |
-                       grep -o '[0-9]')
+# Split a qualified name into a module and a name
+INPUT='(.qname | split(".") | reverse) as $bits'
 
-        echo "{\"module\": \"$MODS\", \"name\": \"$NAME\", \"arity\": $ARITY}"
-    done | jq -s '.'
+# The name is the last bit
+NAME='$bits[0]'
+
+# The module is all except the last bit, joined by dots
+MOD='$bits[1:] | reverse | join(".")'
+
+grep '^{' |
+    jq -c -M "$INPUT | . + {name: $NAME, module: $MOD} | del(.qname)" |
+    jq -s -M '.'
