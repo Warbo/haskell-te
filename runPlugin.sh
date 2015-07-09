@@ -15,21 +15,47 @@ set -e
 
 function typeCommand {
     echo ":m"
+    echo ":set -XTemplateHaskell"
+    #echo "import Language.Haskell.TH"
     while read -r LINE
     do
         QNAME=$(echo "$LINE" | jq -r '.module + "." + .name')
-        echo ":t ($QNAME)"
         mkQuery "$QNAME"
     done
 }
 
 function mkQuery {
     # Try to type-check QuickSpec signatures, to see which work
-    # TODO: Monomorphise, using A, B, C newtypes from QuickSpec.
     # TODO: Higher-kinded morphism, eg. Functors and Monads
+
+    # Shorthand
+    QS="Test.QuickSpec"
+
+    # Use Template Haskell to monomorphise our function (tries to
+    # instantiate all type variables with "Integer")
+    MONO="Test.QuickCheck.All.monomorphic ('$1)"
+
+    # We must use a layer of let/in for TH to work, so we call our
+    # monomorphic function "f"
+    BIND="let f = \$($MONO) in"
+
+    # Get the monomorphised type
+    echo ":t $BIND f"
+
+    # Try turning our monomorphised function into a QuickSpec Sig(nature)
     for NUM in 5 4 3 2 1 0
     do
-        printf ':t Test.QuickSpec.fun%d "" (%s)\n' "$NUM" "$1"
+        # Format the current arity and the (qualified) name as JSON
+        JSON="\"{\\\"arity\\\": $NUM, \\\"qname\\\": \\\"$1\\\"}\""
+
+        # Pass f to QuickSpec, using our JSON as the identifier
+        SIG="$QS.fun${NUM} ($JSON) f"
+
+        # Extract the JSON from the signature
+        EXPR="$QS.Term.name (head ($QS.Signature.symbols ($SIG)))"
+
+        # Print out the JSON, so we can spot it when we parse the results
+        echo "$BIND putStrLn ($EXPR)"
     done
 }
 
@@ -60,7 +86,8 @@ function getAsts {
 }
 
 function repl {
-    cabal repl -v0 --ghc-options="-package quickspec" | cabalLines
+    cabal repl -v0 --ghc-options="-package quickspec -package QuickCheck -package template-haskell" |
+        cabalLines
 }
 
 function build {
