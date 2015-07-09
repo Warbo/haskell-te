@@ -308,7 +308,6 @@ function testPackage {
     testFeaturesUniform   "$1"
     testHaveAllClusters   "$1"
     testProjectsMade      "$1"
-    return
     testNixFilesMade      "$1"
     testNixProjectsRun    "$1"
 }
