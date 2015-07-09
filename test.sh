@@ -17,17 +17,17 @@ function fail {
     exit 1
 }
 
-function getRawData {
-    F="test-data/$1.rawdata"
+function getRawAsts {
+    F="test-data/$1.rawasts"
     [[ ! -e "$F" ]] &&
         ./dump-hackage.sh "$1" > "$F"
     cat "$F"
 }
 
-function getRawAsts {
-    F="test-data/$1.rawasts"
+function getRawData {
+    F="test-data/$1.rawdata"
     [[ ! -e "$F" ]] &&
-        getRawData "$1" | jq '.asts' > "$F"
+        getRawAsts "$1" | ./runTypes.sh "$1" > "$F"
     cat "$F"
 }
 
@@ -143,6 +143,10 @@ function testGetRawAsts {
     getRawAsts "$1"   | assertNotEmpty "Couldn't get raw ASTs from '$1'"
 }
 
+function testGetRawData {
+    getRawData "$1"   | assertNotEmpty "Couldn't get raw data from '$1'"
+}
+
 function testGetTypeCmd {
     getTypeCmd "$1"   | assertNotEmpty "Couldn't get type command from '$1'"
 }
@@ -198,7 +202,7 @@ function testAstLabelled {
 }
 
 function testAllTypeCmdPresent {
-    getAsts "$1" | jq -cr 'map(.module + "." + .name)' |
+    getAsts "$1" | jq -c -r 'map(.module + "." + .name)' |
         while read -r LINE
         do
             getTypeCmd | grep "($LINE)" > /dev/null ||
@@ -293,6 +297,7 @@ function testNixProjectsRun {
 
 function testPackage {
     testGetRawAsts        "$1"
+    testGetRawData        "$1"
     testGetTypeCmd        "$1"
     testGetTypeResults    "$1"
     testGetTypes          "$1"
