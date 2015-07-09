@@ -90,7 +90,7 @@ in (hsPkgs.override { overrides = (self: (super: {
   }) {});
 
   ArbitraryHaskell = self.callPackage (mkSrc ArbitraryHaskell {
-    url = "http://chriswarbo.net/git/arbitrary-haskell.git";
+    url = http://chriswarbo.net/git/arbitrary-haskell.git;
   }) {};
 
   # THEORY EXPLORATION TOOLS (uses "//" to merge in version arguments)
