@@ -1,3 +1,5 @@
 #!/bin/sh
 
-nix-shell -p mlspec --run "MLSpec $1" | grep "^PROJECT" | cut -d ' ' -f 2-
+nix-shell --show-trace -p mlspec --run "MLSpec $1" |
+    grep "^PROJECT" |
+    cut -d ' ' -f 2-

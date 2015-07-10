@@ -25,11 +25,11 @@ function repl {
 
 function typeCommand {
     echo ":m"
-    while read -r LINE
-    do
-        QNAME=$(echo "$LINE" | jq -r '.module + "." + .name')
-        mkQuery "$QNAME"
-    done
+    grep "^{" | while read -r LINE
+                do
+                    QNAME=$(echo "$LINE" | jq -r '.module + "." + .name')
+                    mkQuery "$QNAME"
+                done
 }
 
 function mkQuery {
@@ -67,14 +67,29 @@ function mkQuery {
     done
 }
 
+function typeScopes {
+    # Make sure the types we've been given are actually available in scope (ie.
+    # they're not off in some hidden package)
+    echo ":m"
+    grep "in f[ ]*::" |
+        while IFS= read -r LINE
+        do
+            NAME=$(echo "$LINE" | sed -e "s/^.*('\(.*\)))[ ]*in f[ ]*::.*$/\1/g")
+            TYPE=$(echo "$LINE" | sed -e "s/^.*::[ ]*\(.*\)$/\1/g")
+            echo ":t ($NAME) :: ($TYPE)"
+        done
+}
+
 ASTS=$(cat)
-CMD=$(echo "$ASTS" | typeCommand)
+CMD=$(echo "$ASTS" | jq -c '.[]' | typeCommand)
 RESULT=$(echo "$CMD" | repl "$1" | replLines)
+SCOPECMD=$(echo "$RESULT" | typeScopes)
+SCOPERESULT=$(echo "$SCOPECMD" | repl "$1" | replLines)
 
 # Output everything as JSON
-jq -n --argfile asts   <(echo "$ASTS"   | jq -s    '.') \
-      --argfile cmd    <(echo "$CMD"    | jq -s -R '.') \
-      --argfile result <(echo "$RESULT" | jq -s -R '.') \
-      '{asts: $asts, cmd: $cmd, result: $result}'
-
-#cabal repl -v0 --ghc-options="-package quickspec -package QuickCheck -package template-haskell"
+jq -n --argfile asts        <(echo "$ASTS")                       \
+      --argfile cmd         <(echo "$CMD"         | jq -s -R '.') \
+      --argfile result      <(echo "$RESULT"      | jq -s -R '.') \
+      --argfile scopecmd    <(echo "$SCOPECMD"    | jq -s -R '.') \
+      --argfile scoperesult <(echo "$SCOPERESULT" | jq -s -R '.') \
+      '{asts: $asts, cmd: $cmd, result: $result, scopecmd: $scopecmd, scoperesult: $scoperesult}'

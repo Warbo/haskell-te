@@ -45,10 +45,24 @@ function getTypeResults {
     cat "$F"
 }
 
+function getScopeCmd {
+    F="test-data/$1.scopeCmd"
+    [[ ! -e "$F" ]] &&
+        getRawData "$1" | jq -r '.scopecmd' > "$F"
+    cat "$F"
+}
+
+function getScopeResult {
+    F="test-data/$1.scopeResult"
+    [[ ! -e "$F" ]] &&
+        getRawData "$1" | jq -r '.scoperesult' > "$F"
+    cat "$F"
+}
+
 function getTypes {
     F="test-data/$1.types"
     [[ ! -e "$F" ]] &&
-        getTypeResults "$1" | ./getTypes.sh > "$F"
+        getScopeResult "$1" | ./getTypes.sh > "$F"
     cat "$F"
 }
 
@@ -98,8 +112,9 @@ function getProjects {
     F="test-data/$1.projects"
     if [[ ! -e "$F" ]]
     then
-        mkdir -p "test-data/projects"
-        getClusters "$1" | ./make-projects.sh "test-data/projects" > "$F"
+        rm -rf "test-data/projects/$1" 2> /dev/null || true
+        mkdir -p "test-data/projects/$1"
+        getClusters "$1" | ./make-projects.sh "test-data/projects/$1" > "$F"
     fi
     cat "$F"
 }
@@ -108,13 +123,10 @@ function getNixedProjects {
     F="test-data/$1.nixed"
     if [[ ! -e "$F" ]]
     then
-        if [[ -e "test-data/nixed" ]]
-        then
-            rm -rf "test-data/nixed"
-        fi
-        cp -r "test-data/projects" "test-data/nixed"
+        rm -rf "test-data/nixed/$1" 2> /dev/null || true
+        cp -r "test-data/projects/$1" "test-data/nixed/$1"
         (shopt -s nullglob;
-         for PROJECT in test-data/nixed/*
+         for PROJECT in "test-data/nixed/$1"/*
          do
              readlink -f "$PROJECT" >> "$F"
          done)
@@ -125,10 +137,12 @@ function getNixedProjects {
 
 function assertNotEmpty {
     COUNT=$(count "^")
-    if [[ "$COUNT" -eq 0 ]]
-    then
-        fail "$1"
-    fi
+    [[ "$COUNT" -gt 0 ]] || fail "$1"
+}
+
+function assertJsonNotEmpty {
+    COUNT=$(jq -r "length")
+    [[ "$COUNT" -gt 0 ]] || fail "$1"
 }
 
 function count {
@@ -140,39 +154,47 @@ function count {
 }
 
 function testGetRawAsts {
-    getRawAsts "$1"   | assertNotEmpty "Couldn't get raw ASTs from '$1'"
+    getRawAsts     "$1" | assertJsonNotEmpty "Couldn't get raw ASTs from '$1'"
 }
 
 function testGetRawData {
-    getRawData "$1"   | assertNotEmpty "Couldn't get raw data from '$1'"
+    getRawData     "$1" | assertJsonNotEmpty "Couldn't get raw data from '$1'"
 }
 
 function testGetTypeCmd {
-    getTypeCmd "$1"   | assertNotEmpty "Couldn't get type command from '$1'"
+    getTypeCmd     "$1" | assertNotEmpty "Couldn't get type command from '$1'"
 }
 
 function testGetTypeResults {
     getTypeResults "$1" | assertNotEmpty "Couldn't get type info from '$1'"
 }
 
+function testGetScopeCmd {
+    getScopeCmd    "$1" | assertNotEmpty "Couldn't get scoped command from '$1'"
+}
+
+function testGetScopeResult {
+    getScopeResult "$1" | assertNotEmpty "Couldn't get scoped type info from '$1'"
+}
+
 function testGetTypes {
-    getTypes "$1"    | assertNotEmpty "Couldn't get types from '$1'"
+    getTypes       "$1" | assertJsonNotEmpty "Couldn't get types from '$1'"
 }
 
 function testGetArities {
-    getArities "$1"  | assertNotEmpty "Couldn't get arities from '$1'"
+    getArities     "$1" | assertJsonNotEmpty "Couldn't get arities from '$1'"
 }
 
 function testGetTypeTagged {
-    getTypeTagged "$1" | assertNotEmpty "Couldn't get typed ASTs from '$1'"
+    getTypeTagged  "$1" | assertJsonNotEmpty "Couldn't get typed ASTs from '$1'"
 }
 
 function testGetArityTagged {
-    getArityTagged "$1" | assertNotEmpty "Couldn't get ASTs with aritiesfrom '$1'"
+    getArityTagged "$1" | assertJsonNotEmpty "Couldn't get ASTs with aritiesfrom '$1'"
 }
 
 function testGetAsts {
-    getAsts "$1"     | assertNotEmpty "Couldn't get ASTs from '$1'"
+    getAsts        "$1" | assertJsonNotEmpty "Couldn't get ASTs from '$1'"
 }
 
 function testAstFields {
@@ -194,7 +216,7 @@ function testAstFields {
 }
 
 function testAstLabelled {
-    getAsts "$1" | jq -c '.package' |
+    getAsts "$1" | jq -c '.[] | .package' |
         while read -r LINE
         do
             [[ "x$LINE" = "x\"$1\"" ]] || fail "$FUNCNAME $1 $LINE"
@@ -205,7 +227,7 @@ function testAllTypeCmdPresent {
     getAsts "$1" | jq -c -r 'map(.module + "." + .name)' |
         while read -r LINE
         do
-            getTypeCmd | grep "($LINE)" > /dev/null ||
+            getTypeCmd "$1" | grep "($LINE)" > /dev/null ||
                 fail "$LINE not in '$1' type command"
         done
 }
@@ -296,26 +318,30 @@ function testNixProjectsRun {
 }
 
 function testPackage {
-    testGetRawAsts        "$1"
-    testGetRawData        "$1"
-    testGetTypeCmd        "$1"
-    testGetTypeResults    "$1"
-    testGetTypes          "$1"
-    testGetArities        "$1"
-    testGetTypeTagged     "$1"
-    testGetArityTagged    "$1"
-    testGetAsts           "$1"
-    testAstFields         "$1"
-    testAstLabelled       "$1"
-    testAllTypeCmdPresent "$1"
-    testNoCoreNames       "$1"
-    testGetFeatures       "$1"
-    testFeaturesUniform   "$1"
-    testHaveAllClusters   "$1"
-    testProjectsMade      "$1"
-    testNixFilesMade      "$1"
-    testNixProjectsRun    "$1"
+    TESTS=(testGetRawAsts testGetRawData testGetTypeCmd testGetTypeResults
+           testGetScopeCmd testGetScopeResult testGetTypes testGetArities
+           testGetTypeTagged testGetArityTagged testGetAsts testAstFields
+           testAstLabelled testAllTypeCmdPresent testNoCoreNames testGetFeatures
+           testFeaturesUniform testHaveAllClusters testProjectsMade
+           testNixFilesMade testNixProjectsRun)
+    for TEST in ${TESTS[*]}
+    do
+        $TEST "$1"
+        echo "PASS: '$TEST' '$1'"
+    done
 }
+
+function testTagging {
+    INPUT1='[{"name": "n1", "module": "M1"}, {"name": "n2", "module": "M2"}]'
+    INPUT2='[{"name": "n2", "module": "M2", "foo": "bar"}]'
+    RESULT=$(echo "$INPUT1" | ./tagAsts.sh <(echo "$INPUT2"))
+    TYPE=$(echo "$RESULT" | jq 'type')
+    [[ "x$TYPE" == 'x"array"' ]] || fail "tagAsts.sh gave '$TYPE' not array"
+}
+
+# "Unit" style tests
+testTagging
+echo "PASS: testTagging"
 
 # Run on a selection of packages:
 #  - directory doesn't have any Ord instances, since everything's return type is
@@ -323,9 +349,10 @@ function testPackage {
 #  - quickspec because meta
 #  - attoparsec because it's a decent size and exposeis a dependency of our Haskell
 #    code
-for PKG in data-stringmap #quickspec attoparsec directory
+for PKG in data-stringmap MissingH quickspec attoparsec directory
 do
     testPackage "$PKG"
+    echo "PASS: testPackage '$PKG'"
 done
 
 exit "$CODE"
