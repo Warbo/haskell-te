@@ -4,10 +4,14 @@ set -e
 # Extract ASTs from a Cabal package
 
 function packageName {
+    echo "Looking for .cabal files in '$DIR'" > /dev/stderr
     (shopt -s nullglob
      for CBL in "$DIR"/*.cabal
      do
-         grep "name:" < "$CBL" | cut -d ':' -f 2 | tr -d '[:space:]'
+         echo "Found '$CBL' in '$DIR'"  > /dev/stderr
+         NAME=$(grep -i "name[ ]*:" < "$CBL" | cut -d ':' -f 2 | tr -d '[:space:]')
+         echo "Project name is '$NAME'" > /dev/stderr
+         echo "$NAME"
      done)
 }
 
@@ -20,5 +24,6 @@ BASE=$(readlink -f "$RELBASE")
 
 PKG=$(packageName)
 (cd "$DIR";
- nix-shell -E "with import <nixpkgs> {}; ghcWithPlugin \"$PKG\"" \
+ nix-shell --show-trace \
+           -E "with import <nixpkgs> {}; ghcWithPlugin \"$PKG\"" \
            --run "$BASE/runPlugin.sh")
