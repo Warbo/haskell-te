@@ -12,9 +12,10 @@
 set -e
 
 function pkgName {
+    # FIXME: Duplicated in dump-package.sh
     for CABAL in *.cabal
     do
-        grep "name:" < "$CABAL" | grep -o ":.*" | grep -o "[^: ].*"
+        grep -i "name[ ]*:" < "$CABAL" | grep -o ":.*" | grep -o "[^: ].*"
         return
     done
 }
@@ -34,4 +35,4 @@ function build {
     cabal --ghc-options="$OPTIONS" build 2>&1 1>/dev/null
 }
 
-getAsts
+getAsts | jq -s '.'
