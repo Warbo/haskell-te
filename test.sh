@@ -1,9 +1,6 @@
 #! /usr/bin/env nix-shell
 #! nix-shell -p jq -i bash
-
-# #!/bin/sh
 set -e
-set -x
 
 # Exit code. Can stay at 0 or increase to 1. Should NEVER decrease from 1.
 CODE=0
@@ -124,6 +121,7 @@ function getNixedProjects {
     if [[ ! -e "$F" ]]
     then
         rm -rf "test-data/nixed/$1" 2> /dev/null || true
+        mkdir -p "test-data/nixed"
         cp -r "test-data/projects/$1" "test-data/nixed/$1"
         (shopt -s nullglob;
          for PROJECT in "test-data/nixed/$1"/*
@@ -224,20 +222,18 @@ function testAstLabelled {
 }
 
 function testAllTypeCmdPresent {
-    getAsts "$1" | jq -c -r 'map(.module + "." + .name)' |
+    getAsts "$1" | jq -c -r '.[] | .module + "." + .name' |
         while read -r LINE
         do
-            getTypeCmd "$1" | grep "($LINE)" > /dev/null ||
+            getTypeCmd "$1" | grep "('$LINE)" > /dev/null ||
                 fail "$LINE not in '$1' type command"
         done
 }
 
 function testNoCoreNames {
-    COUNT=$(getAsts "$1" | count '\.\$')
-    if [[ "$COUNT" -ne 0 ]]
-    then
+    COUNT=$(getAsts "$1" | jq -r '.[] | .name' | count '\.\$')
+    [[ "$COUNT" -eq 0 ]] ||
         fail "ASTs for '$1' contain Core names beginning with \$"
-    fi
 }
 
 function testGetFeatures {
@@ -249,7 +245,7 @@ function countCommas {
 }
 
 function testFeaturesUniform {
-    RAWFEATURES=$(getFeatures "$1" | jq -r '.[] | .features')
+    RAWFEATURES=$(getFeatures "$1" | jq -r '.[] | .features' | grep ",")
     COUNT=$(echo "$RAWFEATURES" | head -n 1 | countCommas)
     echo "$RAWFEATURES" |
         while read LINE
@@ -349,7 +345,7 @@ echo "PASS: testTagging"
 #  - quickspec because meta
 #  - attoparsec because it's a decent size and exposeis a dependency of our Haskell
 #    code
-for PKG in data-stringmap MissingH quickspec attoparsec directory
+for PKG in data-stringmap MissingH attoparsec directory quickspec
 do
     testPackage "$PKG"
     echo "PASS: testPackage '$PKG'"
