@@ -1,5 +1,5 @@
 #! /usr/bin/env nix-shell
-#! nix-shell -p weka-cli -p jq -p bash -i bash
+#! nix-shell -p 'import ./weka-cli.nix' -p jq -p bash -i bash
 
 set -e
 
