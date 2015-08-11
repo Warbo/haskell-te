@@ -23,18 +23,17 @@ function pkgName {
 function getAsts {
     PKG=$(pkgName)
     RESULT=$(build)
-    echo "$RESULT" | grep    "^{" | jq -c ". + {package: \"$PKG\"}"
-    echo "$RESULT" | grep -v "^{" > /dev/stderr
-
+    { echo "$RESULT" | grep -v "^{" > /dev/stderr; } || true
+      echo "$RESULT" | grep    "^{"
 }
 
 function build {
     # Override pkg db to get project's dependencies and AstPlugin
     GHC_PKG=$(ghc-pkg list | head -n 1 | tr -d ':')
     OPTIONS="-package-db=$GHC_PKG -package AstPlugin -fplugin=AstPlugin.Plugin"
-        # NOTE: GHC plugins write to stderr!
+    # NOTE: GHC plugins write to stderr!
     cabal --ghc-options="$OPTIONS" build 2>&1 1>/dev/null
 }
 
-cabal configure
-getAsts | jq -s '.'
+cabal configure > /dev/stderr
+getAsts
