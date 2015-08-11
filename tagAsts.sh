@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Given JSON objects on stdin, and a file descriptor containing JSON objects as
 # as $1, returns the intersection of the two
