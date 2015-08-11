@@ -11,6 +11,6 @@ then
     exit 1
 fi
 
-./dump-hackage.sh "$1"   |
-    ./annotateAsts.sh    |
-    ./cluster.sh
+./dump-hackage.sh "$1" # |
+#     ./annotateAsts.sh    |
+#     ./cluster.sh
