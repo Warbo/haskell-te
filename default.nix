@@ -75,19 +75,6 @@ let # Generates a .nix file from a .cabal file, using the cabal2nix command
 in (hsPkgs.override { overrides = (self: (super: {
   # DEPENDENCIES
 
-  ghcWithPlugin = name:
-    runCommand "dummy" {
-      buildInputs = [
-        jq
-        (haskellPackages.ghcWithPackages (hsPkgs: [
-           hsPkgs.quickspec  # For `fun0`, `fun1`, etc.
-           hsPkgs.QuickCheck # For `monomorphise`
-           hsPkgs.${name}    # For dependencies
-           AstPlugin         # For AST extraction
-        ]))
-      ];
-    } "";
-
   weka-cli = runCommand
     "weka-cli"
     {
