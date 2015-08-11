@@ -6,7 +6,10 @@ ABS=$(readlink -f "$REL")
 DIR=$(mktemp -d)
 
 (cd "$DIR";
- nix-shell --show-trace -p haskellPackages.cabal-install --run "cabal get $1" > /dev/stderr)
+ for PKG in "$@"
+ do
+     nix-shell --show-trace -p haskellPackages.cabal-install --run "cabal get $PKG" > /dev/stderr
+ done)
 
 (shopt -s nullglob
  for PROJECT in "$DIR"/*
