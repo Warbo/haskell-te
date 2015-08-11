@@ -1,11 +1,14 @@
 #! /usr/bin/env nix-shell
 #! nix-shell -p treefeatures -p bash -p jq -i bash
 
+[ -z "$BITS" ] && BITS=30
+[ -z "$MODE" ] && MODE=sexpr
+
 jq -c '.[]' |
     while read -r LINE
     do
         # Extract the "ast" value and pipe into TreeFeatures
-        FEATURES=$(echo "$LINE" | jq -r '.ast' | BITS=30 MODE=sexpr TreeFeatures)
+        FEATURES=$(echo "$LINE" | jq -r '.ast' | TreeFeatures)
 
         # Read the features as a raw string, and collect into an array
         FEATARR=$(echo "$FEATURES" | jq -R '.' | jq -s '.')
