@@ -75,21 +75,6 @@ let # Generates a .nix file from a .cabal file, using the cabal2nix command
 in (hsPkgs.override { overrides = (self: (super: {
   # DEPENDENCIES
 
-  weka-cli = runCommand
-    "weka-cli"
-    {
-      propagatedBuildInputs = [ jre weka ];
-    }
-    ''
-      # Make it easy to run Weka
-      mkdir -p "$out/bin"
-      cat <<'EOF' > "$out/bin/weka-cli"
-      #!bin/sh
-      ${jre}/bin/java -Xmx1000M -cp ${weka}/share/weka/weka.jar "$@"
-      EOF
-      chmod +x "$out/bin/weka-cli"
-    '';
-
   # We need < 0.16
   haskell-src-exts = self.callPackage (import ./haskell-src-exts.nix) {};
 
