@@ -1,6 +1,6 @@
 #! /usr/bin/env nix-shell
 #! nix-shell -p jq -i bash
-set -e
+# set -e
 
 # Exit code. Can stay at 0 or increase to 1. Should NEVER decrease from 1.
 CODE=0
