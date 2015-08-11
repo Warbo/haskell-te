@@ -1,6 +1,6 @@
 #! /usr/bin/env nix-shell
 #! nix-shell -p jq -i bash
-# set -e
+set -e
 
 # Exit code. Can stay at 0 or increase to 1. Should NEVER decrease from 1.
 CODE=0
@@ -12,6 +12,13 @@ mkdir -p test-data
 function fail {
     echo "FAIL: $1"
     exit 1
+}
+
+function getRawJson {
+    F="test-data/$1.rawjson"
+    [[ ! -e "$F" ]] &&
+        NOFORMAT="true" ./dump-hackage.sh "$1" > "$F"
+    cat "$F"
 }
 
 function getRawAsts {
@@ -149,6 +156,10 @@ function count {
     set +e
     grep -c "$PAT"
     set -e
+}
+
+function testGetRawJson {
+    getRawJson     "$1" | assertNotEmpty "Couldn't get raw JSON from '$1'"
 }
 
 function testGetRawAsts {
@@ -314,12 +325,28 @@ function testNixProjectsRun {
 }
 
 function testPackage {
-    TESTS=(testGetRawAsts testGetRawData testGetTypeCmd testGetTypeResults
-           testGetScopeCmd testGetScopeResult testGetTypes testGetArities
-           testGetTypeTagged testGetArityTagged testGetAsts testAstFields
-           testAstLabelled testAllTypeCmdPresent testNoCoreNames testGetFeatures
-           testFeaturesUniform testHaveAllClusters testProjectsMade
-           testNixFilesMade testNixProjectsRun)
+    TESTS=(testGetRawJson
+           testGetRawAsts
+           testGetRawData
+           testGetTypeCmd
+           testGetTypeResults
+           testGetScopeCmd
+           testGetScopeResult
+           testGetTypes
+           testGetArities
+           testGetTypeTagged
+           testGetArityTagged
+           testGetAsts
+           testAstFields
+           testAstLabelled
+           testAllTypeCmdPresent
+           testNoCoreNames
+           testGetFeatures
+           testFeaturesUniform
+           testHaveAllClusters
+           testProjectsMade
+           testNixFilesMade
+           testNixProjectsRun)
     for TEST in ${TESTS[*]}
     do
         $TEST "$1"

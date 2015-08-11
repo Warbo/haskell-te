@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -e
 
 # Extract ASTs from a Cabal package
@@ -15,15 +15,27 @@ function packageName {
      done)
 }
 
+function runPlugin {
+    nix-shell --show-trace \
+              -E "with import <nixpkgs> {}; import ./ghcWithPlugin.nix \"$PKG\"" \
+              --run "cd $DIR; $BASE/runPlugin.sh"
+}
+
+function format {
+    # Set NOFORMAT to avoid calling jq, eg. for testing
+    if [[ -z $NOFORMAT ]]
+    then
+        jq -c ". + {package: \"$PKG\"}" | jq -s '.'
+    else
+        cat
+    fi
+}
+
 [[ "$#" -eq 0 ]] && echo "Please specify a Cabal project directory" && exit 1
 
 DIR="$1"
-
 RELBASE=$(dirname "$0")
 BASE=$(readlink -f "$RELBASE")
-
 PKG=$(packageName)
-(cd "$DIR";
- nix-shell --show-trace \
-           -E "with import <nixpkgs> {}; ghcWithPlugin \"$PKG\"" \
-           --run "$BASE/runPlugin.sh")
+
+runPlugin | format
