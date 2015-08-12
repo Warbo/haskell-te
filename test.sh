@@ -1,5 +1,7 @@
 #! /usr/bin/env nix-shell
 #! nix-shell -p jq -p haskellPackages.ShellCheck -i bash
+shopt -s nullglob
+source common.sh
 
 # Simple test suite for ML4HS:
 #  - Given no arguments, all tests will run
@@ -35,7 +37,7 @@ function assertNotEmpty {
 }
 
 function assertJsonNotEmpty {
-    COUNT=$(jq -r "length")
+    COUNT=$(jqLog -r "length")
     [[ "$COUNT" -gt 0 ]] || fail "$1"
 }
 
@@ -98,28 +100,28 @@ function getRawData {
 function getTypeCmd {
     F="test-data/$1.typeCmd"
     [[ ! -e "$F" ]] &&
-        getRawData "$1" | jq -r '.cmd' > "$F"
+        getRawData "$1" | jqLog -r '.cmd' > "$F"
     cat "$F"
 }
 
 function getTypeResults {
     F="test-data/$1.typeResults"
     [[ ! -e "$F" ]] &&
-        getRawData "$1" | jq -r '.result' > "$F"
+        getRawData "$1" | jqLog -r '.result' > "$F"
     cat "$F"
 }
 
 function getScopeCmd {
     F="test-data/$1.scopeCmd"
     [[ ! -e "$F" ]] &&
-        getRawData "$1" | jq -r '.scopecmd' > "$F"
+        getRawData "$1" | jqLog -r '.scopecmd' > "$F"
     cat "$F"
 }
 
 function getScopeResult {
     F="test-data/$1.scopeResult"
     [[ ! -e "$F" ]] &&
-        getRawData "$1" | jq -r '.scoperesult' > "$F"
+        getRawData "$1" | jqLog -r '.scoperesult' > "$F"
     cat "$F"
 }
 
@@ -173,9 +175,11 @@ function getClusters {
 }
 
 function getProjects {
+    mkdir -p test-data/projects
     F="test-data/$1.projects"
-    if [[ ! -e "$F" ]]
+    if [[ ! -e "$F" || ! -e "test-data/projects/$1" ]]
     then
+        rm     "$F"                    2> /dev/null || true
         rm -rf "test-data/projects/$1" 2> /dev/null || true
         mkdir -p "test-data/projects/$1"
         getClusters "$1" | ./make-projects.sh "test-data/projects/$1" > "$F"
@@ -184,21 +188,17 @@ function getProjects {
 }
 
 function getNixedProjects {
-    F="test-data/$1.nixed"
-    if [[ ! -e "$F" ]]
+    getProjects "$1" || return 1
+    mkdir -p test-data/nixed
+    if [[ ! -e "test-data/nixed/$1" ]]
     then
-        rm -rf "test-data/nixed/$1" 2> /dev/null || true
-        mkdir -p "test-data/nixed"
-        getProjects
         cp -r "test-data/projects/$1" "test-data/nixed/$1"
-        (shopt -s nullglob;
-         for PROJECT in "test-data/nixed/$1"/*
-         do
-             readlink -f "$PROJECT" >> "$F"
-         done)
-        ./nix-projects.sh < "$F"
+
+        ./nix-projects.sh < <(for PROJECT in "test-data/nixed/$1"/*
+                              do
+                                  readlink -f "$PROJECT"
+                              done) || return 1
     fi
-    cat "$F"
 }
 
 # Tests requiring a package as argument
@@ -252,14 +252,14 @@ function pkgTestGetAsts {
 }
 
 function pkgTestAstFields {
-       COUNT=$(getAsts "$1" | jq -c 'length')
-        PKGS=$(getAsts "$1" | jq -c 'map(.package)  | length')
-        MODS=$(getAsts "$1" | jq -c 'map(.module)   | length')
-       NAMES=$(getAsts "$1" | jq -c 'map(.name)     | length')
-        ASTS=$(getAsts "$1" | jq -c 'map(.ast)      | length')
-       TYPES=$(getAsts "$1" | jq -c 'map(.type)     | length')
-     ARITIES=$(getAsts "$1" | jq -c 'map(.arity)    | length')
-    FEATURES=$(getAsts "$1" | jq -c 'map(.features) | length')
+       COUNT=$(getAsts "$1" | jqLog -c 'length')
+        PKGS=$(getAsts "$1" | jqLog -c 'map(.package)  | length')
+        MODS=$(getAsts "$1" | jqLog -c 'map(.module)   | length')
+       NAMES=$(getAsts "$1" | jqLog -c 'map(.name)     | length')
+        ASTS=$(getAsts "$1" | jqLog -c 'map(.ast)      | length')
+       TYPES=$(getAsts "$1" | jqLog -c 'map(.type)     | length')
+     ARITIES=$(getAsts "$1" | jqLog -c 'map(.arity)    | length')
+    FEATURES=$(getAsts "$1" | jqLog -c 'map(.features) | length')
     [[ $COUNT -eq $PKGS     ]] || fail "$FUNCNAME '$1' pkgs"
     [[ $COUNT -eq $MODS     ]] || fail "$FUNCNAME '$1' mods"
     [[ $COUNT -eq $NAMES    ]] || fail "$FUNCNAME '$1' names"
@@ -270,7 +270,7 @@ function pkgTestAstFields {
 }
 
 function pkgTestAstLabelled {
-    getAsts "$1" | jq -c '.[] | .package' |
+    getAsts "$1" | jqLog -c '.[] | .package' |
         while read -r LINE
         do
             [[ "x$LINE" = "x\"$1\"" ]] || fail "$FUNCNAME $1 $LINE"
@@ -278,7 +278,7 @@ function pkgTestAstLabelled {
 }
 
 function pkgTestAllTypeCmdPresent {
-    getAsts "$1" | jq -c -r '.[] | .module + "." + .name' |
+    getAsts "$1" | jqLog -c -r '.[] | .module + "." + .name' |
         while read -r LINE
         do
             getTypeCmd "$1" | grep "('$LINE)" > /dev/null ||
@@ -287,7 +287,7 @@ function pkgTestAllTypeCmdPresent {
 }
 
 function pkgTestNoCoreNames {
-    COUNT=$(getAsts "$1" | jq -r '.[] | .name' | count '\.\$')
+    COUNT=$(getAsts "$1" | jqLog -r '.[] | .name' | count '\.\$')
     [[ "$COUNT" -eq 0 ]] ||
         fail "ASTs for '$1' contain Core names beginning with \$"
 }
@@ -301,7 +301,7 @@ function countCommas {
 }
 
 function pkgTestFeaturesUniform {
-    RAWFEATURES=$(getFeatures "$1" | jq -r '.[] | .features' | grep ",")
+    RAWFEATURES=$(getFeatures "$1" | jqLog -r '.[] | .features' | grep ",")
     COUNT=$(echo "$RAWFEATURES" | head -n 1 | countCommas)
     echo "$RAWFEATURES" |
         while read LINE
@@ -317,7 +317,7 @@ function pkgTestFeaturesUniform {
 function pkgTestHaveAllClusters {
     # FIXME: Make cluster number configurable (eg. so we can have it vary based
     # on the number of definitions)
-    COUNT=$(getClusters "$1" | jq -r 'length')
+    COUNT=$(getClusters "$1" | jqLog -r 'length')
     if [[ "$COUNT" -ne 4 ]]
     then
         fail "Found $COUNT clusters for '$1' instead of 4"
@@ -325,8 +325,8 @@ function pkgTestHaveAllClusters {
 }
 
 function pkgTestClusterFields {
-    COUNT=$(getClusters "$1" | jq -r '.[] | length')
-    getClusters "$1" | jq 'map(select(has("")))'
+    COUNT=$(getClusters "$1" | jqLog -r '.[] | length')
+    getClusters "$1" | jqLog 'map(select(has("")))'
 }
 
 function pkgTestProjectsMade {
@@ -341,17 +341,18 @@ function pkgTestProjectsMade {
 }
 
 function pkgTestNixFilesMade {
-    getNixedProjects "$1" | while read PROJECT
-                            do
-                                if [[ ! -e "$PROJECT" ]]
-                                then
-                                    fail "'$PROJECT' not found for '$1'"
-                                fi
-                                if [[ ! -e "$PROJECT/shell.nix" ]]
-                                then
-                                    fail "'$PROJECT/shell.nix' missing for '$1'"
-                                fi
-                            done
+    NIXED=$(getNixedProjects "$1") || return 1
+    while read PROJECT
+    do
+        if [[ ! -e "$PROJECT" ]]
+        then
+            fail "'$PROJECT' not found for '$1'"
+        fi
+        if [[ ! -e "$PROJECT/shell.nix" ]]
+        then
+            fail "'$PROJECT/shell.nix' missing for '$1'"
+        fi
+    done < <(echo "$NIXED")
 }
 
 function pkgTestNixProjectsRun {
@@ -377,7 +378,7 @@ function testTagging {
     INPUT1='[{"name": "n1", "module": "M1"}, {"name": "n2", "module": "M2"}]'
     INPUT2='[{"name": "n2", "module": "M2", "foo": "bar"}]'
     RESULT=$(echo "$INPUT1" | ./tagAsts.sh <(echo "$INPUT2"))
-    TYPE=$(echo "$RESULT" | jq 'type')
+    TYPE=$(echo "$RESULT" | jqLog 'type')
     [[ "x$TYPE" == 'x"array"' ]] || fail "tagAsts.sh gave '$TYPE' not array"
 }
 
@@ -393,6 +394,34 @@ function testShellCheck {
         shellcheck -s bash "${IGNORE[@]}" "$file" || SCERR=1
     done
     return "$SCERR"
+}
+
+function testJqLogLogs {
+    COUNT=0
+    while read line
+    do
+        COUNT=$((COUNT + 1))
+        echo "$line" | grep "^\[jqLog fibble]: " > /dev/null
+    done < <(jqLog fibble 2>&1)
+    [[ "$COUNT" -gt 0 ]] || fail "Errors got lost"
+}
+
+function testJqLogWorks {
+    X=$(echo '{"foo": 10, "bar": 20}' | jqLog '.foo')
+    [[ "$X" -eq 10 ]] || fail "jqLog expressions fail ($X)"
+
+    X=$(echo -e '{"foo": 10}\n{"foo": 11}' | jqLog -c -s 'map(.foo)')
+    [[ "$X" = "[10,11]" ]] || fail "jqLog arguments fail ($X)"
+}
+
+function testNoNakedJq {
+    # We should be using jqLog rather than jq
+    for file in *.sh
+    do
+        NAKED=$(grep "^[^#].*jq[^L]" < "$file")
+        [[ -z "$NAKED" ]] || [[ "x$file" = "xcommon.sh" ]] ||
+            fail "Please use jqLog instead of jq in $file ($NAKED)"
+    done
 }
 
 # Test invocation
