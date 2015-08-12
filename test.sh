@@ -1,5 +1,5 @@
 #! /usr/bin/env nix-shell
-#! nix-shell -p jq -i bash
+#! nix-shell -p jq -p haskellPackages.ShellCheck -i bash
 
 # Simple test suite for ML4HS:
 #  - Given no arguments, all tests will run
@@ -13,6 +13,7 @@
 # Assertion functions
 
 function fail {
+    [[ "$#" -eq 0 ]] || echo "FAIL $*"
     CODE=1
     return 1
 }
@@ -188,6 +189,7 @@ function getNixedProjects {
     then
         rm -rf "test-data/nixed/$1" 2> /dev/null || true
         mkdir -p "test-data/nixed"
+        getProjects
         cp -r "test-data/projects/$1" "test-data/nixed/$1"
         (shopt -s nullglob;
          for PROJECT in "test-data/nixed/$1"/*
@@ -360,13 +362,15 @@ function pkgTestNixProjectsRun {
 
 function testPackages {
     # Run all package tests on a selection of packages
+    PKGERR=0
     getTestPkgs | while read pkg
                   do
                       getPkgTests | while read test
                                     do
-                                        runTest "$test" "$pkg"
+                                        runTest "$test" "$pkg" || PKGERR=1
                                     done
                   done
+    return "$PKGERR"
 }
 
 function testTagging {
@@ -377,26 +381,33 @@ function testTagging {
     [[ "x$TYPE" == 'x"array"' ]] || fail "tagAsts.sh gave '$TYPE' not array"
 }
 
+function testShellCheck {
+    SCERR=0
+    for file in *.sh
+    do
+        # SC1008 complains that #!/usr/bin/env nix-shell is unknown
+        shellcheck -s bash -e SC1008 "$file" || SCERR=1
+    done
+    return "$SCERR"
+}
+
 # Test invocation
 
 function runTest {
-    { "$@" && echo "PASS $@"; } || { echo "FAIL $@"; CODE=1; }
+    { "$@" && echo "PASS $*"; } || { echo "FAIL $*"; return 1; }
 }
 
 function runTests {
+    CODE=0
     getTests | while read test
                do
-                   runTest "$test"
+                   runTest "$test" || CODE=1
                done
+    return "$CODE"
 }
-
-# Exit code. Can stay at 0 or increase to 1. Should NEVER decrease from 1.
-CODE=0
 
 # We cache intermediate results in test-data. We have no cache invalidation,
 # just delete it whenever you like.
 mkdir -p test-data
 
 runTests
-
-exit "$CODE"
