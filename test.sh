@@ -1,17 +1,76 @@
 #! /usr/bin/env nix-shell
 #! nix-shell -p jq -i bash
-set -e
 
-# Exit code. Can stay at 0 or increase to 1. Should NEVER decrease from 1.
-CODE=0
+# Simple test suite for ML4HS:
+#  - Given no arguments, all tests will run
+#  - Given a regex as argument, only matching tests will be called
+#  - Intermediate results are cached in test-data/
+#  - There is no cache invalidation, so just delete the directory as needed
+#  - Functions with names beginning with "test" will be called automatically
+#  - Functions with names beginning with "testPkg" will be called automatically
+#    with a selection of package names as their first argument
 
-# We cache intermediate results in test-data. We have no cache invalidation,
-# just delete it whenever you like.
-mkdir -p test-data
+# Assertion functions
 
 function fail {
-    echo "FAIL: $1"
-    exit 1
+    CODE=1
+    return 1
+}
+
+function absent {
+    while read LINE
+    do
+        if [[ "x$LINE" = "x$1" ]]
+        then
+            return 1
+        fi
+    done
+    return 0
+}
+
+function assertNotEmpty {
+    COUNT=$(count "^")
+    [[ "$COUNT" -gt 0 ]] || fail "$1"
+}
+
+function assertJsonNotEmpty {
+    COUNT=$(jq -r "length")
+    [[ "$COUNT" -gt 0 ]] || fail "$1"
+}
+
+function count {
+    PAT="^"
+    [ -n "$1" ] && PAT="$1"
+    set +e
+    grep -c "$PAT"
+    set -e
+}
+
+# Functions to get data; these should read/write from/to the test-data/ cache
+
+function getFunctions {
+    # Get a list of declared functions
+    declare -F | cut -d ' ' -f 3-
+}
+
+function getPkgTests {
+    # Get a list of tests which require a package
+    getFunctions | grep '^pkgTest'
+}
+
+function getTests {
+    # Get a list of all test functions
+    getFunctions | grep '^test'
+}
+
+function getTestPkgs {
+    cat <<EOF
+data-stringmap
+MissingH
+attoparsec
+directory
+quickspec
+EOF
 }
 
 function getRawJson {
@@ -140,73 +199,57 @@ function getNixedProjects {
     cat "$F"
 }
 
-function assertNotEmpty {
-    COUNT=$(count "^")
-    [[ "$COUNT" -gt 0 ]] || fail "$1"
-}
+# Tests requiring a package as argument
 
-function assertJsonNotEmpty {
-    COUNT=$(jq -r "length")
-    [[ "$COUNT" -gt 0 ]] || fail "$1"
-}
-
-function count {
-    PAT="^"
-    [ -n "$1" ] && PAT="$1"
-    set +e
-    grep -c "$PAT"
-    set -e
-}
-
-function testGetRawJson {
+function pkgTestGetRawJson {
     getRawJson     "$1" | assertNotEmpty "Couldn't get raw JSON from '$1'"
 }
 
-function testGetRawAsts {
+function pkgTestGetRawAsts {
     getRawAsts     "$1" | assertJsonNotEmpty "Couldn't get raw ASTs from '$1'"
 }
 
-function testGetRawData {
+function pkgTestGetRawData {
     getRawData     "$1" | assertJsonNotEmpty "Couldn't get raw data from '$1'"
 }
 
-function testGetTypeCmd {
+function pkgTestGetTypeCmd {
     getTypeCmd     "$1" | assertNotEmpty "Couldn't get type command from '$1'"
 }
 
-function testGetTypeResults {
+function pkgTestGetTypeResults {
     getTypeResults "$1" | assertNotEmpty "Couldn't get type info from '$1'"
 }
 
-function testGetScopeCmd {
+function pkgTestGetScopeCmd {
     getScopeCmd    "$1" | assertNotEmpty "Couldn't get scoped command from '$1'"
 }
 
-function testGetScopeResult {
+function pkgTestGetScopeResult {
     getScopeResult "$1" | assertNotEmpty "Couldn't get scoped type info from '$1'"
 }
 
-function testGetTypes {
+function pkgTestGetTypes {
     getTypes       "$1" | assertJsonNotEmpty "Couldn't get types from '$1'"
 }
 
-function testGetArities {
+function pkgTestGetArities {
     getArities     "$1" | assertJsonNotEmpty "Couldn't get arities from '$1'"
 }
 
-function testGetTypeTagged {
+function pkgTestGetTypeTagged {
     getTypeTagged  "$1" | assertJsonNotEmpty "Couldn't get typed ASTs from '$1'"
 }
 
-function testGetArityTagged {
+function pkgTestGetArityTagged {
     getArityTagged "$1" | assertJsonNotEmpty "Couldn't get ASTs with aritiesfrom '$1'"
 }
 
-function testGetAsts {
+function pkgTestGetAsts {
     getAsts        "$1" | assertJsonNotEmpty "Couldn't get ASTs from '$1'"
 }
 
-function testAstFields {
+function pkgTestAstFields {
        COUNT=$(getAsts "$1" | jq -c 'length')
         PKGS=$(getAsts "$1" | jq -c 'map(.package)  | length')
         MODS=$(getAsts "$1" | jq -c 'map(.module)   | length')
@@ -224,7 +267,7 @@ function testAstFields {
     [[ $COUNT -eq $FEATURES ]] || fail "$FUNCNAME '$1' features"
 }
 
-function testAstLabelled {
+function pkgTestAstLabelled {
     getAsts "$1" | jq -c '.[] | .package' |
         while read -r LINE
         do
@@ -232,7 +275,7 @@ function testAstLabelled {
         done
 }
 
-function testAllTypeCmdPresent {
+function pkgTestAllTypeCmdPresent {
     getAsts "$1" | jq -c -r '.[] | .module + "." + .name' |
         while read -r LINE
         do
@@ -241,13 +284,13 @@ function testAllTypeCmdPresent {
         done
 }
 
-function testNoCoreNames {
+function pkgTestNoCoreNames {
     COUNT=$(getAsts "$1" | jq -r '.[] | .name' | count '\.\$')
     [[ "$COUNT" -eq 0 ]] ||
         fail "ASTs for '$1' contain Core names beginning with \$"
 }
 
-function testGetFeatures {
+function pkgTestGetFeatures {
     getFeatures "$1" | assertNotEmpty "Couldn't get features from '$1'"
 }
 
@@ -255,7 +298,7 @@ function countCommas {
     tr -dc ',' | wc -c
 }
 
-function testFeaturesUniform {
+function pkgTestFeaturesUniform {
     RAWFEATURES=$(getFeatures "$1" | jq -r '.[] | .features' | grep ",")
     COUNT=$(echo "$RAWFEATURES" | head -n 1 | countCommas)
     echo "$RAWFEATURES" |
@@ -269,7 +312,7 @@ function testFeaturesUniform {
         done
 }
 
-function testHaveAllClusters {
+function pkgTestHaveAllClusters {
     # FIXME: Make cluster number configurable (eg. so we can have it vary based
     # on the number of definitions)
     COUNT=$(getClusters "$1" | jq -r 'length')
@@ -279,23 +322,12 @@ function testHaveAllClusters {
     fi
 }
 
-function testClusterFields {
+function pkgTestClusterFields {
     COUNT=$(getClusters "$1" | jq -r '.[] | length')
     getClusters "$1" | jq 'map(select(has("")))'
 }
 
-function absent {
-    while read LINE
-    do
-        if [[ "x$LINE" = "x$1" ]]
-        then
-            return 1
-        fi
-    done
-    return 0
-}
-
-function testProjectsMade {
+function pkgTestProjectsMade {
     getProjects "$1" |
         while read PROJECT
         do
@@ -306,7 +338,7 @@ function testProjectsMade {
         done
 }
 
-function testNixFilesMade {
+function pkgTestNixFilesMade {
     getNixedProjects "$1" | while read PROJECT
                             do
                                 if [[ ! -e "$PROJECT" ]]
@@ -320,38 +352,21 @@ function testNixFilesMade {
                             done
 }
 
-function testNixProjectsRun {
+function pkgTestNixProjectsRun {
     getNixedProjects "$1" | ./run-projects.sh
 }
 
-function testPackage {
-    TESTS=(testGetRawJson
-           testGetRawAsts
-           testGetRawData
-           testGetTypeCmd
-           testGetTypeResults
-           testGetScopeCmd
-           testGetScopeResult
-           testGetTypes
-           testGetArities
-           testGetTypeTagged
-           testGetArityTagged
-           testGetAsts
-           testAstFields
-           testAstLabelled
-           testAllTypeCmdPresent
-           testNoCoreNames
-           testGetFeatures
-           testFeaturesUniform
-           testHaveAllClusters
-           testProjectsMade
-           testNixFilesMade
-           testNixProjectsRun)
-    for TEST in ${TESTS[*]}
-    do
-        $TEST "$1"
-        echo "PASS: '$TEST' '$1'"
-    done
+# Test functions
+
+function testPackages {
+    # Run all package tests on a selection of packages
+    getTestPkgs | while read pkg
+                  do
+                      getPkgTests | while read test
+                                    do
+                                        runTest "$test" "$pkg"
+                                    done
+                  done
 }
 
 function testTagging {
@@ -362,20 +377,26 @@ function testTagging {
     [[ "x$TYPE" == 'x"array"' ]] || fail "tagAsts.sh gave '$TYPE' not array"
 }
 
-# "Unit" style tests
-testTagging
-echo "PASS: testTagging"
+# Test invocation
 
-# Run on a selection of packages:
-#  - directory doesn't have any Ord instances, since everything's return type is
-#    `IO foo`
-#  - quickspec because meta
-#  - attoparsec because it's a decent size and exposeis a dependency of our Haskell
-#    code
-for PKG in data-stringmap MissingH attoparsec directory quickspec
-do
-    testPackage "$PKG"
-    echo "PASS: testPackage '$PKG'"
-done
+function runTest {
+    { "$@" && echo "PASS $@"; } || { echo "FAIL $@"; CODE=1; }
+}
+
+function runTests {
+    getTests | while read test
+               do
+                   runTest "$test"
+               done
+}
+
+# Exit code. Can stay at 0 or increase to 1. Should NEVER decrease from 1.
+CODE=0
+
+# We cache intermediate results in test-data. We have no cache invalidation,
+# just delete it whenever you like.
+mkdir -p test-data
+
+runTests
 
 exit "$CODE"
