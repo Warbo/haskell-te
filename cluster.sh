@@ -20,7 +20,7 @@ function elemCount {
     # Count the commas in the first row and add 1
     # TODO: Use JSON arrays for features
     NUMS=$(getCsv | head -n 1 | sed -e 's/[^,]//g' | awk '{ print length; }')
-    echo $(($NUMS + 1))
+    echo $((NUMS + 1))
 }
 
 function getArff {
@@ -29,7 +29,7 @@ function getArff {
 
     # Type annotations for columns (they're all real numbers)
     COUNT=$(elemCount)
-    for (( i=1; i<=$COUNT; i++ ))
+    for (( i=1; i<=COUNT; i++ ))
     do
         echo "@attribute '$i' real"
     done

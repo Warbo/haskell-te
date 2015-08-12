@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 set -e
 
-REL=$(dirname "$0")
-ABS=$(readlink -f "$REL")
 DIR=$(mktemp -d)
 
 (cd "$DIR";

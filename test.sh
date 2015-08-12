@@ -361,15 +361,15 @@ function pkgTestNixProjectsRun {
 # Test functions
 
 function testPackages {
-    # Run all package tests on a selection of packages
+    # Run all package tests on all test packages
     PKGERR=0
-    getTestPkgs | while read pkg
-                  do
-                      getPkgTests | while read test
-                                    do
-                                        runTest "$test" "$pkg" || PKGERR=1
-                                    done
-                  done
+    while read pkg
+    do
+        while read test
+        do
+            runTest "$test" "$pkg" || PKGERR=1
+        done < <(getPkgTests)
+    done < <(getTestPkgs)
     return "$PKGERR"
 }
 
@@ -383,11 +383,14 @@ function testTagging {
 
 function testShellCheck {
     SCERR=0
+    IGNORE=(
+        -e SC1008 # #!/usr/bin/env nix-shell is OK
+        -e SC2016 # "jq '$foo'" is OK
+        -e SC2001 # Complex sed can't be replaced by bash builtins
+    )
     for file in *.sh
     do
-        # SC1008 complains that #!/usr/bin/env nix-shell is unknown
-        # SC2016 complains that $foo won't be expanded in "jq '$foo'"
-        shellcheck -s bash -e SC1008 -e SC2016 "$file" || SCERR=1
+        shellcheck -s bash "${IGNORE[@]}" "$file" || SCERR=1
     done
     return "$SCERR"
 }
@@ -406,10 +409,10 @@ function runTests {
     else
         TESTS=$(getTests | grep "$1")
     fi
-    echo "$TESTS" | while read test
-                    do
-                        [[ -z "$test" ]] || runTest "$test" || CODE=1
-                    done
+    while read test
+    do
+        [[ -z "$test" ]] || runTest "$test" || CODE=1
+    done < <(echo "$TESTS")
     return "$CODE"
 }
 
