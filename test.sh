@@ -416,12 +416,20 @@ function testJqLogWorks {
 
 function testNoNakedJq {
     # We should be using jqLog rather than jq
+    NAKERR=0
     for file in *.sh
     do
-        NAKED=$(grep "^[^#].*jq[^L]" < "$file")
-        [[ -z "$NAKED" ]] || [[ "x$file" = "xcommon.sh" ]] ||
-            fail "Please use jqLog instead of jq in $file ($NAKED)"
+        if [[ ! "$file" = "common.sh" ]]
+        then
+            NAKED=$(grep "^[^#]*jq[^L]" < "$file")
+            if [[ -n "$NAKED" ]]
+            then
+                fail "Please use jqLog in $file ($NAKED)"
+                NAKERR=1
+            fi
+        fi
     done
+    return "$NAKERR"
 }
 
 # Test invocation
