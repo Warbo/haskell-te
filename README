@@ -1,0 +1,30 @@
+# ML4HS: Machine Learning for Haskell #
+
+http://chriswarbo.net/git/ml4hs
+
+ML4HS is a wrapper around the QuickSpec system. QuickSpec takes a list of
+Haskell expressions (functions, constants, etc., referred to as a *theory*) and
+uses random testing to find equations relating them. ML4HS can automatically
+create theories from either a Hackage package or a directory containing a Cabal
+file.
+
+In addition, ML4HS can generate *multiple* theories from the same package;
+splitting up the expressions based on the similarity of their definitions.
+We do this by:
+
+ 1) Getting ASTs for each exported name, using a GHC plugin.
+ 2) Extracting a set of numbers (known as *features*) from each AST.
+ 3) Performing k-means clustering on these features, to group together names
+    with similar definitions.
+ 4) Generating a theory for each cluster.
+
+The intention is to run QuickSpec multiple times on small theories, rather than
+once on a large theory, since its algorithms don't scale very well.
+
+# Dependencies #
+
+ML4HS itself is mostly a bunch of scripts for plugging together other
+components. It's recommended to use the cross-platform Nix package manager to
+tie all of these dependencies together, in which case you can use the Nix
+configuration at http://chriswarbo.net/git/haskell-te to instantiate ML4HS with
+all of its dependencies.
