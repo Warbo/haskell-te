@@ -386,7 +386,8 @@ function testShellCheck {
     for file in *.sh
     do
         # SC1008 complains that #!/usr/bin/env nix-shell is unknown
-        shellcheck -s bash -e SC1008 "$file" || SCERR=1
+        # SC2016 complains that $foo won't be expanded in "jq '$foo'"
+        shellcheck -s bash -e SC1008 -e SC2016 "$file" || SCERR=1
     done
     return "$SCERR"
 }
@@ -399,10 +400,16 @@ function runTest {
 
 function runTests {
     CODE=0
-    getTests | while read test
-               do
-                   runTest "$test" || CODE=1
-               done
+    if [[ -z "$1" ]]
+    then
+        TESTS=$(getTests)
+    else
+        TESTS=$(getTests | grep "$1")
+    fi
+    echo "$TESTS" | while read test
+                    do
+                        [[ -z "$test" ]] || runTest "$test" || CODE=1
+                    done
     return "$CODE"
 }
 
@@ -410,4 +417,4 @@ function runTests {
 # just delete it whenever you like.
 mkdir -p test-data
 
-runTests
+runTests "$1"
