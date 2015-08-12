@@ -10,9 +10,9 @@ function replLines {
     do
         if echo "$LINE" | grep '^ ' > /dev/null
         then
-            printf  " ${LINE}"
+            printf  " %s" "$LINE"
         else
-            printf "\n${LINE}"
+            printf "\n%s" "$LINE"
         fi
     done
 }
