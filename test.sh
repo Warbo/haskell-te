@@ -4,10 +4,12 @@ shopt -s nullglob
 source common.sh
 
 # Simple test suite for ML4HS:
-#  - Given no arguments, all tests will run
-#  - Given a regex as argument, only matching tests will be called
+#  - Given no arguments, all tests will be run
+#  - Given a regex as argument, only matching tests will be run
+#  - Only failures are reported; no failure == success
 #  - Intermediate results are cached in test-data/
-#  - There is no cache invalidation, so just delete the directory as needed
+#  - stderr and execution traces are written to test-data/debug
+#  - There is no cache invalidation, so just delete test-data as needed
 #  - Functions with names beginning with "test" will be called automatically
 #  - Functions with names beginning with "testPkg" will be called automatically
 #    with a selection of package names as their first argument
@@ -15,7 +17,7 @@ source common.sh
 # Assertion functions
 
 function fail {
-    [[ "$#" -eq 0 ]] || echo "FAIL $*"
+    [[ "$#" -eq 0 ]] || echo "FAIL $*" >> /dev/stderr
     CODE=1
     return 1
 }
@@ -37,7 +39,7 @@ function assertNotEmpty {
 }
 
 function assertJsonNotEmpty {
-    COUNT=$(jqLog -r "length")
+    COUNT=$(jq -r "length")
     [[ "$COUNT" -gt 0 ]] || fail "$1"
 }
 
@@ -100,28 +102,28 @@ function getRawData {
 function getTypeCmd {
     F="test-data/$1.typeCmd"
     [[ ! -e "$F" ]] &&
-        getRawData "$1" | jqLog -r '.cmd' > "$F"
+        getRawData "$1" | jq -r '.cmd' > "$F"
     cat "$F"
 }
 
 function getTypeResults {
     F="test-data/$1.typeResults"
     [[ ! -e "$F" ]] &&
-        getRawData "$1" | jqLog -r '.result' > "$F"
+        getRawData "$1" | jq -r '.result' > "$F"
     cat "$F"
 }
 
 function getScopeCmd {
     F="test-data/$1.scopeCmd"
     [[ ! -e "$F" ]] &&
-        getRawData "$1" | jqLog -r '.scopecmd' > "$F"
+        getRawData "$1" | jq -r '.scopecmd' > "$F"
     cat "$F"
 }
 
 function getScopeResult {
     F="test-data/$1.scopeResult"
     [[ ! -e "$F" ]] &&
-        getRawData "$1" | jqLog -r '.scoperesult' > "$F"
+        getRawData "$1" | jq -r '.scoperesult' > "$F"
     cat "$F"
 }
 
@@ -252,14 +254,14 @@ function pkgTestGetAsts {
 }
 
 function pkgTestAstFields {
-       COUNT=$(getAsts "$1" | jqLog -c 'length')
-        PKGS=$(getAsts "$1" | jqLog -c 'map(.package)  | length')
-        MODS=$(getAsts "$1" | jqLog -c 'map(.module)   | length')
-       NAMES=$(getAsts "$1" | jqLog -c 'map(.name)     | length')
-        ASTS=$(getAsts "$1" | jqLog -c 'map(.ast)      | length')
-       TYPES=$(getAsts "$1" | jqLog -c 'map(.type)     | length')
-     ARITIES=$(getAsts "$1" | jqLog -c 'map(.arity)    | length')
-    FEATURES=$(getAsts "$1" | jqLog -c 'map(.features) | length')
+       COUNT=$(getAsts "$1" | jq -c 'length')
+        PKGS=$(getAsts "$1" | jq -c 'map(.package)  | length')
+        MODS=$(getAsts "$1" | jq -c 'map(.module)   | length')
+       NAMES=$(getAsts "$1" | jq -c 'map(.name)     | length')
+        ASTS=$(getAsts "$1" | jq -c 'map(.ast)      | length')
+       TYPES=$(getAsts "$1" | jq -c 'map(.type)     | length')
+     ARITIES=$(getAsts "$1" | jq -c 'map(.arity)    | length')
+    FEATURES=$(getAsts "$1" | jq -c 'map(.features) | length')
     [[ $COUNT -eq $PKGS     ]] || fail "$FUNCNAME '$1' pkgs"
     [[ $COUNT -eq $MODS     ]] || fail "$FUNCNAME '$1' mods"
     [[ $COUNT -eq $NAMES    ]] || fail "$FUNCNAME '$1' names"
@@ -270,7 +272,7 @@ function pkgTestAstFields {
 }
 
 function pkgTestAstLabelled {
-    getAsts "$1" | jqLog -c '.[] | .package' |
+    getAsts "$1" | jq -c '.[] | .package' |
         while read -r LINE
         do
             [[ "x$LINE" = "x\"$1\"" ]] || fail "$FUNCNAME $1 $LINE"
@@ -278,7 +280,7 @@ function pkgTestAstLabelled {
 }
 
 function pkgTestAllTypeCmdPresent {
-    getAsts "$1" | jqLog -c -r '.[] | .module + "." + .name' |
+    getAsts "$1" | jq -c -r '.[] | .module + "." + .name' |
         while read -r LINE
         do
             getTypeCmd "$1" | grep "('$LINE)" > /dev/null ||
@@ -287,7 +289,7 @@ function pkgTestAllTypeCmdPresent {
 }
 
 function pkgTestNoCoreNames {
-    COUNT=$(getAsts "$1" | jqLog -r '.[] | .name' | count '\.\$')
+    COUNT=$(getAsts "$1" | jq -r '.[] | .name' | count '\.\$')
     [[ "$COUNT" -eq 0 ]] ||
         fail "ASTs for '$1' contain Core names beginning with \$"
 }
@@ -301,7 +303,7 @@ function countCommas {
 }
 
 function pkgTestFeaturesUniform {
-    RAWFEATURES=$(getFeatures "$1" | jqLog -r '.[] | .features' | grep ",")
+    RAWFEATURES=$(getFeatures "$1" | jq -r '.[] | .features' | grep ",")
     COUNT=$(echo "$RAWFEATURES" | head -n 1 | countCommas)
     echo "$RAWFEATURES" |
         while read LINE
@@ -317,7 +319,7 @@ function pkgTestFeaturesUniform {
 function pkgTestHaveAllClusters {
     # FIXME: Make cluster number configurable (eg. so we can have it vary based
     # on the number of definitions)
-    COUNT=$(getClusters "$1" | jqLog -r 'length')
+    COUNT=$(getClusters "$1" | jq -r 'length')
     if [[ "$COUNT" -ne 4 ]]
     then
         fail "Found $COUNT clusters for '$1' instead of 4"
@@ -325,8 +327,8 @@ function pkgTestHaveAllClusters {
 }
 
 function pkgTestClusterFields {
-    COUNT=$(getClusters "$1" | jqLog -r '.[] | length')
-    getClusters "$1" | jqLog 'map(select(has("")))'
+    COUNT=$(getClusters "$1" | jq -r '.[] | length')
+    getClusters "$1" | jq 'map(select(has("")))'
 }
 
 function pkgTestProjectsMade {
@@ -344,6 +346,7 @@ function pkgTestNixFilesMade {
     NIXED=$(getNixedProjects "$1") || return 1
     while read PROJECT
     do
+        [[ -n "$PROJECT" ]] || continue
         if [[ ! -e "$PROJECT" ]]
         then
             fail "'$PROJECT' not found for '$1'"
@@ -359,7 +362,7 @@ function pkgTestNixProjectsRun {
     getNixedProjects "$1" | ./run-projects.sh
 }
 
-# Test functions
+# Tests requiring no arguments
 
 function testPackages {
     # Run all package tests on all test packages
@@ -368,7 +371,9 @@ function testPackages {
     do
         while read test
         do
+            OLDPTH="$PTH"
             runTest "$test" "$pkg" || PKGERR=1
+            PTH="$OLDPTH"
         done < <(getPkgTests)
     done < <(getTestPkgs)
     return "$PKGERR"
@@ -378,7 +383,7 @@ function testTagging {
     INPUT1='[{"name": "n1", "module": "M1"}, {"name": "n2", "module": "M2"}]'
     INPUT2='[{"name": "n2", "module": "M2", "foo": "bar"}]'
     RESULT=$(echo "$INPUT1" | ./tagAsts.sh <(echo "$INPUT2"))
-    TYPE=$(echo "$RESULT" | jqLog 'type')
+    TYPE=$(echo "$RESULT" | jq 'type')
     [[ "x$TYPE" == 'x"array"' ]] || fail "tagAsts.sh gave '$TYPE' not array"
 }
 
@@ -396,65 +401,94 @@ function testShellCheck {
     return "$SCERR"
 }
 
-function testJqLogLogs {
-    COUNT=0
-    while read line
-    do
-        COUNT=$((COUNT + 1))
-        echo "$line" | grep "^\[jqLog fibble]: " > /dev/null
-    done < <(jqLog fibble 2>&1)
-    [[ "$COUNT" -gt 0 ]] || fail "Errors got lost"
-}
-
-function testJqLogWorks {
-    X=$(echo '{"foo": 10, "bar": 20}' | jqLog '.foo')
-    [[ "$X" -eq 10 ]] || fail "jqLog expressions fail ($X)"
-
-    X=$(echo -e '{"foo": 10}\n{"foo": 11}' | jqLog -c -s 'map(.foo)')
-    [[ "$X" = "[10,11]" ]] || fail "jqLog arguments fail ($X)"
-}
-
-function testNoNakedJq {
-    # We should be using jqLog rather than jq
-    NAKERR=0
+function testCommonSourced {
+    # All scripts should source common.sh, among other things to enable tracing
+    ERR=0
     for file in *.sh
     do
-        if [[ ! "$file" = "common.sh" ]]
+        [[ "$file" = "common.sh" ]]                         ||
+            grep "^source common.sh$" < "$file" > /dev/null ||
+            ERR=1
+    done
+    return "$ERR"
+}
+
+function testShebangs {
+    ERR=0
+    for file in *.sh
+    do
+        SHEBANGS=$(grep "^#!" < "$file")
+        if echo "$SHEBANGS" | grep "/bin/sh" > /dev/null
         then
-            NAKED=$(grep "^[^#]*jq[^L]" < "$file")
-            if [[ -n "$NAKED" ]]
-            then
-                fail "Please use jqLog in $file ($NAKED)"
-                NAKERR=1
-            fi
+            fail "$file won't work on Debian. Use #!/usr/bin/env bash"
+            ERR=1
+        fi
+        if echo "$SHEBANGS" | grep "/bin/bash" > /dev/null
+        then
+            fail "$file won't work on NixOS. Use #!/usr/bin/env bash"
+            ERR=1
         fi
     done
-    return "$NAKERR"
+    return "$ERR"
+}
+
+function testStderr {
+    ERR=0
+    for file in *.sh
+    do
+        if grep "[^>]>[ ]*/dev/stderr" < "$file" > /dev/null
+        then
+            fail "$file overwrites stderr instead of appending"
+            ERR=1
+        fi
+    done
+    return "$ERR"
 }
 
 # Test invocation
 
+function traceTest {
+    # Separate our stderr from the previous and give a timestamp
+    echo -e "\n\n" >> /dev/stderr
+    date           >> /dev/stderr
+
+    # `set -x` enables tracing for this script, DEBUG enables it for anything
+    # which sources common.sh
+    export DEBUG=1
+    set -x
+    "$@"; PASS=$?
+    set +x
+    export DEBUG=""
+    return "$PASS"
+}
+
 function runTest {
-    { "$@" && echo "PASS $*"; } || { echo "FAIL $*"; return 1; }
+    # Log stderr in test-data/debug. On failure, send "FAIL" and the debug
+    # path to stdout
+    PTH=$(echo "test-data/debug/$*" | sed 's/ //g')
+    traceTest "$@" 2>> "$PTH" ||
+        { echo "FAIL $*, see $PTH"; return 1; }
 }
 
 function runTests {
+    # Overall script exit code
     CODE=0
+
+    # Handle a regex, if we've been given one
     if [[ -z "$1" ]]
     then
         TESTS=$(getTests)
     else
         TESTS=$(getTests | grep "$1")
     fi
+
     while read test
     do
+        # $test is either empty, successful or we're exiting with an error
         [[ -z "$test" ]] || runTest "$test" || CODE=1
     done < <(echo "$TESTS")
     return "$CODE"
 }
 
-# We cache intermediate results in test-data. We have no cache invalidation,
-# just delete it whenever you like.
-mkdir -p test-data
-
+mkdir -p test-data/debug
 runTests "$1"
