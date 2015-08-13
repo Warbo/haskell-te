@@ -1,16 +1,17 @@
 #!/usr/bin/env bash
 set -e
+source common.sh
 
 # Extract ASTs from a Cabal package
 
 function packageName {
-    echo "Looking for .cabal files in '$DIR'" > /dev/stderr
+    echo "Looking for .cabal files in '$DIR'" >> /dev/stderr
     (shopt -s nullglob
      for CBL in "$DIR"/*.cabal
      do
-         echo "Found '$CBL' in '$DIR'"  > /dev/stderr
+         echo "Found '$CBL' in '$DIR'"  >> /dev/stderr
          NAME=$(grep -i "name[ ]*:" < "$CBL" | cut -d ':' -f 2 | tr -d '[:space:]')
-         echo "Project name is '$NAME'" > /dev/stderr
+         echo "Project name is '$NAME'" >> /dev/stderr
          echo "$NAME"
      done)
 }
@@ -18,7 +19,7 @@ function packageName {
 function runPlugin {
     nix-shell --show-trace \
               -E "with import <nixpkgs> {}; import ./ghcWithPlugin.nix \"$PKG\"" \
-              --run "cd $DIR; $BASE/runPlugin.sh"
+              --run "./runPlugin.sh $DIR"
 }
 
 function format {
@@ -34,8 +35,6 @@ function format {
 [[ "$#" -eq 0 ]] && echo "Please specify a Cabal project directory" && exit 1
 
 DIR="$1"
-RELBASE=$(dirname "$0")
-BASE=$(readlink -f "$RELBASE")
 PKG=$(packageName)
 
 runPlugin | format
