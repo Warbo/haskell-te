@@ -3,17 +3,18 @@
 # Runs AstPlugin.
 #
 # This script makes the following assumptions:
-#  - The current working directory contains a Cabal project
+#  - The path to a Cabal project is given as an argument
 #  - All of the project's dependencies are in the database of ghc-pkg
 #  - AstPlugin is also in the database of ghc-pkg
 
-# All of these requirements can be satisfied by running in nix-shell
+# The dependency requirements can be satisfied by running in nix-shell
 
 set -e
+source common.sh
 
 function getAsts {
     RESULT=$(build)
-    { echo "$RESULT" | grep -v "^{" > /dev/stderr; } || true
+    { echo "$RESULT" | grep -v "^{" >> /dev/stderr; } || true
       echo "$RESULT" | grep    "^{"
 }
 
@@ -21,9 +22,13 @@ function build {
     # Override pkg db to get project's dependencies and AstPlugin
     GHC_PKG=$(ghc-pkg list | head -n 1 | tr -d ':')
     OPTIONS="-package-db=$GHC_PKG -package AstPlugin -fplugin=AstPlugin.Plugin"
-    # NOTE: GHC plugins write to stderr!
-    cabal --ghc-options="$OPTIONS" build 1>/dev/null 2>&1
+    # NOTE: We swap stderr (2) and stdout (1) via a temporary fd (3), since GHC
+    # plugins write to stderr
+    cabal --ghc-options="$OPTIONS" build 3>&2 2>&1 1>&3
 }
 
-cabal configure > /dev/stderr
+[[ "$#" -eq 0 ]] && echo "runPlugin.sh needs a directory" && exit 1
+
+cd "$1"
+cabal configure >> /dev/stderr
 getAsts
