@@ -1,4 +1,6 @@
-#!/bin/sh
+#!/usr/bin/env bash
+
+source common.sh
 
 # Use cabal2nix to give every Cabal project a Nix file
 # We run the loop inside nix-shell to save setup/teardown time

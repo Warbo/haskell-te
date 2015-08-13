@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/usr/bin/env bash
+source common.sh
 
 nix-shell --show-trace -p mlspec --run "MLSpec $1" |
     grep "^PROJECT" |

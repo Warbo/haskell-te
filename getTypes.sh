@@ -1,6 +1,8 @@
 #! /usr/bin/env nix-shell
 #! nix-shell -i bash -p jq
 
+source common.sh
+
 # Monomorphic types come in via stdin
 
 function trim {

@@ -56,10 +56,10 @@ function extractClusters {
     # Chop the final "clusterX" column off the Weka output
     LINES=$(getArff | wc -l)
 
-    showClusters                     |
-        grep -A "$LINES" "^@data"    |
-        grep -o "cluster[0-9]*$"     |
-        jq -R '.'                    |
+    showClusters                  |
+        grep -A "$LINES" "^@data" |
+        grep -o "cluster[0-9]*$"  |
+        jq -R '.'                 |
         jq -s --argfile asts <(echo "$INLINES") \
            '. | to_entries | map($asts[.key] + {cluster: .value})'
 }

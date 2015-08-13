@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -e
+source common.sh
 
 # Main ML4HS script
 
