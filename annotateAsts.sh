@@ -2,6 +2,7 @@
 #! nix-shell -p jq -i bash
 
 set -e
+source common.sh
 
 INPUT=$(cat)
 RAWASTS=$(echo  "$INPUT" | jq -c '.asts')
