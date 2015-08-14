@@ -1,3 +1,8 @@
 #!/usr/bin/env bash
 
-[[ -n "$DEBUG" ]] && set -x
+if [[ -n "$DEBUG" ]]
+then
+    set -x
+else
+    set +x
+fi

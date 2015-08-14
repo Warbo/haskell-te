@@ -335,8 +335,11 @@ function pkgTestHaveAllClusters {
 }
 
 function pkgTestClusterFields {
-    COUNT=$(getClusters "$1" | jq -r '.[] | length')
-    getClusters "$1" | jq 'map(select(has("")))'
+    for field in arity name module type package ast features cluster
+    do
+        RESULT=$(getClusters "$1" | jq "map(map(has(\"$field\")) | all) | all")
+        [[ "x$RESULT" = "xtrue" ]] || fail "$1 clusters don't have $field"
+    done
 }
 
 function pkgTestProjectsMade {
@@ -447,11 +450,12 @@ function traceTest {
 
     # `set -x` enables tracing for this script, DEBUG enables it for anything
     # which sources common.sh
+    OLDDEBUG=$DEBUG
     export DEBUG=1
-    set -x
+    source common.sh
     "$@"; PASS=$?
-    set +x
-    export DEBUG=""
+    export DEBUG="$OLDDEBUG"
+    source common.sh
     return "$PASS"
 }
 
