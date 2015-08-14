@@ -17,7 +17,7 @@ source common.sh
 # Assertion functions
 
 function fail {
-    [[ "$#" -eq 0 ]] || echo "FAIL $*" >> /dev/stderr
+    [[ "$#" -eq 0 ]] || echo "FAIL $*"
     CODE=1
     return 1
 }
@@ -66,6 +66,14 @@ function getPkgTests {
 function getTests {
     # Get a list of all test functions
     getFunctions | grep '^test'
+    # Apply each package test to each package
+    while read pkg
+    do
+        while read test
+        do
+            echo "$test $pkg"
+        done < <(getPkgTests)
+    done < <(getTestPkgs)
 }
 
 function getTestPkgs {
@@ -364,21 +372,6 @@ function pkgTestNixProjectsRun {
 
 # Tests requiring no arguments
 
-function testPackages {
-    # Run all package tests on all test packages
-    PKGERR=0
-    while read pkg
-    do
-        while read test
-        do
-            OLDPTH="$PTH"
-            runTest "$test" "$pkg" || PKGERR=1
-            PTH="$OLDPTH"
-        done < <(getPkgTests)
-    done < <(getTestPkgs)
-    return "$PKGERR"
-}
-
 function testTagging {
     INPUT1='[{"name": "n1", "module": "M1"}, {"name": "n2", "module": "M2"}]'
     INPUT2='[{"name": "n2", "module": "M2", "foo": "bar"}]'
@@ -465,9 +458,9 @@ function traceTest {
 function runTest {
     # Log stderr in test-data/debug. On failure, send "FAIL" and the debug
     # path to stdout
-    PTH=$(echo "test-data/debug/$*" | sed 's/ //g')
-    traceTest "$@" 2>> "$PTH" ||
-        { echo "FAIL $*, see $PTH"; return 1; }
+    read -ra CMD <<<"$@" # Re-parse our args to split packages from functions
+    PTH=$(echo "test-data/debug/$*" | sed 's/ /_/g')
+    traceTest "${CMD[@]}" 2>> "$PTH" || fail "$* failed, see $PTH"
 }
 
 function runTests {
