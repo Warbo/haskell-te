@@ -7,7 +7,7 @@ runCommand
     # Make it easy to run Weka
     mkdir -p "$out/bin"
     cat <<'EOF' > "$out/bin/weka-cli"
-    #!bin/sh
+    #!/usr/bin/env bash
     ${jre}/bin/java -Xmx1000M -cp ${weka}/share/weka/weka.jar "$@"
     EOF
     chmod +x "$out/bin/weka-cli"

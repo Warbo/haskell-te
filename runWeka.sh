@@ -1,5 +1,4 @@
-#! /usr/bin/env nix-shell
-#! nix-shell -p 'import ./weka-cli.nix' -p jq -p bash -i bash
+#!/usr/bin/env bash
 
 set -e
 source common.sh
