@@ -203,12 +203,18 @@ function getNixedProjects {
     if [[ ! -e "test-data/nixed/$1" ]]
     then
         cp -r "test-data/projects/$1" "test-data/nixed/$1"
-
-        ./nix-projects.sh < <(for PROJECT in "test-data/nixed/$1"/*
-                              do
-                                  readlink -f "$PROJECT"
-                              done) || return 1
+        ./nix-projects.sh < <(getNixDirs "$1") || return 1
     fi
+    getNixDirs "$1"
+}
+
+function getNixDirs {
+    F="test-data/$1.nixed"
+    [[ ! -e "$F" ]] || { cat "$F"; return 0; }
+    for PROJECT in "test-data/nixed/$1"/*
+    do
+        readlink -f "$PROJECT"
+    done | tee "$F"
 }
 
 # Tests requiring a package as argument

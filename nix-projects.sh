@@ -6,12 +6,12 @@ source common.sh
 # We run the loop inside nix-shell to save setup/teardown time
 PROJECTS=$(cat)
 nix-shell -p cabal2nix -p bash --run "bash" <<EOF
+source common.sh
 CODE=0
 while read PROJECT
 do
     cd "\$PROJECT"
     cabal2nix --shell ./. > shell.nix || CODE=1
-    cd ..
 done < <(echo "$PROJECTS")
 exit "\$CODE"
 EOF
