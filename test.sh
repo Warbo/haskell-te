@@ -198,7 +198,7 @@ function getProjects {
 }
 
 function getNixedProjects {
-    getProjects "$1" || return 1
+    getProjects "$1" > /dev/null || return 1
     mkdir -p test-data/nixed
     if [[ ! -e "test-data/nixed/$1" ]]
     then
@@ -334,9 +334,9 @@ function pkgTestHaveAllClusters {
     # FIXME: Make cluster number configurable (eg. so we can have it vary based
     # on the number of definitions)
     COUNT=$(getClusters "$1" | jq -r 'length')
-    if [[ "$COUNT" -ne 4 ]]
+    if [[ "$COUNT" -lt 1 || "$COUNT" -gt 4 ]]
     then
-        fail "Found $COUNT clusters for '$1' instead of 4"
+        fail "Found $COUNT clusters for '$1' (should be 1, 2, 3 or 4)"
     fi
 }
 
