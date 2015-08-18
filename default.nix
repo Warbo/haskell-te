@@ -19,10 +19,6 @@ with import <nixpkgs> {};
     rev    = import ./ml4hs.rev.nix;
     sha256 = import ./ml4hs.sha256.nix;
   },
-  ML4HSHelper ? {
-    rev    = import ./ML4HSHelper.rev.nix;
-    sha256 = import ./ML4HSHelper.sha256.nix;
-  },
   mlspec ? {
     rev    = import ./mlspec.rev.nix;
     sha256 = import ./mlspec.sha256.nix;
@@ -34,6 +30,10 @@ with import <nixpkgs> {};
   AstPlugin ? {
     rev    = import ./AstPlugin.rev.nix;
     sha256 = import ./AstPlugin.sha256.nix;
+  },
+  getDeps ? {
+    rev    = import ./getDeps.rev.nix;
+    sha256 = import ./getDeps.sha256.nix;
   }
 }:
 
@@ -119,11 +119,6 @@ in (hsPkgs.override { overrides = (self: (super: {
     url  = http://chriswarbo.net/git/ml4hs.git;
   });
 
-  ML4HSHelper = self.callPackage (mkSrc ML4HSHelper {
-    name = "ML4HSHelper";
-    url  = http://chriswarbo.net/git/ml4hs-helper.git;
-  }) {};
-
   mlspec = self.callPackage (mkSrc mlspec {
     name   = "mlspec";
     url    = http://chriswarbo.net/git/mlspec.git;
@@ -134,5 +129,11 @@ in (hsPkgs.override { overrides = (self: (super: {
     url  =  http://chriswarbo.net/git/ast-plugin.git;
   }) {
     HS2AST = self.HS2AST;
+  };
+
+  getDeps = self.callPackage (mkSrc getDeps {
+    name = "getDeps";
+    url  = https://github.com/ouanixi/getDeps.git;
+  }) {
   };
 })); })
