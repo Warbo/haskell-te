@@ -217,6 +217,18 @@ function getNixDirs {
     done | tee "$F"
 }
 
+function getEquations {
+    F="test-data/$1.equations"
+    [[ ! -e "$F" ]] || { cat "$F"; return 0; }
+    if getNixedProjects "$1" | ./run-projects.sh > "$F"
+    then
+        cat "$F"
+        return 0
+    fi
+    fail "Couldn't get equations for '$1'"
+    return 1
+}
+
 # Tests requiring a package as argument
 
 function pkgTestGetRawJson {
@@ -375,8 +387,23 @@ function pkgTestNixFilesMade {
     done < <(echo "$NIXED")
 }
 
-function pkgTestNixProjectsRun {
-    getNixedProjects "$1" | ./run-projects.sh
+function pkgTestNixQuickCheckFix {
+    while read -r PROJECT
+    do
+        [[ -n "$PROJECT" ]] || continue
+        if [[ ! -f "$PROJECT/quickcheck-fix.nix" ]]
+        then
+            fail "'$PROJECT/quickcheck-fix.nix' not found"
+        fi
+        if ! grep "import ./quickcheck-fix.nix" < "$PROJECT/shell.nix" > /dev/null
+        then
+            fail "'$PROJECT/shell.nix' doesn't import quickcheck-fix.nix"
+        fi
+    done < <(getNixedProjects "$1")
+}
+
+function pkgTestEquations {
+    getEquations "$1" || fail "Couldn't get equations for '$1'"
 }
 
 # Tests requiring no arguments
