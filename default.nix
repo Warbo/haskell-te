@@ -75,9 +75,6 @@ let # Generates a .nix file from a .cabal file, using the cabal2nix command
 in (hsPkgs.override { overrides = (self: (super: {
   # DEPENDENCIES
 
-  # We need < 0.16
-  haskell-src-exts = self.callPackage (import ./haskell-src-exts.nix) {};
-
   # Hackage version is buggy
   structural-induction = haskell.lib.dontCheck (self.callPackage (nixFromCabal {
     name = "structural-induction-src";
