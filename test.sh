@@ -203,7 +203,7 @@ function getNixedProjects {
     if [[ ! -e "test-data/nixed/$1" ]]
     then
         cp -r "test-data/projects/$1" "test-data/nixed/$1"
-        ./nix-projects.sh < <(getNixDirs "$1") || return 1
+        ./nix-projects.sh "test-data/nixed/$1" || return 1
     fi
     getNixDirs "$1"
 }

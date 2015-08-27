@@ -7,4 +7,4 @@ stdenv.lib.overrideDerivation haskellPackages.QuickCheck (old: {
     rev    = "e9f8708ba1";
     sha256 = "01gaixgz6jr0xz6xc3mwm5scsjymrg2yi5z9gcr18bj5dnqm468z";
   };
-});
+})
