@@ -34,6 +34,10 @@ with import <nixpkgs> {};
   getDeps ? {
     rev    = import ./getDeps.rev.nix;
     sha256 = import ./getDeps.sha256.nix;
+  },
+  ML4HSFE ? {
+    rev    = import ./ML4HSFE.rev.nix;
+    sha256 = import ./ML4HSFE.sha256.nix;
   }
 }:
 
@@ -133,4 +137,9 @@ in (hsPkgs.override { overrides = (self: (super: {
     url  = https://github.com/ouanixi/getDeps.git;
   }) {
   };
+
+  ML4HSFE = self.callPackage (mkSrc ML4HSFE {
+    name = "ML4HSFE";
+    url  = http://chriswarbo.net/git/ml4hsfe.git;
+  }) {};
 })); })
