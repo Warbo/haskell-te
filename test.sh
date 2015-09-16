@@ -78,11 +78,7 @@ function getTests {
 
 function getTestPkgs {
     cat <<EOF
-data-stringmap
-MissingH
-attoparsec
-directory
-quickspec
+list-extras
 EOF
 }
 
