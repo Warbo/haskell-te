@@ -3,8 +3,9 @@
 RESULT=""
 
 # Test each package we care about (dependencies will take care of themselves)
-for pkg in ArbitraryHaskell treefeatures HS2AST ml4hs mlspec AstPlugin getDeps
+for FILE in *.rev.nix
 do
+    pkg=$(basename "$FILE" .rev.nix)
     RESULT="${RESULT}Testing $pkg: "
     if ./one.sh "$pkg"
     then
