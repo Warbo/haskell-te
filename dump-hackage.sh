@@ -9,7 +9,7 @@ DIR=$(mktemp -d)
  do
      nix-shell --show-trace \
                -p haskellPackages.cabal-install \
-               --run "cabal get $PKG" >> /dev/stderr
+               --run "cabal update; cabal get $PKG" >> /dev/stderr
  done)
 
 (shopt -s nullglob
