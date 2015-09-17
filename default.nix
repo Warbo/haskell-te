@@ -8,36 +8,36 @@ with import <nixpkgs> {};
   hsPkgs ? haskellPackages,
 
   treefeatures ? {
-    rev    = import ./treefeatures.rev.nix;
-    sha256 = import ./treefeatures.sha256.nix;
+    rev    = import ./components/treefeatures.rev.nix;
+    sha256 = import ./components/treefeatures.sha256.nix;
   },
   HS2AST ? {
-    rev    = import ./HS2AST.rev.nix;
-    sha256 = import ./HS2AST.sha256.nix;
+    rev    = import ./components/HS2AST.rev.nix;
+    sha256 = import ./components/HS2AST.sha256.nix;
   },
   ml4hs ? {
-    rev    = import ./ml4hs.rev.nix;
-    sha256 = import ./ml4hs.sha256.nix;
+    rev    = import ./components/ml4hs.rev.nix;
+    sha256 = import ./components/ml4hs.sha256.nix;
   },
   mlspec ? {
-    rev    = import ./mlspec.rev.nix;
-    sha256 = import ./mlspec.sha256.nix;
+    rev    = import ./components/mlspec.rev.nix;
+    sha256 = import ./components/mlspec.sha256.nix;
   },
   ArbitraryHaskell ? {
-    rev    = import ./ArbitraryHaskell.rev.nix;
-    sha256 = import ./ArbitraryHaskell.sha256.nix;
+    rev    = import ./components/ArbitraryHaskell.rev.nix;
+    sha256 = import ./components/ArbitraryHaskell.sha256.nix;
   },
   AstPlugin ? {
-    rev    = import ./AstPlugin.rev.nix;
-    sha256 = import ./AstPlugin.sha256.nix;
+    rev    = import ./components/AstPlugin.rev.nix;
+    sha256 = import ./components/AstPlugin.sha256.nix;
   },
   getDeps ? {
-    rev    = import ./getDeps.rev.nix;
-    sha256 = import ./getDeps.sha256.nix;
+    rev    = import ./components/getDeps.rev.nix;
+    sha256 = import ./components/getDeps.sha256.nix;
   },
   ML4HSFE ? {
-    rev    = import ./ML4HSFE.rev.nix;
-    sha256 = import ./ML4HSFE.sha256.nix;
+    rev    = import ./components/ML4HSFE.rev.nix;
+    sha256 = import ./components/ML4HSFE.sha256.nix;
   }
 }:
 

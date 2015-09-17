@@ -3,7 +3,7 @@
 RESULT=""
 
 # Test each package we care about (dependencies will take care of themselves)
-for FILE in *.rev.nix
+for FILE in components/*.rev.nix
 do
     pkg=$(basename "$FILE" .rev.nix)
     RESULT="${RESULT}Testing $pkg: "
