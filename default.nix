@@ -1,128 +1,45 @@
 # Theory Exploration tools for Haskell; packaged for Nix
 with import <nixpkgs> {};
 
-# Allow package versions (git revisions) to be overridden, so we can reproduce
-# old experiments
-{
-  # Haskell packages to use; eg. haskell.packages.ghc784 for GHC 7.8.4
-  hsPkgs ? haskellPackages,
+# Define some helper functions
+let
 
-  treefeatures ? {
-    rev    = import ./components/treefeatures.rev.nix;
-    sha256 = import ./components/treefeatures.sha256.nix;
-  },
-  HS2AST ? {
-    rev    = import ./components/HS2AST.rev.nix;
-    sha256 = import ./components/HS2AST.sha256.nix;
-  },
-  ml4hs ? {
-    rev    = import ./components/ml4hs.rev.nix;
-    sha256 = import ./components/ml4hs.sha256.nix;
-  },
-  mlspec ? {
-    rev    = import ./components/mlspec.rev.nix;
-    sha256 = import ./components/mlspec.sha256.nix;
-  },
-  ArbitraryHaskell ? {
-    rev    = import ./components/ArbitraryHaskell.rev.nix;
-    sha256 = import ./components/ArbitraryHaskell.sha256.nix;
-  },
-  AstPlugin ? {
-    rev    = import ./components/AstPlugin.rev.nix;
-    sha256 = import ./components/AstPlugin.sha256.nix;
-  },
-  getDeps ? {
-    rev    = import ./components/getDeps.rev.nix;
-    sha256 = import ./components/getDeps.sha256.nix;
-  },
-  ML4HSFE ? {
-    rev    = import ./components/ML4HSFE.rev.nix;
-    sha256 = import ./components/ML4HSFE.sha256.nix;
-  }
+# Load default version from separate files (makes it easier to programmatically
+# replace them)
+defaults = name: {
+  rev    = import (./components + ("/" + name + ".rev.nix"));
+  sha256 = import (./components + ("/" + name + ".sha256.nix"));
+};
+
+# Merge or override defaults with given arguments. An sha256 attribute implies
+# it's a set of fetchgit arguments.
+mkSrc = given: defs: if (given ? sha256)
+                     then fetchgit (defs // given)
+                     else given;
+
+# Allow package versions (git revisions) to be overridden, so we can reproduce
+# old experiments.
+in {
+  # Haskell packages to use; eg. haskell.packages.ghc784 for GHC 7.8.4
+  hsPkgs           ? haskellPackages,
+
+  # Theory Exploration packages. We'll mix and match these for experiments.
+  ArbitraryHaskell ? defaults "ArbitraryHaskell",
+  AstPlugin        ? defaults "AstPlugin",
+  getDeps          ? defaults "getDeps",
+  HS2AST           ? defaults "HS2AST",
+  ml4hs            ? defaults "ml4hs",
+  ML4HSFE          ? defaults "ML4HSFE",
+  mlspec           ? defaults "mlspec",
+  treefeatures     ? defaults "treefeatures",
 }:
 
-# Define some helper functions
-
-let # Generates a .nix file from a .cabal file, using the cabal2nix command
-    # preConfig and preInstall are run before and after cabal2nix
-    # cbl tells cabal2nix where to look (see cabal2nix documentation)
-    nixFromCabal = {name, src, preConfig ? "", preInstall? "", cbl? "."}:
-      stdenv.mkDerivation {
-        inherit name src;
-        buildInputs    = [ haskellPackages.cabal2nix ];
-        configurePhase = ''
-          (${preConfig}
-           cabal2nix ${cbl} > default.nix)
-        '';
-        installPhase = ''
-          (${preInstall}
-           cp -r . "$out")
-        '';
-      };
-
-    # Script to strip non-ASCII chars from .cabal files (they kill cabal2nix)
-    asciifyCabal = ''
-      for cbl in *.cabal
-      do
-        NAME=$(basename "$cbl" .cabal)
-        mv "$cbl" "$NAME.nonascii"
-        tr -cd '[:print:][:cntrl:]' < "$NAME.nonascii" > "$cbl"
-      done
-    '';
-
-    # Merge or override defaults with given arguments
-    mkSrc = given: defs: if (given ? sha256)
-                         then fetchgit (defs // given)
-                         else given;
-
 # Return a set of packages which includes theory exploration tools
-in (hsPkgs.override { overrides = (self: (super: {
-  # DEPENDENCIES
-
-  # Hackage version is buggy
-  structural-induction = haskell.lib.dontCheck (self.callPackage (nixFromCabal {
-    name = "structural-induction-src";
-    src  = fetchgit {
-      url    = "https://github.com/danr/structural-induction.git";
-      rev    = "f487a8225e";
-      sha256 = "17f5v0xc9lh5505387qws8q2ffsga6435jqm0dgm9rmpx7429wbh";
-    };
-    preConfig = asciifyCabal;
-  }) {});
+(hsPkgs.override { overrides = (self: (super: {
 
   ArbitraryHaskell = self.callPackage (mkSrc ArbitraryHaskell {
-    url = http://chriswarbo.net/git/arbitrary-haskell.git;
-  }) {};
-
-  # THEORY EXPLORATION TOOLS (uses "//" to merge in version arguments)
-
-  hipspec = self.callPackage (nixFromCabal {
-    name = "hipspec-src";
-    src  = mkSrc hipspec {
-      name   = "hipspec-src";
-      url    = https://github.com/danr/hipspec.git;
-    };
-    preConfig = asciifyCabal;
-  }) {};
-
-  treefeatures = self.callPackage (mkSrc treefeatures {
-    name = "tree-features";
-    url  = http://chriswarbo.net/git/tree-features.git;
-  }) {};
-
-  HS2AST = self.callPackage (mkSrc HS2AST {
-    name = "HS2AST";
-    url  = http://chriswarbo.net/git/hs2ast.git;
-  }) {};
-
-  ml4hs = import (mkSrc ml4hs {
-    name = "ml4hs";
-    url  = http://chriswarbo.net/git/ml4hs.git;
-  });
-
-  mlspec = self.callPackage (mkSrc mlspec {
-    name   = "mlspec";
-    url    = http://chriswarbo.net/git/mlspec.git;
+    name = "ArbitraryHaskell";
+    url  = http://chriswarbo.net/git/arbitrary-haskell.git;
   }) {};
 
   AstPlugin = self.callPackage (mkSrc AstPlugin {
@@ -133,13 +50,33 @@ in (hsPkgs.override { overrides = (self: (super: {
   };
 
   getDeps = self.callPackage (mkSrc getDeps {
-    name = "getDeps";
-    url  = https://github.com/ouanixi/getDeps.git;
-  }) {
-  };
+    name  = "getDeps";
+    url   = https://github.com/ouanixi/getDeps.git;
+  }) {};
+
+  HS2AST = self.callPackage (mkSrc HS2AST {
+    name = "HS2AST";
+    url  = http://chriswarbo.net/git/hs2ast.git;
+  }) {};
+
+  ml4hs  = import (mkSrc ml4hs {
+    name = "ml4hs";
+    url  = http://chriswarbo.net/git/ml4hs.git;
+  });
+
+  mlspec = self.callPackage (mkSrc mlspec {
+    name = "mlspec";
+    url  = http://chriswarbo.net/git/mlspec.git;
+  }) {};
 
   ML4HSFE = self.callPackage (mkSrc ML4HSFE {
-    name = "ML4HSFE";
-    url  = http://chriswarbo.net/git/ml4hsfe.git;
+    name  = "ML4HSFE";
+    url   = http://chriswarbo.net/git/ml4hsfe.git;
   }) {};
+
+  treefeatures = self.callPackage (mkSrc treefeatures {
+    name = "tree-features";
+    url  = http://chriswarbo.net/git/tree-features.git;
+  }) {};
+
 })); })
