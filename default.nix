@@ -26,12 +26,13 @@ in {
   # Theory Exploration packages. We'll mix and match these for experiments.
   ArbitraryHaskell ? defaults "ArbitraryHaskell",
   AstPlugin        ? defaults "AstPlugin",
+  nix-eval         ? defaults "nix-eval",
   getDeps          ? defaults "getDeps",
   HS2AST           ? defaults "HS2AST",
   ml4hs            ? defaults "ml4hs",
   ML4HSFE          ? defaults "ML4HSFE",
   mlspec           ? defaults "mlspec",
-  treefeatures     ? defaults "treefeatures",
+  treefeatures     ? defaults "treefeatures"
 }:
 
 # Return a set of packages which includes theory exploration tools
@@ -48,6 +49,11 @@ in {
   }) {
     HS2AST = self.HS2AST;
   };
+
+  nix-eval = self.callPackage (mkSrc nix-eval {
+    name = "nix-eval";
+    url  = http://chriswarbo.net/git/nix-eval.git;
+  }) {};
 
   getDeps = self.callPackage (mkSrc getDeps {
     name  = "getDeps";
