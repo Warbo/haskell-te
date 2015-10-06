@@ -32,6 +32,7 @@ in {
   ml4hs            ? defaults "ml4hs",
   ML4HSFE          ? defaults "ML4HSFE",
   mlspec           ? defaults "mlspec",
+  mlspec-helper    ? defaults "mlspec-helper",
   treefeatures     ? defaults "treefeatures"
 }:
 
@@ -73,6 +74,11 @@ in {
   mlspec = self.callPackage (mkSrc mlspec {
     name = "mlspec";
     url  = http://chriswarbo.net/git/mlspec.git;
+  }) {};
+
+  mlspec-helper = self.callPackage (mkSrc mlspec-helper {
+    name = "mlspec-helper";
+    url  = http://chriswarbo.net/git/mlspec-helper.git;
   }) {};
 
   ML4HSFE = self.callPackage (mkSrc ML4HSFE {
