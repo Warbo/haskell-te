@@ -180,49 +180,14 @@ function getClusters {
     cat "$F"
 }
 
-function getProjects {
+function getEquations {
     mkdir -p test-data/projects
-    F="test-data/$1.projects"
-    if [[ ! -e "$F" || ! -e "test-data/projects/$1" ]]
+    F="test-data/$1.rawEquations"
+    if [[ ! -e "$F" ]]
     then
-        rm     "$F"                    2> /dev/null || true
-        rm -rf "test-data/projects/$1" 2> /dev/null || true
-        mkdir -p "test-data/projects/$1"
-        getClusters "$1" | ./make-projects.sh "test-data/projects/$1" > "$F"
+        getClusters "$1" | ./run-exploration.sh > "$F"
     fi
     cat "$F"
-}
-
-function getNixedProjects {
-    getProjects "$1" > /dev/null || return 1
-    mkdir -p test-data/nixed
-    if [[ ! -e "test-data/nixed/$1" ]]
-    then
-        cp -r "test-data/projects/$1" "test-data/nixed/$1"
-        ./nix-projects.sh "test-data/nixed/$1" || return 1
-    fi
-    getNixDirs "$1"
-}
-
-function getNixDirs {
-    F="test-data/$1.nixed"
-    [[ ! -e "$F" ]] || { cat "$F"; return 0; }
-    for PROJECT in "test-data/nixed/$1"/*
-    do
-        readlink -f "$PROJECT"
-    done | tee "$F"
-}
-
-function getEquations {
-    F="test-data/$1.equations"
-    [[ ! -e "$F" ]] || { cat "$F"; return 0; }
-    if getNixedProjects "$1" | ./run-projects.sh > "$F"
-    then
-        cat "$F"
-        return 0
-    fi
-    fail "Couldn't get equations for '$1'"
-    return 1
 }
 
 # Tests requiring a package as argument
@@ -354,48 +319,6 @@ function pkgTestClusterFields {
         RESULT=$(getClusters "$1" | jq "map(map(has(\"$field\")) | all) | all")
         [[ "x$RESULT" = "xtrue" ]] || fail "$1 clusters don't have $field"
     done
-}
-
-function pkgTestProjectsMade {
-    getProjects "$1" |
-        while read PROJECT
-        do
-            if [[ ! -e "$PROJECT" ]]
-            then
-                fail "Directory '$PROJECT' not made for '$1'"
-            fi
-        done
-}
-
-function pkgTestNixFilesMade {
-    NIXED=$(getNixedProjects "$1") || return 1
-    while read PROJECT
-    do
-        [[ -n "$PROJECT" ]] || continue
-        if [[ ! -e "$PROJECT" ]]
-        then
-            fail "'$PROJECT' not found for '$1'"
-        fi
-        if [[ ! -e "$PROJECT/shell.nix" ]]
-        then
-            fail "'$PROJECT/shell.nix' missing for '$1'"
-        fi
-    done < <(echo "$NIXED")
-}
-
-function pkgTestNixQuickCheckFix {
-    while read -r PROJECT
-    do
-        [[ -n "$PROJECT" ]] || continue
-        if [[ ! -f "$PROJECT/quickcheck-fix.nix" ]]
-        then
-            fail "'$PROJECT/quickcheck-fix.nix' not found"
-        fi
-        if ! grep "import ./quickcheck-fix.nix" < "$PROJECT/shell.nix" > /dev/null
-        then
-            fail "'$PROJECT/shell.nix' doesn't import quickcheck-fix.nix"
-        fi
-    done < <(getNixedProjects "$1")
 }
 
 function pkgTestEquations {

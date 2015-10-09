@@ -1,4 +1,5 @@
-#!/usr/bin/env bash
+#! /usr/bin/env nix-shell
+#! nix-shell -p jq -p bash -i bash
 set -e
 source common.sh
 
@@ -12,6 +13,8 @@ then
     exit 1
 fi
 
-./dump-hackage.sh "$1" # |
-#     ./annotateAsts.sh    |
-#     ./cluster.sh
+./dump-hackage.sh "$1"   |
+./runTypes.sh     "$1"   |
+./annotateAsts.sh        |
+./cluster.sh             |
+./run-exploration.sh
