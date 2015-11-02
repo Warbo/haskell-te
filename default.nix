@@ -33,6 +33,7 @@ in {
   ML4HSFE          ? defaults "ML4HSFE",
   mlspec           ? defaults "mlspec",
   mlspec-helper    ? defaults "mlspec-helper",
+  order-deps       ? defaults "order-deps",
   treefeatures     ? defaults "treefeatures"
 }:
 
@@ -84,6 +85,11 @@ in {
   ML4HSFE = self.callPackage (mkSrc ML4HSFE {
     name  = "ML4HSFE";
     url   = http://chriswarbo.net/git/ml4hsfe.git;
+  }) {};
+
+  order-deps = self.callPackage (mkSrc order-deps {
+    name = "order-deps";
+    url  = http://chriswarbo.net/git/order-deps.git;
   }) {};
 
   treefeatures = self.callPackage (mkSrc treefeatures {
