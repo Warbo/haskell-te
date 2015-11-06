@@ -32,7 +32,7 @@ let
                     };
 
     # Append package "x" to the set "p"
-    addPkg = hs: x: p: let source  = args.${x} or getGit x;
+    addPkg = hs: x: p: let source  = args.${x} or (getGit x);
                            package = if urls.${x}.call
                                         then hs.callPackage source {}
                                         else import         source;

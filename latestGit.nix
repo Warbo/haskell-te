@@ -8,6 +8,9 @@
 #       name = "My Project";
 #       src  = latestGit { url = "http://example.com/project.git"; };
 #     }
+#
+# TODO: This duplicates some functionality of fetchgitrevision; wait for that
+# API to settle down, then use it here.
 
 with import <nixpkgs> {};
 with builtins;
