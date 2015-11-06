@@ -1,11 +1,12 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
+# Accumulate results, so we can repeat them after each package (to avoid
+# trudging through compiler output)
 RESULT=""
 
 # Test each package we care about (dependencies will take care of themselves)
-for FILE in components/*.rev.nix
+while read -r pkg
 do
-    pkg=$(basename "$FILE" .rev.nix)
     RESULT="${RESULT}Testing $pkg: "
     if ./one.sh "$pkg"
     then
@@ -14,4 +15,4 @@ do
         RESULT="$RESULT FAIL\n"
     fi
     echo -e "Results so far:\n$RESULT"
-done
+done < <(grep "call = " < default.nix | sed -e 's/^[ ]*\([^ ]*\).*/\1/g')

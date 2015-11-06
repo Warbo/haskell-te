@@ -1,100 +1,51 @@
 # Theory Exploration tools for Haskell; packaged for Nix
-with import <nixpkgs> {};
 
-# Define some helper functions
+# Take haskellPackages as a parameter. Also accept src overrides (see addPkg)
+args@{ haskellPackages, lib, ... }:
+
+# Attributes are package names, "call" is whether to use callPackage or just
+# import. "url" is the default Git repo name which, annoyingly, doesn't always
+# match the package name. Fixable, but would # temporarily break everything ;)
 let
+#rec {
+ urls = {
+      ArbitraryHaskell = { call = true;  url = "arbitrary-haskell"; };
+      AstPlugin        = { call = true;  url = "ast-plugin";        };
+      getDeps          = { call = true;  url = "get-deps";          };
+      HS2AST           = { call = true;  url = "hs2ast";            };
+      ml4hs            = { call = false; url = "ml4hs";             };
+      mlspec           = { call = true;  url = "mlspec";            };
+      mlspec-helper    = { call = true;  url = "mlspec-helper";     };
+      ML4HSFE          = { call = true;  url = "ml4hsfe";           };
+      nix-eval         = { call = true;  url = "nix-eval";          };
+      order-deps       = { call = true;  url = "order-deps";        };
+      treefeatures     = { call = true;  url = "tree-features";     };
+    };
 
-# Load default version from separate files (makes it easier to programmatically
-# replace them)
-defaults = name: {
-  rev    = import (./components + ("/" + name + ".rev.nix"));
-  sha256 = import (./components + ("/" + name + ".sha256.nix"));
-};
+    # Uses the current HEAD of a git repo, rather than a fixed commit ID
+    latestGit = import ./latestGit.nix;
 
-# Merge or override defaults with given arguments. An sha256 attribute implies
-# it's a set of fetchgit arguments.
-mkSrc = given: defs: if (given ? sha256)
-                     then fetchgit (defs // given)
-                     else given;
+    # Default source for TE tools
+    getGit = x: let path = urls.${x}.url;
+                 in latestGit {
+                      url = "http://chriswarbo.net/git/${path}.git";
+                    };
 
-# Allow package versions (git revisions) to be overridden, so we can reproduce
-# old experiments.
-in {
-  # Haskell packages to use; eg. haskell.packages.ghc784 for GHC 7.8.4
-  hsPkgs           ? haskellPackages,
+    # Append package "x" to the set "p"
+    addPkg = hs: x: p: let source  = args.${x} or getGit x;
+                           package = if urls.${x}.call
+                                        then hs.callPackage source {}
+                                        else import         source;
+                    in p // { ${x} = package; };
 
-  # Theory Exploration packages. We'll mix and match these for experiments.
-  ArbitraryHaskell ? defaults "ArbitraryHaskell",
-  AstPlugin        ? defaults "AstPlugin",
-  nix-eval         ? defaults "nix-eval",
-  getDeps          ? defaults "getDeps",
-  HS2AST           ? defaults "HS2AST",
-  ml4hs            ? defaults "ml4hs",
-  ML4HSFE          ? defaults "ML4HSFE",
-  mlspec           ? defaults "mlspec",
-  mlspec-helper    ? defaults "mlspec-helper",
-  order-deps       ? defaults "order-deps",
-  treefeatures     ? defaults "treefeatures"
-}:
+# Return a modified set of haskellPackages, with added theory exploration tools
+in
+ #x =
+ haskellPackages.override {
 
-# Return a set of packages which includes theory exploration tools
-(hsPkgs.override { overrides = (self: (super: {
-
-  ArbitraryHaskell = self.callPackage (mkSrc ArbitraryHaskell {
-    name = "ArbitraryHaskell";
-    url  = http://chriswarbo.net/git/arbitrary-haskell.git;
-  }) {};
-
-  AstPlugin = self.callPackage (mkSrc AstPlugin {
-    name = "AstPlugin";
-    url  =  http://chriswarbo.net/git/ast-plugin.git;
-  }) {
-    HS2AST = self.HS2AST;
-  };
-
-  nix-eval = self.callPackage (mkSrc nix-eval {
-    name = "nix-eval";
-    url  = http://chriswarbo.net/git/nix-eval.git;
-  }) {};
-
-  getDeps = self.callPackage (mkSrc getDeps {
-    name  = "getDeps";
-    url   = https://github.com/ouanixi/getDeps.git;
-  }) {};
-
-  HS2AST = self.callPackage (mkSrc HS2AST {
-    name = "HS2AST";
-    url  = http://chriswarbo.net/git/hs2ast.git;
-  }) {};
-
-  ml4hs  = import (mkSrc ml4hs {
-    name = "ml4hs";
-    url  = http://chriswarbo.net/git/ml4hs.git;
-  });
-
-  mlspec = self.callPackage (mkSrc mlspec {
-    name = "mlspec";
-    url  = http://chriswarbo.net/git/mlspec.git;
-  }) {};
-
-  mlspec-helper = self.callPackage (mkSrc mlspec-helper {
-    name = "mlspec-helper";
-    url  = http://chriswarbo.net/git/mlspec-helper.git;
-  }) {};
-
-  ML4HSFE = self.callPackage (mkSrc ML4HSFE {
-    name  = "ML4HSFE";
-    url   = http://chriswarbo.net/git/ml4hsfe.git;
-  }) {};
-
-  order-deps = self.callPackage (mkSrc order-deps {
-    name = "order-deps";
-    url  = http://chriswarbo.net/git/order-deps.git;
-  }) {};
-
-  treefeatures = self.callPackage (mkSrc treefeatures {
-    name = "tree-features";
-    url  = http://chriswarbo.net/git/tree-features.git;
-  }) {};
-
-})); })
+  # Build up a set of overrides, by mapping over the attributes in urls
+  overrides = self: super: lib.fold (addPkg self)
+                                    {}
+                                    (builtins.attrNames urls);
+#};
+}

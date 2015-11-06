@@ -1,3 +1,4 @@
 #!/bin/sh
 
-nix-shell -p "(import ./. {}).$1" --command 'true' --show-trace
+nix-shell -p "with import <nixpkgs> {}; (callPackage ./. {}).$1" \
+          --command 'true' --show-trace
