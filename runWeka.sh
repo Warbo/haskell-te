@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 set -e
-source common.sh
 
 # Cluster the features extracted by TreeFeatures
 
