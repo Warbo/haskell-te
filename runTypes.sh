@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 set -e
-source common.sh
 
 # Runs GHCi to get type information
 
