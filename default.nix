@@ -13,7 +13,7 @@ stdenv.mkDerivation {
   installPhase = ''
     # Put scripts in place
     mkdir -p "$out/lib/ml4hs"
-    for SCRIPT in cluster.sh  dump-hackage.sh  dump-package.sh  extractFeatures.sh  ml4hs.sh
+    for SCRIPT in *.sh
     do
       cp "$SCRIPT" "$out/lib/ml4hs/"
     done
