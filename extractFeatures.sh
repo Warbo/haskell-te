@@ -1,8 +1,6 @@
 #! /usr/bin/env nix-shell
 #! nix-shell -i bash -p ML4HSFE bash jq
 
-source common.sh
-
 # Arbitrary sizes for matrices
 WIDTH=10
 HEIGHT=10
