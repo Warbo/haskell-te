@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-source common.sh
-
 # Given JSON objects on stdin, and a file descriptor containing JSON objects as
 # $1, returns the intersection of the two
 
