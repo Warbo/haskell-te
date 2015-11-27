@@ -1,7 +1,6 @@
 #! /usr/bin/env nix-shell
 #! nix-shell -p jq -p haskellPackages.ShellCheck -i bash
 shopt -s nullglob
-source common.sh
 
 # Simple test suite for ML4HS:
 #  - Given no arguments, all tests will be run
@@ -23,7 +22,7 @@ function fail {
 }
 
 function absent {
-    while read LINE
+    while read -r LINE
     do
         if [[ "x$LINE" = "x$1" ]]
         then
@@ -67,9 +66,9 @@ function getTests {
     # Get a list of all test functions
     getFunctions | grep '^test'
     # Apply each package test to each package
-    while read pkg
+    while read -r pkg
     do
-        while read test
+        while read -r test
         do
             echo "$test $pkg"
         done < <(getPkgTests)
@@ -170,6 +169,19 @@ function getAsts {
     F="test-data/$1.asts"
     [[ ! -e "$F" ]] &&
         getRawData "$1" | ./annotateAsts.sh > "$F"
+    cat "$F"
+}
+
+function getDeps {
+    F="test-data/$1.deps"
+    [[ ! -e "$F" ]] &&
+        getAsts "$1" | ./getDeps.sh > "$F"
+}
+
+function getOrdered {
+    F="test-data/$1.ordered"
+    [[ ! -e "$F" ]] &&
+        getDeps "$1" | ./order.sh > "$F"
     cat "$F"
 }
 
@@ -281,6 +293,14 @@ function pkgTestNoCoreNames {
         fail "ASTs for '$1' contain Core names beginning with \$"
 }
 
+function pkgTestDeps {
+    getDeps "$1"
+}
+
+function pkgTestOrder {
+    getOrdered "$1"
+}
+
 function pkgTestGetFeatures {
     getFeatures "$1" | assertNotEmpty "Couldn't get features from '$1'"
 }
@@ -293,7 +313,7 @@ function pkgTestFeaturesUniform {
     RAWFEATURES=$(getFeatures "$1" | jq -r '.[] | .features' | grep ",")
     COUNT=$(echo "$RAWFEATURES" | head -n 1 | countCommas)
     echo "$RAWFEATURES" |
-        while read LINE
+        while read -r LINE
         do
             THIS=$(echo "$LINE" | countCommas)
             if [[ "$THIS" -ne "$COUNT" ]]
@@ -349,18 +369,6 @@ function testShellCheck {
     return "$SCERR"
 }
 
-function testCommonSourced {
-    # All scripts should source common.sh, among other things to enable tracing
-    ERR=0
-    for file in *.sh
-    do
-        [[ "$file" = "common.sh" ]]                         ||
-            grep "^source common.sh$" < "$file" > /dev/null ||
-            ERR=1
-    done
-    return "$ERR"
-}
-
 function testShebangs {
     ERR=0
     for file in *.sh
@@ -400,14 +408,17 @@ function traceTest {
     echo -e "\n\n" >> /dev/stderr
     date           >> /dev/stderr
 
-    # `set -x` enables tracing for this script, DEBUG enables it for anything
-    # which sources common.sh
-    OLDDEBUG=$DEBUG
-    export DEBUG=1
-    source common.sh
+    # Always set -x to trace tests, but remember our previous setting
+    OLDDEBUG=0
+    [[ "$-" == *x* ]] && OLDDEBUG=1
+
+    set -x
+    export SHELLOPTS
     "$@"; PASS=$?
-    export DEBUG="$OLDDEBUG"
-    source common.sh
+
+    # Disable -x if it wasn't set before
+    [[ "$OLDDEBUG" -eq 0 ]] && set +x
+
     return "$PASS"
 }
 
@@ -431,7 +442,7 @@ function runTests {
         TESTS=$(getTests | grep "$1")
     fi
 
-    while read test
+    while read -r test
     do
         # $test is either empty, successful or we're exiting with an error
         [[ -z "$test" ]] || runTest "$test" || CODE=1

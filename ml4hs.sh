@@ -1,7 +1,6 @@
 #! /usr/bin/env nix-shell
 #! nix-shell -p jq -p bash -i bash
 set -e
-source common.sh
 
 # Main ML4HS script
 

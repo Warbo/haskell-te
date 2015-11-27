@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 set -e
-source common.sh
 
 DIR=$(mktemp -d)
 

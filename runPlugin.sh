@@ -10,7 +10,6 @@
 # The dependency requirements can be satisfied by running in nix-shell
 
 set -e
-source common.sh
 
 function getAsts {
     RESULT=$(build)

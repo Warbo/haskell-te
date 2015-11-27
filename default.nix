@@ -1,4 +1,4 @@
-with import <nixpkgs> {};
+{ stdenv, haskellPackages }:
 
 stdenv.mkDerivation {
   name = "ml4hs";
