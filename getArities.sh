@@ -1,8 +1,6 @@
 #! /usr/bin/env nix-shell
 #! nix-shell -i bash -p jq
 
-source common.sh
-
 # Split a qualified name into a module and a name
 INPUT='(.qname | split(".") | reverse) as $bits'
 
