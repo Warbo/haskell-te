@@ -176,6 +176,7 @@ function getDeps {
     F="test-data/$1.deps"
     [[ ! -e "$F" ]] &&
         getAsts "$1" | ./getDeps.sh > "$F"
+    cat "$F"
 }
 
 function getOrdered {
@@ -294,11 +295,23 @@ function pkgTestNoCoreNames {
 }
 
 function pkgTestDeps {
-    getDeps "$1"
+    HAVE=$(getDeps "$1" | jq 'map(has("dependencies")) | all')
+    [[ "x$HAVE" = "xtrue" ]] ||
+        fail "ASTs for '$1' didn't get dependencies"
 }
 
 function pkgTestOrder {
-    getOrdered "$1"
+    LEN=$(getOrdered "$1" | jq 'length')
+    [[ "$LEN" -gt 0 ]] ||
+        fail "Couldn't put '$1' dependencies in order"
+}
+
+function pkgTestOrderMatches {
+    NAMES=$(getOrdered "$1" | jq '.[] | .name')
+    DEPS=$(getDeps "$1" | nix-shell -p order-deps --run 'order-deps')
+    SHOULD=$(echo "$DEPS" | jq '.[] | .[] | .name')
+    [[ "x$NAMES" = "x$SHOULD" ]] ||
+        fail "Dependencies of '$1' are in the wrong order"
 }
 
 function pkgTestGetFeatures {
