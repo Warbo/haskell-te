@@ -1,8 +1,7 @@
 #! /usr/bin/env nix-shell
-#! nix-shell -p getdeps -p bash -p jq -i bash
+#! nix-shell -p getDeps -p bash -p jq -i bash
 
-jq -c '.[]'
-while read -r LINE
+jq -c '.[]' | while read -r LINE
 do
     # Extract the "ast" value and pipe into TreeFeatures
     DEPENDENCIES=$(echo "$LINE" | jq -r '.ast' | GetDeps )
