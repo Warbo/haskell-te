@@ -78,6 +78,18 @@ function getTests {
 function getTestPkgs {
     cat <<EOF
 list-extras
+xmonad
+pandoc
+git-annex
+hakyll
+egison
+lens
+warp
+conduit
+ghc-mod
+shelly
+http-conduit
+yesod-core
 EOF
 }
 
@@ -187,7 +199,9 @@ function getOrdered {
 }
 
 function getClusters {
-    F="test-data/$1.clusters"
+    [[ -z "$CLUSTERS" ]] && CLUSTERS=4
+    export CLUSTERS
+    F="test-data/$1.clusters.$CLUSTERS"
     [[ ! -e "$F" ]] &&
         getAsts "$1" | ./cluster.sh > "$F"
     cat "$F"
@@ -195,7 +209,8 @@ function getClusters {
 
 function getEquations {
     mkdir -p test-data/projects
-    F="test-data/$1.rawEquations"
+    [[ -z "$CLUSTERS" ]] && CLUSTERS=4
+    F="test-data/$1.rawEquations.$CLUSTERS"
     if [[ ! -e "$F" ]]
     then
         getClusters "$1" | ./run-exploration.sh > "$F"
@@ -355,7 +370,11 @@ function pkgTestClusterFields {
 }
 
 function pkgTestEquations {
-    getEquations "$1" || fail "Couldn't get equations for '$1'"
+    for CLUSTERS in 1 2 3 4 5 6 7 8
+    do
+        echo "'$CLUSTERS' CLUSTERS FOR '$1'" >> /dev/stderr
+        getEquations "$1" || fail "Couldn't get equations for '$1'"
+    done
 }
 
 # Tests requiring no arguments

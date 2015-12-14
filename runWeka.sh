@@ -4,13 +4,29 @@ set -e
 
 # Cluster the features extracted by TreeFeatures
 
-INLINES=$(cat)
+RAW=$(cat)
+INLINES=$(echo "$RAW" | jq '[.[] | select(has("features")) | select(has("tocluster")) | select(.tocluster == true)]')
 CSV=""
+
+NUM=$(echo "$INLINES" | jq 'length')
+[[ "$NUM" -eq 0 ]] && {
+    echo "No ASTs with features, skipping" >> /dev/stderr
+    echo "[]"
+    exit 0
+}
+
+# Default to ceil(sqrt($NUM / 2))
+[[ -z "$CLUSTERS" ]] && {
+    CLUSTERS=$(perl -e "use POSIX; print ceil(sqrt($NUM / 2)), \"\n\"")
+    echo "No cluster number given, using '$CLUSTERS'" >> /dev/stderr
+}
 
 function getCsv {
     if [ -z "$CSV" ]
     then
-        CSV=$(echo "$INLINES" | jq -r -c '.[] | .features')
+        CSV=$(echo "$INLINES" | jq -r -c '.[] | select(has("features")) | .features' | tr -d "[]")
+        echo "CSV COUNT" >> /dev/stderr
+        echo "$CSV" | wc -l >> /dev/stderr
     fi
     echo "$CSV"
 }
@@ -39,8 +55,8 @@ function getArff {
 }
 
 function runWeka {
-    CLUSTERS=4
     INPUT=$(cat)
+
     echo "$INPUT" |
         weka-cli weka.filters.unsupervised.attribute.AddCluster \
                  -W "weka.clusterers.SimpleKMeans -N $CLUSTERS -S 42" -I last
@@ -62,7 +78,4 @@ function extractClusters {
            '. | to_entries | map($asts[.key] + {cluster: .value})'
 }
 
-# Reduce an array of ASTs into an object {cluster1: [...], cluster2: [...], ...}
-# Then convert that into an array of clusters (since the keys are meaningless)
-extractClusters |
-    jq 'reduce .[] as $ast ({}; .[$ast.cluster] += [$ast]) | [.[]]'
+extractClusters | jq 'map(. + {cluster: (.cluster | .[7:] | tonumber)})'

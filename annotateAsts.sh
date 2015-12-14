@@ -10,5 +10,4 @@ RAWSCOPE=$(echo "$INPUT" | jq -r '.scoperesult')
 
 echo "$RAWASTS" |
     ./tagAsts.sh <(echo "$RAWSCOPE" | ./getTypes.sh)   |
-    ./tagAsts.sh <(echo "$RAWTYPES" | ./getArities.sh) |
-    ./extractFeatures.sh
+    ./tagAsts.sh <(echo "$RAWTYPES" | ./getArities.sh)
