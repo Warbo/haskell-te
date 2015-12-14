@@ -3,7 +3,6 @@
 
 jq -c '.[]' | while read -r LINE
 do
-    # Extract the "ast" value and pipe into TreeFeatures
     DEPENDENCIES=$(echo "$LINE" | jq -r '.ast' | GetDeps )
     [[ -z "$DEPENDENCIES" ]] && echo "LINE: $LINE" >> /dev/stderr
 
