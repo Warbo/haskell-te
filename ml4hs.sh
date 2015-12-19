@@ -49,7 +49,7 @@ phase ./runTypes.sh                types     dump
 phase ./annotateAsts.sh            asts      types
 phase ./getDeps.sh                 deps      asts
 
-./findMissing.sh < "$DIR/deps" | sort -u | tee "$DIR/missing" >> /dev/stderr
+#./findMissing.sh < "$DIR/deps" | sort -u | tee "$DIR/missing" >> /dev/stderr
 
 phase ./extractFeatures.sh         features  deps
 phase ./nix_recurrentClustering.sh clustered features
