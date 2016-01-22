@@ -1,4 +1,5 @@
-#!/usr/bin/env bash
+#! /usr/bin/env nix-shell
+#! nix-shell -i bash -p bash jq
 
 function fail {
     # Unconditional failure
@@ -28,12 +29,14 @@ function getRawAsts {
 # Tests
 
 function pkgTestGetRawJson {
-    getRawJson "$1" | grep -c "^" || fail "Couldn't get raw JSON from '$1'"
+    getRawJson "$1" | grep -c "^" > /dev/null ||
+        fail "Couldn't get raw JSON from '$1'"
 }
 
 function pkgTestGetRawAsts {
     COUNT=$(getRawAsts "$1" | jq -r "length")
-    [[ "$COUNT" -gt 0 ]] || fail "Couldn't get raw ASTs from '$1'"
+    [[ "$COUNT" -gt 0 ]] ||
+        fail "Couldn't get raw ASTs from '$1'"
 }
 
 # Test runner
