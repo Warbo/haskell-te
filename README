@@ -1,0 +1,33 @@
+Build a database from Cabal packages (local or remote)
+
+# Files #
+
+## dump-hackage.sh ##
+
+Downloads the package name from Hackage, and runs `dump-package.sh` on it.
+
+Usage: `./dump-hackage.sh my-package-name`
+
+## dump-package.sh ##
+
+Takes the directory of a Haskell package as an argument, sets up a GHC environment with all of its dependencies and runs `runPlugin.sh`.
+
+Usage: `./dump-package.sh path/to/package/`
+
+## runPlugin.sh ##
+
+Extracts ASTs from a Cabal package, by compiling it with a special GHC plugin. It's recommended to use `dump-package.sh` rather than calling this directly, to ensure all of the correct dependencies are available.
+
+Usage: `./runPlugin.sh path/to/package/`
+
+## ghcWithPlugin.nix ##
+
+Instructions for the Nix package manager to set up an environment with all dependencies of a given Haskell package. For example, `nix-shell -E 'import ./ghcWithPlugin.nix "foo"'` will create a shell environment including the Nix package `haskellPackages.foo`, hence making that package and its dependencies available to GHC. If `haskellPackages.foo` doesn't exist, you can add it using Nix's override mechanism.
+
+## test.sh ##
+
+A simple test suite for these tools.
+
+## test-data ##
+
+This directory will be created by `test.sh` to cache its results. Delete it to force the tests to run from scratch.
