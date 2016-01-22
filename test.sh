@@ -1,6 +1,12 @@
 #! /usr/bin/env nix-shell
 #! nix-shell -i bash -p bash jq
 
+function abort {
+    # Nope out
+    [[ "$#" -eq 0 ]] || echo "$*" >> /dev/stderr
+    exit 1
+}
+
 function fail {
     # Unconditional failure
     [[ "$#" -eq 0 ]] || echo "FAIL $*"
@@ -11,16 +17,16 @@ function fail {
 # Test data
 
 function getRawJson {
-    # Takes a package name, dumps its ASTs into test-data
-    F="test-data/$1.rawjson"
+    # Takes a package name, dumps its ASTs into $TESTDATA
+    F="$TESTDATA/$1.rawjson"
     [[ ! -e "$F" ]] &&
         NOFORMAT="true" ./dump-hackage.sh "$1" > "$F"
     cat "$F"
 }
 
 function getRawAsts {
-    # Takes a package name, dumps its ASTs into test-data
-    F="test-data/$1.rawasts"
+    # Takes a package name, dumps its ASTs into $TESTDATA
+    F="$TESTDATA/$1.rawasts"
     [[ ! -e "$F" ]] &&
         ./dump-hackage.sh "$1" > "$F"
     cat "$F"
@@ -39,7 +45,7 @@ function pkgTestGetRawAsts {
         fail "Couldn't get raw ASTs from '$1'"
 }
 
-# Test runner
+# Test running infrastructure
 
 function getFunctions {
     # Get a list of the functions in this script
@@ -92,10 +98,10 @@ function traceTest {
 }
 
 function runTest {
-    # Log stderr in test-data/debug. On failure, send "FAIL" and the debug
+    # Log stderr in $TESTDATA/debug. On failure, send "FAIL" and the debug
     # path to stdout
     read -ra CMD <<<"$@" # Re-parse our args to split packages from functions
-    PTH=$(echo "test-data/debug/$*" | sed 's/ /_/g')
+    PTH=$(echo "$TESTDATA/debug/$*" | sed 's/ /_/g')
     traceTest "${CMD[@]}" 2>> "$PTH" || fail "$* failed, see $PTH"
 }
 
@@ -111,13 +117,54 @@ function runTests {
         TESTS=$(getTests | grep "$1")
     fi
 
+    # Set up directories, etc.
+    init
+
     while read -r test
     do
         # $test is either empty, successful or we're exiting with an error
         [[ -z "$test" ]] || runTest "$test" || CODE=1
     done < <(echo "$TESTS")
+
+    # Remove directories, if necessary
+    cleanup
+
     return "$CODE"
 }
 
-mkdir -p test-data/debug
+function init() {
+    # Set the TESTDATA directory
+    if [[ -n "$CABAL2DBTESTDIR" ]]
+    then
+        TMPDIR=""
+        TESTDATA="$CABAL2DBTESTDIR/test-data"
+    else
+        TMPDIR=$(mktemp -d -t 'cabal2db-test-')
+        TESTDATA="$TMPDIR/test-data"
+    fi
+
+    [[ -n "$TESTDATA" ]] ||
+        abort "Error with test data dir"
+
+    INITIAL=$(echo "$TESTDATA" | cut -c 1)
+    [[ "x$INITIAL" = "x/" ]] ||
+        abort "Test data dir '$TESTDATA' must be absolute"
+
+    echo "Attempting to create test data dir '$TESTDATA'" >> /dev/stderr
+    mkdir -p "$TESTDATA/debug" ||
+        abort "Couldn't make test data dir '$TESTDATA'"
+}
+
+function cleanup() {
+    # Remove the TESTDATA directory, if we've been asked
+    [[ -n "$CABAL2DBCLEANUP" ]] && {
+        echo "Removing test data dir '$TESTDATA', as instructed" >> /dev/stderr
+        rm -r "$TESTDATA"
+        [[ -n "$TMPDIR" ]] && {
+            echo "Removing temp directory '$TMPDIR' as well" >> /dev/stderr
+            rmdir "$TMPDIR"
+        }
+    }
+}
+
 runTests "$1"
