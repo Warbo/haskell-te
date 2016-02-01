@@ -99,13 +99,6 @@ EOF
     #yesod-core
 }
 
-function getRawJson {
-    F="test-data/$1.rawjson"
-    [[ ! -e "$F" ]] &&
-        NOFORMAT="true" dump-hackage "$1" > "$F"
-    cat "$F"
-}
-
 function getRawAsts {
     F="test-data/$1.rawasts"
     [[ ! -e "$F" ]] &&
@@ -117,62 +110,6 @@ function getRawData {
     F="test-data/$1.rawdata"
     [[ ! -e "$F" ]] &&
         getRawAsts "$1" | runTypes "$1" > "$F"
-    cat "$F"
-}
-
-function getTypeCmd {
-    F="test-data/$1.typeCmd"
-    [[ ! -e "$F" ]] &&
-        getRawData "$1" | jq -r '.cmd' > "$F"
-    cat "$F"
-}
-
-function getTypeResults {
-    F="test-data/$1.typeResults"
-    [[ ! -e "$F" ]] &&
-        getRawData "$1" | jq -r '.result' > "$F"
-    cat "$F"
-}
-
-function getScopeCmd {
-    F="test-data/$1.scopeCmd"
-    [[ ! -e "$F" ]] &&
-        getRawData "$1" | jq -r '.scopecmd' > "$F"
-    cat "$F"
-}
-
-function getScopeResult {
-    F="test-data/$1.scopeResult"
-    [[ ! -e "$F" ]] &&
-        getRawData "$1" | jq -r '.scoperesult' > "$F"
-    cat "$F"
-}
-
-function getTypes {
-    F="test-data/$1.types"
-    [[ ! -e "$F" ]] &&
-        getScopeResult "$1" | getTypes > "$F"
-    cat "$F"
-}
-
-function getArities {
-    F="test-data/$1.arities"
-    [[ ! -e "$F" ]] &&
-        getTypeResults "$1" | getArities > "$F"
-    cat "$F"
-}
-
-function getTypeTagged {
-    F="test-data/$1.typetagged"
-    [[ ! -e "$F" ]] &&
-        getRawAsts "$1" | tagAsts <(getTypes "$1") > "$F"
-    cat "$F"
-}
-
-function getArityTagged {
-    F="test-data/$1.aritytagged"
-    [[ ! -e "$F" ]] &&
-        getRawAsts "$1" | tagAsts <(getArities "$1") > "$F"
     cat "$F"
 }
 
@@ -225,101 +162,6 @@ function getEquations {
 }
 
 # Tests requiring a package as argument
-
-function pkgTestGetRawJson {
-    getRawJson     "$1" | assertNotEmpty "Couldn't get raw JSON from '$1'"
-}
-
-function pkgTestGetRawAsts {
-    getRawAsts     "$1" | assertJsonNotEmpty "Couldn't get raw ASTs from '$1'"
-}
-
-function pkgTestGetRawData {
-    getRawData     "$1" | assertJsonNotEmpty "Couldn't get raw data from '$1'"
-}
-
-function pkgTestGetTypeCmd {
-    getTypeCmd     "$1" | assertNotEmpty "Couldn't get type command from '$1'"
-}
-
-function pkgTestGetTypeResults {
-    getTypeResults "$1" | assertNotEmpty "Couldn't get type info from '$1'"
-}
-
-function pkgTestGetScopeCmd {
-    getScopeCmd    "$1" | assertNotEmpty "Couldn't get scoped command from '$1'"
-}
-
-function pkgTestGetScopeResult {
-    getScopeResult "$1" | assertNotEmpty "Couldn't get scoped type info from '$1'"
-}
-
-function pkgTestGetTypes {
-    getTypes       "$1" | assertJsonNotEmpty "Couldn't get types from '$1'"
-}
-
-function pkgTestGetArities {
-    getArities     "$1" | assertJsonNotEmpty "Couldn't get arities from '$1'"
-}
-
-function pkgTestGetTypeTagged {
-    getTypeTagged  "$1" | assertJsonNotEmpty "Couldn't get typed ASTs from '$1'"
-}
-
-function pkgTestGetArityTagged {
-    getArityTagged "$1" | assertJsonNotEmpty "Couldn't get ASTs with aritiesfrom '$1'"
-}
-
-function pkgTestGetAsts {
-    getAsts        "$1" | assertJsonNotEmpty "Couldn't get ASTs from '$1'"
-}
-
-function pkgTestAstFields {
-       COUNT=$(getAsts "$1" | jq -c 'length')
-        PKGS=$(getAsts "$1" | jq -c 'map(.package)  | length')
-        MODS=$(getAsts "$1" | jq -c 'map(.module)   | length')
-       NAMES=$(getAsts "$1" | jq -c 'map(.name)     | length')
-        ASTS=$(getAsts "$1" | jq -c 'map(.ast)      | length')
-       TYPES=$(getAsts "$1" | jq -c 'map(.type)     | length')
-     ARITIES=$(getAsts "$1" | jq -c 'map(.arity)    | length')
-    FEATURES=$(getAsts "$1" | jq -c 'map(.features) | length')
-    [[ $COUNT -eq $PKGS     ]] || fail "$FUNCNAME '$1' pkgs"
-    [[ $COUNT -eq $MODS     ]] || fail "$FUNCNAME '$1' mods"
-    [[ $COUNT -eq $NAMES    ]] || fail "$FUNCNAME '$1' names"
-    [[ $COUNT -eq $ASTS     ]] || fail "$FUNCNAME '$1' asts"
-    [[ $COUNT -eq $TYPES    ]] || fail "$FUNCNAME '$1' types"
-    [[ $COUNT -eq $ARITIES  ]] || fail "$FUNCNAME '$1' arities"
-    [[ $COUNT -eq $FEATURES ]] || fail "$FUNCNAME '$1' features"
-}
-
-function pkgTestAstLabelled {
-    getAsts "$1" | jq -c '.[] | .package' |
-        while read -r LINE
-        do
-            [[ "x$LINE" = "x\"$1\"" ]] || fail "$FUNCNAME $1 $LINE"
-        done
-}
-
-function pkgTestAllTypeCmdPresent {
-    getAsts "$1" | jq -c -r '.[] | .module + "." + .name' |
-        while read -r LINE
-        do
-            getTypeCmd "$1" | grep "('$LINE)" > /dev/null ||
-                fail "$LINE not in '$1' type command"
-        done
-}
-
-function pkgTestNoCoreNames {
-    COUNT=$(getAsts "$1" | jq -r '.[] | .name' | count '\.\$')
-    [[ "$COUNT" -eq 0 ]] ||
-        fail "ASTs for '$1' contain Core names beginning with \$"
-}
-
-function pkgTestDeps {
-    HAVE=$(getDeps "$1" | jq 'map(has("dependencies")) | all')
-    [[ "x$HAVE" = "xtrue" ]] ||
-        fail "ASTs for '$1' didn't get dependencies"
-}
 
 function pkgTestOrder {
     LEN=$(getOrdered "$1" | jq 'length')
