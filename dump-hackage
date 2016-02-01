@@ -2,6 +2,12 @@
 set -e
 
 DIR=$(mktemp -d)
+BASE=$(dirname "$0")
+
+[[ -e "$BASE/dump-package" ]] || {
+    echo "Did not find dump-package in '$BASE'" >> /dev/stderr
+    exit 1
+}
 
 (cd "$DIR";
  for PKG in "$@"
@@ -15,7 +21,7 @@ DIR=$(mktemp -d)
  for PROJECT in "$DIR"/*
  do
      echo "Dumping package $PROJECT" >> /dev/stderr
-     ./dump-package "$PROJECT"
+     "$BASE/dump-package" "$PROJECT"
  done)
 
 rm -rf "$DIR"

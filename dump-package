@@ -2,6 +2,17 @@
 #! nix-shell -i bash -p bash jq
 set -e
 
+BASE_=$(dirname "$0")
+BASE=$(readlink -f "$BASE_")
+
+for DEP in ghcWithPlugin.nix runAstPlugin
+do
+    [[ -e "$BASE/$DEP" ]] || {
+        echo "Didn't find '$DEP' in '$BASE'" >> /dev/stderr
+        exit 1
+    }
+done
+
 # Extract ASTs from a Cabal package
 
 function packageName {
@@ -18,8 +29,8 @@ function packageName {
 
 function runPlugin {
     nix-shell --show-trace \
-              -E "with import <nixpkgs> {}; import ./ghcWithPlugin.nix \"$PKG\"" \
-              --run "./runAstPlugin $DIR"
+              -E "with import <nixpkgs> {}; import \"$BASE/ghcWithPlugin.nix\" \"$PKG\"" \
+              --run "'$BASE/runAstPlugin' '$DIR'"
 }
 
 function format {

@@ -1,6 +1,8 @@
 #! /usr/bin/env nix-shell
 #! nix-shell -i bash -p bash jq
 
+BASE=$(dirname "$0")
+
 function abort {
     # Nope out
     [[ "$#" -eq 0 ]] || echo "$*" >> /dev/stderr
@@ -20,7 +22,7 @@ function getRawJson {
     # Takes a package name, dumps its ASTs into $TESTDATA
     F="$TESTDATA/$1.rawjson"
     [[ ! -e "$F" ]] &&
-        NOFORMAT="true" ./dump-hackage "$1" > "$F"
+        NOFORMAT="true" "$BASE/dump-hackage" "$1" > "$F"
     cat "$F"
 }
 
@@ -28,7 +30,7 @@ function getRawAsts {
     # Takes a package name, dumps its ASTs into $TESTDATA
     F="$TESTDATA/$1.rawasts"
     [[ ! -e "$F" ]] &&
-        ./dump-hackage "$1" > "$F"
+        "$BASE/dump-hackage" "$1" > "$F"
     cat "$F"
 }
 
