@@ -81,7 +81,7 @@ function getAsts {
 function getFeatures {
     F="test-data/$1.features"
     [[ ! -e "$F" ]] &&
-        getAsts "$1" | "$BASE/extractFeatures.sh" > "$F"
+        getAsts "$1" | "$BASE/extractFeatures" > "$F"
     cat "$F"
 }
 
@@ -90,7 +90,7 @@ function getClusters {
     export CLUSTERS
     F="test-data/$1.clusters.$CLUSTERS"
     [[ ! -e "$F" ]] &&
-        getFeatures "$1" | "$BASE/nix_recurrentClustering.sh" > "$F"
+        getFeatures "$1" | "$BASE/nix_recurrentClustering" > "$F"
     cat "$F"
 }
 

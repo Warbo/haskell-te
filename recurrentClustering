@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+BASE=$(dirname "$0")
 DEPS=$(cat)
 
 while read -r SCC
@@ -28,13 +29,13 @@ do
     LOOKUP='(. as $this | $deps | map(select('"$COND2"') | .cluster) | . + [0] | .[0] | . + 300)'
     FEATURES="(.features | map(if type == \"object\" then ($LOOKUP) else . end))"
 
-    # Cluster. We call runWeka.sh directly since nix-shell adds a lot of
+    # Cluster. We call runWeka directly since nix-shell adds a lot of
     # overhead, which we move outside the loop to our own invocation
     echo "Clustering..." >> /dev/stderr
     CLUSTERED=$(
         echo "$DEPS" |
         jq '. as $deps | $deps | map(. + {"features": '"$FEATURES"'})' |
-        ./runWeka.sh)
+        "$BASE/runWeka")
 
     # Add new clusters to DEPS
     echo "Collating..." >> /dev/stderr
