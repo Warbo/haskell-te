@@ -5,13 +5,21 @@ set -e
 BASE_=$(dirname "$0")
 BASE=$(readlink -f "$BASE_")
 
-for DEP in ghcWithPlugin.nix runAstPlugin
-do
-    [[ -e "$BASE/$DEP" ]] || {
-        echo "Didn't find '$DEP' in '$BASE'" >> /dev/stderr
-        exit 1
-    }
-done
+[[ -e "$BASE/runAstPlugin" ]] || {
+    echo "Didn't find runAstPlugin in '$BASE'" >> /dev/stderr
+    exit 1
+}
+
+if [[ -e "$BASE/ghcWithPlugin.nix" ]]
+then
+    GHCWITHPLUGIN="$BASE/ghcWithPlugin.nix"
+elif [[ -e "$BASE/../lib/ghcWithPlugin.nix" ]]
+then
+    GHCWITHPLUGIN="$BASE/../lib/ghcWithPlugin.nix"
+else
+    echo "Didn't find ghcWithPlugin.nix in '$BASE' or '$BASE/../lib'" >> /dev/stderr
+    exit 1
+fi
 
 # Extract ASTs from a Cabal package
 
@@ -29,7 +37,7 @@ function packageName {
 
 function runPlugin {
     nix-shell --show-trace \
-              -E "with import <nixpkgs> {}; import \"$BASE/ghcWithPlugin.nix\" \"$PKG\"" \
+              -E "with import <nixpkgs> {}; import \"$GHCWITHPLUGIN\" \"$PKG\"" \
               --run "'$BASE/runAstPlugin' '$DIR'"
 }
 

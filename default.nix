@@ -10,14 +10,12 @@ stdenv.mkDerivation {
 
   installPhase = ''
     mkdir -p "$out/bin"
-    cp dump-hackage "$out/bin/"
-    cp runAstPlugin "$out/bin/"
+    cp -v dump-hackage "$out/bin/"
+    cp -v runAstPlugin "$out/bin/"
+    cp -v dump-package "$out/bin/"
 
     mkdir -p "$out/lib"
-    cp ghcWithPlugin.nix "$out/lib/"
-
-    echo "Patching to use '$out/lib/ghcWithPlugin.nix'"
-    sed -e "s@./ghcWithPlugin.nix@$out/lib/ghcWithPlugin.nix@g" < dump-package > "$out/bin/dump-package"
+    cp -v ghcWithPlugin.nix "$out/lib/"
 
     chmod +x "$out/bin/"*
   '';
