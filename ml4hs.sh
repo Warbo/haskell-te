@@ -1,5 +1,5 @@
 #! /usr/bin/env nix-shell
-#! nix-shell -i bash -p jq bash cabal2db
+#! nix-shell -i bash -p jq bash cabal2db annotatedb
 set -e
 
 # Main ML4HS script
@@ -11,6 +11,8 @@ then
     echo "Please provide a Haskell project name"
     exit 1
 fi
+
+BASE=$(dirname "$0")
 
 PACKAGE="${1}"
 ARG="${PACKAGE}"
@@ -44,15 +46,10 @@ else
     ARG="${PACKAGE}"
 fi
 
-#     COMMAND                      OUTPUT    INPUT
-phase runTypes                     types     dump
-phase annotateAsts                 asts      types
-phase getDeps                      deps      asts
-
-#./findMissing.sh < "$DIR/deps" | sort -u | tee "$DIR/missing" >> /dev/stderr
-
-phase ./extractFeatures.sh         features  deps
-phase ./nix_recurrentClustering.sh clustered features
+#     COMMAND                            OUTPUT    INPUT
+phase annotateDb                         deps      dump
+phase "$BASE/extractFeatures.sh"         features  deps
+phase "$BASE/nix_recurrentClustering.sh" clustered features
 
 #echo "Running run-exploration.sh" >> /dev/stderr
 #./run-exploration.sh < "$DIR/clustered"
