@@ -1,6 +1,6 @@
-{ pkgs ? import <nixpkgs> {} }:
+{ stdenv }:
 
-pkgs.stdenv.mkDerivation {
+stdenv.mkDerivation {
   name = "cabal2db";
 
   # Exclude .git and test-data from being imported into the Nix store
