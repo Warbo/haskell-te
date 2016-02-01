@@ -1,5 +1,5 @@
 #! /usr/bin/env nix-shell
-#! nix-shell -i bash -p jq haskellPackages.ShellCheck cabal2db annotatedb
+#! nix-shell -i bash -p jq haskellPackages.ShellCheck cabal2db annotatedb recurrent-clustering
 shopt -s nullglob
 
 BASE=$(dirname "$0")
@@ -22,39 +22,6 @@ function fail {
     [[ "$#" -eq 0 ]] || echo "FAIL $*"
     CODE=1
     return 1
-}
-
-function absent {
-    # Fails if $1 appears as a line in stdin
-    while read -r LINE
-    do
-        if [[ "x$LINE" = "x$1" ]]
-        then
-            return 1
-        fi
-    done
-    return 0
-}
-
-function assertNotEmpty {
-    # Fails if stdin is empty
-    COUNT=$(count "^")
-    [[ "$COUNT" -gt 0 ]] || fail "$1"
-}
-
-function assertJsonNotEmpty {
-    # Takes a JSON array on stdin, fails if it's empty
-    COUNT=$(jq -r "length")
-    [[ "$COUNT" -gt 0 ]] || fail "$1"
-}
-
-function count {
-    # Count occurrences of $1 in stdin
-    PAT="^"
-    [ -n "$1" ] && PAT="$1"
-    set +e
-    grep -c "$PAT"
-    set -e
 }
 
 # Functions to get data; expensive calls should cache in test-data/
@@ -118,7 +85,7 @@ function getAsts {
 function getFeatures {
     F="test-data/$1.features"
     [[ ! -e "$F" ]] &&
-        getAsts "$1" | "$BASE/extractFeatures.sh" > "$F"
+        getAsts "$1" | extractFeatures > "$F"
     cat "$F"
 }
 
@@ -127,7 +94,7 @@ function getClusters {
     export CLUSTERS
     F="test-data/$1.clusters.$CLUSTERS"
     [[ ! -e "$F" ]] &&
-        getFeatures "$1" | "$BASE/nix_recurrentClustering.sh" > "$F"
+        getFeatures "$1" | nix_recurrentClustering > "$F"
     cat "$F"
 }
 
@@ -144,58 +111,8 @@ function getEquations {
 
 # Tests requiring a package as argument
 
-function pkgTestGetFeatures {
-    getFeatures "$1" | assertNotEmpty "Couldn't get features from '$1'"
-}
-
 function countCommas {
     tr -dc ',' | wc -c
-}
-
-function pkgTestFeaturesConform {
-    FEATURELENGTHS=$(getFeatures "$1" | jq -r '.[] | .features | length')
-    COUNT=$(echo "$FEATURELENGTHS" | head -n 1)
-    echo "$FEATURELENGTHS" | while read -r LINE
-    do
-        if [[ "$LINE" -ne "$COUNT" ]]
-        then
-            fail "Found '$LINE' features, was expecting '$COUNT'"
-        fi
-    done
-}
-
-function pkgTestAllClustered {
-    for CLUSTERS in 1 2 3 5 7 11
-    do
-        if getClusters "$1" | jq '.[] | .tocluster' | grep "false" > /dev/null
-        then
-            fail "Clustering '$1' into '$CLUSTERS' clusters didn't include everything"
-        fi
-    done
-}
-
-function pkgTestHaveAllClusters {
-    for CLUSTERS in 1 2 3 5 7 11
-    do
-        FOUND=$(getClusters "$1" | jq '.[] | .cluster')
-        for NUM in $(seq 1 "$CLUSTERS")
-        do
-            echo "$FOUND" | grep "^${NUM}$" > /dev/null ||
-                fail "Clustering '$1' into '$CLUSTERS' clusters, '$NUM' was empty"
-        done
-    done
-}
-
-function pkgTestClusterFields {
-    for CLUSTERS in 1 2 3 5 7 11
-    do
-        for field in arity name module type package ast features cluster
-        do
-            RESULT=$(getClusters "$1" | jq "map(has(\"$field\")) | all")
-            [[ "x$RESULT" = "xtrue" ]] ||
-                fail "Clustering '$1' into '$CLUSTERS' clusters missed some '$field' entries"
-        done
-    done
 }
 
 function pkgTestEquations {

@@ -1,5 +1,5 @@
 #! /usr/bin/env nix-shell
-#! nix-shell -i bash -p jq bash cabal2db annotatedb
+#! nix-shell -i bash -p jq bash cabal2db annotatedb recurrent-clustering
 set -e
 
 # Main ML4HS script
@@ -46,10 +46,10 @@ else
     ARG="${PACKAGE}"
 fi
 
-#     COMMAND                            OUTPUT    INPUT
-phase annotateDb                         deps      dump
-phase "$BASE/extractFeatures.sh"         features  deps
-phase "$BASE/nix_recurrentClustering.sh" clustered features
+#     COMMAND                 OUTPUT    INPUT
+phase annotateDb              deps      dump
+phase extractFeatures         features  deps
+phase nix_recurrentClustering clustered features
 
 #echo "Running run-exploration.sh" >> /dev/stderr
 #./run-exploration.sh < "$DIR/clustered"
