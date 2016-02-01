@@ -1,4 +1,7 @@
-#!/usr/bin/env bash
+#! /usr/bin/env nix-shell
+#! nix-shell -i bash -p bash jq
+
+BASE=$(dirname "$0")
 
 # Assertion functions
 
@@ -30,12 +33,52 @@ function count {
     set -e
 }
 
-# Data generators
+# Find tests by querying the environment for test* and pkgTest* functions
+
+function getFunctions {
+    # Get a list of the functions in this script
+    declare -F | cut -d ' ' -f 3-
+}
+
+function getPkgTests {
+    # Get a list of test functions which require a package
+    getFunctions | grep '^pkgTest'
+}
+
+function getTests {
+    # Get a list of all test functions
+    getFunctions | grep '^test'
+    # Apply each package test to each package
+    while read -r pkg
+    do
+        while read -r test
+        do
+            echo "$test $pkg"
+        done < <(getPkgTests)
+    done < <(getTestPkgs)
+}
+
+function getTestPkgs {
+    # A list of packages to test with
+    cat <<EOF
+list-extras
+EOF
+}
+
+# Data generators; expensive calls should cache in test-data/
+
+function getRawAsts {
+    F="test-data/$1.rawasts"
+    [[ ! -e "$F" ]] &&
+        nix-shell -p cabal2db --run "dump-hackage '$1'" > "$F"
+    cat "$F"
+}
 
 function getRawData {
+    [[ -e "$BASE/runTypes" ]] || fail "Couldn't find runTypes in '$BASE'"
     F="test-data/$1.rawdata"
     [[ ! -e "$F" ]] &&
-        getRawAsts "$1" | runTypes "$1" > "$F"
+        getRawAsts "$1" | "$BASE/runTypes" "$1" > "$F"
     cat "$F"
 }
 
@@ -68,44 +111,50 @@ function getScopeResult {
 }
 
 function getArities {
+    [[ -e "$BASE/getArities" ]] || fail "Couldn't find getArities in '$BASE'"
     F="test-data/$1.arities"
     [[ ! -e "$F" ]] &&
-        getTypeResults "$1" | getArities > "$F"
+        getTypeResults "$1" | "$BASE/getArities" > "$F"
     cat "$F"
 }
 
 function getTypes {
+    [[ -e "$BASE/getTypes" ]] || fail "Couldn't find getTypes in '$BASE'"
     F="test-data/$1.types"
     [[ ! -e "$F" ]] &&
-        getScopeResult "$1" | getTypes > "$F"
+        getScopeResult "$1" | "$BASE/getTypes" > "$F"
     cat "$F"
 }
 
 function getArityTagged {
+    [[ -e "$BASE/tagAsts" ]] || fail "Couldn't find tagAsts in '$BASE'"
     F="test-data/$1.aritytagged"
     [[ ! -e "$F" ]] &&
-        getRawAsts "$1" | tagAsts <(getArities "$1") > "$F"
+        getRawAsts "$1" | "$BASE/tagAsts" <(getArities "$1") > "$F"
     cat "$F"
 }
 
 function getTypeTagged {
+    [[ -e "$BASE/tagAsts" ]] || fail "Couldn't find tagAsts in '$BASE'"
     F="test-data/$1.typetagged"
     [[ ! -e "$F" ]] &&
-        getRawAsts "$1" | tagAsts <(getTypes "$1") > "$F"
+        getRawAsts "$1" | "$BASE/tagAsts" <(getTypes "$1") > "$F"
     cat "$F"
 }
 
 function getAsts {
+    [[ -e "$BASE/annotateAsts" ]] || fail "Couldn't find annotateAsts in '$BASE'"
     F="test-data/$1.asts"
     [[ ! -e "$F" ]] &&
-        getRawData "$1" | annotateAsts > "$F"
+        getRawData "$1" | "$BASE/annotateAsts" > "$F"
     cat "$F"
 }
 
 function getDeps {
+    [[ -e "$BASE/getDeps" ]] || fail "Couldn't find getDeps in '$BASE'"
     F="test-data/$1.deps"
     [[ ! -e "$F" ]] &&
-        getAsts "$1" | getDeps > "$F"
+        getAsts "$1" | "$BASE/getDeps" > "$F"
     cat "$F"
 }
 
