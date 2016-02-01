@@ -28,8 +28,8 @@ do
     LOOKUP='(. as $this | $deps | map(select('"$COND2"') | .cluster) | . + [0] | .[0] | . + 300)'
     FEATURES="(.features | map(if type == \"object\" then ($LOOKUP) else . end))"
 
-    # Cluster. We call runWeka.sh rather than ./cluster.sh since nix-shell adds
-    # a lot of overhead, which we move outside the loop to our own invocation
+    # Cluster. We call runWeka.sh directly since nix-shell adds a lot of
+    # overhead, which we move outside the loop to our own invocation
     echo "Clustering..." >> /dev/stderr
     CLUSTERED=$(
         echo "$DEPS" |
