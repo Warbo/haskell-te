@@ -20,7 +20,7 @@ function getRawJson {
     # Takes a package name, dumps its ASTs into $TESTDATA
     F="$TESTDATA/$1.rawjson"
     [[ ! -e "$F" ]] &&
-        NOFORMAT="true" ./dump-hackage.sh "$1" > "$F"
+        NOFORMAT="true" ./dump-hackage "$1" > "$F"
     cat "$F"
 }
 
@@ -28,7 +28,7 @@ function getRawAsts {
     # Takes a package name, dumps its ASTs into $TESTDATA
     F="$TESTDATA/$1.rawasts"
     [[ ! -e "$F" ]] &&
-        ./dump-hackage.sh "$1" > "$F"
+        ./dump-hackage "$1" > "$F"
     cat "$F"
 }
 
@@ -139,7 +139,7 @@ function init() {
         TMPDIR=""
         TESTDATA="$CABAL2DBTESTDIR/test-data"
     else
-        TMPDIR=$(mktemp -d -t 'cabal2db-test-')
+        TMPDIR=$(mktemp -d -t 'cabal2db-test-XXXXX')
         TESTDATA="$TMPDIR/test-data"
     fi
 
