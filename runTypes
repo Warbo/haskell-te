@@ -34,7 +34,7 @@ function typeCommand {
 
 function mkQuery {
     # Try to type-check QuickSpec signatures, to see which work
-    # TODO: Higher-kinded morphism, eg. Functors and Monads
+    # TODO: Higher-kinded polymorphism, eg. Functors and Monads
 
     # Shorthand
     QS="Test.QuickSpec"

@@ -3,11 +3,13 @@
 
 set -e
 
+BASE=$(dirname "$0")
+
 INPUT=$(cat)
 RAWASTS=$(echo  "$INPUT" | jq -c '.asts')
 RAWTYPES=$(echo "$INPUT" | jq -r '.result')
 RAWSCOPE=$(echo "$INPUT" | jq -r '.scoperesult')
 
 echo "$RAWASTS" |
-    ./tagAsts.sh <(echo "$RAWSCOPE" | ./getTypes.sh)   |
-    ./tagAsts.sh <(echo "$RAWTYPES" | ./getArities.sh)
+    "$BASE/tagAsts" <(echo "$RAWSCOPE" | "$BASE/getTypes")   |
+    "$BASE/tagAsts" <(echo "$RAWTYPES" | "$BASE/getArities")
