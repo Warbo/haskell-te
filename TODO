@@ -1,3 +1,0 @@
-Rather than looping through package tests for each package, return a list of commands to runTests. That way, we can grep them more easily.
-
-Why don't we get any trace from ./cluster.sh?
