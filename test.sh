@@ -260,6 +260,14 @@ function pkgTestFinalHasAllTags {
     done
 }
 
+function testTagging {
+    INPUT1='[{"name": "n1", "module": "M1"}, {"name": "n2", "module": "M2"}]'
+    INPUT2='[{"name": "n2", "module": "M2", "foo": "bar"}]'
+    RESULT=$(echo "$INPUT1" | "$BASE/tagAsts" <(echo "$INPUT2"))
+    TYPE=$(echo "$RESULT" | jq 'type')
+    [[ "x$TYPE" == 'x"array"' ]] || fail "tagAsts gave '$TYPE' not array"
+}
+
 # Test invocation
 
 function traceTest {
