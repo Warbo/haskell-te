@@ -19,7 +19,7 @@ function packageName {
 function runPlugin {
     nix-shell --show-trace \
               -E "with import <nixpkgs> {}; import ./ghcWithPlugin.nix \"$PKG\"" \
-              --run "./runPlugin.sh $DIR"
+              --run "./runAstPlugin $DIR"
 }
 
 function format {

@@ -26,7 +26,7 @@ function build {
     cabal --ghc-options="$OPTIONS" build 3>&2 2>&1 1>&3
 }
 
-[[ "$#" -eq 0 ]] && echo "runPlugin.sh needs a directory" && exit 1
+[[ "$#" -eq 0 ]] && echo "runAstPlugin needs a directory" && exit 1
 
 cd "$1"
 cabal configure >> /dev/stderr

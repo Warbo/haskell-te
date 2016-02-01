@@ -15,7 +15,7 @@ DIR=$(mktemp -d)
  for PROJECT in "$DIR"/*
  do
      echo "Dumping package $PROJECT" >> /dev/stderr
-     ./dump-package.sh "$PROJECT"
+     ./dump-package "$PROJECT"
  done)
 
 rm -rf "$DIR"
