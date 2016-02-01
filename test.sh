@@ -1,5 +1,5 @@
 #! /usr/bin/env nix-shell
-#! nix-shell -i bash -p jq haskellPackages.ShellCheck cabal2db
+#! nix-shell -i bash -p jq haskellPackages.ShellCheck cabal2db annotatedb
 shopt -s nullglob
 
 # Simple test suite for ML4HS:
@@ -106,38 +106,17 @@ function getRawAsts {
     cat "$F"
 }
 
-function getRawData {
-    F="test-data/$1.rawdata"
+function getAsts {
+    F="test-data/$1.asts"
     [[ ! -e "$F" ]] &&
-        getRawAsts "$1" | runTypes "$1" > "$F"
+        getRawAsts "$1" | annotateDb "$1" > "$F"
     cat "$F"
 }
 
 function getFeatures {
     F="test-data/$1.features"
     [[ ! -e "$F" ]] &&
-        getRawAsts "$1" | ./extractFeatures.sh > "$F"
-    cat "$F"
-}
-
-function getAsts {
-    F="test-data/$1.asts"
-    [[ ! -e "$F" ]] &&
-        getRawData "$1" | annotateAsts > "$F"
-    cat "$F"
-}
-
-function getDeps {
-    F="test-data/$1.deps"
-    [[ ! -e "$F" ]] &&
-        getAsts "$1" | getDeps > "$F"
-    cat "$F"
-}
-
-function getOrdered {
-    F="test-data/$1.ordered"
-    [[ ! -e "$F" ]] &&
-        getDeps "$1" | ./order.sh > "$F"
+        getAsts "$1" | "$BASE/extractFeatures.sh" > "$F"
     cat "$F"
 }
 
@@ -226,14 +205,6 @@ function pkgTestEquations {
 }
 
 # Tests requiring no arguments
-
-function testTagging {
-    INPUT1='[{"name": "n1", "module": "M1"}, {"name": "n2", "module": "M2"}]'
-    INPUT2='[{"name": "n2", "module": "M2", "foo": "bar"}]'
-    RESULT=$(echo "$INPUT1" | tagAsts <(echo "$INPUT2"))
-    TYPE=$(echo "$RESULT" | jq 'type')
-    [[ "x$TYPE" == 'x"array"' ]] || fail "tagAsts gave '$TYPE' not array"
-}
 
 function testShellCheck {
     SCERR=0
