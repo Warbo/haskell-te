@@ -1,5 +1,5 @@
 #! /usr/bin/env nix-shell
-#! nix-shell -p jq -p haskellPackages.ShellCheck -i bash
+#! nix-shell -i bash -p jq haskellPackages.ShellCheck cabal2db
 shopt -s nullglob
 
 # Simple test suite for ML4HS:
@@ -16,12 +16,14 @@ shopt -s nullglob
 # Assertion functions
 
 function fail {
+    # Unconditional failure
     [[ "$#" -eq 0 ]] || echo "FAIL $*"
     CODE=1
     return 1
 }
 
 function absent {
+    # Fails if $1 appears as a line in stdin
     while read -r LINE
     do
         if [[ "x$LINE" = "x$1" ]]
@@ -33,16 +35,19 @@ function absent {
 }
 
 function assertNotEmpty {
+    # Fails if stdin is empty
     COUNT=$(count "^")
     [[ "$COUNT" -gt 0 ]] || fail "$1"
 }
 
 function assertJsonNotEmpty {
+    # Takes a JSON array on stdin, fails if it's empty
     COUNT=$(jq -r "length")
     [[ "$COUNT" -gt 0 ]] || fail "$1"
 }
 
 function count {
+    # Count occurrences of $1 in stdin
     PAT="^"
     [ -n "$1" ] && PAT="$1"
     set +e
@@ -50,15 +55,15 @@ function count {
     set -e
 }
 
-# Functions to get data; these should read/write from/to the test-data/ cache
+# Functions to get data; expensive calls should cache in test-data/
 
 function getFunctions {
-    # Get a list of declared functions
+    # Get a list of the functions in this script
     declare -F | cut -d ' ' -f 3-
 }
 
 function getPkgTests {
-    # Get a list of tests which require a package
+    # Get a list of test functions which require a package
     getFunctions | grep '^pkgTest'
 }
 
@@ -76,41 +81,42 @@ function getTests {
 }
 
 function getTestPkgs {
+    # A list of packages to test with
     cat <<EOF
 list-extras
-xmonad
-pandoc
-git-annex
-hakyll
-egison
-lens
-warp
-conduit
-ghc-mod
-shelly
-http-conduit
-yesod-core
 EOF
+    #xmonad
+    #pandoc
+    #git-annex
+    #hakyll
+    #egison
+    #lens
+    #warp
+    #conduit
+    #ghc-mod
+    #shelly
+    #http-conduit
+    #yesod-core
 }
 
 function getRawJson {
     F="test-data/$1.rawjson"
     [[ ! -e "$F" ]] &&
-        NOFORMAT="true" ./dump-hackage.sh "$1" > "$F"
+        NOFORMAT="true" dump-hackage "$1" > "$F"
     cat "$F"
 }
 
 function getRawAsts {
     F="test-data/$1.rawasts"
     [[ ! -e "$F" ]] &&
-        ./dump-hackage.sh "$1" > "$F"
+        dump-hackage "$1" > "$F"
     cat "$F"
 }
 
 function getRawData {
     F="test-data/$1.rawdata"
     [[ ! -e "$F" ]] &&
-        getRawAsts "$1" | ./runTypes.sh "$1" > "$F"
+        getRawAsts "$1" | runTypes "$1" > "$F"
     cat "$F"
 }
 
@@ -145,28 +151,28 @@ function getScopeResult {
 function getTypes {
     F="test-data/$1.types"
     [[ ! -e "$F" ]] &&
-        getScopeResult "$1" | ./getTypes.sh > "$F"
+        getScopeResult "$1" | getTypes > "$F"
     cat "$F"
 }
 
 function getArities {
     F="test-data/$1.arities"
     [[ ! -e "$F" ]] &&
-        getTypeResults "$1" | ./getArities.sh > "$F"
+        getTypeResults "$1" | getArities > "$F"
     cat "$F"
 }
 
 function getTypeTagged {
     F="test-data/$1.typetagged"
     [[ ! -e "$F" ]] &&
-        getRawAsts "$1" | ./tagAsts.sh <(getTypes "$1") > "$F"
+        getRawAsts "$1" | tagAsts <(getTypes "$1") > "$F"
     cat "$F"
 }
 
 function getArityTagged {
     F="test-data/$1.aritytagged"
     [[ ! -e "$F" ]] &&
-        getRawAsts "$1" | ./tagAsts.sh <(getArities "$1") > "$F"
+        getRawAsts "$1" | tagAsts <(getArities "$1") > "$F"
     cat "$F"
 }
 
@@ -180,14 +186,14 @@ function getFeatures {
 function getAsts {
     F="test-data/$1.asts"
     [[ ! -e "$F" ]] &&
-        getRawData "$1" | ./annotateAsts.sh > "$F"
+        getRawData "$1" | annotateAsts > "$F"
     cat "$F"
 }
 
 function getDeps {
     F="test-data/$1.deps"
     [[ ! -e "$F" ]] &&
-        getAsts "$1" | ./getDeps.sh > "$F"
+        getAsts "$1" | getDeps > "$F"
     cat "$F"
 }
 
@@ -337,7 +343,7 @@ function countCommas {
     tr -dc ',' | wc -c
 }
 
-function pkgTestFeaturesUniform {
+function disabledPkgTestFeaturesUniform {
     RAWFEATURES=$(getFeatures "$1" | jq -r '.[] | .features' | grep ",")
     COUNT=$(echo "$RAWFEATURES" | head -n 1 | countCommas)
     echo "$RAWFEATURES" |
@@ -382,9 +388,9 @@ function pkgTestEquations {
 function testTagging {
     INPUT1='[{"name": "n1", "module": "M1"}, {"name": "n2", "module": "M2"}]'
     INPUT2='[{"name": "n2", "module": "M2", "foo": "bar"}]'
-    RESULT=$(echo "$INPUT1" | ./tagAsts.sh <(echo "$INPUT2"))
+    RESULT=$(echo "$INPUT1" | tagAsts <(echo "$INPUT2"))
     TYPE=$(echo "$RESULT" | jq 'type')
-    [[ "x$TYPE" == 'x"array"' ]] || fail "tagAsts.sh gave '$TYPE' not array"
+    [[ "x$TYPE" == 'x"array"' ]] || fail "tagAsts gave '$TYPE' not array"
 }
 
 function testShellCheck {

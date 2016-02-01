@@ -1,5 +1,5 @@
 #! /usr/bin/env nix-shell
-#! nix-shell -p jq -p bash -i bash
+#! nix-shell -i bash -p jq bash cabal2db
 set -e
 
 # Main ML4HS script
@@ -37,17 +37,17 @@ function phase {
 # Provide a directory as PACKAGEDIR, or else we'll use Hackage
 if [[ -z "${PACKAGEDIR}" ]]
 then
-    phase ./dump-hackage.sh dump
+    phase dump-hackage dump
 else
     ARG="${PACKAGEDIR}"
-    phase ./dump-package.sh dump
+    phase dump-package dump
     ARG="${PACKAGE}"
 fi
 
 #     COMMAND                      OUTPUT    INPUT
-phase ./runTypes.sh                types     dump
-phase ./annotateAsts.sh            asts      types
-phase ./getDeps.sh                 deps      asts
+phase runTypes                     types     dump
+phase annotateAsts                 asts      types
+phase getDeps                      deps      asts
 
 #./findMissing.sh < "$DIR/deps" | sort -u | tee "$DIR/missing" >> /dev/stderr
 
