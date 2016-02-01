@@ -33,6 +33,13 @@ function count {
     set -e
 }
 
+function allObjectsHave {
+    INPUT=$(cat)
+    COUNT=$(echo "$INPUT" | jq -c 'length')
+    PROP=$(echo "$INPUT" | jq -c "map(.$1) | length")
+    [[ "$COUNT" -eq "$PROP" ]]
+}
+
 # Find tests by querying the environment for test* and pkgTest* functions
 
 function getFunctions {
@@ -158,6 +165,14 @@ function getDeps {
     cat "$F"
 }
 
+function getFinal {
+    [[ -e "$BASE/annotateDb" ]] || fail "Couldn't find annotateDb in '$BASE'"
+    F="test-data/$1.final"
+    [[ ! -e "$F" ]] &&
+        getRawAsts "$1" | "$BASE/annotateDb" "$1" > "$F"
+    cat "$F"
+}
+
 # Tests
 
 function pkgTestGetRawData {
@@ -201,21 +216,11 @@ function pkgTestGetAsts {
 }
 
 function pkgTestAstFields {
-    COUNT=$(getAsts "$1" | jq -c 'length')
-    PKGS=$(getAsts "$1" | jq -c 'map(.package)  | length')
-    MODS=$(getAsts "$1" | jq -c 'map(.module)   | length')
-    NAMES=$(getAsts "$1" | jq -c 'map(.name)     | length')
-    ASTS=$(getAsts "$1" | jq -c 'map(.ast)      | length')
-    TYPES=$(getAsts "$1" | jq -c 'map(.type)     | length')
-    ARITIES=$(getAsts "$1" | jq -c 'map(.arity)    | length')
-    FEATURES=$(getAsts "$1" | jq -c 'map(.features) | length')
-    [[ $COUNT -eq $PKGS     ]] || fail "$FUNCNAME '$1' pkgs"
-    [[ $COUNT -eq $MODS     ]] || fail "$FUNCNAME '$1' mods"
-    [[ $COUNT -eq $NAMES    ]] || fail "$FUNCNAME '$1' names"
-    [[ $COUNT -eq $ASTS     ]] || fail "$FUNCNAME '$1' asts"
-    [[ $COUNT -eq $TYPES    ]] || fail "$FUNCNAME '$1' types"
-    [[ $COUNT -eq $ARITIES  ]] || fail "$FUNCNAME '$1' arities"
-    [[ $COUNT -eq $FEATURES ]] || fail "$FUNCNAME '$1' features"
+    for FIELD in package module name ast type arity features
+    do
+        getAsts "$1" | allObjectsHave "$FIELD" ||
+            fail "ASTs for '$1' don't all have '$FIELD'"
+    done
 }
 
 function pkgTestAstLabelled {
@@ -245,6 +250,14 @@ function pkgTestDeps {
     HAVE=$(getDeps "$1" | jq 'map(has("dependencies")) | all')
     [[ "x$HAVE" = "xtrue" ]] ||
         fail "ASTs for '$1' didn't get dependencies"
+}
+
+function pkgTestFinalHasAllTags {
+    for FIELD in package module name ast type arity dependencies
+    do
+        getFinal "$1" | allObjectsHave "$FIELD" ||
+            fail "Annotated DB of '$1' is missing some '$FIELD'"
+    done
 }
 
 # Test invocation
