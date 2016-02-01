@@ -2,6 +2,8 @@
 #! nix-shell -i bash -p jq haskellPackages.ShellCheck cabal2db annotatedb
 shopt -s nullglob
 
+BASE=$(dirname "$0")
+
 # Simple test suite for ML4HS:
 #  - Given no arguments, all tests will be run
 #  - Given a regex as argument, only matching tests will be run
@@ -125,7 +127,7 @@ function getClusters {
     export CLUSTERS
     F="test-data/$1.clusters.$CLUSTERS"
     [[ ! -e "$F" ]] &&
-        getAsts "$1" | ./cluster.sh > "$F"
+        getFeatures "$1" | "$BASE/nix_recurrentClustering.sh" > "$F"
     cat "$F"
 }
 
@@ -135,26 +137,12 @@ function getEquations {
     F="test-data/$1.rawEquations.$CLUSTERS"
     if [[ ! -e "$F" ]]
     then
-        getClusters "$1" | ./run-exploration.sh > "$F"
+        getClusters "$1" | "$BASE/run-exploration.sh" > "$F"
     fi
     cat "$F"
 }
 
 # Tests requiring a package as argument
-
-function pkgTestOrder {
-    LEN=$(getOrdered "$1" | jq 'length')
-    [[ "$LEN" -gt 0 ]] ||
-        fail "Couldn't put '$1' dependencies in order"
-}
-
-function pkgTestOrderMatches {
-    NAMES=$(getOrdered "$1" | jq '.[] | .name')
-    DEPS=$(getDeps "$1" | nix-shell -p order-deps --run 'order-deps')
-    SHOULD=$(echo "$DEPS" | jq '.[] | .[] | .name')
-    [[ "x$NAMES" = "x$SHOULD" ]] ||
-        fail "Dependencies of '$1' are in the wrong order"
-}
 
 function pkgTestGetFeatures {
     getFeatures "$1" | assertNotEmpty "Couldn't get features from '$1'"
@@ -164,40 +152,54 @@ function countCommas {
     tr -dc ',' | wc -c
 }
 
-function disabledPkgTestFeaturesUniform {
-    RAWFEATURES=$(getFeatures "$1" | jq -r '.[] | .features' | grep ",")
-    COUNT=$(echo "$RAWFEATURES" | head -n 1 | countCommas)
-    echo "$RAWFEATURES" |
-        while read -r LINE
-        do
-            THIS=$(echo "$LINE" | countCommas)
-            if [[ "$THIS" -ne "$COUNT" ]]
-            then
-                fail "'$LINE' doesn't have $COUNT commas"
-            fi
-        done
+function pkgTestFeaturesConform {
+    FEATURELENGTHS=$(getFeatures "$1" | jq -r '.[] | .features | length')
+    COUNT=$(echo "$FEATURELENGTHS" | head -n 1)
+    echo "$FEATURELENGTHS" | while read -r LINE
+    do
+        if [[ "$LINE" -ne "$COUNT" ]]
+        then
+            fail "Found '$LINE' features, was expecting '$COUNT'"
+        fi
+    done
+}
+
+function pkgTestAllClustered {
+    for CLUSTERS in 1 2 3 5 7 11
+    do
+        if getClusters "$1" | jq '.[] | .tocluster' | grep "false" > /dev/null
+        then
+            fail "Clustering '$1' into '$CLUSTERS' clusters didn't include everything"
+        fi
+    done
 }
 
 function pkgTestHaveAllClusters {
-    # FIXME: Make cluster number configurable (eg. so we can have it vary based
-    # on the number of definitions)
-    COUNT=$(getClusters "$1" | jq -r 'length')
-    if [[ "$COUNT" -lt 1 || "$COUNT" -gt 4 ]]
-    then
-        fail "Found $COUNT clusters for '$1' (should be 1, 2, 3 or 4)"
-    fi
+    for CLUSTERS in 1 2 3 5 7 11
+    do
+        FOUND=$(getClusters "$1" | jq '.[] | .cluster')
+        for NUM in $(seq 1 "$CLUSTERS")
+        do
+            echo "$FOUND" | grep "^${NUM}$" > /dev/null ||
+                fail "Clustering '$1' into '$CLUSTERS' clusters, '$NUM' was empty"
+        done
+    done
 }
 
 function pkgTestClusterFields {
-    for field in arity name module type package ast features cluster
+    for CLUSTERS in 1 2 3 5 7 11
     do
-        RESULT=$(getClusters "$1" | jq "map(map(has(\"$field\")) | all) | all")
-        [[ "x$RESULT" = "xtrue" ]] || fail "$1 clusters don't have $field"
+        for field in arity name module type package ast features cluster
+        do
+            RESULT=$(getClusters "$1" | jq "map(has(\"$field\")) | all")
+            [[ "x$RESULT" = "xtrue" ]] ||
+                fail "Clustering '$1' into '$CLUSTERS' clusters missed some '$field' entries"
+        done
     done
 }
 
 function pkgTestEquations {
-    for CLUSTERS in 1 2 3 4 5 6 7 8
+    for CLUSTERS in 1 2 3 5 7 11
     do
         echo "'$CLUSTERS' CLUSTERS FOR '$1'" >> /dev/stderr
         getEquations "$1" || fail "Couldn't get equations for '$1'"
