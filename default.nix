@@ -10,7 +10,7 @@ stdenv.mkDerivation {
 
   installPhase = ''
     mkdir -p "$out/bin"
-    for FILE in recurrentClustering nix_recurrentClustering runWeka extractFeatures
+    for FILE in recurrentClustering nix_recurrentClustering runWeka extractFeatures cluster
     do
         cp -v "$FILE" "$out/bin/"
     done
