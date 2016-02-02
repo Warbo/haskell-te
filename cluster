@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+BASE=$(dirname "$0")
+
+"$BASE/extractFeatures" | "$BASE/nix_recurrentClustering"

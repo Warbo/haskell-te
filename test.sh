@@ -86,7 +86,7 @@ function getFeatures {
 }
 
 function getClusters {
-    [[ -z "$CLUSTERS" ]] && CLUSTERS=4
+    [[ -n "$CLUSTERS" ]] || fail "No CLUSTERS for getClusters"
     export CLUSTERS
     F="test-data/$1.clusters.$CLUSTERS"
     [[ ! -e "$F" ]] &&
@@ -94,7 +94,16 @@ function getClusters {
     cat "$F"
 }
 
-# Tests
+function getEndToEnd {
+    [[ -n "$CLUSTERS" ]] || fail "No CLUSTERS for getEndToEnd"
+    export CLUSTERS
+    F="test-data/$1.endtoend.$CLUSTERS"
+    [[ ! -e "$F" ]] &&
+        getAsts "$1" | "$BASE/cluster" > "$F"
+    cat "$F"
+}
+
+# Feature extraction tests
 
 function pkgTestGetFeatures {
     getFeatures "$1" | assertNotEmpty "Couldn't get features from '$1'"
@@ -112,38 +121,79 @@ function pkgTestFeaturesConform {
     done
 }
 
-function pkgTestAllClustered {
-    for CLUSTERS in 1 2 3 5 7 11
+# Clustering tests; each is tested with the feature extraction output, and via
+# the top-level "cluster" command
+
+function clusterNums {
+    # The number of clusters to test with. Since it's expensive, we use the same
+    # numbers each time, so the caches can be re-used.
+    cat <<EOF
+1
+2
+11
+EOF
+}
+
+function allClustered {
+    while read -r CLUSTERS
     do
-        if getClusters "$1" | jq '.[] | .tocluster' | grep "false" > /dev/null
+        if "$2" "$1" | jq '.[] | .tocluster' | grep "false" > /dev/null
         then
             fail "Clustering '$1' into '$CLUSTERS' clusters didn't include everything"
         fi
-    done
+    done < <(clusterNums)
 }
 
-function pkgTestHaveAllClusters {
-    for CLUSTERS in 1 2 3 5 7 11
+function pkgTestAllClustered {
+    allClustered "$1" getClusters
+}
+
+function pkgTestAllEndToEnd {
+    allClustered "$1" getEndToEnd
+}
+
+###
+
+function haveAllClusters {
+    while read -r CLUSTERS
     do
-        FOUND=$(getClusters "$1" | jq '.[] | .cluster')
+        FOUND=$("$2" "$1" | jq '.[] | .cluster')
         for NUM in $(seq 1 "$CLUSTERS")
         do
             echo "$FOUND" | grep "^${NUM}$" > /dev/null ||
                 fail "Clustering '$1' into '$CLUSTERS' clusters, '$NUM' was empty"
         done
-    done
+    done < <(clusterNums)
 }
 
-function pkgTestClusterFields {
-    for CLUSTERS in 1 2 3 5 7 11
+function pkgTestHaveAllClusters {
+    haveAllClusters "$1" getClusters
+}
+
+function pkgTestHaveAllEndToEnd {
+    haveAllClusters "$1" getEndToEnd
+}
+
+###
+
+function clusterFields {
+    while read -r CLUSTERS
     do
         for field in arity name module type package ast features cluster
         do
-            RESULT=$(getClusters "$1" | jq "map(has(\"$field\")) | all")
+            RESULT=$("$2" "$1" | jq "map(has(\"$field\")) | all")
             [[ "x$RESULT" = "xtrue" ]] ||
                 fail "Clustering '$1' into '$CLUSTERS' clusters missed some '$field' entries"
         done
-    done
+    done < <(clusterNums)
+}
+
+function pkgTestClusterFields {
+    clusterFields "$1" getClusters
+}
+
+function pkgTestEndToEndFields {
+    clusterFields "$1" getEndToEnd
 }
 
 # Test invocation

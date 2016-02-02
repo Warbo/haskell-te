@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+[[ -n "$CLUSTERS" ]] || {
+    echo "No CLUSTERS found in environment" >> /dev/stderr
+    exit 1
+}
+
 BASE=$(dirname "$0")
 DEPS=$(cat)
 
