@@ -12,14 +12,33 @@ then
     exit 1
 fi
 
-BASE=$(dirname "$0")
+[[ -n "$CLUSTERS" ]] || {
+    echo "ML4HS needs the env var CLUSTERS to tell it how many clusters to use" >> /dev/stderr
+    exit 1
+}
 
 PACKAGE="${1}"
 ARG="${PACKAGE}"
 
-DIR="ML4HS.${PACKAGE}"
-echo "Making temp dir '$DIR' for results"
-mkdir -vp "$DIR"
+if [[ -n "$ML4HSDIR" ]]
+then
+    [[ -d "$ML4HSDIR" ]] || {
+        echo "Given directory '$ML4HSDIR' doesn't exist" >> /dev/stderr
+        exit 1
+    }
+    DIR="$ML4HSDIR/${PACKAGE}"
+else
+    TEMPDIR=$(mktemp -d --tmpdir "ml4hs.${PACKAGE}.XXXXX")
+    DIR="$TEMPDIR/${PACKAGE}"
+    echo "Making temp dir '$DIR' for results"
+fi
+
+if [[ -d "$DIR" ]]
+then
+    echo "Directory '$DIR' already exists; leaving as-is" >> /dev/null
+else
+    mkdir -v "$DIR" >> /dev/stderr
+fi
 
 function phase {
     if [[ -e "$DIR/$2" ]]
@@ -46,10 +65,11 @@ else
     ARG="${PACKAGE}"
 fi
 
-#     COMMAND                 OUTPUT    INPUT
-phase annotateDb              deps      dump
-phase extractFeatures         features  deps
-phase nix_recurrentClustering clustered features
+BASE=$(dirname "$0")
 
-#echo "Running run-exploration.sh" >> /dev/stderr
-#./run-exploration.sh < "$DIR/clustered"
+#     COMMAND                       OUTPUT    INPUT
+phase annotateDb                    asts      dump
+phase cluster                       clustered asts
+phase "$BASE/format-exploration.sh" formatted clustered
+
+"$BASE/run-exploration.sh" < "$DIR/formatted"

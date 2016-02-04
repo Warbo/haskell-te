@@ -49,6 +49,16 @@ function getTests {
     done < <(getTestPkgs)
 }
 
+function clusterNums {
+    # Re-use the same numbers of clusters across tests, so we can use cached
+    # results
+    cat <<EOF
+1
+2
+11
+EOF
+}
+
 function getTestPkgs {
     # A list of packages to test with
     cat <<EOF
@@ -70,57 +80,146 @@ EOF
 
 function getRawAsts {
     F="test-data/$1.rawasts"
-    [[ ! -e "$F" ]] &&
-        dump-hackage "$1" > "$F"
+    [[ -e "$F" ]] || {
+        dump-hackage "$1" > "$F" || {
+            fail "Error getting ASTs for '$1'"
+            return 1
+        }
+    }
     cat "$F"
 }
 
 function getAsts {
     F="test-data/$1.asts"
-    [[ ! -e "$F" ]] &&
-        getRawAsts "$1" | annotateDb "$1" > "$F"
-    cat "$F"
-}
-
-function getFeatures {
-    F="test-data/$1.features"
-    [[ ! -e "$F" ]] &&
-        getAsts "$1" | extractFeatures > "$F"
+    [[ -e "$F" ]] || {
+        getRawAsts "$1" | annotateDb "$1" > "$F" || {
+            fail "Error annotating ASTs for '$1'"
+            return 1
+        }
+    }
     cat "$F"
 }
 
 function getClusters {
-    [[ -z "$CLUSTERS" ]] && CLUSTERS=4
+    [[ -n "$CLUSTERS" ]] || {
+        fail "No CLUSTERS for getClusters"
+        return 1
+    }
     export CLUSTERS
     F="test-data/$1.clusters.$CLUSTERS"
-    [[ ! -e "$F" ]] &&
-        getFeatures "$1" | nix_recurrentClustering > "$F"
+    [[ -e "$F" ]] || {
+        getAsts "$1" | cluster > "$F" || {
+            fail "Error clustering '$1' into '$CLUSTERS' clusters"
+            return 1
+        }
+    }
+    cat "$F"
+}
+
+function getFormattedClusters {
+    [[ -n "$CLUSTERS" ]] || {
+        fail "No CLUSTERS for getFormattedClusters"
+        return 1
+    }
+    export CLUSTERS
+    F="test-data/$1.formatted.$CLUSTERS"
+    [[ -e "$F" ]] || {
+        getClusters "$1" | "$BASE/format-exploration.sh" > "$F" || {
+            fail "Error formatting '$CLUSTERS' clusters for '$1'"
+            return 1
+        }
+    }
     cat "$F"
 }
 
 function getEquations {
-    mkdir -p test-data/projects
-    [[ -z "$CLUSTERS" ]] && CLUSTERS=4
+    [[ -n "$CLUSTERS" ]] || {
+        fail "No CLUSTERS for getEquations"
+        return 1
+    }
+    export CLUSTERS
     F="test-data/$1.rawEquations.$CLUSTERS"
-    if [[ ! -e "$F" ]]
-    then
-        getClusters "$1" | "$BASE/run-exploration.sh" > "$F"
-    fi
+    [[ -e "$F" ]] || {
+        getFormattedClusters "$1" | "$BASE/run-exploration.sh" > "$F" || {
+            fail "Error running run-exploration.sh for '$1' with '$CLUSTERS' clusters"
+            return 1
+        }
+    }
     cat "$F"
 }
 
-# Tests requiring a package as argument
-
-function countCommas {
-    tr -dc ',' | wc -c
+function getEndToEnd {
+    [[ -n "$CLUSTERS" ]] || {
+        fail "No CLUSTERS for getEquations"
+        return 1
+    }
+    export CLUSTERS
+    export ML4HSDIR="$PWD/test-data"
+    F="test-data/$1.endToEnd.$CLUSTERS"
+    [[ -e "$F" ]] || {
+        "$BASE/ml4hs.sh" "$1" > "$F" || {
+            fail "Error running ml4hs.sh on '$1' with '$CLUSTERS' clusters"
+            return 1
+        }
+    }
+    cat "$F"
 }
 
-function pkgTestEquations {
-    for CLUSTERS in 1 2 3 5 7 11
+# Tests requiring a package as argument.
+
+function pkgTestValidFormatting {
+    while read -r CLUSTERS
     do
-        echo "'$CLUSTERS' CLUSTERS FOR '$1'" >> /dev/stderr
-        getEquations "$1" || fail "Couldn't get equations for '$1'"
-    done
+        FORMATTED=$(getFormattedClusters "$1") || {
+            fail "Couldn't get '$CLUSTERS' formatted clusters for '$1'"
+            return 1
+        }
+        LENGTH=$(echo "$FORMATTED" | jq -c 'length') || {
+            fail "Can't read '$CLUSTERS' formatted clusters for '$1'"
+            continue
+        }
+        [[ "$LENGTH" -eq "$CLUSTERS" ]] ||
+            fail "Formatted '$LENGTH' clusters for '$1' instead of '$CLUSTERS'"
+    done < <(clusterNums)
+}
+
+# We run tests of the equations twice: once on the equations built from the
+# cache, and once with the output of ml4hs.sh, to ensure that they're the same
+
+function checkExitCode {
+    while read -r CLUSTERS
+    do
+        "$2" "$1" || fail "'$2' exited with error for '$1'"
+    done < <(clusterNums)
+}
+
+
+function pkgTestEquationsCode {
+    checkExitCode "$1" getEquations
+}
+
+function pkgTestEndToEndCode {
+    checkExitCode "$1" getEndToEnd
+}
+
+###
+
+function checkJsonEqs {
+    while read -r CLUSTERS
+    do
+        OUTPUT=$("$2" "$1")
+        LENGTH=$(echo "$OUTPUT" | grep '^{' | jq -cs 'length')
+        [[ "$LENGTH" -gt 0 ]] ||
+            fail "'$2' on '$1' produced 0 JSON objects '$OUTPUT'"
+    done < <(clusterNums)
+}
+
+function pkgTestClusterJson {
+    checkJsonEqs "$1" getEquations
+}
+
+function pkgTestEndToEndJson {
+    checkJsonEqs "$1" getEndToEnd
 }
 
 # Tests requiring no arguments
