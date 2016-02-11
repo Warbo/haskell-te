@@ -1,0 +1,13 @@
+#! /usr/bin/env nix-shell
+#! nix-shell -i bash -p jq bash
+
+# Packages required for MLSpec
+printf 'haskellPackages.mlspec haskellPackages.mlspec-helper haskellPackages.runtime-arbitrary '
+
+# Haskell packages taken from JSON
+jq -r '.[] | .[] | .package'       | # Extract packages as unquoted strings
+    sort -u                        | # Remove dupes
+    sed -e 's/^/haskellPackages./' | # Prefix with "haskellPackages."
+    tr '\n' ' '                      # Join package names with spaces
+
+echo "" # Newline

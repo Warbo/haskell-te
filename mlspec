@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+STDIN=0
+
+if [[ "$#" -gt 0 ]]
+then
+    echo "Reading clusters from '$1'" >> /dev/stderr
+    INPUT=$(cat "$1")
+elif ! [ -t 0 ]
+then
+    echo "Reading clusters from stdin" >> /dev/stderr
+    STDIN=1
+    INPUT=$(cat)
+else
+    echo "Error: Please supply a filename or input to stdin" >> /dev/stderr
+    exit 1
+fi
+
+function run {
+    nix-shell --run "MLSpec $*" -p $PKGS
+}
+
+BASE=$(dirname "$(readlink -f "$0")")
+PKGS=$(echo "$INPUT" | "$BASE/getPkgs")
+
+if [[ "$STDIN" -eq 1 ]]
+then
+    echo "$INPUT" | run
+else
+    run "$@"
+fi
