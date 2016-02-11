@@ -16,23 +16,35 @@ else
     exit 1
 fi
 
+function haveCmd {
+    command -v "$1" > /dev/null 2>&1
+}
+
 function explore {
     PKGS=$(echo "$INPUT" | getPkgs)
     nix-shell --run "MLSpec $*" -p $PKGS
+}
+
+function pkgsFromInput {
+    # Extracts packages as unquoted strings
+    ARG='.[] | .[] | .package'
+    if haveCmd jq
+    then
+        jq -r "$ARG"
+    else
+        nix-shell -p jq --run "jq '$ARG'"
+    fi
 }
 
 function getPkgs {
     # Packages required for MLSpec
     for PKG in mlspec mlspec-helper runtime-arbitrary
     do
-        printf "haskellPackages.$PKG"
+        printf "haskellPackages.$PKG "
     done
 
-    # Haskell packages taken from JSON
-    jq -r '.[] | .[] | .package'       | # Extract packages as unquoted strings
-        sort -u                        | # Remove dupes
-        sed -e 's/^/haskellPackages./' | # Prefix with "haskellPackages."
-        tr '\n' ' '                      # Join package names with spaces
+    # Packages used by the given theories
+    pkgsFromInput | sort -u | sed -e 's/^/haskellPackages./' | tr '\n' ' '
 
     echo "" # For the newline
 }

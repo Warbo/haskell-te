@@ -13,18 +13,20 @@ function noDupes {
             sed -e 's/.*head-//g'            |
             sort                             |
             uniq -D)
-    [[ -z "$DUPES" ]] || fail "mlspec made redundant lookups: $DUPES"
+    [[ -z "$DUPES" ]] || fail "'$CMD' made redundant lookups: $DUPES"
 }
 
-function mlspec {
-    "$BASE/mlspec" < "$1" 2>&1
+function explore {
+    "$CMD" < "$1" 2>&1
 }
 
 BASE=$(dirname "$(readlink -f "$0")")
+CMD="$BASE/explore-theories"
 
 for F in data/*
 do
     echo "Exploring '$F'" >> /dev/stderr
-    OUTPUT=$(mlspec "$F" | tee >(cat - >&5)) || fail "Failed to explore '$F'"
+    OUTPUT=$(explore "$F" | tee >(cat - >&5)) || # tee gives us realtime output
+        fail "Failed to explore '$F'"
     echo "$OUTPUT" | noDupes
 done
