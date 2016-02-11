@@ -16,16 +16,30 @@ else
     exit 1
 fi
 
-function run {
+function explore {
+    PKGS=$(echo "$INPUT" | getPkgs)
     nix-shell --run "MLSpec $*" -p $PKGS
 }
 
-BASE=$(dirname "$(readlink -f "$0")")
-PKGS=$(echo "$INPUT" | "$BASE/getPkgs")
+function getPkgs {
+    # Packages required for MLSpec
+    for PKG in mlspec mlspec-helper runtime-arbitrary
+    do
+        printf "haskellPackages.$PKG"
+    done
+
+    # Haskell packages taken from JSON
+    jq -r '.[] | .[] | .package'       | # Extract packages as unquoted strings
+        sort -u                        | # Remove dupes
+        sed -e 's/^/haskellPackages./' | # Prefix with "haskellPackages."
+        tr '\n' ' '                      # Join package names with spaces
+
+    echo "" # For the newline
+}
 
 if [[ "$STDIN" -eq 1 ]]
 then
-    echo "$INPUT" | run
+    echo "$INPUT" | explore "$@"
 else
-    run "$@"
+    explore "$@"
 fi
