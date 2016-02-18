@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-STDIN=0
-
 if [[ "$#" -gt 0 ]]
 then
     echo "Reading clusters from '$1'" >> /dev/stderr
@@ -9,7 +7,6 @@ then
 elif ! [ -t 0 ]
 then
     echo "Reading clusters from stdin" >> /dev/stderr
-    STDIN=1
     INPUT=$(cat)
 else
     echo "Error: Please supply a filename or input to stdin" >> /dev/stderr
@@ -34,13 +31,8 @@ function pkgsFromInput {
 }
 
 function explore {
-    pkgsFromInput | "$BASE/build-env" "$BASE/path-to-front" MLSpec "$@"
+    PKGS=$(echo "$INPUT" | pkgsFromInput)
+    echo "$INPUT" | ENVIRONMENT_PACKAGES="$PKGS" "$BASE/build-env" "$BASE/path-to-front" MLSpec "$@"
 }
 
-
-if [[ "$STDIN" -eq 1 ]]
-then
-    echo "$INPUT" | explore "$@"
-else
-    explore "$@"
-fi
+explore

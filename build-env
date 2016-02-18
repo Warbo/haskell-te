@@ -53,7 +53,7 @@ function needEnv {
     return 1
 }
 
-INPUT=$(sort -u | grep "^.")
+INPUT=$(echo "$ENVIRONMENT_PACKAGES" | sort -u | grep "^.")
 HPKGS=$(echo "$INPUT" | sed -e 's/^/h./')
 NAME=$(echo "$HPKGS" | mkName)
 ENVPKG=$(echo "$HPKGS" | mkEnvPkg "$NAME")

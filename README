@@ -39,12 +39,14 @@ all), so MLSpec can proceed without any further delay.
 
 ### `build-env` ###
 
-Takes a list of Haskell packages on stdin, and a command to run as its
-argument(s). If all of the given packages are already available, the given
-command is executed. If some of the given packages aren't available, a new
-environment is instantiated, and the command is executed inside.
+Takes a list of Haskell packages from `ENVIRONMENT_PACKAGES`, and a command to
+run as its argument(s). If all of the given packages are already available, the
+given command is executed (inheriting stdio). If some of the given packages
+aren't available, a new environment is instantiated, and the command is executed
+inside that.
 
-You should not have to run this directly.
+You should not have to run this directly, although it can be handy to speed up
+some nix-invoking loops.
 
 ### `explore-theories` ###
 
@@ -69,6 +71,7 @@ correct packages available. This script will check for and correct this problem.
 
 ### `test.sh` ###
 
-Test suite. To make tests faster, you can run it via `build-env`, sending in the
-output of `extra-haskell-packages` plus the `list-extras` package (which is used
-by the test data)
+Test suite. To make tests faster, you can avoid repeated Nix invocations by
+running it via `build-env`, using the output of `extra-haskell-packages` plus
+the `list-extras` package (which is used by the test data) as the
+`ENVIRONMENT_PACKAGES`.

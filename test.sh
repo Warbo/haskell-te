@@ -39,7 +39,7 @@ function testExplorationFindsEquations {
     for F in data/*
     do
         echo "Exploring '$F'" >> /dev/stderr
-        OUTPUT=$(explore "$F") || fail "Failed to explore '$F'"
+        OUTPUT=$(explore "$F") || fail "Failed to explore '$F': $OUTPUT"
 
         echo "$OUTPUT" | grep "No clusters found" &&
             fail "No clusters found by MLSpec (did it receive any input?)"
@@ -51,7 +51,7 @@ function testExplorationFindsEquations {
 }
 
 function testEnvContainsPkgs {
-    # Append more and more Haskell packages to build-env's stdin
+    # Append more and more Haskell packages to ENVIRONMENT_PKGS
     PKGS=""
     for NEWPKG in text containers parsec aeson
     do
@@ -61,11 +61,11 @@ function testEnvContainsPkgs {
         # by calling ghc-pkg
         for PKG in $PKGS
         do
-            OUTPUT=$(echo "$PKGS" | "$BASE/build-env" ghc-pkg list "$PKG") ||
+            OUTPUT=$(ENVIRONMENT_PKGS="$PKGS" "$BASE/build-env" ghc-pkg list "$PKG") ||
                 fail "Couldn't run ghc-pkg in build-env for '$PKG' in '$PKGS'"
             echo "$OUTPUT" | grep "$PKG" > /dev/null ||
                 fail "Didn't find package '$PKG' in ghc-pkg output '$OUTPUT'"
-            echo "Package '$PKG' was found in the environment" >&5
+            echo "Package '$PKG' was found in the environment" >> /dev/stderr
         done
     done
 }
@@ -77,7 +77,7 @@ function nixception {
       echo "BEGIN INNER SHELL" >> /dev/stderr
       for PKG in $HLINE
       do
-          echo "$EXTRAH" | "$BASE/build-env" ghc-pkg list "\$PKG" |
+          ENVIRONMENT_PKGS="$EXTRAH" "$BASE/build-env" ghc-pkg list "\$PKG" |
                grep "\$PKG" > /dev/null || {
               echo "Didn't find '\$PKG' in environment" >> /dev/stderr
               exit 1
