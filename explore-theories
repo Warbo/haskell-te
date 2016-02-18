@@ -16,13 +16,10 @@ else
     exit 1
 fi
 
+BASE=$(dirname "$(readlink -f "$0")")
+
 function haveCmd {
     command -v "$1" > /dev/null 2>&1
-}
-
-function explore {
-    PKGS=$(echo "$INPUT" | getPkgs)
-    nix-shell --run "MLSpec $*" -p "$PKGS"
 }
 
 function pkgsFromInput {
@@ -36,45 +33,10 @@ function pkgsFromInput {
     fi
 }
 
-function extraHaskellPackages {
-    # Haskell packages required for MLSpec
-    for PKG in mlspec mlspec-helper runtime-arbitrary quickspec
-    do
-        printf "h.$PKG "
-    done
+function explore {
+    pkgsFromInput | "$BASE/build-env" "$BASE/path-to-front" MLSpec "$@"
 }
 
-function extraPackages {
-    printf "mlspec"
-}
-
-function mkGhcPkg {
-    GIVEN=$(cat)
-    printf "(haskellPackages.ghcWithPackages (h: [%s]))" "$GIVEN"
-}
-
-function mkName {
-    U=$(tr -d '[[:space:]]' | md5sum | cut -d ' ' -f1)
-    printf "explore-theories-$U"
-}
-
-function getPkgs {
-    INPUT=$(cat)
-
-    # Packages used by the given theories
-    FROMINPUT=$(echo "$INPUT" | pkgsFromInput | sort -u | sed -e 's/^/h./' | tr '\n' ' ')
-
-    # Packages for MLSpec
-    EXTRAHASKELL=$(extraHaskellPackages)
-
-    GHCPKG=$(echo "$FROMINPUT $EXTRAHASKELL" | mkGhcPkg)
-
-    EXTRAS=$(extraPackages)
-
-    NAME=$(echo "$FROMINPUT $EXTRAHASKELL $EXTRAS" | mkName)
-
-    echo "buildEnv { name = \"${NAME}\"; paths = [$GHCPKG $EXTRAS];}"
-}
 
 if [[ "$STDIN" -eq 1 ]]
 then
