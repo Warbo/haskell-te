@@ -69,6 +69,18 @@ function getTestPkgs {
     # A list of packages to test with
     cat <<EOF
 list-extras
+xmonad
+pandoc
+git-annex
+hakyll
+egison
+lens
+warp
+conduit
+ghc-mod
+shelly
+http-conduit
+yesod-core
 EOF
 }
 
