@@ -6,6 +6,6 @@ do
     DEPENDENCIES=$(echo "$LINE" | jq -r '.ast' | GetDeps )
     [[ -z "$DEPENDENCIES" ]] && echo "LINE: $LINE" >> /dev/stderr
 
-    # Add the features to the object
+    # Add the dependencies to the object
     echo "$LINE" | jq -c ". + {\"dependencies\": $DEPENDENCIES }"
 done  | jq -s '.'
