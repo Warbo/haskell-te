@@ -1,0 +1,30 @@
+# Haskell Theory Exploration #
+
+This repository is designed to allow reproducible experiments in theory
+exploration, in the Haskell language.
+
+## Scripts ##
+
+### `getPackageList.sh` ###
+
+Fetches the latest list of packages available from hackage.haskell.org
+
+The results are, by their nature, subject to change; hence the list of packages
+used in an experiment should be kept alongside the results.
+
+### `shufflePackages.sh` ###
+
+Outputs (the latest version of) each package in `index.tar.gz` (as fetched by
+`getPackageList.sh`), in a random order. This is designed to allow a random
+set of packages to be used in experiments; we can't select a set of packages
+based just on their names, since some may fail to compile or may not provide any
+functions to explore.
+
+By emitting all packages in a random order, we can loop through them, extracting
+functions from each until we have the desired number. Hence the results of this
+script don't necessarily need to be kept, as long as we keep the set of packages
+eventually obtained.
+
+### `getPackages.sh` ###
+
+Fetch packages from hackage.haskell.org
