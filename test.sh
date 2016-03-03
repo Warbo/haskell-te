@@ -50,6 +50,17 @@ function testExplorationFindsEquations {
     echo "Exploration worked" >> /dev/stderr
 }
 
+function testEmptyEnv {
+    # The contents of extra-haskell-packages should be available, even with no
+    # ENVIRONMENT_PACKAGES given
+    while read -r PKG
+    do
+        unset ENVIRONMENT_PACKAGES
+        "$BASE/build-env" ghc-pkg list "$PKG" ||
+            fail "Extra package '$PKG' wasn't found with empty environment"
+    done < <("$BASE/extra-haskell-packages")
+}
+
 function testEnvContainsPkgs {
     # Append more and more Haskell packages to ENVIRONMENT_PACKAGES
     PKGS=""
@@ -112,6 +123,7 @@ function testEnvIsNotRedundant {
     msg "build-env didn't make unnecessary environment"
 }
 
+testEmptyEnv
 testEnvContainsPkgs
 testEnvIsNotRedundant
 testExplorationFindsEquations
