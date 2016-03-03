@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
 
 # Given JSON objects on stdin, and a file descriptor containing JSON objects as
-# $1, returns the intersection of the two
+# $1, combines those elements of each with matching pkg/mod/name. If no match is
+# found in $1, a fallback is used
+
+FALLBACK='{"name":$this.name,"module":$this.module,"package":$this.package}'
 
 # Call the current AST $this, then loop over $tags
-INPUT='.[] | . as $this | $tags | .[]'
+INPUT=".[] | . as \$this | \$tags + [$FALLBACK]"
 
 # Select $tags matching $this
-QUERY='select((.module == $this.module) and (.name == $this.name))'
+QUERY='map(select((.module == $this.module) and (.name == $this.name))) | .[0]'
 
 # Combine matching $tags with $this
 ACTION='. + $this'
