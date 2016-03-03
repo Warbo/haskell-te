@@ -37,7 +37,6 @@ function allObjectsHave {
     INPUT=$(cat)
     COUNT=$(echo "$INPUT" | jq -c 'length')
     PROP=$(echo "$INPUT" | jq -c "map(select(has(\"$1\"))) | length")
-    echo "$1: COUNT '$COUNT' PROP '$PROP'"
     [[ "$COUNT" -eq "$PROP" ]]
 }
 
@@ -230,7 +229,7 @@ function pkgTestGetAsts {
 }
 
 function pkgTestAstFields {
-    for FIELD in package module name ast type arity features
+    for FIELD in package module name ast type arity quickspecable
     do
         getAsts "$1" | allObjectsHave "$FIELD" ||
             fail "ASTs for '$1' don't all have '$FIELD'"
@@ -251,6 +250,20 @@ function pkgTestAllTypeCmdPresent {
         do
             getTypeCmd "$1" | grep "('$LINE)" > /dev/null ||
                 fail "$LINE not in '$1' type command"
+        done
+}
+
+function pkgTestAllAstsPreserved {
+    getRawData "$1" | jq -c '.asts | .[]' |
+        while read -r LINE
+        do
+            NAME=$(echo "$LINE" | jq -r '.name')
+             MOD=$(echo "$LINE" | jq -r '.module')
+             PKG=$(echo "$LINE" | jq -r '.package')
+            PRED=".name == \"$NAME\" and .module == \"$MOD\" and .package == \"$PKG\""
+            COUNT=$(getAsts "$1" | jq "map(select($PRED)) | length")
+            [[ "$COUNT" -eq 1 ]] ||
+                fail "$PKG:$MOD.$NAME was in raw data but not ASTs"
         done
 }
 
