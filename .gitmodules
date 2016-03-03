@@ -1,0 +1,3 @@
+[submodule "packages/mlspec-bench"]
+	path = packages/mlspec-bench
+	url = http://chriswarbo.net/git/mlspec-bench.git
