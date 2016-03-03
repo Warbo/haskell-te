@@ -18,6 +18,11 @@ function fail {
 
 # Test data
 
+function build {
+    nix-shell --run "cabal configure && cabal build" \
+              -E "with import <nixpkgs> {}; import \"$GHCWITHPLUGIN\" \"$1\""
+}
+
 function buildable {
     # Test that the given package can be built normally; let alone with our
     # modifications
@@ -30,12 +35,11 @@ function buildable {
         if cabal get "$1"
         then
             cd "$1"*
-            if nix-shell --run "cabal configure && cabal build" \
-                 -E "with import <nixpkgs> {}; import \"$GHCWITHPLUGIN\" \"$1\""
+            if OUTPUT=$(build "$1" 2>&1) # Hide output, but capture for debugging
             then
                 BUILDABLE=0 # Success
             else
-                echo "Couldn't configure/build '$1'" >> /dev/stderr
+                echo "Couldn't configure/build '$1'; see debug log" >> /dev/stderr
             fi
         else
             echo "Couldn't fetch '$1'" >> /dev/stderr
