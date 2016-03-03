@@ -51,7 +51,7 @@ function testExplorationFindsEquations {
 }
 
 function testEnvContainsPkgs {
-    # Append more and more Haskell packages to ENVIRONMENT_PKGS
+    # Append more and more Haskell packages to ENVIRONMENT_PACKAGES
     PKGS=""
     for NEWPKG in text containers parsec aeson
     do
@@ -61,7 +61,7 @@ function testEnvContainsPkgs {
         # by calling ghc-pkg
         for PKG in $PKGS
         do
-            OUTPUT=$(ENVIRONMENT_PKGS="$PKGS" "$BASE/build-env" ghc-pkg list "$PKG") ||
+            OUTPUT=$(ENVIRONMENT_PACKAGES="$PKGS" "$BASE/build-env" ghc-pkg list "$PKG") ||
                 fail "Couldn't run ghc-pkg in build-env for '$PKG' in '$PKGS'"
             echo "$OUTPUT" | grep "$PKG" > /dev/null ||
                 fail "Didn't find package '$PKG' in ghc-pkg output '$OUTPUT'"
@@ -77,7 +77,7 @@ function nixception {
       echo "BEGIN INNER SHELL" >> /dev/stderr
       for PKG in $HLINE
       do
-          ENVIRONMENT_PKGS="$EXTRAH" "$BASE/build-env" ghc-pkg list "\$PKG" |
+          ENVIRONMENT_PACKAGES="$EXTRAH" "$BASE/build-env" ghc-pkg list "\$PKG" |
                grep "\$PKG" > /dev/null || {
               echo "Didn't find '\$PKG' in environment" >> /dev/stderr
               exit 1
@@ -107,7 +107,7 @@ function testEnvIsNotRedundant {
 
     msg "Making sure build-env didn't create a new Nix environment"
     echo "$OUTPUT" | grep -A 9999 "BEGIN INNER SHELL" | grep "building path" &&
-        fail "Build Nix environment when it wasn't needed"
+        fail "Built Nix environment when it wasn't needed"
 
     msg "build-env didn't make unnecessary environment"
 }
@@ -116,3 +116,5 @@ testEnvContainsPkgs
 testEnvIsNotRedundant
 testExplorationFindsEquations
 testNoDupes
+
+echo "Tests passed (check prior output for more information)"
