@@ -36,7 +36,8 @@ function count {
 function allObjectsHave {
     INPUT=$(cat)
     COUNT=$(echo "$INPUT" | jq -c 'length')
-    PROP=$(echo "$INPUT" | jq -c "map(.$1) | length")
+    PROP=$(echo "$INPUT" | jq -c "map(select(has(\"$1\"))) | length")
+    echo "$1: COUNT '$COUNT' PROP '$PROP'"
     [[ "$COUNT" -eq "$PROP" ]]
 }
 
@@ -69,19 +70,20 @@ function getTestPkgs {
     # A list of packages to test with
     cat <<EOF
 list-extras
-xmonad
-pandoc
-git-annex
-hakyll
-egison
-lens
-warp
-conduit
-ghc-mod
-shelly
-http-conduit
-yesod-core
 EOF
+#xmonad
+#pandoc
+#git-annex
+#hakyll
+#egison
+#lens
+#warp
+#conduit
+#ghc-mod
+#shelly
+#http-conduit
+#yesod-core
+#EOF
 }
 
 # Data generators; expensive calls should cache in test-data/
