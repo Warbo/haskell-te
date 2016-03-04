@@ -33,9 +33,12 @@ function testBenchCompile {
             popd > /dev/null
             return 1
         }
-        TIMING_NAME="compile_$PKG" BENCHMARK_COMMAND="cabal build"  mlspecBench
+        TIMING_NAME="compile_$PKG" BENCHMARK_COMMAND="cabal build"  mlspecBench || {
+            fail "Couldn't benchmark cabal build"
+            popd > /dev/null
+            return 1
+        }
         popd > /dev/null
-        exit
     done
 }
 
@@ -50,7 +53,7 @@ function mlspecBench {
 }
 
 function fail {
-    echo "FAIL: $1" >> /dev/stderr
+    echo -e "FAIL: $1" >> /dev/stderr
     ERR=1
     return 1
 }

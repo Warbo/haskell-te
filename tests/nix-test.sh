@@ -27,6 +27,7 @@ haskellPackages.mlspec
 haskellPackages.mlspec-bench
 haskellPackages.mlspec-helper
 haskellPackages.nix-eval
+haskellPackages.runtime-arbitrary
 EOF
 }
 

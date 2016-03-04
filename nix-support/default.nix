@@ -25,8 +25,14 @@ let real = import <real> args; # <real> should point to the 'real' <nixpkgs>
           # Wrapper around Criterion for benchmarking
           mlspec-bench = cabalPath ../packages/mlspec-bench;
 
+          # Helper functions for use inside MLSpec's nix-eval environments
+          mlspec-helper = cabalPath ../packages/mlspec-helper;
+
           # "eval" for Haskell, using Nix to fetch dependencies
           nix-eval = cabalPath ../packages/nix-eval;
+
+          # Look up instances of 'Arbitrary' at runtime rather than compile time
+          runtime-arbitrary = cabalPath ../packages/runtime-arbitrary;
         };
     };
     overridden = pkgs // rec {
