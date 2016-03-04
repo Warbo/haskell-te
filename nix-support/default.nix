@@ -24,6 +24,9 @@ let real = import <real> args; # <real> should point to the 'real' <nixpkgs>
 
           # Wrapper around Criterion for benchmarking
           mlspec-bench = cabalPath ../packages/mlspec-bench;
+
+          # "eval" for Haskell, using Nix to fetch dependencies
+          nix-eval = cabalPath ../packages/nix-eval;
         };
     };
     overridden = pkgs // rec {

@@ -22,9 +22,10 @@ function nixPackages {
 explore-theories
 mlspec
 mlspec-bench
+haskellPackages.ArbitraryHaskell
 haskellPackages.mlspec
 haskellPackages.mlspec-bench
-haskellPackages.ArbitraryHaskell
+haskellPackages.nix-eval
 EOF
 }
 
@@ -37,21 +38,22 @@ function testNixPackagesAugmented {
 }
 
 function testNixPackagesPristine {
-    # If you have any custom packages, e.g. in ~/.nixpkgs, you can add them here
-    # to check that they don't interfere with ./nix-support
-    for QUERY in " ? warbo-utilities" " ? fs-uae" ".haskellPackages ? haskell-example"
+    # Check that custom packages, e.g. defined in ~/.nixpkgs, don't interfere
+    # with ./nix-support. These examples are from the author's configuration.
+    # To avoid interference see the use of 'pristine' in nix-support/default.nix
+    for QUERY in " ? warbo-utilities" \
+                 " ? fs-uae" \
+                 ".haskellPackages ? haskell-example"
     do
-        # Check if the given attribute is available by default
+        # Check if the query matches by default
         EXPR="(import <nixpkgs> {})$QUERY"
         OUTPUT=$(nix-instantiate --show-trace --eval -E "$EXPR") ||
             fail "Failed to query default packages for '$QUERY'"
 
-        [[ "x$OUTPUT" = "xtrue" ]] || {
-            echo "Skipping query '$QUERY'" >> /dev/stderr
-            continue
-        }
+        # Skipping queries which don't even match a default config
+        [[ "x$OUTPUT" = "xtrue" ]] || continue
 
-        # Make sure the attribute isn't interfering with our augmented packages
+        # Make sure the query doesn't match our augmented packages
         OUTPUT=$(nixEval "$EXPR") ||
             fail "Failed to query augmented packages for '$QUERY'"
         [[ "x$OUTPUT" = "xfalse" ]] ||
@@ -71,8 +73,11 @@ function testNixPackagesAvailable {
 }
 
 function testNixPackagesUsable {
+    # As an extra bonus, any test suites included in a package should get run as
+    # part of the build process
     while read -r ATTR
     do
+        echo "Building environment for '$ATTR'" >> /dev/stderr
         NIX_PATH="$(nixPath)" nix-shell --show-trace --run true \
                               -p "(import <nixpkgs> {}).$ATTR" --run true ||
             fail "Couldn't build environment containing '$ATTR'"
@@ -90,6 +95,8 @@ testNixPackagesPristine
 testNixPackagesAvailable
 testNixPackagesUsable
 #testBenchmarks
+
+echo "Tests passed (for more info, see messages above)"
 
 exit
 
