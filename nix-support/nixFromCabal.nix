@@ -31,6 +31,9 @@ let pkgs  = import <nixpkgs> {};
         echo "Copying '$dir' to '$out'"
         cp -vr "$dir" "$out"
 
+        echo "Cleaning up unnecessary files"
+        rm -rf "$out/.git"
+
         echo "Looking for Cabal files in '$out'"
         cd "$out"
 

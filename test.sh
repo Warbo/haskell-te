@@ -10,12 +10,7 @@ function fail {
 }
 
 function nixPath {
-    # Get the path to 'nixpkgs'
-    REAL=$(nix-instantiate --eval -E '<nixpkgs>') || fail "Couldn't invoke Nix"
-
-    # Alias <nixpkgs> to <real> and use nix-support in place of <nixpkgs>
-    [[ -d "$BASE/nix-support" ]] || fail "Couldn't find nix-support in '$BASE'"
-    echo "nixpkgs=$BASE/nix-support:real=$REAL:$NIX_PATH"
+    "$BASE/nixPath.sh"
 }
 
 function nixEval {
@@ -24,8 +19,12 @@ function nixEval {
 
 function nixPackages {
     cat <<EOF
-mlspec-bench
 explore-theories
+mlspec
+mlspec-bench
+haskellPackages.mlspec
+haskellPackages.mlspec-bench
+haskellPackages.ArbitraryHaskell
 EOF
 }
 
@@ -63,7 +62,9 @@ function testNixPackagesPristine {
 function testNixPackagesAvailable {
     while read -r ATTR
     do
-        TYPE=$(nixEval "builtins.typeOf (import <nixpkgs> {}).$ATTR") ||
+        EXPR="builtins.typeOf (import <nixpkgs> {}).$ATTR"
+        echo "Attempting to evaluate '$EXPR'..." >> /dev/stderr
+        TYPE=$(nixEval "$EXPR") ||
             fail "Couldn't get type of '$ATTR'"
         [[ "x$TYPE" = "x\"set\"" ]] || fail "'$ATTR' is a '$TYPE', should be a set"
     done < <(nixPackages)
