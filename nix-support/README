@@ -1,0 +1,7 @@
+# Useful Nix Expressions #
+
+A collection of useful expressions for managing Nix packages.
+
+These are maintained elsewhere, but duplicated here to aid reproducibility.
+
+Run refresh.sh to fetch the latest versions.

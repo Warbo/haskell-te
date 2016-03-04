@@ -1,0 +1,14 @@
+# Theory Exploration Packages #
+
+These are all of the tools used for Haskell theory exploration. Each is a
+standalone project with its own git repository. They are included here as git
+submodules, in order to aid reproducibility.
+
+If the directories are empty, you can populate them using:
+
+    git submodule init
+    git submodule update
+
+Otherwise, you can keep them as they are to reproduce experimental results with
+the same versions. To use different versions of these packages, you can follow
+the instructions at http://git-scm.com/book/en/v2/Git-Tools-Submodules
