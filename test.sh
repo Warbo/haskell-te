@@ -85,7 +85,8 @@ function testNixPackagesUsable {
 }
 
 function testBenchmarks {
-    NIX_PATH="$NEW_PATH" "$BASE/bench-test.sh"
+    NIX_PATH="$(nixPath)" "$BASE/bench-test.sh" ||
+        fail "Benchmark tests failed"
 }
 
 # Test invocation
@@ -94,7 +95,7 @@ testNixPackagesAugmented
 testNixPackagesPristine
 testNixPackagesAvailable
 testNixPackagesUsable
-#testBenchmarks
+testBenchmarks
 
 echo "Tests passed (for more info, see messages above)"
 

@@ -1,7 +1,5 @@
 #! /usr/bin/env nix-shell
-#! nix-shell --show-trace -i bash -p explore-theories bash mlspec-bench
-
-exit 1
+#! nix-shell --show-trace -i bash -p explore-theories mlspec-bench
 
 ERR=0
 BASE=$(dirname "$(readlink -f "$0")")
