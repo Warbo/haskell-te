@@ -25,6 +25,3 @@
 [submodule "packages/nix-eval"]
 	path = packages/nix-eval
 	url = http://chriswarbo.net/git/nix-eval.git
-[submodule "packages/ml4hs-helper"]
-	path = packages/ml4hs-helper
-	url = http://chriswarbo.net/git/ml4hs-helper.git
