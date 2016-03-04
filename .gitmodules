@@ -22,3 +22,6 @@
 [submodule "packages/arbitrary-haskell"]
 	path = packages/arbitrary-haskell
 	url = http://chriswarbo.net/git/arbitrary-haskell.git
+[submodule "packages/nix-eval"]
+	path = packages/nix-eval
+	url = http://chriswarbo.net/git/nix-eval.git
