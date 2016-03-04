@@ -2,7 +2,7 @@
 
 # Helpers
 
-BASE=$(dirname "$(readlink -f "$0")")
+BASE=$(dirname "$(dirname "$(readlink -f "$0")")")
 
 function fail {
     echo -e "FAIL: $1" >> /dev/stderr
@@ -25,6 +25,7 @@ mlspec-bench
 haskellPackages.ArbitraryHaskell
 haskellPackages.mlspec
 haskellPackages.mlspec-bench
+haskellPackages.mlspec-helper
 haskellPackages.nix-eval
 EOF
 }
@@ -84,20 +85,14 @@ function testNixPackagesUsable {
     done < <(nixPackages)
 }
 
-function testBenchmarks {
-    NIX_PATH="$(nixPath)" "$BASE/bench-test.sh" ||
-        fail "Benchmark tests failed"
-}
-
 # Test invocation
 
 testNixPackagesAugmented
 testNixPackagesPristine
 testNixPackagesAvailable
 testNixPackagesUsable
-testBenchmarks
 
-echo "Tests passed (for more info, see messages above)"
+echo "Nix tests passed (for more info, see messages above)"
 
 exit
 

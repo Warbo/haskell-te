@@ -1,13 +1,12 @@
-#! /usr/bin/env nix-shell
-#! nix-shell --show-trace -i bash -p explore-theories mlspec-bench
+#!/usr/bin/env bash
 
 ERR=0
-BASE=$(dirname "$(readlink -f "$0")")
+BASE=$(dirname "$(dirname "$(readlink -f "$0")")")
 
 # Tests for benchmarking commands
 
 function testBenchTrue {
-    BENCHMARK_COMMAND=true TIMING_NAME=true mlspec-bench ||
+    BENCHMARK_COMMAND=true TIMING_NAME=true mlspecBench ||
         fail "Couldn't benchmark the 'true' command"
 }
 
@@ -34,13 +33,21 @@ function testBenchCompile {
             popd > /dev/null
             return 1
         }
-        TIMING_NAME="compile_$PKG" BENCHMARK_COMMAND="cabal build"  mlspec-bench
+        TIMING_NAME="compile_$PKG" BENCHMARK_COMMAND="cabal build"  mlspecBench
         popd > /dev/null
         exit
     done
 }
 
 # Helpers
+
+function nixPath {
+    "$BASE/nixPath.sh"
+}
+
+function mlspecBench {
+    NIX_PATH="$(nixPath)" "$BASE/bench-run.sh"
+}
 
 function fail {
     echo "FAIL: $1" >> /dev/stderr
@@ -60,10 +67,6 @@ function findPkgSrc {
         fi
     done
     return 1
-}
-
-function mlspec-bench {
-    bash "$BASE/bench-run.sh"
 }
 
 # Test invocation

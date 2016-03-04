@@ -1,5 +1,5 @@
 #! /usr/bin/env nix-shell
-#! nix-shell -i bash -p explore-theories bash mlspec-bench
+#! nix-shell -i bash -p explore-theories mlspec-bench
 
 [[ -z "$BENCHMARK_COMMAND" ]] && {
     echo "Please provide a BENCHMARK_COMMAND variable" >> /dev/stderr
