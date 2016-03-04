@@ -1,3 +1,21 @@
 [submodule "packages/mlspec-bench"]
 	path = packages/mlspec-bench
 	url = http://chriswarbo.net/git/mlspec-bench.git
+[submodule "packages/annotatedb"]
+	path = packages/annotatedb
+	url = http://chriswarbo.net/git/annotatedb.git
+[submodule "packages/ast-plugin"]
+	path = packages/ast-plugin
+	url = http://chriswarbo.net/git/ast-plugin.git
+[submodule "packages/cabal2db"]
+	path = packages/cabal2db
+	url = http://chriswarbo.net/git/cabal2db.git/
+[submodule "packages/explore-theories"]
+	path = packages/explore-theories
+	url = http://chriswarbo.net/git/explore-theories.git
+[submodule "packages/get-deps"]
+	path = packages/get-deps
+	url = http://chriswarbo.net/git/get-deps.git
+[submodule "packages/mlspec"]
+	path = packages/mlspec
+	url = http://chriswarbo.net/git/mlspec.git
