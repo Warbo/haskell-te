@@ -1,5 +1,7 @@
 #! /usr/bin/env nix-shell
-#! nix-shell -i bash -p explore-theories bash
+#! nix-shell --show-trace -i bash -p explore-theories bash mlspec-bench
+
+exit 1
 
 ERR=0
 BASE=$(dirname "$(readlink -f "$0")")
@@ -63,7 +65,7 @@ function findPkgSrc {
 }
 
 function mlspec-bench {
-    bash "$BASE/run.sh"
+    bash "$BASE/bench-run.sh"
 }
 
 # Test invocation
@@ -72,7 +74,7 @@ BENCH_DIR="$PWD/test-data"
 export BENCH_DIR
 mkdir -p "$BENCH_DIR/outputs"
 
-#testBenchTrue
+testBenchTrue
 testBenchCompile
 
 exit "$ERR"

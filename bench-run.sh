@@ -1,5 +1,5 @@
 #! /usr/bin/env nix-shell
-#! nix-shell -i bash -p explore-theories bash
+#! nix-shell -i bash -p explore-theories bash mlspec-bench
 
 [[ -z "$BENCHMARK_COMMAND" ]] && {
     echo "Please provide a BENCHMARK_COMMAND variable" >> /dev/stderr
@@ -48,7 +48,7 @@ fi
 
 # We want to use Nix as little as possible inside our benchmarks, so we use
 # build-env from explore-theories to provide all of the packages we'll need
-echo "$INPUT" | build-env cabal -v0 run -- --template json --output "$OUTPUT"
+echo "$INPUT" | build-env mlspec-bench --template json --output "$OUTPUT"
 
 [[ -z "$DELETE_BENCH_OUTPUT" ]] || {
     echo "Deleting output directory '$BENCH_DIR'" >> /dev/stderr
