@@ -19,3 +19,6 @@
 [submodule "packages/mlspec"]
 	path = packages/mlspec
 	url = http://chriswarbo.net/git/mlspec.git
+[submodule "packages/arbitrary-haskell"]
+	path = packages/arbitrary-haskell
+	url = http://chriswarbo.net/git/arbitrary-haskell.git
