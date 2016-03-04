@@ -28,3 +28,6 @@
 [submodule "packages/mlspec-helper"]
 	path = packages/mlspec-helper
 	url = http://chriswarbo.net/git/mlspec-helper.git
+[submodule "packages/runtime-arbitrary"]
+	path = packages/runtime-arbitrary
+	url = http://chriswarbo.net/git/runtime-arbitrary.git
