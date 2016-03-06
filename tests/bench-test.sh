@@ -13,6 +13,7 @@ function testBenchTrue {
 function testBenchCompile {
     for PKG in list-extras xmonad
     do
+        # Only fetch if we can't already find itI
         if FOUND=$(findPkgSrc "$PKG")
         then
             true
@@ -33,11 +34,19 @@ function testBenchCompile {
             popd > /dev/null
             return 1
         }
-        TIMING_NAME="compile_$PKG" BENCHMARK_COMMAND="cabal build"  mlspecBench || {
-            fail "Couldn't benchmark cabal build"
+        OUTPUT=$(TIMING_NAME="compile_$PKG" \
+                 BENCHMARK_COMMAND="cabal"  \
+                 BENCHMARK_ARGS='["build"]'  mlspecBench 2>&1) || {
+                        fail "Couldn't benchmark cabal build for '$PKG'"
+                        popd > /dev/null
+                        return 1
+        }
+        if echo "$OUTPUT" | grep " exited with code " > /dev/null
+        then
+            fail "Cabal build failed for '$PKG':\n$OUTPUT"
             popd > /dev/null
             return 1
-        }
+        fi
         popd > /dev/null
     done
 }
