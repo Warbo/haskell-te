@@ -3,7 +3,7 @@
 # Run everything in tests/
 
 BASE=$(dirname "$(dirname "$(readlink "$0")")")
-source "$BASE/common.sh"
+source "$BASE/scripts/common.sh"
 
 [[ -d "$BASE/tests" ]] || abort "Couldn't find '$BASE/tests' directory"
 

@@ -2,37 +2,23 @@
 
 BASE=$(dirname "$(dirname "$(readlink -f "$0")")")
 NAME=$(basename "$0")
+source "$BASE/scripts/common.sh"
 
 for CMD in annotateDb
 do
-    command -v "$CMD" > /dev/null || {
-        echo "ERROR: benchmark-annotate.sh requires '$CMD'" >> /dev/stderr
-        exit 1
-    }
+    command -v "$CMD" > /dev/null || abort "$NAME requires '$CMD'"
 done
 
-[[ -n "$1" ]] || {
-    echo "ERROR: $NAME Needs a directory as argument" >> /dev/stderr
-    exit 1
-}
+[[ -n "$1" ]] || abort "$NAME Needs a directory as argument"
 
-[[ -d "$1" ]] || {
-    echo "ERROR: Directory '$1' not found" >> /dev/stderr
-    exit 1
-}
+[[ -d "$1" ]] || abort "$NAME couldn't find directory '$1'"
 
-PKG=$(dump-package-name "$1") || {
-    echo "ERROR: Couldn't get package name from '$1'" >> /dev/stderr
-    exit 1
-}
+PKG=$(dump-package-name "$1") || abort "Couldn't get package name from '$1'"
 
 CACHE=$("$BASE/cacheDir.sh")
 
 ASTS="$CACHE/$PKG.asts"
-[[ -f "$ASTS" ]] || {
-    echo "ERROR: No ASTs found for '$PKG'" >> /dev/stderr
-    exit 1
-}
+[[ -f "$ASTS" ]] || abort "No ASTs found for '$PKG'"
 
 BENCHMARK_COMMAND="annotateDb"
 export BENCHMARK_COMMAND
@@ -53,36 +39,27 @@ mkdir -p "$BENCH_DIR"
 EXISTING="$BENCH_DIR/outputs/$TIMING_NAME.json"
 if [[ -f "$EXISTING" ]]
 then
-    echo "$0: Using existing result '$EXISTING'" >> /dev/stderr
+    info "$NAME using existing result '$EXISTING'"
 else
-    "$BASE/benchmarks/bench-run.sh" < "$ASTS" || {
-        echo "Failed to annotate ASTs for '$PKG'" >> /dev/stderr
-        exit 1
-    }
+    "$BASE/benchmarks/bench-run.sh" < "$ASTS" ||
+        abort "Failed to annotate ASTs for '$PKG'"
 fi
 
 OUTPUT_FILE="$CACHE/$PKG.annotated"
 
 if [[ -f "$OUTPUT_FILE" ]]
 then
-    echo "Using existing '$OUTPUT_FILE'" >> /dev/stderr
+    info "$NAME using existing '$OUTPUT_FILE'"
 else
-    "$BASE/benchmarks/last-stdout.sh" > "$OUTPUT_FILE" || {
-        echo "ERROR: No stdout, aborting" >> /dev/stderr
-        exit 1
-    }
-    [[ -f "$OUTPUT_FILE" ]] || {
-        echo "ERROR: No such file '$OUTPUT_FILE'" >> /dev/stderr
-        exit 1
-    }
+    "$BASE/benchmarks/last-stdout.sh" > "$OUTPUT_FILE" ||
+        abort "$NAME found no stdout, aborting"
+
+    [[ -f "$OUTPUT_FILE" ]] || abort "No such file '$OUTPUT_FILE'"
 fi
 
-AST_COUNT=$(jq 'length' < "$OUTPUT_FILE") || {
-    echo "Failed to count outputted ASTs" >> /dev/stderr
-    exit 1
-}
+AST_COUNT=$(jq 'length' < "$OUTPUT_FILE") ||
+    abort "Failed to count outputted ASTs"
 
-[[ "$AST_COUNT" -gt 0 ]] || {
-    echo "Got no ASTs from '$1', abandoning" >> /dev/stderr
-    exit 1
-}
+[[ "$AST_COUNT" -gt 0 ]] || abort "$NAME got no ASTs from '$1', abandoning"
+
+info "Finished benchmarking annotatedb for '$1'"
