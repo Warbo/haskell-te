@@ -34,3 +34,9 @@
 [submodule "packages/hs2ast"]
 	path = packages/hs2ast
 	url = http://chriswarbo.net/git/hs2ast.git
+[submodule "packages/recurrent-clustering"]
+	path = packages/recurrent-clustering
+	url = http://chriswarbo.net/git/recurrent-clustering.git
+[submodule "packages/ml4hsfe"]
+	path = packages/ml4hsfe
+	url = http://chriswarbo.net/git/ml4hsfe.git/
