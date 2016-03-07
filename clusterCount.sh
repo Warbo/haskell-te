@@ -2,4 +2,4 @@
 
 # The number of different cluster parameters to use
 BASE=$(dirname "$(readlink -f "$0")")
-"$BASE/clusterNums.sh" | wc -l
+"$BASE/scripts/clusterNums.sh" | wc -l

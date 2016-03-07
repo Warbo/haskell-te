@@ -65,7 +65,7 @@ do
             "$BASE/benchmarks/benchmark-explore.sh"  "$DIR" "$CLUSTERS" &&
             "$BASE/benchmarks/benchmark-simplify.sh" "$DIR" "$CLUSTERS" &&
             CLUSTERS_TODO=$(( CLUSTERS_TODO - 1 ))
-        done < <("$BASE/clusterNums.sh")
+        done < <("$BASE/scripts/clusterNums.sh")
         [[ "$CLUSTERS_TODO" -eq 0 ]] &&
             COUNT=$(( COUNT + 1 ))   &&
             echo "$DIR" >> "$CACHE/finished"
