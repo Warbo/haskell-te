@@ -40,3 +40,6 @@
 [submodule "packages/ml4hsfe"]
 	path = packages/ml4hsfe
 	url = http://chriswarbo.net/git/ml4hsfe.git/
+[submodule "packages/order-deps"]
+	path = packages/order-deps
+	url = http://chriswarbo.net/git/order-deps.git/
