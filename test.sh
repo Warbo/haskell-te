@@ -131,8 +131,11 @@ function getTests {
 }
 
 function getTestPkgs {
-    # A list of packages to test with
-    for PKG in list-extras xmonad pandoc git-annex hakyll egison lens warp conduit ghc-mod shelly http-conduit yesod-core
+    # The following don't build for me, as of 2016-03-03:
+    #   pandoc git-annex lens warp ghc-mod
+
+    # These packages build for me, as of 2016-03-03
+    for PKG in list-extras xmonad hakyll egison conduit shelly http-conduit yesod-core
     do
         if buildable "$PKG" >> /dev/stderr
         then
@@ -204,6 +207,14 @@ function init() {
     then
         TMPDIR=""
         TESTDATA="$CABAL2DBTESTDIR/test-data"
+    elif [[ -n "$XDG_CACHE_HOME" ]] && [[ -d "$XDG_CACHE_HOME" ]]
+    then
+        TMPDIR="$XDG_CACHE_HOME/cabal2db"
+        TESTDATA="$TMPDIR/test-data"
+    elif [[ -n "$HOME" ]] && [[ -d "$HOME" ]]
+    then
+        TMPDIR="$HOME/.cache/cabal2db"
+        TESTDATA="$TMPDIR/test-data"
     else
         TMPDIR=$(mktemp -d -t 'cabal2db-test-XXXXX')
         TESTDATA="$TMPDIR/test-data"
