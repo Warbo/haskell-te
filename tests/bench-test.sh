@@ -13,41 +13,19 @@ function testBenchTrue {
 function testBenchCompile {
     for PKG in list-extras xmonad
     do
-        # Only fetch if we can't already find itI
-        if FOUND=$(findPkgSrc "$PKG")
-        then
-            true
-        else
-            echo "Fetching '$PKG'" >> /dev/stderr
-            pushd "$BENCH_DIR" > /dev/null
-            cabal get "$PKG"
-            popd > /dev/null
-            FOUND=$(findPkgSrc "$PKG") || {
-                fail "Couldn't find source for '$PKG'" >> /dev/stderr
-                return 1
-            }
-        fi
-        pushd "$FOUND" > /dev/null
-        echo "Configuring '$PKG'" >> /dev/stderr
-        OUTPUT=$(nix-shell --show-trace -E "$(cabal2nix --shell ./.)" --run "cabal configure" 2>&1) || {
-            fail "Problem configuring '$PKG': $OUTPUT"
-            popd > /dev/null
-            return 1
+        # Only fetch if we can't already find it
+        FOUND=$("$BASE/fetchIfNeeded.sh" "$PKG") || fail "Couldn't fetch '$PKG'"
+
+        OUTPUT=$("$BASE/benchmarks/benchmark-ghc.sh" "$FOUND") || {
+            fail "Problem benchmarking GHC in '$FOUND'"
+            continue
         }
-        OUTPUT=$(TIMING_NAME="compile_$PKG" \
-                 BENCHMARK_COMMAND="cabal"  \
-                 BENCHMARK_ARGS='["build"]'  mlspecBench 2>&1) || {
-                        fail "Couldn't benchmark cabal build for '$PKG'"
-                        popd > /dev/null
-                        return 1
-        }
+
         if echo "$OUTPUT" | grep " exited with code " > /dev/null
         then
             fail "Cabal build failed for '$PKG':\n$OUTPUT"
-            popd > /dev/null
-            return 1
+            continue
         fi
-        popd > /dev/null
     done
 }
 

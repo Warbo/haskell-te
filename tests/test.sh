@@ -2,18 +2,14 @@
 
 # Run everything in tests/
 
-BASE=$(dirname "$(readlink "$0")")
-[[ -d "$BASE/tests" ]] || {
-    echo "Couldn't find '$BASE/tests' directory" >> /dev/stderr
-    exit 1
-}
+BASE=$(dirname "$(dirname "$(readlink "$0")")")
+source "$BASE/common.sh"
 
-for T in "$BASE/tests"/*
+[[ -d "$BASE/tests" ]] || abort "Couldn't find '$BASE/tests' directory"
+
+for T in "$BASE/tests"/*-test.sh
 do
-    "$T" || {
-        echo "Tests '$T' failed" >> /dev/stderr
-        exit 1
-    }
+    "$T" || abort "Tests '$T' failed"
 done
 
 echo "Tests passed"
