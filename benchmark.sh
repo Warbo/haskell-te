@@ -4,9 +4,16 @@
 
 BASE=$(dirname "$(readlink -f "$0")")
 
-# Use our Nix packages
-NIX_PATH=$("$BASE/nix-support/nixPath.sh")
-export NIX_PATH
+# Ensure our Nix packages are in use
+if echo "$NIX_PATH" | grep "$BASE/nix-support" > /dev/null
+then
+    true
+else
+    NIX_PATH=$("$BASE/nix-support/nixPath.sh")
+    export NIX_PATH
+fi
+
+CACHE=$("$BASE/cacheDir.sh")
 
 [[ -n "$REPETITIONS" ]] || REPETITIONS=2
 
@@ -20,13 +27,13 @@ do
     echo "Benchmarking '$PKG'" >> /dev/stderr
     if ! DIR=$("$BASE/fetchIfNeeded.sh" "$PKG")
     then
-        markUnfetchable "$PKG"
+        echo "$PKG" >> "$CACHE/unfetchable"
     elif ! "$BASE/benchmarks/benchmark-ghc.sh" "$DIR"
     then
-        markUnbenchable "$DIR"
+        echo "$DIR" >> "$CACHE/unbuildable"
     elif ! "$BASE/benchmarks/benchmark-features.sh" "$DIR"
     then
-        markFeatureless "$DIR"
+        echo "$DIR" >> "$CACHE/featureless"
     else
         # Make sure we run all clusters for this package
         CLUSTERS_TODO=$(clusterCount)

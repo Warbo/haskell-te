@@ -23,10 +23,18 @@ BASE=$(dirname "$(readlink -f "$0")")
 }
 
 PKG="$1"
-
-# See if we have a Hackage package already
 DIR=$("$BASE/cacheDir.sh")
 
+# See if we've previously failed to fetch this package
+UNFETCHABLE="$DIR/unfetchable"
+touch "$UNFETCHABLE"
+if grep -Fx "$PKG" "$UNFETCHABLE" > /dev/null
+then
+    echo "$0: Package '$PKG' is marked as unfetchable, aborting" >> /dev/stderr
+    exit 1
+fi
+
+# See if we have a Hackage package already
 FOUND=$(findInCache "$PKG" "$DIR") && {
     echo "Using cached version '$FOUND' for '$PKG'" >> /dev/stderr
     echo "$FOUND"

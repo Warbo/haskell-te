@@ -36,6 +36,9 @@ let real = import <real> args; # <real> should point to the 'real' <nixpkgs>
         };
     };
     overridden = pkgs // rec {
+      # Extracts ASTs from Cabal packages
+      cabal2db = overridden.callPackage ../packages/cabal2db {};
+
       # Sets up a Nix environment containing all packages of a theory
       explore-theories = overridden.callPackage ../packages/explore-theories {};
 
