@@ -22,6 +22,9 @@ let real = import <real> args; # <real> should point to the 'real' <nixpkgs>
           # GHC Plugin to extract ASTs from Core
           AstPlugin = cabalPath ../packages/ast-plugin;
 
+          # Extract dependencies from ASTs
+          getDeps = cabalPath ../packages/get-deps;
+
           # Shared library for handling ASTs
           HS2AST = cabalPath ../packages/hs2ast;
 
@@ -56,6 +59,7 @@ let real = import <real> args; # <real> should point to the 'real' <nixpkgs>
 
       # Pull out Haskell packages
       AstPlugin    = haskellPackages.AstPlugin;
+      getDeps      = haskellPackages.getDeps;
       mlspec       = haskellPackages.mlspec;
       mlspec-bench = haskellPackages.mlspec-bench;
     };
