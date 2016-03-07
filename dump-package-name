@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+echo "Looking for .cabal files in '$1'" >> /dev/stderr
+
+shopt -s nullglob
+for CBL in "$1"/*.cabal
+do
+    echo "Found '$CBL' in '$1'"  >> /dev/stderr
+    NAME=$(grep -i "name[ ]*:" < "$CBL" | cut -d ':' -f 2 | tr -d '[:space:]')
+    echo "Project name is '$NAME'" >> /dev/stderr
+    echo "$NAME"
+done

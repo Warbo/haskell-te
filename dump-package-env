@@ -1,0 +1,14 @@
+#!/usr/bin/bash
+
+if [[ -e "$BASE/ghcWithPlugin.nix" ]]
+then
+    GHCWITHPLUGIN="$BASE/ghcWithPlugin.nix"
+elif [[ -e "$BASE/../lib/ghcWithPlugin.nix" ]]
+then
+    GHCWITHPLUGIN="$BASE/../lib/ghcWithPlugin.nix"
+else
+    echo "Didn't find ghcWithPlugin.nix in '$BASE' or '$BASE/../lib'" >> /dev/stderr
+    exit 1
+fi
+
+echo "with import <nixpkgs> {}; import \"$GHCWITHPLUGIN\" \"$PKG\""

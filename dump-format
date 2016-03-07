@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+# Set NOFORMAT to avoid calling jq, eg. for testing
+if [[ -z $NOFORMAT ]]
+then
+    jq -c ". + {package: \"$PKG\"}" | jq -s '.'
+else
+    cat
+fi
