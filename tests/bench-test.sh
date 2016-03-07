@@ -62,7 +62,8 @@ function findPkgSrc {
 
 # Test invocation
 
-BENCH_DIR="$PWD/test-data"
+CACHE="$CASE/scripts/cacheDir.sh"
+BENCH_DIR="$CACHE/test-data"
 export BENCH_DIR
 mkdir -p "$BENCH_DIR/outputs"
 

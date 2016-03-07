@@ -1,30 +1,65 @@
 # Haskell Theory Exploration #
 
 This repository is designed to allow reproducible experiments in theory
-exploration, in the Haskell language.
+exploration, in the Haskell language. The actual functionality is implemented in
+a collection of separate tools, this repository is mostly focused on
+benchmarking those tools.
 
-## Scripts ##
+The repository is laid out as follows:
 
-### `getPackageList.sh` ###
+ - `benchmarks` contains scripts to benchmark each stage of the theory
+   exploration process.
+ - `cache` will be created to store intermediate output, unless the directory is
+   not writable (in which case a variety of XDG cache directories are tried as
+   fallbacks).
+ - `nix-support` instructs the Nix package manager on where to find each tool.
+ - `packages` contains git submodules for each tool, to ensure we're using
+   particular versions.
+ - `scripts` contains a variety of helper scripts used by the benchmarks.
+ - `tests` contains test scripts to ensure the repository is working.
+ - `README` is this file.
+ - `run-benchmarks.sh` is the recommended way to invoke the benchmark scripts.
+ - `run-tests.sh` is the recommended way to invoke the tests.
+ - `shell.nix` tells Nix which packages to make available. This is meant to be
+   used in combination with `nix-support/nixPath.sh`.
 
-Fetches the latest list of packages available from hackage.haskell.org
+## `benchmarks` ##
 
-The results are, by their nature, subject to change; hence the list of packages
-used in an experiment should be kept alongside the results.
+ - `benchmark.sh` is the top-level script for invoking the others, looping
+   through a variety of Haskell packages, downloading their source, extracting
+   their ASTs, etc.
+ - `benchmark-ghc.sh` builds a Haskell package with the GHC compiler. It gives
+   us a baseline which we can compare our feature extraction tool against. It
+   also lets us skip packages which won't build under normal circumstances.
+ - `benchmark-features.sh` measures the one-time-cost associated with extracting
+   features from a Haskell library. It simply calls `benchmark-dump-asts.sh` and
+   `benchmark-annotate.sh`.
+ - `benchmark-dump-asts.sh` builds a Haskell package using the GHC compiler,
+   augmented with a plugin for extracting Core ASTs as s-expressions.
+ - `benchmark-annotate.sh` appends additional information to the ASTs extracted
+   by `benchmark-dump-asts.sh`.
+ - `benchmark-cluster.sh` measures the cost of clustering the features extracted
+   from a Haskell package. Clustering may be performed many times with a variety
+   of different parameters or input combinations, hence we measure it separately
+   to the one-time-cost of `benchmark-features.sh`.
+ - `benchmark-explore.sh` measures the cost of exploring a collection of
+   theories, derived from the clusters produced by `benchmark-cluster.sh`. As a
+   baseline, we treat exploring a single cluster as equivalent to exploring
+   without having performed feature extraction or clustering.
+ - `benchmark-simplify.sh` combines the results of each theory in a collection
+   together, simplifying to remove redundancies.
+ - `bench-run.sh` invokes our benchmarking tool (based on Criterion); it is used
+   by the scripts above.
+ - `last-stdout.sh` obtains the stdout of a benchmarked tool. Since benchmarking
+   runs each tool over and over, we only select the output of the final run.
 
-### `shufflePackages.sh` ###
+## `nix-support` ##
 
-Outputs (the latest version of) each package in `index.tar.gz` (as fetched by
-`getPackageList.sh`), in a random order. This is designed to allow a random
-set of packages to be used in experiments; we can't select a set of packages
-based just on their names, since some may fail to compile or may not provide any
-functions to explore.
-
-By emitting all packages in a random order, we can loop through them, extracting
-functions from each until we have the desired number. Hence the results of this
-script don't necessarily need to be kept, as long as we keep the set of packages
-eventually obtained.
-
-### `getPackages.sh` ###
-
-Fetch packages from hackage.haskell.org
+ - `default.nix` specifies to location and name of each package we use.
+ - `nixFromCabal.nix` allows a directory containing a Cabal package (Cabal is
+   the build system used by Haskell) to be used as a Nix package.
+ - `nixPath.sh` produces a value suitable for use as `NIX_PATH` which overrides
+   the default package set with ours.
+ - `README` explains our use of Nix in more detail.
+ - `refresh.sh` updates the utilities in `nix-support` to their latest versions
+   (currently this is just for `nixFromCabal.nix`).
