@@ -2,44 +2,51 @@
 
 # Benchmark ML4HS compared to GHC and QuickSpec
 
-BASE=$(dirname "$(readlink -f "$0")")
+function info {
+    echo -e "INFO: $1" >> /dev/stderr
+}
+
+function warn {
+    echo -e "WARNING: $1" >> /dev/stderr
+    return 1
+}
+
+function abort {
+    echo -e "ERROR: $1" >> /dev/stderr
+    exit 1
+}
+
+BASE=$(dirname "$(dirname "$(readlink -f "$0")")")
 
 # Ensure our Nix packages are in use
-if echo "$NIX_PATH" | grep "$BASE/nix-support" > /dev/null
-then
-    true
-else
-    NIX_PATH=$("$BASE/nix-support/nixPath.sh")
-    export NIX_PATH
-fi
+echo "$NIX_PATH" | grep "$BASE/nix-support" > /dev/null ||
+    abort "$BASE/nix-support not found in NIX_PATH; try using run-benchmarks.sh"
 
 # Check as many pre-conditions as we can here
 for CMD in annotateDb build-env cabal cabal2nix cluster dump-format \
            dump-package dump-package-env dump-package-name jq mlspec-bench \
            nix-shell runAstPlugin
 do
-    command -v "$CMD" > /dev/null || {
-        "Benchmarking needs '$CMD'; try running in nix-shell" >> /dev/stderr
-        exit 1
-    }
+    command -v "$CMD" > /dev/null ||
+        abort "Benchmarking needs '$CMD'; maybe add a buildInput to shell.nix?"
 done
 
 CACHE=$("$BASE/cacheDir.sh")
 
 [[ -n "$REPETITIONS" ]] || REPETITIONS=2
 
-echo "Benchmarking '$REPETITIONS' packages" >> /dev/stderr
+info "Benchmarking '$REPETITIONS' packages"
 
 COUNT=0
 while read -r LINE
 do
     [[ "$COUNT" -lt "$REPETITIONS" ]] || {
-        echo "Successfully processed '$COUNT' packages; stopping" >> /dev/stderr
+        info "Successfully processed '$COUNT' packages; stopping"
         break
     }
     PKG=$(echo "$LINE" | cut -f 1)
     VERSION=$(echo "$LINE" | cut -f 2)
-    echo "Benchmarking '$PKG'" >> /dev/stderr
+    info "Benchmarking '$PKG'"
     if ! DIR=$("$BASE/fetchIfNeeded.sh" "$PKG")
     then
         echo "$PKG" >> "$CACHE/unfetchable"
@@ -61,6 +68,6 @@ do
         done < <("$BASE/clusterNums.sh")
         [[ "$CLUSTERS_TODO" -eq 0 ]] &&
             COUNT=$(( COUNT + 1 ))   &&
-            markFinished "$DIR"
+            echo "$DIR" >> "$CACHE/finished"
     fi
 done < <("$BASE/shufflePackages.sh")
