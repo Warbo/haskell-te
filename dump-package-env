@@ -1,4 +1,18 @@
-#!/usr/bin/bash
+#!/usr/bin/env bash
+
+[[ "$#" -lt 1 ]] && {
+    echo "dump-package-env needs a Cabal project directory" >> /dev/stderr
+    exit 1
+}
+
+[[ -d "$1" ]] || {
+    echo "Directory '$1' not found" >> /dev/stderr
+    exit 1
+}
+
+DIR="$1"
+BASE=$(dirname "$(readlink -f "$0")")
+PKG=$("$BASE/dump-package-name" "$DIR")
 
 if [[ -e "$BASE/ghcWithPlugin.nix" ]]
 then

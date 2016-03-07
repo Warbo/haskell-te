@@ -5,7 +5,7 @@ function findPkgInDir {
     # Look through the contents of $DIR for entries of the form $1-1.2.3
     for D in "$DIR"/*
     do
-        if basename "$D" | grep "^$1-[0-9\.]*\$" > /dev/null
+        if basename "$D" | grep "^$1[-0-9\.]*\$" > /dev/null
         then
             basename "$D"
             return 0
@@ -18,11 +18,13 @@ if [[ -n "$XDG_CACHE_HOME" ]] && [[ -d "$XDG_CACHE_HOME" ]]
 then
     # On many systems, 'mktemp -d' will use an in-memory filesystem, which will
     # quickly fill up. To avoid that, we try to use XDG_CACHE_HOME instead.
-    DIR=$(mkdir -p "$XDG_CACHE_HOME/cabal2db")
+    DIR="$XDG_CACHE_HOME/cabal2db"
+    mkdir -p "$DIR"
 elif [[ -n "$HOME" ]] && [[ -d "$HOME" ]]
 then
     # If $HOME exists, try falling back to the recommended ~/.cache directory
-    DIR=$(mkdir -p "$HOME/.cache/cabal2db")
+    DIR="$HOME/.cache/cabal2db"
+    mkdir -p "$DIR"
 else
     # If $HOME doesn't exist, we're probably a daemon. Use mktemp, in the hope
     # that it's sane.
@@ -31,7 +33,7 @@ fi
 
 echo "Storing packages in '$DIR'" >> /dev/stderr
 
-BASE=$(dirname "$0")
+BASE=$(dirname "$(readlink -f "$0")")
 
 [[ -e "$BASE/dump-package" ]] || {
     echo "Did not find dump-package in '$BASE'" >> /dev/stderr

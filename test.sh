@@ -30,9 +30,15 @@ function buildable {
     [[ ! -e "$F" ]] && {
         BUILDABLE=1  # Assume failure
         TMP="$TESTDATA/building"
-        mkdir -v "$TMP"
+        mkdir -p -v "$TMP"
         pushd "$TMP" > /dev/null
-        if cabal get "$1"
+        FOUND=0
+        shopt -s nullglob
+        for D in "$1"*
+        do
+            FOUND=1
+        done
+        if [[ "$FOUND" -eq 1 ]] || cabal get "$1"
         then
             cd "$1"*
             if OUTPUT=$(build "$1" 2>&1) # Hide output, but capture for debugging
@@ -139,7 +145,7 @@ function getTestPkgs {
     do
         if buildable "$PKG" >> /dev/stderr
         then
-            echo "Running tests for '$PKG', as it is buildable" >> /dev/stderr
+            echo "Tests will be run for '$PKG', as it is buildable" >> /dev/stderr
             echo "$PKG"
         else
             echo "Skipping '$PKG' as it couldn't be built" >> /dev/stderr
