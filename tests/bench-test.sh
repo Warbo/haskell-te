@@ -54,11 +54,11 @@ function testBenchCompile {
 # Helpers
 
 function nixPath {
-    "$BASE/nixPath.sh"
+    "$BASE/nix-support/nixPath.sh"
 }
 
 function mlspecBench {
-    NIX_PATH="$(nixPath)" "$BASE/bench-run.sh"
+    NIX_PATH="$(nixPath)" "$BASE/benchmarks/bench-run.sh"
 }
 
 function fail {

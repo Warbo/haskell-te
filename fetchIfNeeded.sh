@@ -18,19 +18,22 @@ function findInCache {
 BASE=$(dirname "$(readlink -f "$0")")
 
 [[ -n "$1" ]] || {
-    echo "$0: Requires a Hackage package name as argument"
+    echo "$0: Requires a Hackage package name as argument" >> /dev/stderr
     exit 1
 }
+
+PKG="$1"
 
 # See if we have a Hackage package already
 DIR=$("$BASE/cacheDir.sh")
 
 FOUND=$(findInCache "$PKG" "$DIR") && {
     echo "Using cached version '$FOUND' for '$PKG'" >> /dev/stderr
+    echo "$FOUND"
     exit 0
 }
 
-echo "No cached version of '$PKG' found, downloading with Cabal"
+echo "No cached version of '$PKG' found, downloading with Cabal" >> /dev/stderr
 cd "$DIR" || {
     echo "$0: Couldn't cd to '$DIR', aborting" >> /dev/stderr
     exit 1
@@ -43,6 +46,7 @@ cabal get "$1" 1>&2 || {
 
 FOUND=$(findInCache "$PKG" "$DIR") && {
     echo "Using '$FOUND' for '$PKG'" >> /dev/stderr
+    echo "$FOUND"
     exit 0
 }
 

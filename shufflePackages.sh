@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 BASE=$(dirname "$(readlink -f "$0")")
 DIR=$("$BASE/cacheDir.sh")
+
+echo "Ensuring we have a Hackage list" >> /dev/stderr
 if [[ -n "$1" ]]
 then
     F="$1"
@@ -15,6 +17,16 @@ else
         exit 1
     }
 fi
+
+echo "Checking for shuffled package list" >> /dev/stderr
+CACHE="$DIR/shuffled"
+if [[ -f "$CACHE" ]]
+then
+    echo "Using cached packages '$CACHE'" >> /dev/stderr
+    cat "$CACHE"
+    exit 0
+fi
+echo "Generating new shuffled list" >> /dev/stderr
 
 function extractVersions {
     PKG=""
@@ -53,4 +65,4 @@ function randomPkgs {
     withVersions | uniq | shuf
 }
 
-randomPkgs
+randomPkgs | tee "$CACHE"

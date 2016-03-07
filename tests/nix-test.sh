@@ -10,7 +10,7 @@ function fail {
 }
 
 function nixPath {
-    "$BASE/nixPath.sh"
+    "$BASE/nix-support/nixPath.sh"
 }
 
 function nixEval {
