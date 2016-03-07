@@ -9,4 +9,8 @@ do
     NAME=$(grep -i "name[ ]*:" < "$CBL" | cut -d ':' -f 2 | tr -d '[:space:]')
     echo "Project name is '$NAME'" >> /dev/stderr
     echo "$NAME"
+    exit 0
 done
+
+echo "Couldn't find name of package in '$1'" >> /dev/stderr
+exit 1
