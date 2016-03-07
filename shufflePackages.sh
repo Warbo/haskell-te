@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+BASE=$(dirname "$(readlink -f "$0")")
 DIR=$("$BASE/cacheDir.sh")
 if [[ -n "$1" ]]
 then
@@ -9,13 +10,11 @@ then
 else
     URL="http://hackage.haskell.org/packages/index.tar.gz"
     echo "Downloading Hackage package list from '$URL'" >> /dev/stderr
-    wget -O "$DIR/index.tar.gz"  || {
+    wget -O "$DIR/index.tar.gz" "$URL" || {
         echo "Failed to fetch package list, aborting" >> /dev/stderr
         exit 1
     }
 fi
-
-BASE=$(dirname "$(readlink -f "$0")")
 
 function extractVersions {
     PKG=""
