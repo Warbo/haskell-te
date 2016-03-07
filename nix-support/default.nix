@@ -43,6 +43,9 @@ let real = import <real> args; # <real> should point to the 'real' <nixpkgs>
           # "eval" for Haskell, using Nix to fetch dependencies
           nix-eval = cabalPath ../packages/nix-eval;
 
+          # Topologically sort by dependencies
+          order-deps = cabalPath ../packages/order-deps;
+
           # Look up instances of 'Arbitrary' at runtime rather than compile time
           runtime-arbitrary = cabalPath ../packages/runtime-arbitrary;
         };
@@ -69,5 +72,6 @@ let real = import <real> args; # <real> should point to the 'real' <nixpkgs>
       ML4HSFE      = haskellPackages.ML4HSFE;
       mlspec       = haskellPackages.mlspec;
       mlspec-bench = haskellPackages.mlspec-bench;
+      order-deps   = haskellPackages.order-deps;
     };
 in overridden
