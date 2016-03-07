@@ -2,55 +2,46 @@
 
 # Benchmark regular building with Cabal + GHC
 
+function info {
+    echo -e "INFO: $1" >> /dev/stderr
+}
+
+function warn {
+    echo -e "WARNING: $1" >> /dev/stderr
+    return 1
+}
+
+function abort {
+    echo -e "ERROR: $1" >> /dev/stderr
+    exit 1
+}
+
 BASE=$(dirname "$(dirname "$(readlink -f "$0")")")
+NAME=$(basename "$0")
 
-[[ -n "$1" ]] || {
-    echo "'$0' requires a package directory" >> /dev/stderr
-    exit 1
-}
+[[ -n "$1" ]] || abort "$NAME requires a package directory"
 
-[[ -d "$1" ]] || {
-    echo "'$0': Directory '$1' not found" >> /dev/stderr
-    exit 1
-}
+[[ -d "$1" ]] || abort "$NAME couldn't find directory '$1'"
 
-command -v cabal > /dev/null || {
-    echo "'$0' requires cabal" >> /dev/stderr
-    exit 1
-}
-
-command -v nix-shell > /dev/null || {
-    echo "'$0' requires nix-shell" >> /dev/stderr
-    exit 1
-}
-
-command -v cabal2nix > /dev/null || {
-    echo "'$0' requires cabal2nix" >> /dev/stderr
-    exit 1
-}
+for CMD in cabal nix-shell cabal2nix
+do
+    command -v "$CMD" > /dev/null || abort "$NAME requires $CMD"
+done
 
 # See if we've already benchmarked this package
-CACHE=$("$BASE/cacheDir.sh") || {
-    echo "$0: Couldn't get cache dir" >> /dev/stderr
-    exit 1
-}
+CACHE=$("$BASE/cacheDir.sh") abort "$NAME couldn't get cache dir"
 
 UNBUILDABLE="$CACHE/unbuildable"
 touch "$UNBUILDABLE"
-if grep -Fx "$1" "$UNBUILDABLE" > /dev/null
-then
-    echo "$0: Package '$1' is marked as unbuildable, aborting" >> /dev/stderr
-    exit 1
-fi
+grep -Fx "$1" "$UNBUILDABLE" > /dev/null &&
+    abort "Package '$1' is marked as unbuildable"
 
 CLEAN=$(echo "$1" | tr -cd '[:alnum:]')
 TIMING_NAME="cabal-build-$CLEAN"
 
 BENCH_DIR="$CACHE/benchmarks"
-mkdir -p "$BENCH_DIR" || {
-    echo "$0: Couldn't create benchmark directory '$BENCH_DIR'" >> /dev/stderr
-    exit 1
-}
+mkdir -p "$BENCH_DIR" ||
+    abort "$NAME couldn't create benchmark directory '$BENCH_DIR'"
 
 EXISTING="$BENCH_DIR/outputs/$TIMING_NAME.json"
 if [[ -f "$EXISTING" ]]
@@ -60,15 +51,10 @@ then
 fi
 
 # Configure, with all required packages available
-cd "$1" || {
-    echo "$0: Couldn't cd to '$1'" >> /dev/stderr
-    exit 1
-}
+cd "$1" || abort "$NAME couldn't cd to '$1'"
 
-nix-shell --show-trace -E "$(cabal2nix --shell ./.)" --run "cabal configure" || {
-    echo "$0: Failed to configure '$1'" >> /dev/stderr
-    exit 1
-}
+nix-shell --show-trace -E "$(cabal2nix --shell ./.)" --run "cabal configure" ||
+    abort "$NAME failed to configure '$1'"
 
 # Benchmark "cabal build"
 BENCHMARK_COMMAND="cabal"
