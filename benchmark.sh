@@ -2,52 +2,37 @@
 
 # Benchmark ML4HS compared to GHC and QuickSpec
 
-function pkgList {
-    echo "list-extras"
-}
+BASE=$(dirname "$(readlink -f "$0")")
 
-function clusterList {
-    seq 1 10
-}
+[[ -n "$REPETITIONS" ]] || REPETITIONS=2
 
-function benchmarkGhc {
-    cabal get
-    cabal configure
-    benchmark cabal build
-}
+echo "Benchmarking '$REPETITIONS' packages" >> /dev/stderr
 
-function benchmarkOneTimeCost {
-    cabal configure with AstPlugin
-    benchmark cabal build
-    benchmark annotatedb
-}
-
-function benchmarkRecurrentClustering {
-    while read -r CLUSTERS
-    do
-        benchmark recurrent clustering into CLUSTERS
-    done
-}
-
-function benchmarkExploration {
-    while read -r CLUSTERS
-    do
-        benchmark explore-theories with CLUSTERS
-    done < <(clusterList)
-}
-
-function benchmarkSimplification {
-    while read -r CLUSTERS
-    do
-        benchmark simplify equations from CLUSTERS output
-    done < <(clusterList)
-}
-
-for PKG in pkgList
+COUNT=0
+while [[ "$COUNT" -lt "$REPETITIONS" ]] && read -r PKG
 do
-    benchmarkGhc                 "$PKG"
-    benchmarkOneTimeCost         "$PKG"
-    benchmarkRecurrentClustering "$PKG"
-    benchmarkExploration         "$PKG"
-    benchmarkSimplification      "$PKG"
-done
+    echo "Benchmarking '$PKG'" >> /dev/stderr
+    if ! DIR=$("$BASE/fetchIfNeeded.sh" "$PKG")
+    then
+        markUnfetchable "$PKG"
+    elif ! "$BASE/benchmarks/benchmark-ghc.sh" "$PKG" "$DIR"
+    then
+        markUnbenchable "$PKG"
+    elif ! "$BASE/benchmarks/benchmark-features.sh" "$PKG" "$DIR"
+    then
+        markFeatureless "$PKG"
+    else
+        # Make sure we run all clusters for this package
+        CLUSTERS_TODO=$(clusterCount)
+        while read -r CLUSTERS
+        do
+            "$BASE/benchmarks/benchmark-cluster.sh"  "$PKG" "$CLUSTERS" &&
+            "$BASE/benchmarks/benchmark-explore.sh"  "$PKG" "$CLUSTERS" &&
+            "$BASE/benchmarks/benchmark-simplify.sh" "$PKG" "$CLUSTERS" &&
+            CLUSTERS_TODO=$(( CLUSTERS_TODO - 1 ))
+        done < <("$BASE/clusterNums.sh")
+        [[ "$CLUSTERS_TODO" -eq 0 ]] &&
+            COUNT=$(( COUNT + 1 ))   &&
+            markFinished "$PKG"
+    fi
+done < <("$BASE/shufflePackages.sh")
