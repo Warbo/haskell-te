@@ -9,6 +9,8 @@ stdenv.mkDerivation {
     cabal2db
     explore-theories
     jq
+    ML4HSFE
     mlspec-bench
+    recurrent-clustering
   ];
 }

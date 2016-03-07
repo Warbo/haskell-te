@@ -28,6 +28,9 @@ let real = import <real> args; # <real> should point to the 'real' <nixpkgs>
           # Shared library for handling ASTs
           HS2AST = cabalPath ../packages/hs2ast;
 
+          # Feature extraction to go from ASTs to feature vectors
+          ML4HSFE = cabalPath ../packages/ml4hsfe;
+
           # Wrapper around QuickSpec for theory exploration
           mlspec = cabalPath ../packages/mlspec;
 
@@ -54,12 +57,16 @@ let real = import <real> args; # <real> should point to the 'real' <nixpkgs>
       # Sets up a Nix environment containing all packages of a theory
       explore-theories = overridden.callPackage ../packages/explore-theories {};
 
+      # Iterative recurrent clustering algorithm
+      recurrent-clustering = overridden.callPackage ../packages/recurrent-clustering {};
+
       # Include our overridden Haskell packages
       inherit haskellPackages;
 
-      # Pull out Haskell packages
+      # Pull out Haskell packages (e.g. because they provide executables)
       AstPlugin    = haskellPackages.AstPlugin;
       getDeps      = haskellPackages.getDeps;
+      ML4HSFE      = haskellPackages.ML4HSFE;
       mlspec       = haskellPackages.mlspec;
       mlspec-bench = haskellPackages.mlspec-bench;
     };

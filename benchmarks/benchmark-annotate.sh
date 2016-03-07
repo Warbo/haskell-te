@@ -62,15 +62,20 @@ else
 fi
 
 OUTPUT_FILE="$CACHE/$PKG.annotated"
-"$BASE/benchmarks/last-stdout.sh" > "$OUTPUT_FILE"  || {
-    echo "No stdout, aborting" >> /dev/stderr
-    exit 1
-}
 
-[[ -f "$OUTPUT_FILE" ]] || {
-    echo "Didn't copy stdout, aborting" >> /dev/stderr
-    exit 1
-}
+if [[ -f "$OUTPUT_FILE" ]]
+then
+    echo "Using existing '$OUTPUT_FILE'" >> /dev/stderr
+else
+    "$BASE/benchmarks/last-stdout.sh" > "$OUTPUT_FILE" || {
+        echo "ERROR: No stdout, aborting" >> /dev/stderr
+        exit 1
+    }
+    [[ -f "$OUTPUT_FILE" ]] || {
+        echo "ERROR: No such file '$OUTPUT_FILE'" >> /dev/stderr
+        exit 1
+    }
+fi
 
 AST_COUNT=$(jq 'length' < "$OUTPUT_FILE") || {
     echo "Failed to count outputted ASTs" >> /dev/stderr

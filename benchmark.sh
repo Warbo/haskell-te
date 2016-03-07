@@ -14,8 +14,9 @@ else
 fi
 
 # Check as many pre-conditions as we can here
-for CMD in build-env cabal cabal2nix dump-format dump-package-env \
-           dump-package-name jq mlspec-bench nix-shell runAstPlugin
+for CMD in annotateDb build-env cabal cabal2nix cluster dump-format \
+           dump-package dump-package-env dump-package-name jq mlspec-bench \
+           nix-shell runAstPlugin
 do
     command -v "$CMD" > /dev/null || {
         "Benchmarking needs '$CMD'; try running in nix-shell" >> /dev/stderr
@@ -50,7 +51,7 @@ do
         echo "$DIR" >> "$CACHE/featureless"
     else
         # Make sure we run all clusters for this package
-        CLUSTERS_TODO=$(clusterCount)
+        CLUSTERS_TODO=$("$BASE/clusterCount.sh")
         while read -r CLUSTERS
         do
             "$BASE/benchmarks/benchmark-cluster.sh"  "$DIR" "$CLUSTERS" &&

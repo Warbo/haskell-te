@@ -84,22 +84,28 @@ fi
 echo "Looking for stdout" >> /dev/stderr
 OUTPUT_FILE="$CACHE/$PKG.asts"
 
-"BASE/benchmarks/last-stdout.sh" > "$OUTPUT_FILE" || {
-    echo "No stdout, aborting" >> /dev/stderr
-    exit 1
-}
-
-[[ -f "$OUTPUT_FILE" ]] || {
-    echo "Didn't copy stdout, aborting" >> /dev/stderr
-    exit 1
-}
+if [[ -f "$OUTPUT_FILE" ]]
+then
+    echo "Using existing '$OUTPUT_FILE'" >> /dev/stderr
+else
+    "$BASE/benchmarks/last-stdout.sh" > "$OUTPUT_FILE" || {
+        echo "ERROR: No stdout, aborting" >> /dev/stderr
+        exit 1
+    }
+    [[ -f "$OUTPUT_FILE" ]] || {
+        echo "ERROR: No such file '$OUTPUT_FILE'" >> /dev/stderr
+        exit 1
+    }
+fi
 
 AST_COUNT=$(jq 'length' < "$OUTPUT_FILE") || {
-    echo "Failed to count outputted ASTs" >> /dev/stderr
+    echo "ERROR: Failed to count outputted ASTs" >> /dev/stderr
     exit 1
 }
 
 [[ "$AST_COUNT" -gt 0 ]] || {
-    echo "Got no ASTs from '$1', abandoning" >> /dev/stderr
+    echo "ERROR: Got no ASTs from '$1', abandoning" >> /dev/stderr
     exit 1
 }
+
+echo "Finished benchmark-dump-asts.sh" >> /dev/stderr
