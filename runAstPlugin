@@ -32,4 +32,4 @@ function build {
 
 cd "$1"
 [[ -n "$SKIP_CABAL_CONFIG" ]] || cabal configure >> /dev/stderr
-getAsts | "$BASE/dump-format"
+getAsts | "$BASE/dump-format" "$1"
