@@ -53,8 +53,10 @@ function mkQuery {
     # Try turning our monomorphised function into a QuickSpec Sig(nature)
     for NUM in 5 4 3 2 1 0
     do
-        # Format the current arity and the (qualified) name as JSON
-        JSON="\"{\\\"arity\\\": $NUM, \\\"qname\\\": \\\"$1\\\"}\""
+        # Format the current arity and the (qualified) name as JSON. If this
+        # works, this term is 'quickspecable' (i.e. suitable for use in a
+        # QuickSpec signature)
+        JSON="\"{\\\"arity\\\": $NUM, \\\"qname\\\": \\\"$1\\\", \\\"quickspecable\\\": true}\""
 
         # Pass f to QuickSpec, using our JSON as the identifier
         SIG="$QS.fun${NUM} ($JSON) f"

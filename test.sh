@@ -150,7 +150,7 @@ function getArityTagged {
     [[ -e "$BASE/tagAsts" ]] || fail "Couldn't find tagAsts in '$BASE'"
     F="test-data/$1.aritytagged"
     [[ ! -e "$F" ]] &&
-        getRawAsts "$1" | "$BASE/tagAsts" <(getArities "$1") > "$F"
+        getRawAsts "$1" | "$BASE/tagAsts" <(getArities "$1") "{}" > "$F"
     cat "$F"
 }
 
@@ -158,7 +158,7 @@ function getTypeTagged {
     [[ -e "$BASE/tagAsts" ]] || fail "Couldn't find tagAsts in '$BASE'"
     F="test-data/$1.typetagged"
     [[ ! -e "$F" ]] &&
-        getRawAsts "$1" | "$BASE/tagAsts" <(getTypes "$1") > "$F"
+        getRawAsts "$1" | "$BASE/tagAsts" <(getTypes "$1") "{}" > "$F"
     cat "$F"
 }
 
@@ -280,7 +280,7 @@ function pkgTestDeps {
 }
 
 function pkgTestFinalHasAllTags {
-    for FIELD in package module name ast type arity dependencies
+    for FIELD in package module name ast type arity dependencies quickspecable
     do
         getFinal "$1" | allObjectsHave "$FIELD" ||
             fail "Annotated DB of '$1' is missing some '$FIELD'"
@@ -290,7 +290,7 @@ function pkgTestFinalHasAllTags {
 function testTagging {
     INPUT1='[{"name": "n1", "module": "M1"}, {"name": "n2", "module": "M2"}]'
     INPUT2='[{"name": "n2", "module": "M2", "foo": "bar"}]'
-    RESULT=$(echo "$INPUT1" | "$BASE/tagAsts" <(echo "$INPUT2"))
+    RESULT=$(echo "$INPUT1" | "$BASE/tagAsts" <(echo "$INPUT2") "{}")
     TYPE=$(echo "$RESULT" | jq 'type')
     [[ "x$TYPE" == 'x"array"' ]] || fail "tagAsts gave '$TYPE' not array"
 }
