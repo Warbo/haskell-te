@@ -88,7 +88,7 @@ ENVPKG=$(echo "$HPKGS" | mkEnvPkg "$NAME")
 if echo "$INPUT" | needEnv
 then
     echo "build-env: Running '$*' in Nix environment '$ENVPKG'" >> /dev/stderr
-    EXPLORE_NAME="$NAME" nix-shell --run "$*" -p "$ENVPKG"
+    EXPLORE_NAME="$NAME" nix-shell --show-trace --run "$*" -p "$ENVPKG"
 else
     echo "build-env: Running '$*' in existing environment" >> /dev/stderr
     "$@"

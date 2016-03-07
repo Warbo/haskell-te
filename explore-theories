@@ -26,7 +26,7 @@ function pkgsFromInput {
     then
         jq -r "$ARG"
     else
-        nix-shell -p jq --run "jq -r '$ARG'"
+        nix-shell --show-trace -p jq --run "jq -r '$ARG'"
     fi
 }
 

@@ -84,7 +84,7 @@ function testEnvContainsPkgs {
 function nixception {
     # For use by testEnvIsNotRedundant. Requires particular variables to be
     # initialised. We only keep it separate to avoid heredoc annoyances.
-    nix-shell -p "$GHCPKG" $EXTRA --run bash <<EOF
+    nix-shell --show-trace -p "$GHCPKG" $EXTRA --run bash <<EOF
       echo "BEGIN INNER SHELL" >> /dev/stderr
       for PKG in $HLINE
       do
