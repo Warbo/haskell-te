@@ -10,9 +10,12 @@ stdenv.mkDerivation {
 
   installPhase = ''
     mkdir -p "$out/bin"
-    cp -v dump-hackage "$out/bin/"
-    cp -v runAstPlugin "$out/bin/"
-    cp -v dump-package "$out/bin/"
+
+    for CMD in dump-format dump-hackage dump-package dump-package-env \
+               dump-package-name runAstPlugin
+    do
+        cp -v "$CMD" "$out/bin/"
+    done
 
     mkdir -p "$out/lib"
     cp -v ghcWithPlugin.nix "$out/lib/"
