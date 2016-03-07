@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 BASE=$(dirname "$(dirname "$(readlink -f "$0")")")
-DIR=$("$BASE/cacheDir.sh")
+DIR=$("$BASE/scripts/cacheDir.sh")
 
 echo "Ensuring we have a Hackage list" >> /dev/stderr
 if [[ -n "$1" ]]

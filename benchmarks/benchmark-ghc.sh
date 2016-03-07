@@ -16,7 +16,7 @@ do
 done
 
 # See if we've already benchmarked this package
-CACHE=$("$BASE/cacheDir.sh") || abort "$NAME couldn't get cache dir"
+CACHE=$("$BASE/scripts/cacheDir.sh") || abort "$NAME couldn't get cache dir"
 
 UNBUILDABLE="$CACHE/unbuildable"
 touch "$UNBUILDABLE"

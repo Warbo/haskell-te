@@ -2,7 +2,7 @@
 
 BASE=$(dirname "$(dirname "$(readlink -f "$0")")")
 NAME=$(basename "$0")
-CACHE=$("$BASE/cacheDir.sh")
+CACHE=$("$BASE/scripts/cacheDir.sh")
 
 function fail {
     echo -e "ERROR: $1" >> /dev/stderr

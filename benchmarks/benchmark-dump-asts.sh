@@ -35,7 +35,7 @@ BENCHMARK_ARGS="[\"${ESCAPED_ARG}\"]"
 export BENCHMARK_ARGS
 
 CLEAN=$(echo "$PKG" | tr -cd '[:alnum:]')
-CACHE=$("$BASE/cacheDir.sh") || {
+CACHE=$("$BASE/scripts/cacheDir.sh") || {
     echo "$0: Couldn't get cache dir" >> /dev/stderr
     exit 1
 }

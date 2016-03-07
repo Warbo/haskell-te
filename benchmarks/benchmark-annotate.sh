@@ -15,7 +15,7 @@ done
 
 PKG=$(dump-package-name "$1") || abort "Couldn't get package name from '$1'"
 
-CACHE=$("$BASE/cacheDir.sh")
+CACHE=$("$BASE/scripts/cacheDir.sh")
 
 ASTS="$CACHE/$PKG.asts"
 [[ -f "$ASTS" ]] || abort "No ASTs found for '$PKG'"

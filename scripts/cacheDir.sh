@@ -5,7 +5,7 @@ function fail {
     exit 1
 }
 
-BASE=$(dirname "$(readlink -f "$0")")
+BASE=$(dirname "$(dirname "$(readlink -f "$0")")")
 if [[ -w "$BASE" ]]
 then
     # If we can write to the same place as our scripts, do so as it allows

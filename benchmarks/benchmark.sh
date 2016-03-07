@@ -31,7 +31,7 @@ do
         abort "Benchmarking needs '$CMD'; maybe add a buildInput to shell.nix?"
 done
 
-CACHE=$("$BASE/cacheDir.sh")
+CACHE=$("$BASE/scripts/cacheDir.sh")
 
 [[ -n "$REPETITIONS" ]] || REPETITIONS=2
 

@@ -23,7 +23,7 @@ BASE=$(dirname "$(dirname "$(readlink -f "$0")")")
 }
 
 PKG="$1"
-DIR=$("$BASE/cacheDir.sh")
+DIR=$("$BASE/scripts/cacheDir.sh")
 
 # See if we've previously failed to fetch this package
 UNFETCHABLE="$DIR/unfetchable"
