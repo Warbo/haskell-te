@@ -29,7 +29,7 @@ function testBenchCompile {
         fi
         pushd "$FOUND" > /dev/null
         echo "Configuring '$PKG'" >> /dev/stderr
-        OUTPUT=$(nix-shell -E "$(cabal2nix --shell ./.)" --run "cabal configure" 2>&1) || {
+        OUTPUT=$(nix-shell --show-trace -E "$(cabal2nix --shell ./.)" --run "cabal configure" 2>&1) || {
             fail "Problem configuring '$PKG': $OUTPUT"
             popd > /dev/null
             return 1
