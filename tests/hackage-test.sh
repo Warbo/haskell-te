@@ -11,7 +11,7 @@ function fail {
 
 function testShuffleShuffles {
     AMOUNT=$(( RANDOM % 100 + 10 ))
-    CMD="$BASE/shufflePackages.sh"
+    CMD="$BASE/scripts/shufflePackages.sh"
     OUTPUT1=$("$CMD" | head -n$AMOUNT)
     OUTPUT2=$("$CMD" | head -n$AMOUNT)
     [[ "x$OUTPUT1" = "x$OUTPUT2" ]] &&
@@ -20,7 +20,7 @@ function testShuffleShuffles {
 
 function testShuffleUnique {
     AMOUNT=$(( RANDOM % 100 + 10 ))
-    CMD="$BASE/shufflePackages.sh"
+    CMD="$BASE/scripts/shufflePackages.sh"
     OUTPUT=$("$CMD" | head -n$AMOUNT) ||
         fail "Failed to run '$CMD'"
     RAW_COUNT=$(echo "$OUTPUT" | wc -l)

@@ -70,4 +70,4 @@ do
             COUNT=$(( COUNT + 1 ))   &&
             echo "$DIR" >> "$CACHE/finished"
     fi
-done < <("$BASE/shufflePackages.sh")
+done < <("$BASE/scripts/shufflePackages.sh")

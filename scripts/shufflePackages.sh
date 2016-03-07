@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-BASE=$(dirname "$(readlink -f "$0")")
+BASE=$(dirname "$(dirname "$(readlink -f "$0")")")
 DIR=$("$BASE/cacheDir.sh")
 
 echo "Ensuring we have a Hackage list" >> /dev/stderr
