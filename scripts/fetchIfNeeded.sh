@@ -15,7 +15,7 @@ function findInCache {
 }
 
 
-BASE=$(dirname "$(readlink -f "$0")")
+BASE=$(dirname "$(dirname "$(readlink -f "$0")")")
 
 [[ -n "$1" ]] || {
     echo "$0: Requires a Hackage package name as argument" >> /dev/stderr

@@ -14,7 +14,8 @@ function testBenchCompile {
     for PKG in list-extras xmonad
     do
         # Only fetch if we can't already find it
-        FOUND=$("$BASE/fetchIfNeeded.sh" "$PKG") || fail "Couldn't fetch '$PKG'"
+        FOUND=$("$BASE/scripts/fetchIfNeeded.sh" "$PKG") ||
+            fail "Couldn't fetch '$PKG'"
 
         OUTPUT=$("$BASE/benchmarks/benchmark-ghc.sh" "$FOUND") || {
             fail "Problem benchmarking GHC in '$FOUND'"

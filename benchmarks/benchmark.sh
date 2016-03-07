@@ -47,7 +47,7 @@ do
     PKG=$(echo "$LINE" | cut -f 1)
     VERSION=$(echo "$LINE" | cut -f 2)
     info "Benchmarking '$PKG'"
-    if ! DIR=$("$BASE/fetchIfNeeded.sh" "$PKG")
+    if ! DIR=$("$BASE/scripts/fetchIfNeeded.sh" "$PKG")
     then
         echo "$PKG" >> "$CACHE/unfetchable"
     elif ! "$BASE/benchmarks/benchmark-ghc.sh" "$DIR"
