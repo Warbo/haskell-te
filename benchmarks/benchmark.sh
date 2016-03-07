@@ -58,7 +58,7 @@ do
         echo "$DIR" >> "$CACHE/featureless"
     else
         # Make sure we run all clusters for this package
-        CLUSTERS_TODO=$("$BASE/clusterCount.sh")
+        CLUSTERS_TODO=$("$BASE/scripts/clusterCount.sh")
         while read -r CLUSTERS
         do
             "$BASE/benchmarks/benchmark-cluster.sh"  "$DIR" "$CLUSTERS" &&
