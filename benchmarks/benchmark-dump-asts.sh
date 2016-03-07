@@ -14,45 +14,40 @@ BASE=$(dirname "$(dirname "$(readlink -f "$0")")")
 
 cd "$1"
 
-command -v cabal > /dev/null || {
-    echo "'$0' requires cabal" >> /dev/stderr
-    exit 1
-}
+for CMD in cabal nix-shell cabal2nix dump-package
+do
+    command -v "$CMD" > /dev/null || {
+        echo "'$0' requires dump-package" >> /dev/stderr
+        exit 1
+    }
+done
 
-command -v nix-shell > /dev/null || {
-    echo "'$0' requires nix-shell" >> /dev/stderr
-    exit 1
-}
-
-command -v cabal2nix > /dev/null || {
-    echo "'$0' requires cabal2nix" >> /dev/stderr
-    exit 1
-}
-
-command -v dump-package > /dev/null || {
-    echo "'$0' requires dump-package" >> /dev/stderr
-    exit 1
-}
+PKG=$(dump-package-name "$1")
 
 ENVIRONMENT_PACKAGES=""
+export ENVIRONMENT_PACKAGES
+
 BENCHMARK_COMMAND="runAstPlugin"
+export BENCHMARK_COMMAND
 
 ESCAPED_ARG=$(echo "$1" | sed -e 's@\\"@\\\\"@g' | sed -e 's@"@\\"@g')
 BENCHMARK_ARGS="[\"${ESCAPED_ARG}\"]"
+export BENCHMARK_ARGS
 
-CLEAN=$(echo "$1" | tr -cd '[:alnum:]')
+CLEAN=$(echo "$PKG" | tr -cd '[:alnum:]')
 CACHE=$("$BASE/cacheDir.sh") || {
     echo "$0: Couldn't get cache dir" >> /dev/stderr
     exit 1
 }
 
 BENCH_DIR="$CACHE/benchmarks"
+export BENCH_DIR
 mkdir -p "$BENCH_DIR" || {
     echo "$0: Couldn't create benchmark directory '$BENCH_DIR'" >> /dev/stderr
     exit 1
 }
 
-TIMING_NAME="dump-package-$CLEAN"
+TIMING_NAME="$BENCHMARK_COMMAND-$CLEAN"
 
 EXISTING="$BENCH_DIR/outputs/$TIMING_NAME.json"
 if [[ -f "$EXISTING" ]]
@@ -78,9 +73,6 @@ else
     export SKIP_CABAL_CONFIG
 
     # Benchmark, inside the environment determined by dump-package-env
-    export BENCHMARK_COMMAND
-    export BENCHMARK_ARGS
-    export BENCH_DIR
     export TIMING_NAME
     export ENVIRONMENT_PACKAGES
     nix-shell --show-trace -E "$ENV" --run "'$BASE/benchmarks/bench-run.sh'" || {
@@ -90,39 +82,10 @@ else
 fi
 
 echo "Looking for stdout" >> /dev/stderr
+OUTPUT_FILE="$CACHE/$PKG.asts"
 
-function upToDashes {
-    while read -r LINE
-    do
-        if [[ "x$LINE" = "x-----" ]]
-        then
-            break
-        else
-            echo "$LINE"
-        fi
-    done
-}
-
-HAVE_OUTPUT=0
-OUTPUT_FILE="$CACHE/$CLEAN.asts"
-EXPECT=$(echo "$BENCHMARK_COMMAND $BENCHMARK_ARGS" | tr -dc '[:alnum:]')
-echo "Expect: $EXPECT"
-for F in "$BENCH_DIR"/outputs/*.stdout
-do
-    NAME=$(basename "$F" .stdout)
-    FOUND=$(echo "$NAME" | tr -dc '[:alnum:]')
-    echo "FOUND:  $FOUND"
-    if [[ "x$FOUND" = "x$EXPECT" ]]
-    then
-        echo "Found stdout in '$F'" >> /dev/stderr
-        HAVE_OUTPUT=1
-        # Get everything following last occurrence of -----
-        tac "$F" | upToDashes | tac > "$OUTPUT_FILE"
-    fi
-done
-
-[[ "$HAVE_OUTPUT" -eq 1 ]] || {
-    echo "Didn't find stdout, aborting" >> /dev/stderr
+"BASE/benchmarks/last-stdout.sh" > "$OUTPUT_FILE" || {
+    echo "No stdout, aborting" >> /dev/stderr
     exit 1
 }
 

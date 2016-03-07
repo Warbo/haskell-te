@@ -14,8 +14,8 @@ else
 fi
 
 # Check as many pre-conditions as we can here
-for CMD in build-env cabal cabal2nix dump-format dump-package-env jq \
-           mlspec-bench nix-shell runAstPlugin
+for CMD in build-env cabal cabal2nix dump-format dump-package-env \
+           dump-package-name jq mlspec-bench nix-shell runAstPlugin
 do
     command -v "$CMD" > /dev/null || {
         "Benchmarking needs '$CMD'; try running in nix-shell" >> /dev/stderr

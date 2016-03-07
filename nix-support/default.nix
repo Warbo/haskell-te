@@ -42,6 +42,9 @@ let real = import <real> args; # <real> should point to the 'real' <nixpkgs>
         };
     };
     overridden = pkgs // rec {
+      # Post-process extracted ASTs to determine types, arity, etc.
+      annotatedb = overridden.callPackage ../packages/annotatedb {};
+
       # Extracts ASTs from Cabal packages
       cabal2db = overridden.callPackage ../packages/cabal2db {};
 
