@@ -13,6 +13,16 @@ else
     export NIX_PATH
 fi
 
+# Check as many pre-conditions as we can here
+for CMD in build-env cabal cabal2nix dump-format dump-package-env jq \
+           mlspec-bench nix-shell runAstPlugin
+do
+    command -v "$CMD" > /dev/null || {
+        "Benchmarking needs '$CMD'; try running in nix-shell" >> /dev/stderr
+        exit 1
+    }
+done
+
 CACHE=$("$BASE/cacheDir.sh")
 
 [[ -n "$REPETITIONS" ]] || REPETITIONS=2
@@ -20,8 +30,12 @@ CACHE=$("$BASE/cacheDir.sh")
 echo "Benchmarking '$REPETITIONS' packages" >> /dev/stderr
 
 COUNT=0
-while [[ "$COUNT" -lt "$REPETITIONS" ]] && read -r LINE
+while read -r LINE
 do
+    [[ "$COUNT" -lt "$REPETITIONS" ]] || {
+        echo "Successfully processed '$COUNT' packages; stopping" >> /dev/stderr
+        break
+    }
     PKG=$(echo "$LINE" | cut -f 1)
     VERSION=$(echo "$LINE" | cut -f 2)
     echo "Benchmarking '$PKG'" >> /dev/stderr

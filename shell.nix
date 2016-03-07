@@ -3,5 +3,5 @@ with import <nixpkgs> {};
 
 stdenv.mkDerivation {
   name = "haskell-te";
-  buildInputs = [ cabal2nix cabal2db explore-theories mlspec-bench ];
+  buildInputs = [ cabal2nix cabal2db explore-theories mlspec-bench jq ];
 }

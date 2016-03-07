@@ -19,6 +19,12 @@ let real = import <real> args; # <real> should point to the 'real' <nixpkgs>
           # Generate arbitrary Haskell code for testing purposes
           ArbitraryHaskell = cabalPath ../packages/arbitrary-haskell;
 
+          # GHC Plugin to extract ASTs from Core
+          AstPlugin = cabalPath ../packages/ast-plugin;
+
+          # Shared library for handling ASTs
+          HS2AST = cabalPath ../packages/hs2ast;
+
           # Wrapper around QuickSpec for theory exploration
           mlspec = cabalPath ../packages/mlspec;
 
@@ -45,7 +51,8 @@ let real = import <real> args; # <real> should point to the 'real' <nixpkgs>
       # Include our overridden Haskell packages
       inherit haskellPackages;
 
-      # Pull out those Haskell packages which provide executable commands
+      # Pull out Haskell packages
+      AstPlugin    = haskellPackages.AstPlugin;
       mlspec       = haskellPackages.mlspec;
       mlspec-bench = haskellPackages.mlspec-bench;
     };

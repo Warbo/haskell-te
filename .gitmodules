@@ -31,3 +31,6 @@
 [submodule "packages/runtime-arbitrary"]
 	path = packages/runtime-arbitrary
 	url = http://chriswarbo.net/git/runtime-arbitrary.git
+[submodule "packages/hs2ast"]
+	path = packages/hs2ast
+	url = http://chriswarbo.net/git/hs2ast.git

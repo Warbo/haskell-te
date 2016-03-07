@@ -58,7 +58,10 @@ fi
 # We want to use Nix as little as possible inside our benchmarks, so we use
 # build-env from explore-theories to provide all of the packages we'll need
 echo "Benchmarking '$BENCHMARK_COMMAND' with args '$BENCHMARK_ARGS'" >> /dev/stderr
-echo "$INPUT" | build-env mlspec-bench --template json --output "$OUTPUT"
+echo "$INPUT" | build-env mlspec-bench --template json --output "$OUTPUT" || {
+    echo "$0: Failed to benchmark, aborting" >> /dev/stderr
+    exit 1
+}
 
 [[ -z "$DELETE_BENCH_OUTPUT" ]] || {
     echo "Deleting output directory '$BENCH_DIR'" >> /dev/stderr
