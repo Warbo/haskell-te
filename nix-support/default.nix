@@ -1,17 +1,20 @@
 # A drop-in replacement for <nixpkgs>
+# WATCH OUT! callPackage can introduce references to the underlying <nixpkgs>
+# behind your back. If in doubt, pass such arguments explicitly.
 args:
 
 let real = import <real> args; # <real> should point to the 'real' <nixpkgs>
 
     # If your <nixpkgs> is heavily customised, you can provide a pristine
-    # version to use as 'pkgs.pristine'
-    pkgs = if real ? pristine then real.pristine else real;
+    # version to use as 'original.pristine'
+    original = if real ? pristine then real.pristine else real;
 
     # Turns Haskell project directories into Nix packages
     nixFromCabal = import ./nixFromCabal.nix;
 
     # haskellPackages.override ensures dependencies are overridden too
-    haskellPackages = pkgs.haskellPackages.override {
+    haskellPackages = assert !(original.haskellPackages ? order-deps);
+    original.haskellPackages.override {
       overrides = self: super:
         # Use nixFromCabal on paths in ../packages
         let cabalPath = p: self.callPackage (nixFromCabal (toString p) null) {};
@@ -49,8 +52,8 @@ let real = import <real> args; # <real> should point to the 'real' <nixpkgs>
           # Look up instances of 'Arbitrary' at runtime rather than compile time
           runtime-arbitrary = cabalPath ../packages/runtime-arbitrary;
         };
-    };
-    overridden = pkgs // rec {
+      };
+    overridden = original // {
       # Post-process extracted ASTs to determine types, arity, etc.
       annotatedb = overridden.callPackage ../packages/annotatedb {};
 
@@ -60,6 +63,23 @@ let real = import <real> args; # <real> should point to the 'real' <nixpkgs>
       # Sets up a Nix environment containing all packages of a theory
       explore-theories = overridden.callPackage ../packages/explore-theories {};
 
+      # Ourselves
+      haskell-te = overridden.stdenv.mkDerivation {
+        name = "haskell-te";
+        buildInputs = [
+          overridden.annotatedb
+          overridden.cabal2nix
+          overridden.cabal2db
+          overridden.explore-theories
+          overridden.getDeps
+          original.jq
+          overridden.ML4HSFE
+          overridden.mlspec-bench
+          overridden.haskellPackages.order-deps
+          overridden.recurrent-clustering
+        ];
+      };
+
       # Iterative recurrent clustering algorithm
       recurrent-clustering = overridden.callPackage ../packages/recurrent-clustering {};
 
@@ -67,11 +87,11 @@ let real = import <real> args; # <real> should point to the 'real' <nixpkgs>
       inherit haskellPackages;
 
       # Pull out Haskell packages (e.g. because they provide executables)
-      AstPlugin    = haskellPackages.AstPlugin;
-      getDeps      = haskellPackages.getDeps;
-      ML4HSFE      = haskellPackages.ML4HSFE;
-      mlspec       = haskellPackages.mlspec;
-      mlspec-bench = haskellPackages.mlspec-bench;
-      order-deps   = haskellPackages.order-deps;
+      AstPlugin    = overridden.haskellPackages.AstPlugin;
+      getDeps      = overridden.haskellPackages.getDeps;
+      ML4HSFE      = overridden.haskellPackages.ML4HSFE;
+      mlspec       = overridden.haskellPackages.mlspec;
+      mlspec-bench = overridden.haskellPackages.mlspec-bench;
+      order-deps   = overridden.haskellPackages.order-deps;
     };
 in overridden
