@@ -1,6 +1,13 @@
-#! /usr/bin/env nix-shell
-#! nix-shell -i bash -p jq bash cabal2db annotatedb recurrent-clustering
+#!/usr/bin/env bash
 set -e
+
+for CMD in dump-package annotateDb cluster jq
+do
+    command -v "$CMD" > /dev/null || {
+        echo "ml4hs.sh requires $CMD" >> /dev/stderr
+        exit 1
+    }
+done
 
 # Main ML4HS script
 

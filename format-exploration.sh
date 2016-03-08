@@ -1,5 +1,9 @@
-#! /usr/bin/env nix-shell
-#! nix-shell -i bash -p jq bash
+#!/usr/bin/env bash
+
+command -v jq > /dev/null || {
+    echo "format-exploration.sh requires jq" >> /dev/stderr
+    exit 1
+}
 
 # shellcheck disable=SC2153
 [[ -n "$CLUSTERS" ]] || {

@@ -1,5 +1,9 @@
-#! /usr/bin/env nix-shell
-#! nix-shell -i bash -p jq bash
+#!/usr/bin/env bash
+
+command -v jq > /dev/null || {
+    echo "findMissing.sh requires jq" >> /dev/stderr
+    exit 1
+}
 
 INPUT=$(cat)
 

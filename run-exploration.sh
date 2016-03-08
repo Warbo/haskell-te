@@ -1,5 +1,9 @@
-#! /usr/bin/env nix-shell
-#! nix-shell -i bash -p mlspec bash
+#!/usr/bin/env bash
+
+command -v MLSpec > /dev/null || {
+    echo "run-exploration.sh requires MLSpec"
+    exit 1
+}
 
 # shellcheck disable=SC2153
 [[ -n "$CLUSTERS" ]] || {
