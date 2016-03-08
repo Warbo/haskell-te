@@ -8,8 +8,6 @@ do
     command -v "$CMD" > /dev/null || abort "readBenchJson.sh needs $CMD"
 done
 
-CACHE=$("$BASE/scripts/cacheDir.sh")
-
 function clusteringData {
     echo -e "Clusters\tTime"
     while read -r FILE

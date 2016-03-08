@@ -24,6 +24,16 @@ function packageName {
     dump-package-name "$1" || abort "Couldn't get package name from '$1'"
 }
 
+function clusterNums {
+    # The cluster parameters to use, one per line
+    seq 1 3
+}
+
+function clusterCount {
+    # The number of different cluster parameters to use
+    clusterNums | wc -l
+}
+
 function findOutput {
     "$BASE/benchmarks/last-stdout.sh" > "$1.tmp" || {
         rm -f "$1.tmp"

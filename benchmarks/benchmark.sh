@@ -2,21 +2,30 @@
 
 # Benchmark ML4HS compared to GHC and QuickSpec
 
-function info {
-    echo -e "INFO: $1" >> /dev/stderr
-}
-
-function warn {
-    echo -e "WARNING: $1" >> /dev/stderr
-    return 1
-}
-
-function abort {
-    echo -e "ERROR: $1" >> /dev/stderr
-    exit 1
-}
-
 BASE=$(dirname "$(dirname "$(readlink -f "$0")")")
+NAME=$(basename "$0")
+source "$BASE/scripts/common.sh"
+
+function uniqueLines {
+    mv "$1" "$1.tmp"
+    sort -u < "$1.tmp" > "$1"
+    rm -f "$1.tmp"
+}
+
+function unfetchable {
+    echo "$1" >> "$CACHE/unfetchable"
+    uniqueLines "$CACHE/unfetchable"
+}
+
+function unbuildable {
+    echo "$1" >> "$CACHE/unbuildable"
+    uniqueLines "$CACHE/unbuildable"
+}
+
+function featureless {
+    echo "$1" >> "$CACHE/featureless"
+    uniqueLines
+}
 
 # Ensure our Nix packages are in use
 echo "$NIX_PATH" | grep "$BASE/nix-support" > /dev/null ||
@@ -27,11 +36,8 @@ for CMD in annotateDb build-env cabal cabal2nix cluster dump-format \
            dump-package dump-package-env dump-package-name jq mlspec-bench \
            nix-shell runAstPlugin
 do
-    command -v "$CMD" > /dev/null ||
-        abort "Benchmarking needs '$CMD'; maybe add a buildInput to shell.nix?"
+    requireCmd "$CMD"
 done
-
-CACHE=$("$BASE/scripts/cacheDir.sh")
 
 [[ -n "$REPETITIONS" ]] || REPETITIONS=2
 
@@ -49,16 +55,16 @@ do
     info "Benchmarking '$PKG'"
     if ! DIR=$("$BASE/scripts/fetchIfNeeded.sh" "$PKG")
     then
-        echo "$PKG" >> "$CACHE/unfetchable"
+        unfetchable "$PKG"
     elif ! "$BASE/benchmarks/benchmark-ghc.sh" "$DIR"
     then
-        echo "$DIR" >> "$CACHE/unbuildable"
+        unbuildable "$DIR"
     elif ! "$BASE/benchmarks/benchmark-features.sh" "$DIR"
     then
-        echo "$DIR" >> "$CACHE/featureless"
+        featureless "$DIR"
     else
         # Make sure we run all clusters for this package
-        CLUSTERS_TODO=$("$BASE/scripts/clusterCount.sh")
+        CLUSTERS_TODO=$(clusterCount)
         while read -r CLUSTERS
         do
             "$BASE/benchmarks/benchmark-cluster.sh"  "$DIR" "$CLUSTERS" &&
