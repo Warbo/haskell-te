@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# WARNING: This is deprecated, since it's very slow. Use ml4hsfe-loop instead.
+# We keep this around for testing to make sure the output of both is consistent.
+
 for CMD in ML4HSFE jq
 do
     command -v "$CMD" > /dev/null || {

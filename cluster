@@ -2,4 +2,4 @@
 
 BASE=$(dirname "$0")
 
-"$BASE/extractFeatures" | "$BASE/nix_recurrentClustering"
+WIDTH=30 HEIGHT=30 ml4hsfe-loop | "$BASE/nix_recurrentClustering"

@@ -109,7 +109,7 @@ function getFeatures {
         [[ "$-" == *x* ]] && OLDDEBUG=1
 
         set +x
-        getAsts "$1" | "$BASE/extractFeatures" > "$F"
+        getAsts "$1" | WIDTH=30 HEIGHT=30 ml4hsfe-loop > "$F"
 
         # Enable -x if it was set before
         [[ "$OLDDEBUG" -eq 0 ]] || set -x
