@@ -6,12 +6,6 @@ BASE=$(dirname "$(dirname "$(readlink -f "$0")")")
 NAME=$(basename "$0")
 source "$BASE/scripts/common.sh"
 
-function uniqueLines {
-    mv "$1" "$1.tmp"
-    sort -u < "$1.tmp" > "$1"
-    rm -f "$1.tmp"
-}
-
 function unfetchable {
     echo "$1" >> "$CACHE/unfetchable"
     uniqueLines "$CACHE/unfetchable"
@@ -38,6 +32,28 @@ for CMD in annotateDb build-env cabal cabal2nix cluster dump-format \
 do
     requireCmd "$CMD"
 done
+
+# Clean out stale/erroneous data from cache
+[[ -d "$CACHE" ]] || mkdir -p "$CACHE"
+
+# Remove unparseable times
+rm -f "$CACHE"/*.time  # Left-over files
+while read -r FILE
+do
+    jq '.' < "$FILE" > /dev/null || {
+        warn "Deleting unparseable benchmark result '$FILE'"
+        rm -f "$FILE"
+    }
+done < <(find "$CACHE/benchmarks" -name "*.json")
+
+# Remove empty results
+shopt -s nullglob
+while read -r FILE
+do
+    rm -fv "$FILE"
+done < <(find "$CACHE" -maxdepth 1 -empty -type f \( \
+              -name "*.annotated" -o -name "*.asts" -o -name "*.formatted.*" \
+           -o -name "*.clustered.*" -o -name "*.explored.*" \) )
 
 [[ -n "$REPETITIONS" ]] || REPETITIONS=2
 

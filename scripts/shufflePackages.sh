@@ -1,32 +1,30 @@
 #!/usr/bin/env bash
 BASE=$(dirname "$(dirname "$(readlink -f "$0")")")
-DIR=$("$BASE/scripts/cacheDir.sh")
+source "$BASE/scripts/common.sh"
 
-echo "Ensuring we have a Hackage list" >> /dev/stderr
+info "Ensuring we have a Hackage list"
 if [[ -n "$1" ]]
 then
     F="$1"
-elif [[ -f "$DIR/index.tar.gz" ]]
+elif [[ -f "$CACHE/index.tar.gz" ]]
 then
-    F="$DIR/index.tar.gz"
+    F="$CACHE/index.tar.gz"
 else
     URL="http://hackage.haskell.org/packages/index.tar.gz"
-    echo "Downloading Hackage package list from '$URL'" >> /dev/stderr
-    wget -O "$DIR/index.tar.gz" "$URL" || {
-        echo "Failed to fetch package list, aborting" >> /dev/stderr
-        exit 1
-    }
+    info "Downloading Hackage package list from '$URL'"
+    wget -O "$CACHE/index.tar.gz" "$URL" ||
+        abort "Failed to fetch package list"
 fi
 
-echo "Checking for shuffled package list" >> /dev/stderr
-CACHE="$DIR/shuffled"
+info "Checking for shuffled package list"
+CACHE="$CACHE/shuffled"
 if [[ -f "$CACHE" ]]
 then
-    echo "Using cached packages '$CACHE'" >> /dev/stderr
+    info "Using cached packages '$CACHE'"
     cat "$CACHE"
     exit 0
 fi
-echo "Generating new shuffled list" >> /dev/stderr
+info "Generating new shuffled list"
 
 function extractVersions {
     PKG=""
@@ -51,12 +49,12 @@ function extractVersions {
 
 function withVersions {
     HASH=$(md5sum "$F" | cut -d ' ' -f 1)
-    CACHED="$DIR/package-versions-$HASH"
+    CACHED="$CACHE/package-versions-$HASH"
     if [[ -f "$CACHED" ]]
     then
         cat "$CACHED"
     else
-        echo "Caching package versions to '$CACHED'" >> /dev/stderr
+        info "Caching package versions to '$CACHED'"
         extractVersions | tee "$CACHED"
     fi
 }

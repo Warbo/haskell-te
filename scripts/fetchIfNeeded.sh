@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+BASE=$(dirname "$(dirname "$(readlink -f "$0")")")
+NAME=$(basename "$0")
+source "$BASE/scripts/common.sh"
+
 function findInCache {
     # Look through the contents of $2 for entries of the form $1-1.2.3
     for D in "$2"/*
@@ -14,49 +18,32 @@ function findInCache {
     return 1
 }
 
-
-BASE=$(dirname "$(dirname "$(readlink -f "$0")")")
-
-[[ -n "$1" ]] || {
-    echo "$0: Requires a Hackage package name as argument" >> /dev/stderr
-    exit 1
-}
+[[ -n "$1" ]] || abort "$NAME requires a Hackage package name as argument"
 
 PKG="$1"
-DIR=$("$BASE/scripts/cacheDir.sh")
 
 # See if we've previously failed to fetch this package
-UNFETCHABLE="$DIR/unfetchable"
+UNFETCHABLE="$CACHE/unfetchable"
 touch "$UNFETCHABLE"
-if grep -Fx "$PKG" "$UNFETCHABLE" > /dev/null
-then
-    echo "$0: Package '$PKG' is marked as unfetchable, aborting" >> /dev/stderr
-    exit 1
-fi
+grep -Fx "$PKG" "$UNFETCHABLE" > /dev/null &&
+    abort "Package '$PKG' is marked as unfetchable"
 
 # See if we have a Hackage package already
-FOUND=$(findInCache "$PKG" "$DIR") && {
-    echo "Using cached version '$FOUND' for '$PKG'" >> /dev/stderr
+FOUND=$(findInCache "$PKG" "$CACHE") && {
+    info "Using cached version '$FOUND' for '$PKG'"
     echo "$FOUND"
     exit 0
 }
 
-echo "No cached version of '$PKG' found, downloading with Cabal" >> /dev/stderr
-cd "$DIR" || {
-    echo "$0: Couldn't cd to '$DIR', aborting" >> /dev/stderr
-    exit 1
-}
+info "No cached version of '$PKG' found, downloading with Cabal"
+cd "$CACHE" || abort "$NAME couldn't cd to '$CACHE'"
 
-cabal get "$1" 1>&2 || {
-    echo "Failed to download '$PKG' with Cabal, aborting" >> /dev/stderr
-    exit 1
-}
+cabal get "$1" 1>&2 || abort "Failed to download '$PKG' with Cabal"
 
-FOUND=$(findInCache "$PKG" "$DIR") && {
-    echo "Using '$FOUND' for '$PKG'" >> /dev/stderr
+FOUND=$(findInCache "$PKG" "$CACHE") && {
+    info "Using '$FOUND' for '$PKG'"
     echo "$FOUND"
     exit 0
 }
 
-echo "$0: Couldn't find '$PKG' after downloading it; aborting" >> /dev/stderr
-exit 1
+abort "Couldn't find '$PKG' after downloading it"

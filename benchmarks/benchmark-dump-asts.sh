@@ -1,25 +1,18 @@
 #!/usr/bin/env bash
 
 BASE=$(dirname "$(dirname "$(readlink -f "$0")")")
+NAME=$(basename "$0")
+source "$BASE/scripts/common.sh"
 
-[[ -n "$1" ]] || {
-    echo "'$0' requires a package directory" >> /dev/stderr
-    exit 1
-}
+[[ -n "$1" ]] || abort "$NAME requires a package directory"
 
-[[ -d "$1" ]] || {
-    echo "'$0': Directory '$1' not found" >> /dev/stderr
-    exit 1
-}
+[[ -d "$1" ]] || abort "Directory '$1' not found"
 
 cd "$1"
 
 for CMD in cabal nix-shell cabal2nix dump-package
 do
-    command -v "$CMD" > /dev/null || {
-        echo "'$0' requires dump-package" >> /dev/stderr
-        exit 1
-    }
+    requireCmd "$CMD"
 done
 
 PKG=$(dump-package-name "$1")
@@ -35,38 +28,29 @@ BENCHMARK_ARGS="[\"${ESCAPED_ARG}\"]"
 export BENCHMARK_ARGS
 
 CLEAN=$(echo "$PKG" | tr -cd '[:alnum:]')
-CACHE=$("$BASE/scripts/cacheDir.sh") || {
-    echo "$0: Couldn't get cache dir" >> /dev/stderr
-    exit 1
-}
 
 BENCH_DIR="$CACHE/benchmarks"
 export BENCH_DIR
-mkdir -p "$BENCH_DIR" || {
-    echo "$0: Couldn't create benchmark directory '$BENCH_DIR'" >> /dev/stderr
-    exit 1
-}
+mkdir -p "$BENCH_DIR" ||
+    abort "$NAME couldn't create benchmark directory '$BENCH_DIR'"
 
 TIMING_NAME="$BENCHMARK_COMMAND-$CLEAN"
 
 EXISTING="$BENCH_DIR/outputs/$TIMING_NAME.json"
 if [[ -f "$EXISTING" ]]
 then
-    echo "$0: Using existing result '$EXISTING'" >> /dev/stderr
+    info "$NAME using existing result '$EXISTING'"
 else
     # We're essentially replicating the job of dump-package, since we'd like to
     # avoid measuring the time taken to build dependencies, etc.
 
     # Configure the package, using dump-haskell-env to ensure that AstPlugin is
     # available for GHC
-    ENV=$(dump-package-env "$1") || {
-        echo "Couldn't get Haskell package environment, aborting" >> /dev/stderr
-        exit 1
-    }
-    nix-shell --show-trace -E "$ENV" --run "cabal configure" || {
-        echo "Couldn't configure package, aborting" >> /dev/stderr
-        exit 1
-    }
+    ENV=$(dump-package-env "$1") ||
+        abort "Couldn't get Haskell package environment"
+
+    nix-shell --show-trace -E "$ENV" --run "cabal configure" ||
+        abort "Couldn't configure package"
 
     # Tell runAstPlugin not to configure the package itself
     SKIP_CABAL_CONFIG=1
@@ -75,37 +59,26 @@ else
     # Benchmark, inside the environment determined by dump-package-env
     export TIMING_NAME
     export ENVIRONMENT_PACKAGES
-    nix-shell --show-trace -E "$ENV" --run "'$BASE/benchmarks/bench-run.sh'" || {
-        echo "$0: Error benchmarking '$1'" >> /dev/stderr
-        exit 1
-    }
+    nix-shell --show-trace -E "$ENV" --run "'$BASE/benchmarks/bench-run.sh'" ||
+        abort "$NAME couldn't benchmark '$1'"
 fi
 
-echo "Looking for stdout" >> /dev/stderr
+info "Looking for stdout"
 OUTPUT_FILE="$CACHE/$PKG.asts"
 
 if [[ -f "$OUTPUT_FILE" ]]
 then
-    echo "Using existing '$OUTPUT_FILE'" >> /dev/stderr
+    info "Using existing '$OUTPUT_FILE'"
 else
-    "$BASE/benchmarks/last-stdout.sh" > "$OUTPUT_FILE" || {
-        echo "ERROR: No stdout, aborting" >> /dev/stderr
-        exit 1
-    }
-    [[ -f "$OUTPUT_FILE" ]] || {
-        echo "ERROR: No such file '$OUTPUT_FILE'" >> /dev/stderr
-        exit 1
-    }
+    "$BASE/benchmarks/last-stdout.sh" > "$OUTPUT_FILE" ||
+        abort "No stdout, aborting"
+
+    [[ -f "$OUTPUT_FILE" ]] || abort "No such file '$OUTPUT_FILE'"
 fi
 
-AST_COUNT=$(jq 'length' < "$OUTPUT_FILE") || {
-    echo "ERROR: Failed to count outputted ASTs" >> /dev/stderr
-    exit 1
-}
+AST_COUNT=$(jq 'length' < "$OUTPUT_FILE") ||
+    abort "Failed to count outputted ASTs"
 
-[[ "$AST_COUNT" -gt 0 ]] || {
-    echo "ERROR: Got no ASTs from '$1', abandoning" >> /dev/stderr
-    exit 1
-}
+[[ "$AST_COUNT" -gt 0 ]] || abort "Got no ASTs from '$1'"
 
-echo "Finished benchmark-dump-asts.sh" >> /dev/stderr
+info "$NAME finished"

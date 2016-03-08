@@ -12,28 +12,35 @@ source "$BASE/scripts/common.sh"
 
 for CMD in cabal nix-shell cabal2nix
 do
-    command -v "$CMD" > /dev/null || abort "$NAME requires $CMD"
+    requireCmd "$CMD"
 done
 
 # See if we've already benchmarked this package
-CACHE=$("$BASE/scripts/cacheDir.sh") || abort "$NAME couldn't get cache dir"
-
 UNBUILDABLE="$CACHE/unbuildable"
 touch "$UNBUILDABLE"
 grep -Fx "$1" "$UNBUILDABLE" > /dev/null &&
     abort "Package '$1' is marked as unbuildable"
 
-CLEAN=$(echo "$1" | tr -cd '[:alnum:]')
-TIMING_NAME="cabal-build-$CLEAN"
+PKG=$(packageName "$1")
 
-BENCH_DIR="$CACHE/benchmarks"
-mkdir -p "$BENCH_DIR" ||
-    abort "$NAME couldn't create benchmark directory '$BENCH_DIR'"
+BENCHMARK_COMMAND="cabal"
+export BENCHMARK_COMMAND
 
-EXISTING="$BENCH_DIR/outputs/$TIMING_NAME.json"
-if [[ -f "$EXISTING" ]]
+BENCHMARK_ARGS='["build"]'
+export BENCHMARK_ARGS
+
+TIMING_NAME="cabal-build-$PKG"
+export TIMING_NAME
+
+BENCH_DIR="$CACHE/benchmarks/ghc/$PKG"
+export BENCH_DIR
+
+ENVIRONMENT_PACKAGES=""
+export ENVIRONMENT_PACKAGES
+
+if "$BASE/scripts/skipBenchmark.sh"
 then
-    info "$NAME using existing result '$EXISTING'" >> /dev/stderr
+    # We can exit right away, since our build products aren't needed
     exit 0
 fi
 
@@ -43,16 +50,6 @@ cd "$1" || abort "$NAME couldn't cd to '$1'"
 nix-shell --show-trace -E "$(cabal2nix --shell ./.)" --run "cabal configure" ||
     abort "$NAME failed to configure '$1'"
 
-# Benchmark "cabal build"
-BENCHMARK_COMMAND="cabal"
-BENCHMARK_ARGS='["build"]'
-ENVIRONMENT_PACKAGES=""
-
-export BENCHMARK_COMMAND
-export BENCHMARK_ARGS
-export TIMING_NAME
-export BENCH_DIR
-export ENVIRONMENT_PACKAGES
-"$BASE/benchmarks/bench-run.sh" || abort "Failed to benchmark GHC for '$1'"
+"$BASE/scripts/runBenchmark.sh"
 
 info "Finished benchmarking GHC for '$1'"

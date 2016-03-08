@@ -16,6 +16,12 @@ function abort {
     exit 1
 }
 
+function uniqueLines {
+    mv "$1" "$1.tmp"
+    sort -u < "$1.tmp" > "$1"
+    rm -f "$1.tmp"
+}
+
 function requireCmd {
     command -v "$1" > /dev/null || abort "$NAME needs $1"
 }

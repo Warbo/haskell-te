@@ -33,7 +33,6 @@ export TIMING_NAME
 
 BENCH_DIR="$CACHE/benchmarks/cluster/$PKG/$CLUSTERS-clusters"
 export BENCH_DIR
-mkdir -p "$BENCH_DIR/outputs"
 
 "$BASE/scripts/runBenchmark.sh" < "$ANNOTATED"
 
