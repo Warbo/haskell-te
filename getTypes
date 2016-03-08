@@ -1,5 +1,9 @@
-#! /usr/bin/env nix-shell
-#! nix-shell -i bash -p jq
+#!/usr/bin/env bash
+
+command -v jq > /dev/null || {
+    echo "ERROR: getTypes needs jq" >> /dev/stderr
+    exit 1
+}
 
 # Monomorphic types come in via stdin
 

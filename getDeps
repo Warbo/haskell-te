@@ -1,5 +1,12 @@
-#! /usr/bin/env nix-shell
-#! nix-shell -p getDeps -p bash -p jq -i bash
+#!/usr/bin/env bash
+
+for CMD in jq GetDeps
+do
+    command -v "$CMD" > /dev/null || {
+        echo "ERROR: getDeps needs '$CMD'" >> /dev/stderr
+        exit 1
+    }
+done
 
 jq -c '.[]' | while read -r LINE
 do

@@ -1,5 +1,9 @@
-#! /usr/bin/env nix-shell
-#! nix-shell -i bash -p jq
+#!/usr/bin/env bash
+
+command -v jq > /dev/null || {
+    echo "ERROR: getArities requires jq" >> /dev/stderr
+    exit 1
+}
 
 # Split a qualified name into a module and a name
 INPUT='(.qname | split(".") | reverse) as $bits'

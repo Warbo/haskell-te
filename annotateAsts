@@ -1,7 +1,11 @@
-#! /usr/bin/env nix-shell
-#! nix-shell -p jq -i bash
+#!/usr/bin/env bash
 
 set -e
+
+command -v jq > /dev/null || {
+    echo "ERROR: annotateAsts requires jq" >> /dev/stderr
+    exit 1
+}
 
 BASE=$(dirname "$0")
 

@@ -1,7 +1,11 @@
-#! /usr/bin/env nix-shell
-#! nix-shell -i bash -p bash jq
+#!/usr/bin/env bash
 
 set -e
+
+command -v jq > /dev/null || {
+    echo "runTypes requires jq" >> /dev/stderr
+    exit 1
+}
 
 # Runs GHCi to get type information
 
