@@ -62,7 +62,7 @@ let real = import <real> args; # <real> should point to the 'real' <nixpkgs>
 
       # Sets up a Nix environment containing all packages of a theory
       explore-theories = overridden.callPackage ../packages/explore-theories {};
-
+      ml4hs = overridden.callPackage ../packages/ml4hs {};
       # Ourselves
       haskell-te = overridden.stdenv.mkDerivation {
         name = "haskell-te";
@@ -77,6 +77,7 @@ let real = import <real> args; # <real> should point to the 'real' <nixpkgs>
           overridden.mlspec-bench
           overridden.haskellPackages.order-deps
           overridden.recurrent-clustering
+          overridden.ml4hs
         ];
       };
 
