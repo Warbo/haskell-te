@@ -40,6 +40,32 @@ function clusterCount {
     clusterNums | wc -l
 }
 
+function cacheDir {
+    if [[ -w "$BASE" ]]
+    then
+        # If we can write to the same place as our scripts, do so as it allows
+        # committing files for reproducibility
+        DIR="$BASE/cache"
+        mkdir -p "$DIR" 1>&2 || abort "Couldn't create dir '$DIR'"
+    elif [[ -n "$XDG_CACHE_HOME" ]] && [[ -d "$XDG_CACHE_HOME" ]]
+    then
+        # On many systems, 'mktemp -d' will use an in-memory filesystem, which will
+        # quickly fill up. To avoid that, we try to use XDG_CACHE_HOME instead.
+        DIR="$XDG_CACHE_HOME/haskell-te"
+        mkdir -p "$DIR" 1>&2 || abort "Couldn't create dir '$DIR'"
+    elif [[ -n "$HOME" ]] && [[ -d "$HOME" ]]
+    then
+        # If $HOME exists, try falling back to the recommended ~/.cache directory
+        DIR="$HOME/.cache/haskell-te"
+        mkdir -p "$DIR" 1>&2 || abort "Couldn't create dir '$DIR'"
+    else
+        # If $HOME doesn't exist, we're probably a daemon. Use mktemp, in the hope
+        # that it's sane.
+        DIR=$(mktemp -d "haskell-te") || abort "Couldn't create temp dir $DIR"
+    fi
+    echo "$DIR"
+}
+
 function findOutput {
     "$BASE/benchmarks/last-stdout.sh" > "$1.tmp" || {
         rm -f "$1.tmp"
@@ -71,6 +97,8 @@ function findOutput {
     fi
 }
 
+info "Sourcing common.sh from $0"
+
 BASE=$(dirname "$(dirname "$(readlink -f "$0")")")
-CACHE=$("$BASE/scripts/cacheDir.sh")
+CACHE=$(cacheDir)
 mkdir -p "$CACHE/data"
