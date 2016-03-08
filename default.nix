@@ -1,4 +1,4 @@
-{ stdenv, order-deps }:
+{ stdenv, order-deps, ML4HSFE }:
 
 stdenv.mkDerivation {
   name = "recurrent-clustering";
@@ -8,7 +8,7 @@ stdenv.mkDerivation {
     baseNameOf path != ".git" &&
     baseNameOf path != "test-data") ./.;
 
-  propagatedBuildInputs = [ (import ./weka-cli.nix) order-deps ];
+  propagatedBuildInputs = [ (import ./weka-cli.nix) order-deps ML4HSFE ];
 
   installPhase = ''
     mkdir -p "$out/bin"

@@ -102,8 +102,17 @@ function getAsts {
 
 function getFeatures {
     F="test-data/$1.features"
-    [[ ! -e "$F" ]] &&
+    [[ ! -e "$F" ]] && {
+        # Disable tracing as it takes up a LOT of space
+        OLDDEBUG=0
+        [[ "$-" == *x* ]] && OLDDEBUG=1
+
+        set +x
         getAsts "$1" | "$BASE/extractFeatures" > "$F"
+
+        # Enable -x if it was set before
+        [[ "$OLDDEBUG" -eq 0 ]] || set -x
+    }
     cat "$F"
 }
 
@@ -120,8 +129,17 @@ function getEndToEnd {
     [[ -n "$CLUSTERS" ]] || fail "No CLUSTERS for getEndToEnd"
     export CLUSTERS
     F="test-data/$1.endtoend.$CLUSTERS"
-    [[ ! -e "$F" ]] &&
+    [[ ! -e "$F" ]] && {
+        # Disable tracing as it takes up a LOT of space
+        OLDDEBUG=0
+        [[ "$-" == *x* ]] && OLDDEBUG=1
+
+        set +x
         getAsts "$1" | "$BASE/cluster" > "$F"
+
+        # Enable -x if it was set before
+        [[ "$OLDDEBUG" -eq 0 ]] || set -x
+    }
     cat "$F"
 }
 
