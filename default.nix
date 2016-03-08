@@ -1,7 +1,7 @@
 { stdenv }:
 
 let pkgs = import <nixpkgs> {};
-stdenv.mkDerivation {
+in stdenv.mkDerivation {
   name = "recurrent-clustering";
 
   # Exclude .git and test-data from being imported into the Nix store
