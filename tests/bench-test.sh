@@ -2,6 +2,7 @@
 
 ERR=0
 BASE=$(dirname "$(dirname "$(readlink -f "$0")")")
+source "$BASE/scripts/common.sh"
 
 # Tests for benchmarking commands
 
@@ -62,7 +63,6 @@ function findPkgSrc {
 
 # Test invocation
 
-CACHE="$CASE/scripts/cacheDir.sh"
 BENCH_DIR="$CACHE/test-data"
 export BENCH_DIR
 mkdir -p "$BENCH_DIR/outputs"
