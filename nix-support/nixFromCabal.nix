@@ -21,7 +21,8 @@ assert f == null || isFunction f;
 let pkgs  = import <nixpkgs> {};
     hsVer = pkgs.haskellPackages.ghc.version;
     inGit     = elem ".git" (builtins.attrNames (builtins.readDir ./..));
-    extraHash = if inGit then readFile ../.git/refs/heads/master else "";
+    sanitise  = with pkgs.lib.strings; stringAsChars (c: if elem c (lowerChars ++ upperChars ++ stringToCharacters "0123456789") then c else "");
+    extraHash = sanitise (if inGit then readFile ../.git/refs/heads/master else "");
     nixed = pkgs.stdenv.mkDerivation {
       inherit dir;
       name         = "nixFromCabal-${hsVer}${extraHash}";
