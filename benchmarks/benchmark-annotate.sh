@@ -43,7 +43,7 @@ else
         abort "Failed to annotate ASTs for '$PKG'"
 fi
 
-OUTPUT_FILE="$CACHE/$PKG.annotated"
+OUTPUT_FILE="$CACHE/data/$PKG.annotated"
 
 if [[ -f "$OUTPUT_FILE" ]]
 then

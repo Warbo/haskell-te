@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 
 BASE=$(dirname "$(dirname "$(readlink -f "$0")")")
+NAME=$(basename "$0")
 source "$BASE/scripts/common.sh"
 
 for CMD in jq gnuplot
 do
-    command -v "$CMD" > /dev/null || abort "readBenchJson.sh needs $CMD"
+    requireCmd "$CMD"
 done
+
+mkdir -p "$CACHE/results"
 
 function clusteringData {
     echo -e "Clusters\tTime"
@@ -39,20 +42,20 @@ function overheadData {
 }
 
 function plotClustering {
-    DATA_FILE="$CACHE/clustering.gnuplotdata"
+    DATA_FILE="$CACHE/results/clustering.gnuplotdata"
     clusteringData > "$DATA_FILE"
 
-    PLOT_FILE="$CACHE/clustering.png"
+    PLOT_FILE="$CACHE/results/clustering.png"
 
     gnuplot -e "filename='$DATA_FILE';ofilename='$PLOT_FILE'" "$BASE/scripts/plot.gnu"
 }
 
 function plotOverhead {
-    DATA_FILE="$CACHE/overhead.gnuplotdata"
+    DATA_FILE="$CACHE/results/overhead.gnuplotdata"
 
     overheadData > "$DATA_FILE"
 
-    PLOT_FILE="$CACHE/overhead.png"
+    PLOT_FILE="$CACHE/results/overhead.png"
 
     gnuplot -e "filename='$DATA_FILE';ofilename='$PLOT_FILE'" "$BASE/scripts/bars.gnu"
 }

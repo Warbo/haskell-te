@@ -37,7 +37,7 @@ export BENCH_DIR
 "$BASE/scripts/runBenchmark.sh" < "$ANNOTATED"
 
 info "Looking for stdout"
-OUTPUT_FILE="$CACHE/$PKG.clustered.$CLUSTERS"
+OUTPUT_FILE="$CACHE/data/$PKG.clustered.$CLUSTERS"
 
 findOutput "$OUTPUT_FILE"
 

@@ -64,7 +64,7 @@ else
 fi
 
 info "Looking for stdout"
-OUTPUT_FILE="$CACHE/$PKG.asts"
+OUTPUT_FILE="$CACHE/data/$PKG.asts"
 
 if [[ -f "$OUTPUT_FILE" ]]
 then

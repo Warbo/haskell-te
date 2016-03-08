@@ -49,7 +49,7 @@ export BENCH_DIR
 "$BASE/scripts/runBenchmark.sh" < "$FORMATTED"
 
 info "Looking for stdout"
-OUTPUT_FILE="$CACHE/$PKG.explored.$CLUSTERS"
+OUTPUT_FILE="$CACHE/data/$PKG.explored.$CLUSTERS"
 
 findOutput "$OUTPUT_FILE"
 

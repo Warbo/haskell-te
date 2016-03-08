@@ -73,3 +73,4 @@ function findOutput {
 
 BASE=$(dirname "$(dirname "$(readlink -f "$0")")")
 CACHE=$("$BASE/scripts/cacheDir.sh")
+mkdir -p "$CACHE/data"
