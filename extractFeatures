@@ -1,5 +1,12 @@
-#! /usr/bin/env nix-shell
-#! nix-shell -i bash -p ML4HSFE bash jq
+#!/usr/bin/env bash
+
+for CMD in ML4HSFE jq
+do
+    command -v "$CMD" > /dev/null || {
+        echo "extractFeatures needs '$CMD'" >> /dev/stderr
+        exit 1
+    }
+done
 
 # Arbitrary sizes for matrices
 WIDTH=30

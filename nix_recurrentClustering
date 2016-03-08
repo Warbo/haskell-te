@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
-BASE_=$(dirname "$0")
-BASE=$(readlink -f "$BASE_")
+BASE=$(readlink -f "$(dirname "$0")")
 
 if [[ -e "$BASE/weka-cli.nix" ]]
 then
@@ -14,6 +13,11 @@ else
     exit 1
 fi
 
-# nix-shell shebangs don't like whitespace, so we call nix-shell explicitly
-nix-shell -p "import \"$WEKACLI\"" jq bash order-deps perl \
-          --run "$BASE/recurrentClustering"
+if command -v weka-cli > /dev/null
+then
+    "$BASE/recurrentClustering"
+else
+    # nix-shell shebangs don't like whitespace, so we call nix-shell explicitly
+    nix-shell --show-trace -p "import \"$WEKACLI\"" jq order-deps \
+              --run "$BASE/recurrentClustering"
+fi

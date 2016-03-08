@@ -1,4 +1,4 @@
-{ stdenv }:
+{ stdenv, order-deps }:
 
 stdenv.mkDerivation {
   name = "recurrent-clustering";
@@ -7,6 +7,8 @@ stdenv.mkDerivation {
   src = builtins.filterSource (path: type:
     baseNameOf path != ".git" &&
     baseNameOf path != "test-data") ./.;
+
+  propagatedBuildInputs = [ (import ./weka-cli.nix) order-deps ];
 
   installPhase = ''
     mkdir -p "$out/bin"

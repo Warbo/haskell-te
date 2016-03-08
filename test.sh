@@ -1,5 +1,5 @@
 #! /usr/bin/env nix-shell
-#! nix-shell -i bash -p bash cabal2db annotatedb jq
+#! nix-shell -i bash -p cabal2db annotatedb jq
 
 BASE=$(dirname "$0")
 
@@ -36,6 +36,16 @@ function getTests {
     # Apply each package test to each package
     while read -r pkg
     do
+        runTraced getRawAsts "$pkg" > /dev/null || {
+            echo "Can't get raw ASTs for '$pkg', skipping"    >> /dev/stderr
+            echo "Flaky package or bug in Cabal2DB, see $PTH" >> /dev/stderr
+            continue
+        }
+        runTraced getAsts "$pkg" > /dev/null || {
+            echo "Can't get ASTs for '$pkg', skipping"          >> /dev/stderr
+            echo "Flaky package or bug in annotatedb, see $PTH" >> /dev/stderr
+            continue
+        }
         while read -r test
         do
             echo "$test $pkg"
@@ -47,34 +57,46 @@ function getTestPkgs {
     # A list of packages to test with
     cat <<EOF
 list-extras
+xmonad
+hakyll
 EOF
-    #xmonad
-    #pandoc
-    #git-annex
-    #hakyll
-    #egison
-    #lens
-    #warp
-    #conduit
-    #ghc-mod
-    #shelly
-    #http-conduit
-    #yesod-core
 }
 
 # Data generators
 
 function getRawAsts {
     F="test-data/$1.rawasts"
-    [[ ! -e "$F" ]] &&
-        dump-hackage "$1" > "$F"
+    [[ ! -e "$F" ]] && {
+        # Hide errors, but log them vai set -x debugging
+        OUTPUT=$( { dump-hackage "$1" > "$F"; } 2>&1 ) || {
+            fail "Couldn't get raw ASTs for '$1'"
+            return 1
+        }
+    }
+    [[ -n "$(cat "$F")" ]] || {
+        fail "Raw ASTs for '$1' are empty"
+        return 1
+    }
     cat "$F"
 }
 
 function getAsts {
+    getRawAsts "$1" > /dev/null || {
+        fail "Can't get ASTs for '$1' as raw ASTs don't work"
+        return 1
+    }
+
     F="test-data/$1.asts"
-    [[ ! -e "$F" ]] &&
-        getRawAsts "$1" | annotateDb "$1" > "$F"
+    [[ ! -e "$F" ]] && {
+        getRawAsts "$1" | annotateDb "$1" > "$F" || {
+            fail "Failed to annotate ASTs for '$1'"
+            return 1
+        }
+    }
+    [[ -n "$(cat "$F")" ]] || {
+        fail "Got empty output for '$1' ASTs"
+        return 1
+    }
     cat "$F"
 }
 
@@ -179,7 +201,7 @@ function pkgTestHaveAllEndToEnd {
 function clusterFields {
     while read -r CLUSTERS
     do
-        for field in arity name module type package ast features cluster
+        for field in arity name module type package ast features cluster quickspecable
         do
             RESULT=$("$2" "$1" | jq "map(has(\"$field\")) | all")
             [[ "x$RESULT" = "xtrue" ]] ||
@@ -217,12 +239,16 @@ function traceTest {
     return "$PASS"
 }
 
-function runTest {
+function runTraced {
     # Log stderr in test-data/debug. On failure, send "FAIL" and the debug
     # path to stdout
     read -ra CMD <<<"$@" # Re-parse our args to split packages from functions
     PTH=$(echo "test-data/debug/$*" | sed 's/ /_/g')
-    traceTest "${CMD[@]}" 2>> "$PTH" || fail "$* failed, see $PTH"
+    traceTest "${CMD[@]}" 2>> "$PTH"
+}
+
+function runTest {
+    runTraced "$@" || fail "$* failed, see $PTH"
 }
 
 function runTests {
