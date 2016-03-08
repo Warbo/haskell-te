@@ -1,5 +1,5 @@
 #! /usr/bin/env nix-shell
-#! nix-shell -i bash -p cabal2db annotatedb jq
+#! nix-shell -i bash -p cabal2db annotatedb jq ML4HSFE
 
 BASE=$(dirname "$0")
 
@@ -57,9 +57,10 @@ function getTestPkgs {
     # A list of packages to test with
     cat <<EOF
 list-extras
-xmonad
-hakyll
 EOF
+    return
+    xmonad
+    hakyll
 }
 
 # Data generators
@@ -159,6 +160,23 @@ function pkgTestFeaturesConform {
             fail "Found '$LINE' features, was expecting '$COUNT'"
         fi
     done
+}
+
+function pkgTestExtractionMatchesHaskell {
+    # extractFeatures is written in bash + jq, and is really slow. We've
+    # replaced it with ml4hsfe-loop, but keep it around for testing
+    BASH_RESULT=$(getAsts "$1" | "$BASE/extractFeatures" | jq '.') ||
+        fail "Couldn't extract features with bash: $BASH_RESULT"
+    HASKELL_RESULT=$(getAsts "$1" | WIDTH=30 HEIGHT=30 ml4hsfe-loop | jq '.') ||
+        fail "Couldn't extract features with haskell: $HASKELL_RESULT"
+
+    RESULT=$(jq -n --argfile bash    <(echo "$BASH_RESULT")    \
+                   --argfile haskell <(echo "$HASKELL_RESULT") \
+                   '$bash == $haskell') || {
+        fail "jq failed to process extracted features"
+        return 1
+    }
+    [[ "x$RESULT" = "xtrue" ]] || fail "Bash/Haskell comparison gave '$RESULT'"
 }
 
 # Clustering tests; each is tested with the feature extraction output, and via
