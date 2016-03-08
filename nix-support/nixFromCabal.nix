@@ -15,30 +15,29 @@ with builtins;
 # for "haskellPackages.callPackage" to work.
 dir: f:
 
-assert isString dir;
+assert typeOf dir == "path" || isString dir;
 assert f == null || isFunction f;
 
 let pkgs  = import <nixpkgs> {};
     hsVer = pkgs.haskellPackages.ghc.version;
-    hsh   = hashString "sha256" "$dir";
+    inGit     = elem ".git" (builtins.attrNames (builtins.readDir ./..));
+    extraHash = if inGit then readFile ../.git/refs/heads/master else "";
     nixed = pkgs.stdenv.mkDerivation {
       inherit dir;
-      name         = "nixFromCabal-${hsVer}-${hsh}";
+      name         = "nixFromCabal-${hsVer}${extraHash}";
       buildInputs  = [ pkgs.haskellPackages.cabal2nix ];
       buildCommand = ''
         source $stdenv/setup
 
         echo "Copying '$dir' to '$out'"
         cp -vr "$dir" "$out"
-
-        echo "Cleaning up unnecessary files"
-        rm -rf "$out/.git"
-
-        echo "Looking for Cabal files in '$out'"
         cd "$out"
 
         echo "Setting permissions"
         chmod +w . # We need this if dir has come from the store
+
+        echo "Cleaning up unnecessary files"
+        rm -rf ".git" || true
 
         echo "Creating '$out/default.nix'"
         touch default.nix
