@@ -18,7 +18,7 @@ function unbuildable {
 
 function featureless {
     echo "$1" >> "$CACHE/featureless"
-    uniqueLines
+    uniqueLines "$CACHE/featureless"
 }
 
 # Ensure our Nix packages are in use
@@ -28,7 +28,7 @@ echo "$NIX_PATH" | grep "$BASE/nix-support" > /dev/null ||
 # Check as many pre-conditions as we can here
 for CMD in annotateDb build-env cabal cabal2nix cluster dump-format \
            dump-package dump-package-env dump-package-name jq mlspec-bench \
-           nix-shell runAstPlugin
+           nix-shell runAstPlugin time
 do
     requireCmd "$CMD"
 done
@@ -87,7 +87,7 @@ do
             "$BASE/benchmarks/benchmark-explore.sh"  "$DIR" "$CLUSTERS" &&
             "$BASE/benchmarks/benchmark-simplify.sh" "$DIR" "$CLUSTERS" &&
             CLUSTERS_TODO=$(( CLUSTERS_TODO - 1 ))
-        done < <("$BASE/scripts/clusterNums.sh")
+        done < <(clusterNums)
         [[ "$CLUSTERS_TODO" -eq 0 ]] &&
             COUNT=$(( COUNT + 1 ))   &&
             echo "$DIR" >> "$CACHE/finished"

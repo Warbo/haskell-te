@@ -21,11 +21,11 @@ CLUSTERS="$2"
 export CLUSTERS
 
 # Find the clusters which should have been made by benchmark-cluster.sh
-CLUSTERED="$CACHE/$PKG.clustered.$CLUSTERS"
+CLUSTERED="$CACHE/data/$PKG.clustered.$CLUSTERS"
 [[ -f "$CLUSTERED" ]] || abort "Couldn't find '$PKG' clustered into '$CLUSTERS'"
 
 # TODO: Adjust the format slightly for MLSpec
-FORMATTED="$CACHE/$PKG.formatted.$CLUSTERS"
+FORMATTED="$CACHE/data/$PKG.formatted.$CLUSTERS"
 
 FORMATTER="$(dirname "$(dirname "$(command -v ml4hs)")")/lib/ml4hs/format-exploration.sh"
 [[ -f "$FORMATTER" ]] || abort "Couldn't find format-exploration.sh at '$FORMATTER'"
@@ -46,7 +46,7 @@ export TIMING_NAME
 BENCH_DIR="$CACHE/benchmarks/explore/$PKG/$CLUSTERS-clusters"
 export BENCH_DIR
 
-"$BASE/scripts/runBenchmark.sh" < "$FORMATTED"
+"$BASE/scripts/runBenchmark.sh" < "$FORMATTED" || abort "Error benchmarking"
 
 info "Looking for stdout"
 OUTPUT_FILE="$CACHE/data/$PKG.explored.$CLUSTERS"

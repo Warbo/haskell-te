@@ -9,8 +9,10 @@ then
     ARGARRAY=()
 else
     # Use jq to parse arguments into something bash-compatible
-    ARGARRAY=( $(echo "$BENCHMARK_ARGS" | jq -r '@sh') )
+    eval "ARGARRAY=( $(echo "$BENCHMARK_ARGS" | jq -r '@sh') )"
 fi
+
+info "Quick benchmarking '$BENCHMARK_COMMAND' '${ARGARRAY[@]}'"
 
 TIME_FILE="$CACHE/$BENCHMARK_COMMAND.time"
 TIME_CMD=$(command -v time)
@@ -26,7 +28,7 @@ echo "TIME USED: $TIME_USED"
 RESULT="$BENCH_DIR/outputs/$TIMING_NAME.json"
 echo "[{\"reportAnalysis\":{\"anMean\":{\"estPoint\":$TIME_USED}}}]" > "$RESULT"
 
-jq '.' < "$RESULT" || {
+jq '.' < "$RESULT" > /dev/null || {
     warn "Deleting unparseable benchmark result '$RESULT'"
     rm -f "$RESULT"
 }

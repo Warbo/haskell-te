@@ -17,8 +17,8 @@ PKG=$(packageName "$1")
 CLUSTERS="$2"
 export CLUSTERS
 
-ANNOTATED="$CACHE/$PKG.annotated"
-[[ -f "$ANNOTATED" ]] || abort "No ASTs found for '$PKG'"
+ANNOTATED="$CACHE/data/$PKG.annotated"
+[[ -f "$ANNOTATED" ]] || abort "No annotated ASTs found for '$PKG'"
 
 # Set the benchmark parameters
 
@@ -34,7 +34,7 @@ export TIMING_NAME
 BENCH_DIR="$CACHE/benchmarks/cluster/$PKG/$CLUSTERS-clusters"
 export BENCH_DIR
 
-"$BASE/scripts/runBenchmark.sh" < "$ANNOTATED"
+"$BASE/scripts/runBenchmark.sh" < "$ANNOTATED" || abort "Error benchmarking"
 
 info "Looking for stdout"
 OUTPUT_FILE="$CACHE/data/$PKG.clustered.$CLUSTERS"

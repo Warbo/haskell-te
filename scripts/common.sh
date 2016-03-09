@@ -99,6 +99,6 @@ function findOutput {
 
 info "Sourcing common.sh from $0"
 
-BASE=$(dirname "$(dirname "$(readlink -f "$0")")")
+[[ -n "$BASE" ]] || abort "BASE needs to be set for common.sh"
 CACHE=$(cacheDir)
 mkdir -p "$CACHE/data"

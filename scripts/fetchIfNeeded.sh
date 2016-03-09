@@ -37,7 +37,7 @@ FOUND=$(findInCache "$PKG") && {
 }
 
 info "No cached version of '$PKG' found, downloading with Cabal"
-cd "$CACHE" || abort "$NAME couldn't cd to '$CACHE'"
+cd "$CACHE/packages" || abort "$NAME couldn't cd to '$CACHE/packages'"
 
 cabal get "$1" 1>&2 || abort "Failed to download '$PKG' with Cabal"
 

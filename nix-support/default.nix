@@ -53,6 +53,7 @@ let real = import <real> args; # <real> should point to the 'real' <nixpkgs>
           runtime-arbitrary = cabalPath ../packages/runtime-arbitrary;
         };
       };
+
     overridden = original // {
       # Post-process extracted ASTs to determine types, arity, etc.
       annotatedb = overridden.callPackage ../packages/annotatedb {};
@@ -62,22 +63,36 @@ let real = import <real> args; # <real> should point to the 'real' <nixpkgs>
 
       # Sets up a Nix environment containing all packages of a theory
       explore-theories = overridden.callPackage ../packages/explore-theories {};
+
+      # Misc scripts
       ml4hs = overridden.callPackage ../packages/ml4hs {};
-      # Ourselves
-      haskell-te = overridden.stdenv.mkDerivation {
+
+      # The environment we'll be running in
+      haskell-te = overridden.buildEnv {
         name = "haskell-te";
-        buildInputs = [
+        paths = [
+          # Our custom packages
           overridden.annotatedb
-          overridden.cabal2nix
           overridden.cabal2db
           overridden.explore-theories
           overridden.getDeps
-          original.jq
           overridden.ML4HSFE
           overridden.mlspec-bench
-          overridden.haskellPackages.order-deps
+          overridden.order-deps
           overridden.recurrent-clustering
           overridden.ml4hs
+
+          # Standard utilities we need
+          real.bash
+          real.cabal-install
+          real.cabal2nix
+          real.coreutils
+          real.findutils
+          real.gnugrep
+          real.gnused
+          real.jq
+          real.nix
+          real.time
         ];
       };
 

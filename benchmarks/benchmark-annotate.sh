@@ -15,7 +15,7 @@ done
 
 PKG=$(dump-package-name "$1") || abort "Couldn't get package name from '$1'"
 
-ASTS="$CACHE/$PKG.asts"
+ASTS="$CACHE/data/$PKG.asts"
 [[ -f "$ASTS" ]] || abort "No ASTs found for '$PKG'"
 
 BENCHMARK_COMMAND="annotateDb"

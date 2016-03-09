@@ -14,9 +14,10 @@ function testBenchTrue {
 function testBenchCompile {
     for PKG in list-extras xmonad
     do
-        # Only fetch if we can't already find it
         FOUND=$("$BASE/scripts/fetchIfNeeded.sh" "$PKG") ||
             fail "Couldn't fetch '$PKG'"
+
+        info "Fetched '$FOUND' for '$PKG'"
 
         OUTPUT=$("$BASE/benchmarks/benchmark-ghc.sh" "$FOUND") || {
             fail "Problem benchmarking GHC in '$FOUND'"
@@ -38,26 +39,12 @@ function nixPath {
 }
 
 function mlspecBench {
-    NIX_PATH="$(nixPath)" "$BASE/benchmarks/bench-run.sh"
+    "$BASE/benchmarks/bench-run.sh"
 }
 
 function fail {
     echo -e "FAIL: $1" >> /dev/stderr
     ERR=1
-    return 1
-}
-
-function findPkgSrc {
-    for D in "$BENCH_DIR"/*
-    do
-        NAME=$(basename "$D")
-        if echo "$NAME" | grep "^$1-[0-9\.]*$" > /dev/null
-        then
-            echo "Using existing '$NAME' for '$1'" >> /dev/stderr
-            readlink -f "$D"
-            return 0
-        fi
-    done
     return 1
 }
 

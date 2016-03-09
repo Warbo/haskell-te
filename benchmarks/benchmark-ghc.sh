@@ -47,9 +47,15 @@ fi
 # Configure, with all required packages available
 cd "$1" || abort "$NAME couldn't cd to '$1'"
 
-nix-shell --show-trace -E "$(cabal2nix --shell ./.)" --run "cabal configure" ||
+info "Configuring '$1'"
+
+EXPLORE_NAME="haskell-te-benchmark-env"
+export EXPLORE_NAME
+
+nix-shell --show-trace -E "$(cabal2nix --shell ./.)" \
+          --run 'cabal configure' ||
     abort "$NAME failed to configure '$1'"
 
-"$BASE/scripts/runBenchmark.sh"
+"$BASE/scripts/runBenchmark.sh" || abort "Error benchmarking"
 
 info "Finished benchmarking GHC for '$1'"
