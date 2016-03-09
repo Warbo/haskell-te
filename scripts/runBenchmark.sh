@@ -5,7 +5,8 @@ source "$BASE/scripts/common.sh"
 
 mkdir -p "$BENCH_DIR/outputs"
 
-function chooseMethod {
+if ! "$BASE/scripts/skipBenchmark.sh"
+then
     if [[ -n "$QUICK" ]]
     then
         CACHE="$CACHE" "$BASE/scripts/quickTime.sh" ||
@@ -14,9 +15,4 @@ function chooseMethod {
         "$BASE/benchmarks/bench-run.sh" ||
             abort "Failed to benchmark '$BENCHMARK_COMMAND'"
     fi
-}
-
-if ! "$BASE/scripts/skipBenchmark.sh"
-then
-    chooseMethod
 fi

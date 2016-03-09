@@ -13,7 +13,15 @@ benchmarking those tools.
  - Invoke `run-benchmarks.sh` to run all benchmarks.
  - Results are cached to `cache` if possible (i.e. if it's writable); otherwise
    fallbacks such as `~/.cache` are used.
- - 
+ - If there is a list of packages in the cache, we use that. Otherwise we fetch
+   one from hackage.haskell.org. Since the list changes, this needs to be kept
+   in order to ensure reproducibility.
+ - Since hackage is large, we may not want to process the whole thing. To ensure
+   we process a representative sample, we shuffle the package list. This avoids,
+   for example, runs of similarly-named packages (like acme-*, aeson-*, etc.)
+   being over-represented.
+ - The shuffled package list is also cached. This is needed for reproducibility,
+   and also makes caching more useful.
 
 The repository is laid out as follows:
 

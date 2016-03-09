@@ -70,12 +70,7 @@ function findOutput {
     "$BASE/benchmarks/last-stdout.sh" > "$1.tmp" || {
         rm -f "$1.tmp"
 
-        if [[ -f "$1" ]]
-        then
-            info "Using existing output"
-        else
-            abort "No stdout, aborting"
-        fi
+        [[ -f "$1" ]] || abort "No stdout, aborting"
     }
 
     if [[ -f "$1.tmp" ]]
@@ -97,7 +92,13 @@ function findOutput {
     fi
 }
 
-info "Sourcing common.sh from $0"
+function nonEmptyJson {
+    [[ -f "$1" ]] || abort "Couldn't count JSON in non-existent '$1'"
+
+    COUNT=$(jq 'length' < "$1") || abort "Failed to count JSON from '$1'"
+
+    [[ "$COUNT" -gt 0 ]] || abort "JSON in '$1' is empty"
+}
 
 [[ -n "$BASE" ]] || abort "BASE needs to be set for common.sh"
 CACHE=$(cacheDir)

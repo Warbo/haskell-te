@@ -31,18 +31,15 @@ grep -Fx "$PKG" "$UNFETCHABLE" > /dev/null &&
 
 # See if we have a Hackage package already
 FOUND=$(findInCache "$PKG") && {
-    info "Using cached version '$FOUND' for '$PKG'"
     echo "$FOUND"
     exit 0
 }
 
-info "No cached version of '$PKG' found, downloading with Cabal"
 cd "$CACHE/packages" || abort "$NAME couldn't cd to '$CACHE/packages'"
 
 cabal get "$1" 1>&2 || abort "Failed to download '$PKG' with Cabal"
 
 FOUND=$(findInCache "$PKG") && {
-    info "Using '$FOUND' for '$PKG'"
     echo "$FOUND"
     exit 0
 }

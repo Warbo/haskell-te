@@ -78,6 +78,7 @@ let real = import <real> args; # <real> should point to the 'real' <nixpkgs>
           overridden.getDeps
           overridden.ML4HSFE
           overridden.mlspec-bench
+          overridden.mlspec
           overridden.order-deps
           overridden.recurrent-clustering
           overridden.ml4hs
@@ -93,6 +94,7 @@ let real = import <real> args; # <real> should point to the 'real' <nixpkgs>
           real.jq
           real.nix
           real.time
+          real.utillinux
         ];
       };
 

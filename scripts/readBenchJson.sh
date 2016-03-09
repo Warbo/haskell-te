@@ -1,8 +1,11 @@
-#!/usr/bin/env bash
+#! /usr/bin/env nix-shell
+#! nix-shell -i bash -p jq gnuplot
 
 BASE=$(dirname "$(dirname "$(readlink -f "$0")")")
 NAME=$(basename "$0")
 source "$BASE/scripts/common.sh"
+
+shopt -s nullglob
 
 for CMD in jq gnuplot
 do
@@ -21,24 +24,41 @@ function clusteringData {
     done < <(find "$CACHE/benchmarks/cluster" -name "*.json")
 }
 
+function timeFor {
+    DIR="$CACHE/benchmarks/$2/$1"
+    if [[ -d "$DIR" ]]
+    then
+        for FILE in "$DIR/outputs"/*.json
+        do
+            jq '.[] | .reportAnalysis | .anMean | .estPoint' < "$FILE"
+            return
+        done
+    fi
+    echo "-"
+}
+
+function pkgsWith {
+    for DIR in "$CACHE/benchmarks/$1"/*
+    do
+        basename "$DIR"
+    done
+}
+
+function pkgsWithOverhead {
+    printf '%s\n%s\n%s' "$(pkgsWith ghc)"  \
+                        "$(pkgsWith dump)" \
+                        "$(pkgsWith annotate)" | sort -u | grep -v "^$"
+}
+
 function overheadData {
-    # Label Time
-
-    # First, regular GHC
-    while read -r FILE
+    while read -r PKG
     do
-        LABEL=$(echo "$FILE" | sed -e 's@.*homechrisProgramminghaskelltecache@@g' | sed -e 's@.json$@@g')
-        MEAN=$(jq '.[] | .reportAnalysis | .anMean | .estPoint' < "$FILE")
-        echo -e "GHC-$LABEL\t$MEAN"
-    done < <(find "$CACHE/benchmarks/outputs" -name "cabal-build*.json")
-
-    # Now our feature extraction
-    while read -r FILE
-    do
-        LABEL=$(echo "$FILE" | sed -e 's@.*runAstPlugin-@@g' | sed -e 's@.json$@@g')
-        MEAN=$(jq '.[] | .reportAnalysis | .anMean | .estPoint' < "$FILE")
-        echo -e "AST-$LABEL\t$MEAN"
-    done < <(find "$CACHE/benchmarks/outputs" -name "runAstPlugin*.json")
+        GHC=$(timeFor "$PKG" ghc)
+        DUMP=$(timeFor "$PKG" dump)
+        ANNOTATION=$(timeFor "$PKG" annotate)
+        printf 'Package\tGHC\tExtraction\tAnnotation\n'
+        printf '%s\t%s\t%s\n' "$PKG" "$GHC" "$DUMP" "$ANNOTATION"
+    done < <(pkgsWithOverhead)
 }
 
 function plotClustering {
