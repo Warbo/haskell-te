@@ -18,7 +18,8 @@ CLUSTERS="$2"
 export CLUSTERS
 
 ANNOTATED="$CACHE/data/$PKG.annotated"
-[[ -f "$ANNOTATED" ]] || abort "No annotated ASTs found for '$PKG'"
+
+nonEmptyJson "$ANNOTATED"
 
 # Set the benchmark parameters
 
@@ -41,9 +42,6 @@ OUTPUT_FILE="$CACHE/data/$PKG.clustered.$CLUSTERS"
 
 findOutput "$OUTPUT_FILE"
 
-AST_COUNT=$(jq 'length' < "$OUTPUT_FILE") ||
-    abort "Failed to count outputted ASTs"
-
-[[ "$AST_COUNT" -gt 0 ]] || abort "Got no clusters from '$1', abandoning"
+nonEmptyJson "$OUTPUT_FILE"
 
 info "Finished benchmark-cluster.sh"

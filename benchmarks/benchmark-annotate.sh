@@ -4,10 +4,7 @@ BASE=$(dirname "$(dirname "$(readlink -f "$0")")")
 NAME=$(basename "$0")
 source "$BASE/scripts/common.sh"
 
-for CMD in annotateDb
-do
-    command -v "$CMD" > /dev/null || abort "$NAME requires '$CMD'"
-done
+requireCmd annotateDb
 
 [[ -n "$1" ]] || abort "$NAME Needs a directory as argument"
 
@@ -16,7 +13,8 @@ done
 PKG=$(dump-package-name "$1") || abort "Couldn't get package name from '$1'"
 
 ASTS="$CACHE/data/$PKG.asts"
-[[ -f "$ASTS" ]] || abort "No ASTs found for '$PKG'"
+
+nonEmptyJson "$ASTS"
 
 BENCHMARK_COMMAND="annotateDb"
 export BENCHMARK_COMMAND
@@ -32,32 +30,22 @@ export ENVIRONMENT_PACKAGES
 
 BENCH_DIR="$CACHE/benchmarks/annotate/$PKG"
 export BENCH_DIR
-mkdir -p "$BENCH_DIR"
 
-EXISTING="$BENCH_DIR/outputs/$TIMING_NAME.json"
-if [[ -f "$EXISTING" ]]
-then
-    info "$NAME using existing result '$EXISTING'"
-else
-    "$BASE/benchmarks/bench-run.sh" < "$ASTS" ||
-        abort "Failed to annotate ASTs for '$PKG'"
-fi
+"$BASE/scripts/runBenchmark.sh" < "$ASTS" || abort "Error benchmarking"
 
+info "Looking for stdout"
 OUTPUT_FILE="$CACHE/data/$PKG.annotated"
 
-if [[ -f "$OUTPUT_FILE" ]]
-then
-    info "$NAME using existing '$OUTPUT_FILE'"
-else
-    "$BASE/benchmarks/last-stdout.sh" > "$OUTPUT_FILE" ||
-        abort "$NAME found no stdout, aborting"
+findOutput "$OUTPUT_FILE"
 
-    [[ -f "$OUTPUT_FILE" ]] || abort "No such file '$OUTPUT_FILE'"
-fi
+nonEmptyJson "$OUTPUT_FILE"
 
-AST_COUNT=$(jq 'length' < "$OUTPUT_FILE") ||
-    abort "Failed to count outputted ASTs"
+USABLE=$(jq 'map(.quickspecable and .type != null) | any' < "$OUTPUT_FILE")
 
-[[ "$AST_COUNT" -gt 0 ]] || abort "$NAME got no ASTs from '$1', abandoning"
+[[ "x$USABLE" = "xtrue" ]] || {
+    echo "$PKG" >> "$CACHE/unquickspecable"
+    uniqueLines "$CACHE/unquickspecable"
+    abort "$PKG gave no quickspecable definitions"
+}
 
 info "Finished benchmarking annotatedb for '$1'"

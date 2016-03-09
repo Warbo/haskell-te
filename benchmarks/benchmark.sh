@@ -59,6 +59,11 @@ done < <(find "$CACHE" -maxdepth 1 -empty -type f \( \
 
 info "Benchmarking '$REPETITIONS' packages"
 
+function pkgInList {
+    touch "$CACHE/$2"
+    grep -Fx -- "$1" < "$CACHE/$2" > /dev/null
+}
+
 COUNT=0
 while read -r LINE
 do
@@ -68,28 +73,59 @@ do
     }
     PKG=$(echo "$LINE" | cut -f 1)
     VERSION=$(echo "$LINE" | cut -f 2)
+
+    # Skip packages which we've already processed
+    SKIP=""
+    for LIST in finished unfetchable unbuildable unexplorable unquickspecable \
+                featureless unclusterable
+    do
+        if pkgInList "$PKG" "$LIST"
+        then
+            SKIP="$LIST"
+            break
+        fi
+    done
+
+    if [[ -n "$SKIP" ]]
+    then
+        info "Skipping '$PKG' as it is $SKIP"
+        continue
+    fi
+
     info "Benchmarking '$PKG'"
     if ! DIR=$("$BASE/scripts/fetchIfNeeded.sh" "$PKG")
     then
         unfetchable "$PKG"
-    elif ! "$BASE/benchmarks/benchmark-ghc.sh" "$DIR"
-    then
-        unbuildable "$DIR"
-    elif ! "$BASE/benchmarks/benchmark-features.sh" "$DIR"
-    then
-        featureless "$DIR"
-    else
-        # Make sure we run all clusters for this package
-        CLUSTERS_TODO=$(clusterCount)
-        while read -r CLUSTERS
-        do
-            "$BASE/benchmarks/benchmark-cluster.sh"  "$DIR" "$CLUSTERS" &&
-            "$BASE/benchmarks/benchmark-explore.sh"  "$DIR" "$CLUSTERS" &&
-            "$BASE/benchmarks/benchmark-simplify.sh" "$DIR" "$CLUSTERS" &&
-            CLUSTERS_TODO=$(( CLUSTERS_TODO - 1 ))
-        done < <(clusterNums)
-        [[ "$CLUSTERS_TODO" -eq 0 ]] &&
-            COUNT=$(( COUNT + 1 ))   &&
-            echo "$DIR" >> "$CACHE/finished"
+        continue
     fi
+
+    if ! "$BASE/benchmarks/benchmark-ghc.sh" "$DIR"
+    then
+        unbuildable "$PKG"
+        continue
+    fi
+
+    if ! "$BASE/benchmarks/benchmark-features.sh" "$DIR"
+    then
+        featureless "$PKG"
+        continue
+    fi
+
+    # Make sure we run all clusters for this package
+    while read -r CLUSTERS
+    do
+        "$BASE/benchmarks/benchmark-cluster.sh"  "$DIR" "$CLUSTERS" || {
+            echo "$PKG" >> "$CACHE/unclusterable"
+            continue
+        }
+        "$BASE/benchmarks/benchmark-explore.sh"  "$DIR" "$CLUSTERS" || {
+            echo "$PKG" >> "$CACHE/unexplorable"
+            continue
+        }
+        "$BASE/benchmarks/benchmark-simplify.sh" "$DIR" "$CLUSTERS"
+    done < <(clusterNums)
+
+    echo "$PKG" >> "$CACHE/finished"
+
+    COUNT=$(( COUNT + 1 ))
 done < <("$BASE/scripts/shufflePackages.sh")

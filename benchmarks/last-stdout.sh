@@ -14,19 +14,13 @@ function upToDashes {
     done
 }
 
-EXPECT=$(echo "$BENCHMARK_COMMAND $BENCHMARK_ARGS" | tr -dc '[:alnum:]')
-for F in "$BENCH_DIR"/outputs/*.stdout
+while read -r F
 do
-    NAME=$(basename "$F" .stdout)
-    FOUND=$(echo "$NAME" | tr -dc '[:alnum:]')
-    if [[ "x$FOUND" = "x$EXPECT" ]]
-    then
-        echo "Found stdout in '$F'" >> /dev/stderr
-        # Get everything following last occurrence of -----
-        tac "$F" | upToDashes | tac
-        exit 0
-    fi
-done
+    echo "INFO: Found stdout in '$F'" >> /dev/stderr
+    # Get everything following last occurrence of -----
+    tac "$F" | upToDashes | tac
+    exit 0
+done < <(find "$BENCH_DIR"/outputs -name "*.stdout")
 
-echo "Didn't find stdout, aborting" >> /dev/stderr
+echo "ERROR: Didn't find stdout, aborting" >> /dev/stderr
 exit 1

@@ -15,7 +15,7 @@ do
     requireCmd "$CMD"
 done
 
-PKG=$(dump-package-name "$1")
+PKG=$(packageName "$1")
 
 ENVIRONMENT_PACKAGES=""
 export ENVIRONMENT_PACKAGES
@@ -23,18 +23,19 @@ export ENVIRONMENT_PACKAGES
 BENCHMARK_COMMAND="runAstPlugin"
 export BENCHMARK_COMMAND
 
-ESCAPED_ARG=$(echo "$1" | sed -e 's@\\"@\\\\"@g' | sed -e 's@"@\\"@g')
-BENCHMARK_ARGS="[\"${ESCAPED_ARG}\"]"
+# Use jq to wrap $1 in quotes, escape any nested quotes, etc.
+BENCHMARK_ARGS="[$(echo "$1" | jq -R '.')]"
 export BENCHMARK_ARGS
 
 CLEAN=$(echo "$PKG" | tr -cd '[:alnum:]')
 
-BENCH_DIR="$CACHE/benchmarks"
+BENCH_DIR="$CACHE/benchmarks/dump/$PKG"
 export BENCH_DIR
-mkdir -p "$BENCH_DIR" ||
+mkdir -p "$BENCH_DIR/outputs" ||
     abort "$NAME couldn't create benchmark directory '$BENCH_DIR'"
 
-TIMING_NAME="$BENCHMARK_COMMAND-$CLEAN"
+TIMING_NAME="$BENCHMARK_COMMAND-$PKG"
+export TIMING_NAME
 
 EXISTING="$BENCH_DIR/outputs/$TIMING_NAME.json"
 if [[ -f "$EXISTING" ]]
@@ -57,28 +58,15 @@ else
     export SKIP_CABAL_CONFIG
 
     # Benchmark, inside the environment determined by dump-package-env
-    export TIMING_NAME
-    export ENVIRONMENT_PACKAGES
-    nix-shell --show-trace -E "$ENV" --run "'$BASE/benchmarks/bench-run.sh'" ||
+    nix-shell --show-trace -E "$ENV" --run "'$BASE/scripts/runBenchmark.sh'" ||
         abort "$NAME couldn't benchmark '$1'"
 fi
 
 info "Looking for stdout"
 OUTPUT_FILE="$CACHE/data/$PKG.asts"
 
-if [[ -f "$OUTPUT_FILE" ]]
-then
-    info "Using existing '$OUTPUT_FILE'"
-else
-    "$BASE/benchmarks/last-stdout.sh" > "$OUTPUT_FILE" ||
-        abort "No stdout, aborting"
+findOutput "$OUTPUT_FILE"
 
-    [[ -f "$OUTPUT_FILE" ]] || abort "No such file '$OUTPUT_FILE'"
-fi
-
-AST_COUNT=$(jq 'length' < "$OUTPUT_FILE") ||
-    abort "Failed to count outputted ASTs"
-
-[[ "$AST_COUNT" -gt 0 ]] || abort "Got no ASTs from '$1'"
+nonEmptyJson "$OUTPUT_FILE"
 
 info "$NAME finished"

@@ -22,7 +22,8 @@ export CLUSTERS
 
 # Find the clusters which should have been made by benchmark-cluster.sh
 CLUSTERED="$CACHE/data/$PKG.clustered.$CLUSTERS"
-[[ -f "$CLUSTERED" ]] || abort "Couldn't find '$PKG' clustered into '$CLUSTERS'"
+
+nonEmptyJson "$CLUSTERED"
 
 # TODO: Adjust the format slightly for MLSpec
 FORMATTED="$CACHE/data/$PKG.formatted.$CLUSTERS"
@@ -31,6 +32,8 @@ FORMATTER="$(dirname "$(dirname "$(command -v ml4hs)")")/lib/ml4hs/format-explor
 [[ -f "$FORMATTER" ]] || abort "Couldn't find format-exploration.sh at '$FORMATTER'"
 
 "$FORMATTER" < "$CLUSTERED" > "$FORMATTED"
+
+nonEmptyJson "$FORMATTED"
 
 # Set the benchmark parameters
 
