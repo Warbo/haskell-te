@@ -1,10 +1,16 @@
 #!/usr/bin/env bash
 
-command -v nix-shell > /dev/null || {
-    echo "ERROR: nix-shell is needed for benchmarking" >> /dev/stderr
-    exit 1
-}
-
 BASE=$(dirname "$(readlink -f "$0")")
+source "$BASE/scripts/common.sh"
 
-NIX_PATH="$("$BASE/nix-support/nixPath.sh")" nix-shell --show-trace --run "$BASE/benchmarks/benchmark.sh"
+requireCmd nix-env
+
+NIX_PATH="$("$BASE/nix-support/nixPath.sh")"
+export NIX_PATH
+
+# Create a new Nix profile and install haskell-te-env into it
+nix-env -f "$BASE/nix-support/defexpr" \
+        -p "$CACHE/haskell-te-env" \
+        -iA haskell-te || abort "Failed to set up haskell-te-env"
+
+PATH="$CACHE/haskell-te-env/bin" "$BASE/benchmarks/benchmark.sh"
