@@ -5,6 +5,16 @@ exploration, in the Haskell language. The actual functionality is implemented in
 a collection of separate tools, this repository is mostly focused on
 benchmarking those tools.
 
+## Quick Summary ##
+
+ - You'll need the Nix package manager and a UNIX-like OS (tested on Linux). Nix
+   will take care of gathering any other dependencies.
+ - Invoke `run-tests.sh` to run all tests.
+ - Invoke `run-benchmarks.sh` to run all benchmarks.
+ - Results are cached to `cache` if possible (i.e. if it's writable); otherwise
+   fallbacks such as `~/.cache` are used.
+ - 
+
 The repository is laid out as follows:
 
  - `benchmarks` contains scripts to benchmark each stage of the theory
