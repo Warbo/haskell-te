@@ -1,5 +1,5 @@
 #! /usr/bin/env nix-shell
-#! nix-shell -i bash -p jq haskellPackages.ShellCheck cabal2db annotatedb recurrent-clustering
+#! nix-shell -i bash -p jq haskellPackages.ShellCheck cabal2db annotatedb recurrent-clustering mlspec
 shopt -s nullglob
 
 BASE=$(dirname "$0")
@@ -64,17 +64,8 @@ function getTestPkgs {
     cat <<EOF
 list-extras
 xmonad
-pandoc
-git-annex
 hakyll
-egison
-lens
-warp
-conduit
-ghc-mod
-shelly
-http-conduit
-yesod-core
+EOF
 }
 
 function getRawAsts {
@@ -179,6 +170,18 @@ function pkgTestValidFormatting {
         }
         [[ "$LENGTH" -eq "$CLUSTERS" ]] ||
             fail "Formatted '$LENGTH' clusters for '$1' instead of '$CLUSTERS'"
+    done < <(clusterNums)
+}
+
+function pkgTestOnlyQuickspecableFormatted {
+    while read -r CLUSTERS
+    do
+        QS=$(getFormattedClusters "$1" | jq 'map(.[] | .quickspecable) | all') || {
+            fail "Couldn't see if '$1' with '$CLUSTERS' clusters are quickspecable"
+            return 1
+        }
+        [[ "x$QS" = "xtrue" ]] ||
+            fail "Got '$QS' not 'true' for '$1' in '$CLUSTERS' clusters"
     done < <(clusterNums)
 }
 

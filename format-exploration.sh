@@ -17,7 +17,7 @@ function individualClusters {
     # shellcheck disable=SC2153
     for CLUSTER in $(seq 1 "$CLUSTERS")
     do
-        echo "$INPUT" | jq -c "map(select(.cluster == $CLUSTER))"
+        echo "$INPUT" | jq -c "map(select(.cluster == $CLUSTER and .quickspecable))"
     done
 }
 
