@@ -17,7 +17,16 @@ function individualClusters {
     # shellcheck disable=SC2153
     for CLUSTER in $(seq 1 "$CLUSTERS")
     do
-        echo "$INPUT" | jq -c "map(select(.cluster == $CLUSTER and .quickspecable))"
+        # Select entries which have a "cluster" attribute matching $CLUSTER, and
+        # a "quickspecable" attribute which is true
+        GOT=$(echo "$INPUT" | jq -c "map(select(.cluster == $CLUSTER and .quickspecable))")
+
+        # Only output non-empty clusters
+        LENGTH=$(echo "$GOT" | jq 'length')
+        if [[ "$LENGTH" -gt 0 ]]
+        then
+            echo "$GOT"
+        fi
     done
 }
 

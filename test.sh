@@ -168,7 +168,7 @@ function pkgTestValidFormatting {
             fail "Can't read '$CLUSTERS' formatted clusters for '$1'"
             continue
         }
-        [[ "$LENGTH" -eq "$CLUSTERS" ]] ||
+        [[ "$LENGTH" -eq "$CLUSTERS" ]] || [[ "$LENGTH" -lt "$CLUSTERS" ]] ||
             fail "Formatted '$LENGTH' clusters for '$1' instead of '$CLUSTERS'"
     done < <(clusterNums)
 }
