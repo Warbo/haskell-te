@@ -283,6 +283,18 @@ function pkgTestDeps {
         fail "ASTs for '$1' didn't get dependencies"
 }
 
+function pkgTestDepPackagesSeparateFromVersions {
+    DEPPACKAGES=$(getDeps "$1"                                  |
+                  jq -cr '.[] | .dependencies | .[] | .package' | sort -u) || {
+        fail "Couldn't get packages of '$1' dependencies"
+        return 1
+    }
+    echo "$DEPPACKAGES" | grep -- "-[0-9][0-9.]*$" > /dev/null &&
+        fail "Deps of '$1' have versions in their package ID:\n$DEPPACKAGES"
+
+    return 0
+}
+
 function pkgTestFinalHasAllTags {
     for FIELD in package module name ast type arity dependencies quickspecable
     do
