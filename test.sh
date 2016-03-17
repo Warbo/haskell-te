@@ -5,9 +5,13 @@ BASE=$(dirname "$0")
 
 # Assertion functions
 
+function msg {
+    echo -e "$1" >> /dev/stderr
+}
+
 function fail {
     # Unconditional failure
-    [[ "$#" -eq 0 ]] || echo "FAIL $*"
+    [[ "$#" -eq 0 ]] || msg "FAIL: $*"
     CODE=1
     return 1
 }
@@ -299,8 +303,8 @@ function testTagging {
 
 function traceTest {
     # Separate our stderr from the previous and give a timestamp
-    echo -e "\n\n" >> /dev/stderr
-    date           >> /dev/stderr
+    msg "\n\n"
+    date >> /dev/stderr
 
     # Always set -x to trace tests, but remember our previous setting
     OLDDEBUG=0
@@ -341,6 +345,14 @@ function runTests {
         # $test is either empty, successful or we're exiting with an error
         [[ -z "$test" ]] || runTest "$test" || CODE=1
     done < <(echo "$TESTS")
+
+    if [[ "$CODE" -eq 0 ]]
+    then
+        msg "All tests passed"
+    else
+        msg "Tests failed"
+    fi
+
     return "$CODE"
 }
 
