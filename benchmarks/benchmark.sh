@@ -67,6 +67,11 @@ function pkgInList {
 COUNT=0
 while read -r LINE
 do
+    # Stop if disk is filling
+    SPACE=$(df -h | grep /dev/disk/by-label/nixos | sed -e 's@  *@ @g' | cut -d ' ' -f 5 | sed -e 's@%@@g')
+    info "Disk is $SPACE percent full"
+    [[ "$SPACE" -gt 98 ]] && abort "Disk full, stopping"
+
     [[ "$COUNT" -lt "$REPETITIONS" ]] || {
         info "Successfully processed '$COUNT' packages; stopping"
         break
@@ -127,5 +132,5 @@ do
 
     echo "$PKG" >> "$CACHE/finished"
 
-    COUNT=$(( COUNT + 1 ))
+    #COUNT=$(( COUNT + 1 ))
 done < <("$BASE/scripts/shufflePackages.sh")
