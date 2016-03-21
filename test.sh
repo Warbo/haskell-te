@@ -7,7 +7,7 @@ function msg {
 }
 
 function fail {
-    echo "FAIL: $1" >> /dev/stderr
+    msg "FAIL: $1"
     exit 1
 }
 
@@ -36,6 +36,7 @@ function testNoDupes {
 
 function testExplorationFindsEquations {
     echo "Making sure exploration actually works" >> /dev/stderr
+    FOUND=0
     for F in data/*
     do
         echo "Exploring '$F'" >> /dev/stderr
@@ -44,10 +45,26 @@ function testExplorationFindsEquations {
         echo "$OUTPUT" | grep "No clusters found" &&
             fail "No clusters found by MLSpec (did it receive any input?)"
 
-        echo "$OUTPUT" | grep "^{" ||
-            fail "Couldn't find any equations in output: $OUTPUT"
+        if echo "$OUTPUT" | grep "^{" > /dev/null
+        then
+            msg "Found equations for '$F'"
+            FOUND=1
+        else
+            msg "Couldn't find any equations in output of '$F':\n$OUTPUT"
+        fi
     done
-    echo "Exploration worked" >> /dev/stderr
+
+    if [[ "$FOUND" -eq 0 ]]
+    then
+        fail "No equations found from files in data/"
+    else
+        msg "Exploration worked, found some equations from data/"
+    fi
+}
+
+function testNoRegressions {
+    OUTPUT=$(explore data/hastily.formatted.1) ||
+        fail "Failed to explore 'hastily':\n$OUTPUT"
 }
 
 function testEmptyEnv {
@@ -128,5 +145,6 @@ testEnvContainsPkgs
 testEnvIsNotRedundant
 testExplorationFindsEquations
 testNoDupes
+testNoRegressions
 
 echo "Tests passed (check prior output for more information)"
