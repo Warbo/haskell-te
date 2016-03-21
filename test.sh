@@ -104,12 +104,21 @@ function getAsts {
 function getFeatures {
     F="test-data/$1.features"
     [[ ! -e "$F" ]] && {
+        getAsts "$1" | WIDTH=30 HEIGHT=30 ml4hsfe-loop > "$F"
+    }
+    cat "$F"
+}
+
+function exampleFeatures {
+    ENAME=$(basename "$1")
+    F="test-data/$ENAME.features"
+    [[ ! -e "$F" ]] && {
         # Disable tracing as it takes up a LOT of space
         OLDDEBUG=0
         [[ "$-" == *x* ]] && OLDDEBUG=1
 
         set +x
-        getAsts "$1" | WIDTH=30 HEIGHT=30 ml4hsfe-loop > "$F"
+        WIDTH=30 HEIGHT=30 ml4hsfe-loop < "$1" > "$F"
 
         # Enable -x if it was set before
         [[ "$OLDDEBUG" -eq 0 ]] || set -x
@@ -144,14 +153,38 @@ function getEndToEnd {
     cat "$F"
 }
 
+function getExampleFiles {
+    while read -r FILE
+    do
+        readlink -f "$FILE"
+    done < <(find examples -type f)
+}
+
+# Validation
+
+function testExamplesValid {
+    while read -r EXAMPLE
+    do
+        jq '.' < "$EXAMPLE" > /dev/null || fail "Failed to parse '$EXAMPLE'"
+    done < <(getExampleFiles)
+}
+
 # Feature extraction tests
 
 function pkgTestGetFeatures {
     getFeatures "$1" | assertNotEmpty "Couldn't get features from '$1'"
 }
 
-function pkgTestFeaturesConform {
-    FEATURELENGTHS=$(getFeatures "$1" | jq -r '.[] | .features | length')
+function testExampleFeatures {
+    while read -r EXAMPLE
+    do
+        exampleFeatures "$EXAMPLE" |
+            assertNotEmpty "Couldn't get features from '$EXAMPLE'"
+    done < <(getExampleFiles)
+}
+
+function featuresConform {
+    FEATURELENGTHS=$(jq -r '.[] | .features | length')
     COUNT=$(echo "$FEATURELENGTHS" | head -n 1)
     echo "$FEATURELENGTHS" | while read -r LINE
     do
@@ -162,12 +195,26 @@ function pkgTestFeaturesConform {
     done
 }
 
-function pkgTestExtractionMatchesHaskell {
+function pkgTestFeaturesConform {
+    getFeatures "$1" | featuresConform
+}
+
+function testExampleFeaturesConform {
+    while read -r EXAMPLE
+    do
+        exampleFeatures "$EXAMPLE" | featuresConform
+    done < <(getExampleFiles)
+}
+
+function extractionMatchesHaskell {
     # extractFeatures is written in bash + jq, and is really slow. We've
     # replaced it with ml4hsfe-loop, but keep it around for testing
-    BASH_RESULT=$(getAsts "$1" | "$BASE/extractFeatures" | jq '.') ||
+    INPUT=$(cat)
+    set +x
+    BASH_RESULT=$(echo "$INPUT" | "$BASE/extractFeatures" | jq '.') ||
         fail "Couldn't extract features with bash: $BASH_RESULT"
-    HASKELL_RESULT=$(getAsts "$1" | WIDTH=30 HEIGHT=30 ml4hsfe-loop | jq '.') ||
+    set -x
+    HASKELL_RESULT=$(echo "$INPUT" | WIDTH=30 HEIGHT=30 ml4hsfe-loop | jq '.') ||
         fail "Couldn't extract features with haskell: $HASKELL_RESULT"
 
     RESULT=$(jq -n --argfile bash    <(echo "$BASH_RESULT")    \
@@ -179,8 +226,19 @@ function pkgTestExtractionMatchesHaskell {
     [[ "x$RESULT" = "xtrue" ]] || fail "Bash/Haskell comparison gave '$RESULT'"
 }
 
-# Clustering tests; each is tested with the feature extraction output, and via
-# the top-level "cluster" command
+function pkgTestExtractionMatchesHaskell {
+    getAsts "$1" | extractionMatchesHaskell
+}
+
+function testExampleExtractionMatchesHaskell {
+    while read -r EXAMPLE
+    do
+        exampleFeatures "$EXAMPLE" | extractionMatchesHaskell
+    done < <(getExampleFiles)
+}
+
+# Clustering tests; each is tested with the feature extraction output and via
+# the top-level "cluster" command, on test packages and examples
 
 function clusterNums {
     # The number of clusters to test with. Since it's expensive, we use the same
