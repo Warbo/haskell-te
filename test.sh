@@ -209,10 +209,10 @@ function pkgTestEndToEndCode {
 function checkJsonEqs {
     while read -r CLUSTERS
     do
-        OUTPUT=$("$2" "$1")
-        LENGTH=$(echo "$OUTPUT" | grep '^{' | jq -cs 'length')
-        [[ "$LENGTH" -gt 0 ]] ||
-            fail "'$2' on '$1' produced 0 JSON objects '$OUTPUT'"
+        while read -r LINE
+        do
+            [[ -z "$LINE" ]] || fail "Unexpected output for '$1': $LINE"
+        done < <("$2" "$1" | grep -v '^{' | grep -v '^Depth')
     done < <(clusterNums)
 }
 
