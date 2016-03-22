@@ -58,6 +58,7 @@ then
 
         # If we're here, we've found a ghc-pkg with AstPlugin and $PKG_NAME
         GHC_PKG=$("$DIR/ghc-pkg" list | head -n 1 | tr -d ':')
+        break
     done < <(echo "$PATH" | tr ':' '\n' | grep ghc)
 
     if [[ -z "$GHC_PKG" ]]
