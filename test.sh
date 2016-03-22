@@ -1,5 +1,5 @@
 #! /usr/bin/env nix-shell
-#! nix-shell -i bash -p cabal2db annotatedb jq ML4HSFE
+#! nix-shell -i bash -p annotatedb jq ML4HSFE
 
 BASE=$(dirname "$0")
 
@@ -59,6 +59,7 @@ function getTestPkgs {
 list-extras
 EOF
     return
+    regex-tdfa
     xmonad
     hakyll
 }
@@ -68,8 +69,8 @@ EOF
 function getRawAsts {
     F="test-data/$1.rawasts"
     [[ ! -e "$F" ]] && {
-        # Hide errors, but log them vai set -x debugging
-        OUTPUT=$( { dump-hackage "$1" > "$F"; } 2>&1 ) || {
+        # Hide errors, but log them via set -x debugging
+        OUTPUT=$( { nix-shell -p cabal2db --run "dump-hackage '$1'" > "$F"; } 2>&1 ) || {
             fail "Couldn't get raw ASTs for '$1'"
             return 1
         }
@@ -209,32 +210,26 @@ function testExampleFeaturesConform {
 function extractionMatchesHaskell {
     # extractFeatures is written in bash + jq, and is really slow. We've
     # replaced it with ml4hsfe-loop, but keep it around for testing
-    INPUT=$(cat)
     set +x
+    INPUT=$(cat)
     BASH_RESULT=$(echo "$INPUT" | "$BASE/extractFeatures" | jq '.') ||
         fail "Couldn't extract features with bash: $BASH_RESULT"
-    set -x
     HASKELL_RESULT=$(echo "$INPUT" | WIDTH=30 HEIGHT=30 ml4hsfe-loop | jq '.') ||
         fail "Couldn't extract features with haskell: $HASKELL_RESULT"
 
     RESULT=$(jq -n --argfile bash    <(echo "$BASH_RESULT")    \
                    --argfile haskell <(echo "$HASKELL_RESULT") \
                    '$bash == $haskell') || {
+        set -x
         fail "jq failed to process extracted features"
         return 1
     }
+    set -x
     [[ "x$RESULT" = "xtrue" ]] || fail "Bash/Haskell comparison gave '$RESULT'"
 }
 
 function pkgTestExtractionMatchesHaskell {
     getAsts "$1" | extractionMatchesHaskell
-}
-
-function testExampleExtractionMatchesHaskell {
-    while read -r EXAMPLE
-    do
-        exampleFeatures "$EXAMPLE" | extractionMatchesHaskell
-    done < <(getExampleFiles)
 }
 
 # Clustering tests; each is tested with the feature extraction output and via
