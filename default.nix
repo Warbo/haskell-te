@@ -1,4 +1,4 @@
-{ stdenv }:
+{ stdenv, jq, getDeps, utillinux }:
 
 stdenv.mkDerivation {
   name = "annotatedb";
@@ -7,6 +7,8 @@ stdenv.mkDerivation {
   src = builtins.filterSource (path: type:
     baseNameOf path != ".git" &&
     baseNameOf path != "test-data") ./.;
+
+  propagatedBuildInputs = [ jq getDeps utillinux ];
 
   installPhase = ''
     mkdir -p "$out/bin"
