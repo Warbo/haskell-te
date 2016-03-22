@@ -8,7 +8,7 @@ name:
         hsPkgs.quickspec  # For `fun0`, `fun1`, etc.
         hsPkgs.QuickCheck # For `monomorphise`
         hsPkgs.${name}    # For dependencies
-        AstPlugin         # For AST extraction
+        hsPkgs.AstPlugin  # For AST extraction
       ]))
     ];
   } ""
