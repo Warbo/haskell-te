@@ -137,11 +137,8 @@ function getTests {
 }
 
 function getTestPkgs {
-    # The following don't build for me, as of 2016-03-03:
-    #   pandoc git-annex lens warp ghc-mod
-
     # These packages build for me, as of 2016-03-03
-    for PKG in list-extras xmonad hakyll egison conduit shelly http-conduit yesod-core
+    for PKG in list-extras xmonad
     do
         if buildable "$PKG" >> /dev/stderr
         then
