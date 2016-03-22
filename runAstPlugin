@@ -20,9 +20,7 @@ function getAsts {
 }
 
 function build {
-    # Override pkg db to get project's dependencies and AstPlugin
-    GHC_PKG=$(ghc-pkg list | head -n 1 | tr -d ':')
-    OPTIONS="-package-db=$GHC_PKG -package AstPlugin -fplugin=AstPlugin.Plugin"
+
     # NOTE: We swap stderr (2) and stdout (1) via a temporary fd (3), since GHC
     # plugins write to stderr
     cabal --ghc-options="$OPTIONS" build 3>&2 2>&1 1>&3
@@ -31,5 +29,12 @@ function build {
 [[ "$#" -eq 0 ]] && echo "runAstPlugin needs a directory" && exit 1
 
 cd "$1"
-[[ -n "$SKIP_CABAL_CONFIG" ]] || cabal configure >> /dev/stderr
+
+# Override pkg db to get project's dependencies and AstPlugin
+GHC_PKG=$(ghc-pkg list | head -n 1 | tr -d ':')
+OPTIONS="-package-db=$GHC_PKG -package AstPlugin -fplugin=AstPlugin.Plugin"
+
+[[ -n "$SKIP_CABAL_CONFIG" ]] ||
+    cabal configure --package-db="$GHC_PKG" >> /dev/stderr
+
 getAsts | "$BASE/dump-format" "$1"
