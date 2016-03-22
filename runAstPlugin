@@ -26,12 +26,49 @@ function build {
     cabal --ghc-options="$OPTIONS" build 3>&2 2>&1 1>&3
 }
 
+function packageMissing {
+    for P in "$PKG_NAME" AstPlugin
+    do
+        "$1" list "$P" | grep '(no packages)' > /dev/null && return 0
+    done
+    return 1
+}
+
 [[ "$#" -eq 0 ]] && echo "runAstPlugin needs a directory" && exit 1
+
+PKG_NAME=$("$BASE/dump-package-name" "$1") || {
+    echo "Couldn't get package name from '$1'" >> /dev/stderr
+    exit 1
+}
 
 cd "$1"
 
 # Override pkg db to get project's dependencies and AstPlugin
-GHC_PKG=$(ghc-pkg list | head -n 1 | tr -d ':')
+GHC_PKG=""
+if packageMissing "ghc-pkg"
+then
+    # Not found in the DB. Maybe broken nix-shell nesting, try elsewhere in PATH
+    while read -r DIR
+    do
+        # Ignore entries which don't contain ghc-pkg
+        [[ -e "$DIR/ghc-pkg" ]] || continue
+
+        # Ignore ghc-pkg entries which don't contain AstPlugin or $PKG_NAME
+        packageMissing "$DIR/ghc-pkg" && continue
+
+        # If we're here, we've found a ghc-pkg with AstPlugin and $PKG_NAME
+        GHC_PKG=$("$DIR/ghc-pkg" list | head -n 1 | tr -d ':')
+    done < <(echo "$PATH" | tr ':' '\n' | grep ghc)
+
+    if [[ -z "$GHC_PKG" ]]
+    then
+        echo "Couldn't find ghc-pkg for AstPlugin & '$PKG_NAME'" >> /dev/stderr
+        exit 1
+    fi
+else
+    GHC_PKG=$(ghc-pkg list | head -n 1 | tr -d ':')
+fi
+
 OPTIONS="-package-db=$GHC_PKG -package AstPlugin -fplugin=AstPlugin.Plugin"
 
 [[ -n "$SKIP_CABAL_CONFIG" ]] ||
