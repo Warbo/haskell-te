@@ -34,18 +34,25 @@ function buildable {
         pushd "$TMP" > /dev/null
         FOUND=0
         shopt -s nullglob
+
+        # shellcheck disable=SC2034
         for D in "$1"*
         do
             FOUND=1
         done
+
         if [[ "$FOUND" -eq 1 ]] || cabal get "$1"
         then
-            cd "$1"*
-            if OUTPUT=$(build "$1" 2>&1) # Hide output, but capture for debugging
+            if cd "$1"*
             then
-                BUILDABLE=0 # Success
+                if _=$(build "$1" 2>&1) # Hide output, except for debugging
+                then
+                    BUILDABLE=0 # Success
+                else
+                    echo "Couldn't configure/build '$1'; see debug log" >> /dev/stderr
+                fi
             else
-                echo "Couldn't configure/build '$1'; see debug log" >> /dev/stderr
+                echo "Couldn't cd to dir beginning with '$1'" >> /dev/stderr
             fi
         else
             echo "Couldn't fetch '$1'" >> /dev/stderr
