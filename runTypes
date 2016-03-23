@@ -93,6 +93,7 @@ SCOPECMD=$(echo "$RESULT" | typeScopes)
 SCOPERESULT=$(echo "$SCOPECMD" | repl "$1" | replLines)
 
 # Output everything as JSON
+# shellcheck disable=SC2016
 jq -n --argfile asts        <(echo "$ASTS")                       \
       --argfile cmd         <(echo "$CMD"         | jq -s -R '.') \
       --argfile result      <(echo "$RESULT"      | jq -s -R '.') \

@@ -33,9 +33,11 @@ FALLBACK="({\"name\":\$this.name,\"module\":\$this.module,\"package\":\$this.pac
 INPUT=".[] | . as \$this | \$tags + [$FALLBACK]"
 
 # Select $tags matching $this
+# shellcheck disable=SC2016
 QUERY='map(select((.module == $this.module) and (.name == $this.name))) | .[0]'
 
 # Combine matching $tags with $this
+# shellcheck disable=SC2016
 ACTION='. + $this'
 
 jq --argfile tags "$1" "[$INPUT | $QUERY | $ACTION]"

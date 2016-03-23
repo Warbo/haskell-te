@@ -1,5 +1,5 @@
 #! /usr/bin/env nix-shell
-#! nix-shell -i bash -p bash jq getDeps
+#! nix-shell -i bash -p jq getDeps
 
 BASE=$(dirname "$0")
 
@@ -244,7 +244,7 @@ function pkgTestAstLabelled {
     getAsts "$1" | jq -c '.[] | .package' |
         while read -r LINE
         do
-            [[ "x$LINE" = "x\"$1\"" ]] || fail "$FUNCNAME $1 $LINE"
+            [[ "x$LINE" = "x\"$1\"" ]] || fail "Unlabelled: $1 $LINE"
         done
 }
 

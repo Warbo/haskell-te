@@ -6,12 +6,15 @@ command -v jq > /dev/null || {
 }
 
 # Split a qualified name into a module and a name
+# shellcheck disable=SC2016
 INPUT='(.qname | split(".") | reverse) as $bits'
 
 # The name is the last bit
+# shellcheck disable=SC2016
 NAME='$bits[0]'
 
 # The module is all except the last bit, joined by dots
+# shellcheck disable=SC2016
 MOD='$bits[1:] | reverse | join(".")'
 
 grep '^{' |

@@ -22,6 +22,8 @@ do
             # We have a version number in our package field; split it up
             NAME=$(echo    "$PKG" | rev | cut -d '-' -f 2- | rev)
             VERSION=$(echo "$PKG" | rev | cut -d '-' -f 1  | rev)
+
+            # shellcheck disable=SC2016
             echo "$DEP" | jq --arg name "$NAME"       \
                              --arg version "$VERSION" \
                              '. + {"package":$name,"version":$version}'
