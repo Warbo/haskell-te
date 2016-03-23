@@ -71,7 +71,7 @@ function getRawAsts {
     [[ ! -e "$F" ]] && {
         # Hide errors, but log them via set -x debugging
         OUTPUT=$( { nix-shell -p cabal2db --run "dump-hackage '$1'" > "$F"; } 2>&1 ) || {
-            fail "Couldn't get raw ASTs for '$1'"
+            fail "Couldn't get raw ASTs for '$1' ($(echo "$OUTPUT" | wc -l) lines of output)"
             return 1
         }
     }
@@ -217,6 +217,7 @@ function extractionMatchesHaskell {
     HASKELL_RESULT=$(echo "$INPUT" | WIDTH=30 HEIGHT=30 ml4hsfe-loop | jq '.') ||
         fail "Couldn't extract features with haskell: $HASKELL_RESULT"
 
+    # shellcheck disable=SC2016
     RESULT=$(jq -n --argfile bash    <(echo "$BASH_RESULT")    \
                    --argfile haskell <(echo "$HASKELL_RESULT") \
                    '$bash == $haskell') || {

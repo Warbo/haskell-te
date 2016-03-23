@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+# shellcheck disable=SC2153
 [[ -n "$CLUSTERS" ]] || {
     echo "No CLUSTERS found in environment" >> /dev/stderr
     exit 1
@@ -17,6 +18,8 @@ do
         NAME=$(echo "$ID" | jq -r '.name')
         MOD=$( echo "$ID" | jq -r '.module')
         PKG=$( echo "$ID" | jq -r '.package')
+
+        # shellcheck disable=SC2016
         COND='.name == $name and .module == $mod and .package == $pkg'
 
         echo "Marking '$ID' for clustering" >> /dev/stderr
@@ -30,13 +33,17 @@ do
     # Update all features with the latest clusters
 
     # Look up an ID in $deps
+    # shellcheck disable=SC2016
     COND2='.name == $this.name and .module == $this.module and .package == $this.package'
+
+    # shellcheck disable=SC2016
     LOOKUP='(. as $this | $deps | map(select('"$COND2"') | .cluster) | . + [0] | .[0] | . + 300)'
     FEATURES="(.features | map(if type == \"object\" then ($LOOKUP) else . end))"
 
     # Cluster. We call runWeka directly since nix-shell adds a lot of
     # overhead, which we move outside the loop to our own invocation
     echo "Clustering..." >> /dev/stderr
+    # shellcheck disable=SC2016
     CLUSTERED=$(
         echo "$DEPS" |
         jq '. as $deps | $deps | map(. + {"features": '"$FEATURES"'})' |
@@ -44,6 +51,7 @@ do
 
     # Add new clusters to DEPS
     echo "Collating..." >> /dev/stderr
+    # shellcheck disable=SC2016
     DEPS=$(echo "$DEPS" | jq --argfile clustered <(echo "$CLUSTERED") \
                              'map(. as $this | $clustered | map(select(.name == $this.name and .module == $this.module and .package == $this.package)) | map(.cluster) | if length == 1 then $this + {"cluster": .[0]} else $this end)')
 done < <(echo "$DEPS" | order-deps | jq -c '.[]')

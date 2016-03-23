@@ -31,6 +31,8 @@ do
     # but we want them to be globals
     MOD=$(echo "$LINE" | jq -r '.module')
     PKG=$(echo "$LINE" | jq -r '.package')
+
+    # shellcheck disable=SC2016
     NAMES=$(echo "$ALL" | jq --arg mod "$MOD" --arg pkg "$PKG" -c \
                 'map(select(.module == $mod and .package == $pkg)) | map(.name)')
 
@@ -42,6 +44,7 @@ do
     FEATURES=$(echo "$AST" | ML4HSFE)
 
     # Add the features to the object
+    # shellcheck disable=SC2016
     echo "$LINE" | jq -c --argfile features <(echo "$FEATURES") \
                       '. + {features: $features}'
 

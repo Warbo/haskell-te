@@ -70,6 +70,7 @@ function extractClusters {
     # Chop the final "clusterX" column off the Weka output
     LINES=$(getArff | wc -l)
 
+    # shellcheck disable=SC2016
     showClusters                  |
         grep -A "$LINES" "^@data" |
         grep -o "cluster[0-9]*$"  |
