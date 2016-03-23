@@ -23,6 +23,7 @@ do
 
         skip "$NAME" && continue
 
+        # shellcheck disable=SC2016
         FOUND=$(echo "$INPUT" |
             jq -c --arg name "$NAME" \
                   --arg mod  "$MOD"  \
