@@ -25,7 +25,7 @@ function mkGhcPkg {
 function mkName {
     GOT=$(cat)
     EXTRA=$(allExtras)
-    UNIQUEID=$(echo "$GOT $EXTRA" | tr ' ' '\n' | sort -u | tr -d '[[:space:]]')
+    UNIQUEID=$(echo "$GOT $EXTRA" | tr ' ' '\n' | sort -u | tr -d '[:space:]')
     MD5HASH=$(echo "$UNIQUEID" | md5sum | cut -d ' ' -f1)
     printf "explore-theories-%s" "$MD5HASH"
 }

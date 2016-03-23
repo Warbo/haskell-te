@@ -35,4 +35,4 @@ function explore {
     echo "$INPUT" | ENVIRONMENT_PACKAGES="$PKGS" "$BASE/build-env" "$BASE/path-to-front" MLSpec "$@"
 }
 
-explore
+explore "$@"

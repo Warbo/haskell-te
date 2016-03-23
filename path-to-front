@@ -11,5 +11,5 @@ then
     fi
 fi
 
-echo "path-to-front: Running '$@'" >> /dev/stderr
+echo "path-to-front: Running '$*'" >> /dev/stderr
 "$@"
