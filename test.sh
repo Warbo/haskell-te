@@ -18,6 +18,11 @@ function assertNotEmpty {
     [[ "$COUNT" -gt 0 ]] || fail "$1"
 }
 
+function assertNoVersions {
+    grep -- '-[0-9][0-9.]*$' > /dev/null &&
+        fail "Versions found in package names of $1"
+}
+
 # Look up tests from the environment
 
 function getFunctions {
@@ -170,16 +175,24 @@ function testExamplesValid {
     done < <(getExampleFiles)
 }
 
+function packageNamesUnversioned {
+    INPUT=$(cat)
+    echo "$INPUT" | jq -rc '.[] | .package'                       |
+        assertNoVersions "'$1'"
+
+    echo "$INPUT" | jq -rc '.[] | .dependencies | .[] | .package' |
+        assertNoVersions "dependencies of '$1'"
+}
+
 function testExamplePackageNamesUnversioned {
     while read -r EXAMPLE
     do
-        jq -rc '.[] | .package' < "$EXAMPLE" |
-            grep -- '-[0-9][0-9.]*$' > /dev/null &&
-            fail "Package names in '$EXAMPLE' contain version numbers"
-        jq -rc '.[] | .dependencies | .[] | .package' < "$EXAMPLE" |
-            grep -- '-[0-9][0-9.]*$' > /dev/null &&
-            fail "Deps in '$EXAMPLE' contain version numbers in package names"
+        packageNamesUnversioned "$EXAMPLE" < "$EXAMPLE"
     done < <(getExampleFiles)
+}
+
+function pkgTestPackageNamesUnversioned {
+    getAsts "$1" | packageNamesUnversioned "$1"
 }
 
 # Feature extraction tests
