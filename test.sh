@@ -170,6 +170,18 @@ function testExamplesValid {
     done < <(getExampleFiles)
 }
 
+function testExamplePackageNamesUnversioned {
+    while read -r EXAMPLE
+    do
+        jq -rc '.[] | .package' < "$EXAMPLE" |
+            grep -- '-[0-9][0-9.]*$' > /dev/null &&
+            fail "Package names in '$EXAMPLE' contain version numbers"
+        jq -rc '.[] | .dependencies | .[] | .package' < "$EXAMPLE" |
+            grep -- '-[0-9][0-9.]*$' > /dev/null &&
+            fail "Deps in '$EXAMPLE' contain version numbers in package names"
+    done < <(getExampleFiles)
+}
+
 # Feature extraction tests
 
 function pkgTestGetFeatures {
