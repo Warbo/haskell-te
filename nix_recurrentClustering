@@ -9,7 +9,7 @@ elif [[ -e "$BASE/../lib/weka-cli.nix" ]]
 then
     WEKACLI="$BASE/../lib/weka-cli.nix"
 else
-    echo "Cannot find weka-cli.nix in '$BASE' or '$BASE/../lib/'" >> /dev/stderr
+    echo "Cannot find weka-cli.nix in '$BASE' or '$BASE/../lib/'" 1>&2
     exit 1
 fi
 

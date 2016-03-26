@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
 
+function msg {
+    echo -e "$1" 1>&2
+}
+
 # shellcheck disable=SC2153
 [[ -n "$CLUSTERS" ]] || {
-    echo "No CLUSTERS found in environment" >> /dev/stderr
+    msg "No CLUSTERS found in environment"
     exit 1
 }
 
@@ -11,7 +15,7 @@ DEPS=$(cat)
 
 while read -r SCC
 do
-    echo "Next SCC" >> /dev/stderr
+    msg "Next SCC"
     while read -r ID
     do
         # TODO: Make this a more generic sub-set relation
@@ -22,7 +26,7 @@ do
         # shellcheck disable=SC2016
         COND='.name == $name and .module == $mod and .package == $pkg'
 
-        echo "Marking '$ID' for clustering" >> /dev/stderr
+        msg "Marking '$ID' for clustering"
         DEPS=$(echo "$DEPS" | jq \
             --arg name "$NAME"   \
             --arg mod  "$MOD"    \
@@ -42,7 +46,7 @@ do
 
     # Cluster. We call runWeka directly since nix-shell adds a lot of
     # overhead, which we move outside the loop to our own invocation
-    echo "Clustering..." >> /dev/stderr
+    msg "Clustering..."
     # shellcheck disable=SC2016
     CLUSTERED=$(
         echo "$DEPS" |
@@ -50,11 +54,11 @@ do
         "$BASE/runWeka")
 
     # Add new clusters to DEPS
-    echo "Collating..." >> /dev/stderr
+    msg "Collating..."
     # shellcheck disable=SC2016
     DEPS=$(echo "$DEPS" | jq --argfile clustered <(echo "$CLUSTERED") \
                              'map(. as $this | $clustered | map(select(.name == $this.name and .module == $this.module and .package == $this.package)) | map(.cluster) | if length == 1 then $this + {"cluster": .[0]} else $this end)')
 done < <(echo "$DEPS" | order-deps | jq -c '.[]')
 
-echo "Done" >> /dev/stderr
+msg "Done"
 echo "$DEPS"

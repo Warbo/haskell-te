@@ -6,7 +6,7 @@
 for CMD in ML4HSFE jq
 do
     command -v "$CMD" > /dev/null || {
-        echo "extractFeatures needs '$CMD'" >> /dev/stderr
+        echo "extractFeatures needs '$CMD'" 1>&2
         exit 1
     }
 done

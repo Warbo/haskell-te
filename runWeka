@@ -2,6 +2,10 @@
 
 set -e
 
+function msg {
+    echo -e "$1" 1>&2
+}
+
 # Cluster the features extracted by TreeFeatures
 
 RAW=$(cat)
@@ -10,7 +14,7 @@ CSV=""
 
 NUM=$(echo "$INLINES" | jq 'length')
 [[ "$NUM" -eq 0 ]] && {
-    echo "No ASTs with features, skipping" >> /dev/stderr
+    msg "No ASTs with features, skipping"
     echo "[]"
     exit 0
 }
@@ -18,15 +22,14 @@ NUM=$(echo "$INLINES" | jq 'length')
 # Default to ceil(sqrt($NUM / 2))
 [[ -z "$CLUSTERS" ]] && {
     CLUSTERS=$(perl -e "use POSIX; print ceil(sqrt($NUM / 2)), \"\n\"")
-    echo "No cluster number given, using '$CLUSTERS'" >> /dev/stderr
+    msg "No cluster number given, using '$CLUSTERS'"
 }
 
 function getCsv {
     if [ -z "$CSV" ]
     then
         CSV=$(echo "$INLINES" | jq -r -c '.[] | select(has("features")) | .features' | tr -d "[]")
-        echo "CSV COUNT" >> /dev/stderr
-        echo "$CSV" | wc -l >> /dev/stderr
+        msg "CSV COUNT $(echo "$CSV" | wc -l)"
     fi
     echo "$CSV"
 }

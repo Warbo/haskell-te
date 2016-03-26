@@ -3,11 +3,15 @@
 
 BASE=$(dirname "$0")
 
+function msg {
+    echo -e "$1" 1>&2
+}
+
 # Assertion functions
 
 function fail {
     # Unconditional failure
-    [[ "$#" -eq 0 ]] || echo "FAIL $*"
+    msg "FAIL $*"
     CODE=1
     return 1
 }
@@ -42,13 +46,13 @@ function getTests {
     while read -r pkg
     do
         runTraced getRawAsts "$pkg" > /dev/null || {
-            echo "Can't get raw ASTs for '$pkg', skipping"    >> /dev/stderr
-            echo "Flaky package or bug in Cabal2DB, see $PTH" >> /dev/stderr
+            msg "Can't get raw ASTs for '$pkg', skipping"
+            msg "Flaky package or bug in Cabal2DB, see $PTH"
             continue
         }
         runTraced getAsts "$pkg" > /dev/null || {
-            echo "Can't get ASTs for '$pkg', skipping"          >> /dev/stderr
-            echo "Flaky package or bug in annotatedb, see $PTH" >> /dev/stderr
+            msg "Can't get ASTs for '$pkg', skipping"
+            msg "Flaky package or bug in annotatedb, see $PTH"
             continue
         }
         while read -r test
@@ -337,8 +341,8 @@ function pkgTestEndToEndFields {
 
 function traceTest {
     # Separate our stderr from the previous and give a timestamp
-    echo -e "\n\n" >> /dev/stderr
-    date           >> /dev/stderr
+    msg "\n\n"
+    date 1>&2
 
     # Always set -x to trace tests, but remember our previous setting
     OLDDEBUG=0
