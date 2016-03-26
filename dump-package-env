@@ -1,12 +1,16 @@
 #!/usr/bin/env bash
 
+function msg {
+    echo -e "$1" 1>&2
+}
+
 [[ "$#" -lt 1 ]] && {
-    echo "dump-package-env needs a Cabal project directory" >> /dev/stderr
+    msg "dump-package-env needs a Cabal project directory"
     exit 1
 }
 
 [[ -d "$1" ]] || {
-    echo "Directory '$1' not found" >> /dev/stderr
+    msg "Directory '$1' not found"
     exit 1
 }
 
@@ -21,7 +25,7 @@ elif [[ -e "$BASE/../lib/ghcWithPlugin.nix" ]]
 then
     GHCWITHPLUGIN="$BASE/../lib/ghcWithPlugin.nix"
 else
-    echo "Didn't find ghcWithPlugin.nix in '$BASE' or '$BASE/../lib'" >> /dev/stderr
+    msg "Didn't find ghcWithPlugin.nix in '$BASE' or '$BASE/../lib'"
     exit 1
 fi
 

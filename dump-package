@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
 set -e
 
+function msg {
+    echo -e "$1" 1>&2
+}
+
 command -v jq > /dev/null || {
-    echo "dump-package requires jq, aborting" >> /dev/stderr
+    msg "dump-package requires jq, aborting"
     exit 1
 }
 
@@ -11,7 +15,7 @@ BASE=$(dirname "$(readlink -f "$0")")
 for CMD in runAstPlugin dump-package-env dump-format dump-package-name
 do
     [[ -e "$BASE/$CMD" ]] || {
-        echo "Didn't find $CMD in '$BASE'" >> /dev/stderr
+        msg "Didn't find $CMD in '$BASE'"
         exit 1
     }
 done
@@ -20,7 +24,7 @@ done
 
 function runPlugin {
     ENV=$("$BASE/dump-package-env" "$DIR") || {
-        echo "Unable to get package environment; aborting" >> /dev/stderr
+        msg "Unable to get package environment; aborting"
         exit 1
     }
     nix-shell --show-trace \

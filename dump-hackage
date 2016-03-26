@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -e
 
+function msg {
+    echo -e "$1" 1>&2
+}
+
 function findPkgInDir {
     # Look through the contents of $DIR for entries of the form $1-1.2.3
     for D in "$DIR"/*
@@ -31,12 +35,12 @@ else
     DIR=$(mktemp -d --tmpdir "cabal2db.XXXXX")
 fi
 
-echo "Storing packages in '$DIR'" >> /dev/stderr
+msg "Storing packages in '$DIR'"
 
 BASE=$(dirname "$(readlink -f "$0")")
 
 [[ -e "$BASE/dump-package" ]] || {
-    echo "Did not find dump-package in '$BASE'" >> /dev/stderr
+    msg "Did not find dump-package in '$BASE'"
     exit 1
 }
 
@@ -49,14 +53,14 @@ do
     else
         nix-shell --show-trace \
                   -p haskellPackages.cabal-install \
-                  --run "cabal update; cabal get $PKG" >> /dev/stderr
+                  --run "cabal update; cabal get $PKG" 1>&2
         PKGDIR=$(findPkgInDir "$PKG") || {
-            echo "Failed to get '$PKG', aborting" >> /dev/stderr
+            msg "Failed to get '$PKG', aborting"
             exit 1
         }
     fi
 
     PROJECT=$(readlink -f "$DIR/$PKGDIR")
-    echo "Dumping package $PROJECT" >> /dev/stderr
+    msg "Dumping package $PROJECT"
     "$BASE/dump-package" "$PROJECT"
 done

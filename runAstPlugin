@@ -13,9 +13,13 @@ set -e
 
 BASE=$(dirname "$(readlink -f "$0")")
 
+function msg {
+    echo -e "$1" 1>&2
+}
+
 function getAsts {
     RESULT=$(build)
-    { echo "$RESULT" | grep -v "^{" >> /dev/stderr; } || true
+    { echo "$RESULT" | grep -v "^{" 1>&2; } || true
       echo "$RESULT" | grep    "^{"
 }
 
@@ -37,7 +41,7 @@ function packageMissing {
 [[ "$#" -eq 0 ]] && echo "runAstPlugin needs a directory" && exit 1
 
 PKG_NAME=$("$BASE/dump-package-name" "$1") || {
-    echo "Couldn't get package name from '$1'" >> /dev/stderr
+    msg "Couldn't get package name from '$1'"
     exit 1
 }
 
@@ -63,7 +67,7 @@ then
 
     if [[ -z "$GHC_PKG" ]]
     then
-        echo "Couldn't find ghc-pkg for AstPlugin & '$PKG_NAME'" >> /dev/stderr
+        msg "Couldn't find ghc-pkg for AstPlugin & '$PKG_NAME'"
         exit 1
     fi
 else
@@ -73,6 +77,6 @@ fi
 OPTIONS="-package-db=$GHC_PKG -package AstPlugin -fplugin=AstPlugin.Plugin"
 
 [[ -n "$SKIP_CABAL_CONFIG" ]] ||
-    cabal configure --package-db="$GHC_PKG" >> /dev/stderr
+    cabal configure --package-db="$GHC_PKG" 1>&2
 
 getAsts | "$BASE/dump-format" "$1"

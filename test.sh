@@ -3,9 +3,13 @@
 
 BASE=$(dirname "$0")
 
+function msg {
+    echo -e "$1" 1>&2
+}
+
 function abort {
     # Nope out
-    [[ "$#" -eq 0 ]] || echo "$*" >> /dev/stderr
+    msg "$*"
     exit 1
 }
 
@@ -49,13 +53,13 @@ function buildable {
                 then
                     BUILDABLE=0 # Success
                 else
-                    echo "Couldn't configure/build '$1'; see debug log" >> /dev/stderr
+                    msg "Couldn't configure/build '$1'; see debug log"
                 fi
             else
-                echo "Couldn't cd to dir beginning with '$1'" >> /dev/stderr
+                msg "Couldn't cd to dir beginning with '$1'"
             fi
         else
-            echo "Couldn't fetch '$1'" >> /dev/stderr
+            msg "Couldn't fetch '$1'"
         fi
         popd > /dev/null
         rm -r "$TMP"
@@ -147,20 +151,20 @@ function getTestPkgs {
     # These packages build for me, as of 2016-03-03
     for PKG in list-extras xmonad
     do
-        if buildable "$PKG" >> /dev/stderr
+        if buildable "$PKG" 1>&2
         then
-            echo "Tests will be run for '$PKG', as it is buildable" >> /dev/stderr
+            msg "Tests will be run for '$PKG', as it is buildable"
             echo "$PKG"
         else
-            echo "Skipping '$PKG' as it couldn't be built" >> /dev/stderr
+            msg "Skipping '$PKG' as it couldn't be built"
         fi
     done
 }
 
 function traceTest {
     # Separate our stderr from the previous and give a timestamp
-    echo -e "\n\n" >> /dev/stderr
-    date           >> /dev/stderr
+    msg "\n\n"
+    date 1>&2
 
     # Always set -x to trace tests, but remember our previous setting
     OLDDEBUG=0
@@ -240,7 +244,7 @@ function init() {
     [[ "x$INITIAL" = "x/" ]] ||
         abort "Test data dir '$TESTDATA' must be absolute"
 
-    echo "Attempting to create test data dir '$TESTDATA'" >> /dev/stderr
+    msg "Attempting to create test data dir '$TESTDATA'"
     mkdir -p "$TESTDATA/debug" ||
         abort "Couldn't make test data dir '$TESTDATA'"
 
@@ -251,10 +255,10 @@ function init() {
 function cleanup() {
     # Remove the TESTDATA directory, if we've been asked
     [[ -n "$CABAL2DBCLEANUP" ]] && {
-        echo "Removing test data dir '$TESTDATA', as instructed" >> /dev/stderr
+        msg "Removing test data dir '$TESTDATA', as instructed"
         rm -r "$TESTDATA"
         [[ -n "$TMPDIR" ]] && {
-            echo "Removing temp directory '$TMPDIR' as well" >> /dev/stderr
+            msg "Removing temp directory '$TMPDIR' as well"
             rmdir "$TMPDIR"
         }
     }

@@ -1,16 +1,20 @@
 #!/usr/bin/env bash
 
-echo "Looking for .cabal files in '$1'" >> /dev/stderr
+function msg {
+    echo -e "$1" 1>&2
+}
+
+msg "Looking for .cabal files in '$1'"
 
 shopt -s nullglob
 for CBL in "$1"/*.cabal
 do
-    echo "Found '$CBL' in '$1'"  >> /dev/stderr
+    msg "Found '$CBL' in '$1'"
     NAME=$(grep -i "name[ ]*:" < "$CBL" | cut -d ':' -f 2 | tr -d '[:space:]')
-    echo "Project name is '$NAME'" >> /dev/stderr
+    msg "Project name is '$NAME'"
     echo "$NAME"
     exit 0
 done
 
-echo "Couldn't find name of package in '$1'" >> /dev/stderr
+msg "Couldn't find name of package in '$1'"
 exit 1
