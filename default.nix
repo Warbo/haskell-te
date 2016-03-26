@@ -1,4 +1,4 @@
-{ stdenv, nix }:
+{ stdenv, nix, haskellPackages }:
 
 stdenv.mkDerivation {
   name = "cabal2db";
@@ -8,7 +8,7 @@ stdenv.mkDerivation {
     baseNameOf path != ".git" &&
     baseNameOf path != "test-data") ./.;
 
-  propagatedBuildInputs = [ nix ];
+  propagatedBuildInputs = [ nix haskellPackages.cabal-install ];
 
   NIX_REMOTE = "daemon";
   NIX_PATH = builtins.getEnv "NIX_PATH";

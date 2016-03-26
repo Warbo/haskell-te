@@ -15,7 +15,7 @@ function abort {
 
 function fail {
     # Unconditional failure
-    [[ "$#" -eq 0 ]] || echo "FAIL $*"
+    msg "FAIL $*"
     CODE=1
     return 1
 }
