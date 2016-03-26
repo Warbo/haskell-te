@@ -47,12 +47,14 @@ function getTests {
     do
         runTraced getRawAsts "$pkg" > /dev/null || {
             msg "Can't get raw ASTs for '$pkg', skipping"
-            msg "Flaky package or bug in Cabal2DB, see $PTH"
+            msg "Flaky package or bug in Cabal2DB:"
+            cat "$PTH" 1>&2
             continue
         }
         runTraced getAsts "$pkg" > /dev/null || {
             msg "Can't get ASTs for '$pkg', skipping"
-            msg "Flaky package or bug in annotatedb, see $PTH"
+            msg "Flaky package or bug in annotatedb:"
+            cat "$PTH" 1>&2
             continue
         }
         while read -r test
