@@ -1,4 +1,4 @@
-{ stdenv }:
+{ stdenv, nix }:
 
 stdenv.mkDerivation {
   name = "cabal2db";
@@ -8,6 +8,10 @@ stdenv.mkDerivation {
     baseNameOf path != ".git" &&
     baseNameOf path != "test-data") ./.;
 
+  propagatedBuildInputs = [ nix ];
+
+  NIX_REMOTE = "daemon";
+  NIX_PATH = builtins.getEnv "NIX_PATH";
   doCheck = true;
   checkPhase = ''
     ./test.sh
