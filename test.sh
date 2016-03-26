@@ -151,6 +151,7 @@ function getTests {
 
 function getTestPkgs {
     # These packages build for me, as of 2016-03-03
+    cabal update
     for PKG in list-extras xmonad
     do
         if buildable "$PKG" 1>&2
