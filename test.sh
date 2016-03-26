@@ -1,6 +1,8 @@
 #! /usr/bin/env nix-shell
 #! nix-shell -i bash -p jq
 
+export HOME="$TMPDIR"
+
 BASE=$(dirname "$0")
 
 function msg {
