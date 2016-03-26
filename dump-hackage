@@ -28,7 +28,7 @@ then
 else
     # If $HOME doesn't exist, we're probably a daemon. Use mktemp, in the hope
     # that it's sane.
-    DIR=$(mktemp -d "cabal2db")
+    DIR=$(mktemp -d "cabal2db.XXXXX")
 fi
 
 echo "Storing packages in '$DIR'" >> /dev/stderr
