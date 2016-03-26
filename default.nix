@@ -1,4 +1,4 @@
-{ stdenv, jq, getDeps, utillinux }:
+{ stdenv, jq, getDeps, utillinux, nix }:
 
 stdenv.mkDerivation {
   name = "annotatedb";
@@ -8,7 +8,7 @@ stdenv.mkDerivation {
     baseNameOf path != ".git" &&
     baseNameOf path != "test-data") ./.;
 
-  propagatedBuildInputs = [ jq getDeps utillinux ];
+  propagatedBuildInputs = [ jq getDeps utillinux nix ];
 
   NIX_REMOTE = "daemon";
   NIX_PATH   = builtins.getEnv "NIX_PATH";
