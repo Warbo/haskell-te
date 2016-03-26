@@ -269,4 +269,11 @@ function cleanup() {
 
 runTests "$1"
 
+if [[ "$CODE" -eq 0 ]]
+then
+    msg "Tests passed successfully"
+else
+    msg "Some tests failed"
+fi
+
 exit "$CODE"
