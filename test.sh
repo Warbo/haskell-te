@@ -267,3 +267,5 @@ function cleanup() {
 }
 
 runTests "$1"
+
+exit "$CODE"
