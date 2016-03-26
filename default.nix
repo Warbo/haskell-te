@@ -8,6 +8,11 @@ stdenv.mkDerivation {
     baseNameOf path != ".git" &&
     baseNameOf path != "test-data") ./.;
 
+  doCheck = true;
+  checkPhase = ''
+    ./test.sh
+  '';
+
   installPhase = ''
     mkdir -p "$out/bin"
 
