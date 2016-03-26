@@ -1,5 +1,5 @@
-let pkgs = import <nixpkgs> {};
-in { stdenv ? pkgs.stdenv }:
+{ stdenv, order-deps, ML4HSFE, nix, annotatedb }:
+
 stdenv.mkDerivation {
   name = "recurrent-clustering";
 
@@ -8,13 +8,13 @@ stdenv.mkDerivation {
     baseNameOf path != ".git" &&
     baseNameOf path != "test-data") ./.;
 
-  buildInputs = [ pkgs.annotatedb ];
+  buildInputs = [ annotatedb ];
 
   propagatedBuildInputs = [
     (import ./weka-cli.nix)
-    pkgs.order-deps
-    pkgs.ML4HSFE
-    pkgs.nix
+    order-deps
+    ML4HSFE
+    nix
   ];
 
   NIX_REMOTE = "daemon";
