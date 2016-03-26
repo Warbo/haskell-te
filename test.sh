@@ -369,7 +369,10 @@ function runTraced {
 }
 
 function runTest {
-    runTraced "$@" || fail "$* failed, see $PTH"
+    runTraced "$@" || {
+        cat "$PTH" 1>&2
+        fail "$* failed"
+    }
 }
 
 function runTests {
