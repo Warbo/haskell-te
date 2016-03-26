@@ -10,6 +10,13 @@ stdenv.mkDerivation {
 
   propagatedBuildInputs = [ jq getDeps utillinux ];
 
+  NIX_REMOTE = "daemon";
+  NIX_PATH   = builtins.getEnv "NIX_PATH";
+  doCheck    = true;
+  checkPhase = ''
+    ./test.sh
+  '';
+
   installPhase = ''
     mkdir -p "$out/bin"
     for FILE in annotateAsts annotateDb getArities getDeps getTypes runTypes tagAsts
