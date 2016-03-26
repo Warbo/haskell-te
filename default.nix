@@ -1,7 +1,6 @@
-{ stdenv }:
-
 let pkgs = import <nixpkgs> {};
-in stdenv.mkDerivation {
+in { stdenv ? pkgs.stdenv }:
+stdenv.mkDerivation {
   name = "recurrent-clustering";
 
   # Exclude .git and test-data from being imported into the Nix store
@@ -9,7 +8,21 @@ in stdenv.mkDerivation {
     baseNameOf path != ".git" &&
     baseNameOf path != "test-data") ./.;
 
-  propagatedBuildInputs = [ (import ./weka-cli.nix) pkgs.order-deps pkgs.ML4HSFE ];
+  buildInputs = [ pkgs.annotatedb ];
+
+  propagatedBuildInputs = [
+    (import ./weka-cli.nix)
+    pkgs.order-deps
+    pkgs.ML4HSFE
+    pkgs.nix
+  ];
+
+  NIX_REMOTE = "daemon";
+  NIX_PATH   = builtins.getEnv "NIX_PATH";
+  doCheck    = true;
+  checkPhase = ''
+    ./test.sh
+  '';
 
   installPhase = ''
     mkdir -p "$out/bin"
