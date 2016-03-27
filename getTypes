@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 
+function msg {
+    echo -e "$1" 1>&2
+}
+
 command -v jq > /dev/null || {
-    echo "ERROR: getTypes needs jq" >> /dev/stderr
+    msg "ERROR: getTypes needs jq"
     exit 1
 }
 

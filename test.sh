@@ -6,7 +6,7 @@ BASE=$(dirname "$0")
 # Assertion functions
 
 function msg {
-    echo -e "$1" >> /dev/stderr
+    echo -e "$1" 1>&2
 }
 
 function fail {
@@ -316,7 +316,7 @@ function testTagging {
 function traceTest {
     # Separate our stderr from the previous and give a timestamp
     msg "\n\n"
-    date >> /dev/stderr
+    date 1>&2
 
     # Always set -x to trace tests, but remember our previous setting
     OLDDEBUG=0

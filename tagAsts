@@ -4,26 +4,30 @@
 # $1, combines those elements of each with matching pkg/mod/name. If no match is
 # found in $1, a fallback is used
 
+function msg {
+    echo -e "$1" 1>&2
+}
+
 [[ -n "$1" ]] || {
-    echo "tagAsts requires an argument for its tags"     >> /dev/stderr
-    echo "For example, 'echo FOO | tagAsts <(echo BAR)'" >> /dev/stderr
+    msg "tagAsts requires an argument for its tags"
+    msg "For example, 'echo FOO | tagAsts <(echo BAR)'"
     exit 1
 }
 
 [[ -n "$2" ]] || {
-    echo "tagAsts requires a JSON object as its second argument"  >> /dev/stderr
-    echo "This is used as a fallback, e.g. '{\"myField\":false}'" >> /dev/stderr
+    msg "tagAsts requires a JSON object as its second argument"
+    msg "This is used as a fallback, e.g. '{\"myField\":false}'"
     exit 2
 }
 
 TYPE=$(echo "$2" | jq -r 'type') || {
-    echo "Couldn't parse tagAst's second argument '$2' as JSON" >> /dev/stderr
+    msg "Couldn't parse tagAst's second argument '$2' as JSON"
     exit 3
 }
 
 [[ "x$TYPE" = "xobject" ]] || {
-    echo "tagAsts 2nd argument '$2' has type '$TYPE'" >> /dev/stderr
-    echo "It should be an object"                     >> /dev/stderr
+    msg "tagAsts 2nd argument '$2' has type '$TYPE'"
+    msg "It should be an object"
     exit 4
 }
 

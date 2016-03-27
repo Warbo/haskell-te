@@ -6,7 +6,7 @@
 BASE=$(dirname "$0")
 
 [[ -n "$1" ]] || {
-    echo "annotateDb needs a package name as argument" >> /dev/stderr
+    echo "annotateDb needs a package name as argument" 1>&2
     exit 1
 }
 

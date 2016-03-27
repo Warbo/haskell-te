@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 
+function msg {
+    echo -e "$1" 1>&2
+}
+
 for CMD in jq GetDeps rev
 do
     command -v "$CMD" > /dev/null || {
-        echo "ERROR: getDeps needs '$CMD'" >> /dev/stderr
+        msg "ERROR: getDeps needs '$CMD'"
         exit 1
     }
 done
@@ -11,7 +15,7 @@ done
 jq -c '.[]' | while read -r LINE
 do
     DEPENDENCIES=$(echo "$LINE" | jq -r '.ast' | GetDeps)
-    [[ -z "$DEPENDENCIES" ]] && echo "Unexpected line: $LINE" >> /dev/stderr
+    [[ -z "$DEPENDENCIES" ]] && msg "Unexpected line: $LINE"
 
     # Split versions from the package names
     VERSIONED=$(echo "$DEPENDENCIES" | jq -c '.[]' | while read -r DEP

@@ -2,8 +2,12 @@
 
 set -e
 
+function msg {
+    echo -e "$1"
+}
+
 command -v jq > /dev/null || {
-    echo "ERROR: annotateAsts requires jq" >> /dev/stderr
+    msg "ERROR: annotateAsts requires jq"
     exit 1
 }
 
