@@ -337,7 +337,10 @@ function runTest {
     # path to stdout
     read -ra CMD <<<"$@" # Re-parse our args to split packages from functions
     PTH=$(echo "test-data/debug/$*" | sed 's/ /_/g')
-    traceTest "${CMD[@]}" 2>> "$PTH" || fail "$* failed, see $PTH"
+    traceTest "${CMD[@]}" 2>> "$PTH" || {
+        cat "$PTH" 1>&2
+        fail "$* failed"
+    }
 }
 
 function runTests {
