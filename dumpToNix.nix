@@ -1,10 +1,10 @@
-{ stdenv, nix, haskellPackages }:
-{ pkgDir }:
+{ stdenv, cabal2db }:
+pkgDir:
 
 stdenv.mkDerivation {
   inherit pkgDir;
   name = "dump-to-nix-${builtins.hashString pkgDir}";
-  buildInputs = [ (import ./. { inherit stdenv nix haskellPackages; }) ];
+  buildInputs = [ cabal2db ];
   builder = ''
     dump-package "$pkgDir" > "$out"
   '';
