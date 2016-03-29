@@ -1,2 +1,2 @@
 with import <nixpkgs> {};
-callPackage ./. {}
+callPackage ./defs.nix {}

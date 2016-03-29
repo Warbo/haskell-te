@@ -12,7 +12,7 @@ stdenv.mkDerivation {
 
   NIX_REMOTE = "daemon";
   NIX_PATH = builtins.getEnv "NIX_PATH";
-  doCheck = true;
+  doCheck = builtins.getEnv "NIX_DO_CHECK" != "0";
   checkPhase = ''
     ./test.sh
   '';

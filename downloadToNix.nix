@@ -14,12 +14,12 @@ in stdenv.mkDerivation {
   # Download pkgName to the store
   builder = builtins.toFile "download-to-nix-builder" ''
     source "$stdenv/setup"
-    cp -rv "$pkgDir" ./pkgDir
 
     mkdir -p "$out"
     cd "$out"
 
     export HOME="$TMPDIR"
+    cabal update
     cabal get "$pkgName" || exit 1
     for D in ./*
     # */

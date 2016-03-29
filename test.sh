@@ -1,8 +1,6 @@
 #! /usr/bin/env nix-shell
 #! nix-shell -i bash -p jq
 
-export HOME="$TMPDIR"
-
 BASE=$(dirname "$0")
 
 function msg {
@@ -12,6 +10,7 @@ function msg {
 function abort {
     # Nope out
     msg "$*"
+    CODE=1
     exit 1
 }
 
@@ -24,51 +23,15 @@ function fail {
 
 # Test data
 
-function build {
-    nix-shell --run "cabal configure && cabal build" \
-              -E "with import <nixpkgs> {}; import \"$GHCWITHPLUGIN\" \"$1\""
-}
-
 function buildable {
     # Test that the given package can be built normally; let alone with our
-    # modifications
-    F="$TESTDATA/$1.buildable"
-    [[ ! -e "$F" ]] && {
-        BUILDABLE=1  # Assume failure
-        TMP="$TESTDATA/building"
-        mkdir -p -v "$TMP"
-        pushd "$TMP" > /dev/null
-        FOUND=0
-        shopt -s nullglob
-
-        # shellcheck disable=SC2034
-        for D in "$1"*
-        do
-            FOUND=1
-        done
-
-        if [[ "$FOUND" -eq 1 ]] || cabal get "$1"
-        then
-            if cd "$1"*
-            then
-                if _=$(build "$1" 2>&1) # Hide output, except for debugging
-                then
-                    BUILDABLE=0 # Success
-                else
-                    msg "Couldn't configure/build '$1'; see debug log"
-                fi
-            else
-                msg "Couldn't cd to dir beginning with '$1'"
-            fi
-        else
-            msg "Couldn't fetch '$1'"
-        fi
-        popd > /dev/null
-        rm -r "$TMP"
-        echo "$BUILDABLE" > "$F"
-    }
-    BUILDABLE=$(cat "$F")
-    return "$BUILDABLE"
+    # modifications #  \"$1\"
+    BUILDABLEPKGDIR=$(getPkgDir "$1")
+    msg "Attempting to build '$1' from '$BUILDABLEPKGDIR'"
+    BUILDDIR=$(nix-build --show-trace --no-out-link -E \
+      "(import ./defs-default.nix).build \"$BUILDABLEPKGDIR\" \"$1\"") ||
+        abort "Failed to initiate build of '$1'"
+    return "$(cat "$BUILDDIR/buildable")"
 }
 
 function ghcWithPlugin {
@@ -84,28 +47,24 @@ function ghcWithPlugin {
     fi
 }
 
-function getRawJson {
-    # Takes a package name, dumps its ASTs into $TESTDATA
-    F="$TESTDATA/$1.rawjson"
-    [[ ! -e "$F" ]] &&
-        NOFORMAT="true" "$BASE/dump-hackage" "$1" > "$F"
-    cat "$F"
+function getPkgDir {
+    rm -f result
+    msg "Attempting to download '$1'"
+    PKGDIR=$(nix-build --no-out-link -E \
+      "with import <nixpkgs> {}; callPackage ./downloadToNix.nix {} \"$1\"") ||
+        abort "Couldn't download '$1'"
+    echo "$PKGDIR/source"
 }
 
 function getRawAsts {
-    # Takes a package name, dumps its ASTs into $TESTDATA
-    F="$TESTDATA/$1.rawasts"
-    [[ ! -e "$F" ]] &&
-        "$BASE/dump-hackage" "$1" > "$F"
-    cat "$F"
+    PKGDIR="$(getPkgDir "$1")"
+    JSONDIR=$(NIX_DO_CHECK=0 nix-build --no-out-link -E \
+      "with import <nixpkgs> {}; (callPackage ./defs.nix {}).dumpToNix \"$PKGDIR\"") ||
+        abort "Couldn't get JSON from '$1'"
+    cat "$JSONDIR/dump.json"
 }
 
 # Tests
-
-function pkgTestGetRawJson {
-    getRawJson "$1" | grep -c "^" > /dev/null ||
-        fail "Couldn't get raw JSON from '$1'"
-}
 
 function pkgTestGetRawAsts {
     COUNT=$(getRawAsts "$1" | jq -r "length")
@@ -151,7 +110,7 @@ function getTests {
 
 function getTestPkgs {
     # These packages build for me, as of 2016-03-03
-    cabal update 1>&2
+    #cabal update 1>&2
     for PKG in list-extras xmonad
     do
         if buildable "$PKG" 1>&2
