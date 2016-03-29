@@ -89,105 +89,71 @@ EOF
 #EOF
 }
 
-# Data generators; expensive calls should cache in test-data/
+# Data generators
 
 function getRawAsts {
-    F="test-data/$1.rawasts"
-    [[ ! -e "$F" ]] &&
-        nix-shell -p cabal2db --run "dump-hackage '$1'" > "$F"
-    cat "$F"
+    DUMPDIR=$(nix-build --no-out-link -E \
+      "(import ./defs-default.nix).downloadAndDump \"$1\"") ||
+        fail "Couldn't get raw ASTs for '$1'"
+    DUMPJSON="$DUMPDIR/dump.json"
+    [[ -f "$DUMPJSON" ]] || fail "Got no '$DUMPJSON' for '$1'"
+    cat "$DUMPJSON"
 }
 
 function getRawData {
     [[ -e "$BASE/runTypes" ]] || fail "Couldn't find runTypes in '$BASE'"
-    F="test-data/$1.rawdata"
-    [[ ! -e "$F" ]] &&
-        getRawAsts "$1" | "$BASE/runTypes" "$1" > "$F"
-    cat "$F"
+    getRawAsts "$1" | "$BASE/runTypes" "$1"
 }
 
 function getTypeCmd {
-    F="test-data/$1.typeCmd"
-    [[ ! -e "$F" ]] &&
-        getRawData "$1" | jq -r '.cmd' > "$F"
-    cat "$F"
+    getRawData "$1" | jq -r '.cmd'
 }
 
 function getScopeCmd {
-    F="test-data/$1.scopeCmd"
-    [[ ! -e "$F" ]] &&
-        getRawData "$1" | jq -r '.scopecmd' > "$F"
-    cat "$F"
+    getRawData "$1" | jq -r '.scopecmd'
 }
 
 function getTypeResults {
-    F="test-data/$1.typeResults"
-    [[ ! -e "$F" ]] &&
-        getRawData "$1" | jq -r '.result' > "$F"
-    cat "$F"
+    getRawData "$1" | jq -r '.result'
 }
 
 function getScopeResult {
-    F="test-data/$1.scopeResult"
-    [[ ! -e "$F" ]] &&
-        getRawData "$1" | jq -r '.scoperesult' > "$F"
-    cat "$F"
+    getRawData "$1" | jq -r '.scoperesult'
 }
 
 function getArities {
     [[ -e "$BASE/getArities" ]] || fail "Couldn't find getArities in '$BASE'"
-    F="test-data/$1.arities"
-    [[ ! -e "$F" ]] &&
-        getTypeResults "$1" | "$BASE/getArities" > "$F"
-    cat "$F"
+    getTypeResults "$1" | "$BASE/getArities"
 }
 
 function getTypes {
     [[ -e "$BASE/getTypes" ]] || fail "Couldn't find getTypes in '$BASE'"
-    F="test-data/$1.types"
-    [[ ! -e "$F" ]] &&
-        getScopeResult "$1" | "$BASE/getTypes" > "$F"
-    cat "$F"
+    getScopeResult "$1" | "$BASE/getTypes"
 }
 
 function getArityTagged {
     [[ -e "$BASE/tagAsts" ]] || fail "Couldn't find tagAsts in '$BASE'"
-    F="test-data/$1.aritytagged"
-    [[ ! -e "$F" ]] &&
-        getRawAsts "$1" | "$BASE/tagAsts" <(getArities "$1") "{}" > "$F"
-    cat "$F"
+    getRawAsts "$1" | "$BASE/tagAsts" <(getArities "$1") "{}"
 }
 
 function getTypeTagged {
     [[ -e "$BASE/tagAsts" ]] || fail "Couldn't find tagAsts in '$BASE'"
-    F="test-data/$1.typetagged"
-    [[ ! -e "$F" ]] &&
-        getRawAsts "$1" | "$BASE/tagAsts" <(getTypes "$1") "{}" > "$F"
-    cat "$F"
+    getRawAsts "$1" | "$BASE/tagAsts" <(getTypes "$1") "{}"
 }
 
 function getAsts {
     [[ -e "$BASE/annotateAsts" ]] || fail "Couldn't find annotateAsts in '$BASE'"
-    F="test-data/$1.asts"
-    [[ ! -e "$F" ]] &&
-        getRawData "$1" | "$BASE/annotateAsts" > "$F"
-    cat "$F"
+    getRawData "$1" | "$BASE/annotateAsts"
 }
 
 function getDeps {
     [[ -e "$BASE/getDeps" ]] || fail "Couldn't find getDeps in '$BASE'"
-    F="test-data/$1.deps"
-    [[ ! -e "$F" ]] &&
-        getAsts "$1" | "$BASE/getDeps" > "$F"
-    cat "$F"
+    getAsts "$1" | "$BASE/getDeps"
 }
 
 function getFinal {
     [[ -e "$BASE/annotateDb" ]] || fail "Couldn't find annotateDb in '$BASE'"
-    F="test-data/$1.final"
-    [[ ! -e "$F" ]] &&
-        getRawAsts "$1" | "$BASE/annotateDb" "$1" > "$F"
-    cat "$F"
+    getRawAsts "$1" | "$BASE/annotateDb" "$1"
 }
 
 # Tests
@@ -333,10 +299,10 @@ function traceTest {
 }
 
 function runTest {
-    # Log stderr in test-data/debug. On failure, send "FAIL" and the debug
-    # path to stdout
+    # Log stderr in TESTDIR. On failure, send "FAIL" and the debug path to
+    # stdout
     read -ra CMD <<<"$@" # Re-parse our args to split packages from functions
-    PTH=$(echo "test-data/debug/$*" | sed 's/ /_/g')
+    PTH=$(echo "$TESTDIR/$*" | sed 's/ /_/g')
     traceTest "${CMD[@]}" 2>> "$PTH" || {
         cat "$PTH" 1>&2
         fail "$* failed"
@@ -357,6 +323,7 @@ function runTests {
 
     while read -r test
     do
+        msg "Running test '$test'"
         # $test is either empty, successful or we're exiting with an error
         [[ -z "$test" ]] || runTest "$test" || CODE=1
     done < <(echo "$TESTS")
@@ -371,5 +338,5 @@ function runTests {
     return "$CODE"
 }
 
-mkdir -p test-data/debug
+TESTDIR=$(mktemp -d --tmpdir 'annotatedb-test-XXXXX')
 runTests "$1"
