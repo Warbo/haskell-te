@@ -37,7 +37,7 @@ function buildable {
 function getPkgDir {
     msg "Attempting to download '$1'"
     PKGDIR=$(nix-build --no-out-link -E \
-      "with import <nixpkgs> {}; callPackage ./downloadToNix.nix {} \"$1\"") ||
+      "(import ./defs-default.nix).downloadToNix \"$1\"") ||
         abort "Couldn't download '$1'"
     echo "$PKGDIR/source"
 }
@@ -45,7 +45,7 @@ function getPkgDir {
 function getRawAsts {
     PKGDIR="$(getPkgDir "$1")"
     JSONDIR=$(NIX_DO_CHECK=0 nix-build --no-out-link -E \
-      "with import <nixpkgs> {}; (callPackage ./defs.nix {}).dumpToNix \"$PKGDIR\"") ||
+      "(import ./defs-default.nix).dumpToNix \"$PKGDIR\"") ||
         abort "Couldn't get JSON from '$1'"
     cat "$JSONDIR/dump.json"
 }
