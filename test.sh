@@ -34,19 +34,6 @@ function buildable {
     return "$(cat "$BUILDDIR/buildable")"
 }
 
-function ghcWithPlugin {
-    if [[ -e "$BASE/ghcWithPlugin.nix" ]]
-    then
-        echo "$BASE/ghcWithPlugin.nix"
-    elif [[ -e "$BASE/../lib/ghcWithPlugin.nix" ]]
-    then
-        echo "$BASE/../lib/ghcWithPlugin.nix"
-    else
-        fail "Didn't find ghcWithPlugin.nix in '$BASE' or '$BASE/../lib'"
-        exit 1
-    fi
-}
-
 function getPkgDir {
     rm -f result
     msg "Attempting to download '$1'"
@@ -74,51 +61,15 @@ function pkgTestGetRawAsts {
 
 # Test running infrastructure
 
-function getFunctions {
-    # Get a list of the functions in this script
-    declare -F | cut -d ' ' -f 3-
-}
-
-function getPkgTests {
-    # Get a list of test functions which require a package
-    getFunctions | grep '^pkgTest'
-}
-
 function getTests {
-    # Get a list of all test functions
-    getFunctions | grep '^test'
-
-    TESTPKGS=$(getTestPkgs) || {
-        fail "Problem getting list of packages to test, aborting"
-        exit 1
-    }
-
-    [[ -n "$TESTPKGS" ]] || {
-        fail "Wasn't able to find any working packages to test with, aborting"
-        exit 1
-    }
-
-    # Apply each package test to each package
-    while read -r pkg
-    do
-        while read -r test
-        do
-            echo "$test $pkg"
-        done < <(getPkgTests)
-    done < <(echo "$TESTPKGS")
-}
-
-function getTestPkgs {
-    # These packages build for me, as of 2016-03-03
-    #cabal update 1>&2
     for PKG in list-extras xmonad
     do
         if buildable "$PKG" 1>&2
         then
-            msg "Tests will be run for '$PKG', as it is buildable"
-            echo "$PKG"
+            msg "'$PKG' is buildable, so we'll use it for tests"
+            echo "pkgTestGetRawAsts $PKG"
         else
-            msg "Skipping '$PKG' as it couldn't be built"
+            msg "Not testing with '$PKG' as it couldn't be built"
         fi
     done
 }
@@ -171,6 +122,7 @@ function runTests {
     while read -r test
     do
         # $test is either empty, successful or we're exiting with an error
+        msg "Running test '$test'"
         [[ -z "$test" ]] || runTest "$test" || CODE=1
     done < <(echo "$TESTS")
 
@@ -209,9 +161,6 @@ function init() {
     msg "Attempting to create test data dir '$TESTDATA'"
     mkdir -p "$TESTDATA/debug" ||
         abort "Couldn't make test data dir '$TESTDATA'"
-
-    # Look for ghcWithPlugin.nix
-    GHCWITHPLUGIN=$(readlink -f "$(ghcWithPlugin)")
 }
 
 function cleanup() {
