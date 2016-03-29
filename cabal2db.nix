@@ -27,7 +27,10 @@ stdenv.mkDerivation {
     done
 
     mkdir -p "$out/lib"
-    cp -v ghcWithPlugin.nix "$out/lib/"
+    for F in *.nix
+    do
+        cp -v "$F" "$out/lib/"
+    done
 
     chmod +x "$out/bin/"*
   '';
