@@ -58,6 +58,25 @@ function pkgTestGetRawAsts {
         fail "Couldn't get raw ASTs from '$1'"
 }
 
+function pkgTestDownloadAndDump {
+    RESULT=$(nix-build --no-out-link -E \
+      "(import ./defs-default.nix).downloadAndDump \"$1\"") ||
+        abort "Couldn't download and dump '$1'"
+    JSON="$RESULT/dump.json"
+    [[ -f "$JSON" ]] || {
+        fail "Didn't get '$JSON' for '$1'"
+        return 1
+    }
+    COUNT=$(jq -r 'length' < "$JSON") || {
+        fail "Couldn't get length of JSON '$JSON' for '$1'"
+        return 1
+    }
+    [[ "$COUNT" -gt 0 ]] || {
+        fail "Got '$COUNT' ASTs in '$JSON' for '$1'"
+        return 1
+    }
+}
+
 # Test running infrastructure
 
 function getTests {
@@ -67,6 +86,7 @@ function getTests {
         then
             msg "'$PKG' is buildable, so we'll use it for tests"
             echo "pkgTestGetRawAsts $PKG"
+            echo "pkgTestDownloadAndDump $PKG"
         else
             msg "Not testing with '$PKG' as it couldn't be built"
         fi
