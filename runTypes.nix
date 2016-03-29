@@ -1,10 +1,10 @@
 { stdenv, annotatedb, jq }:
-asts:
+asts: pkgName:
 
 let hash = builtins.hashString "sha256" asts;
 in stdenv.mkDerivation {
-  inherit asts;
-  name        = "download-to-nix-${hash}";
+  inherit asts pkgName;
+  name        = "typed-asts-${hash}";
   buildInputs = [ annotatedb jq ];
 
   # Required for calling nix-shell during build
@@ -16,6 +16,6 @@ in stdenv.mkDerivation {
     source "$stdenv/setup"
 
     mkdir -p "$out"
-    runTypes < "$asts" > "$out/typed.json"
+    runTypes "$pkgName" < "$asts" > "$out/typed.json" || exit 1
   '';
 }
