@@ -1,1 +1,2 @@
-(import <nixpkgs> {}).callPackage (import ./.) {}
+with import <nixpkgs> {};
+callPackage ./. {}
