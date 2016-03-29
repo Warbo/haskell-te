@@ -20,6 +20,6 @@ in stdenv.mkDerivation {
 
     mkdir -p "$out"
     #HOME="$TMPDIR"
-    dump-package pkgDir > "$out/dump.json"
+    dump-package "$(readlink -f pkgDir)" > "$out/dump.json"
   '';
 }

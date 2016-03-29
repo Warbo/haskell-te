@@ -77,6 +77,24 @@ function pkgTestDownloadAndDump {
     }
 }
 
+function pkgTestHaveFields {
+    while read -r AST
+    do
+        for FIELD in package module name ast
+        do
+            RESULT=$(echo "$AST" | jq "has(\"$FIELD\")")
+            msg "Field '$FIELD' gave '$RESULT'"
+            [[ "x$RESULT" = "xtrue" ]] ||
+                fail "Expected 'true', got '$RESULT', for field '$FIELD'"
+
+            RESULT=$(echo "$AST" | jq ".$FIELD | length")
+            msg "Field '$FIELD' has length '$RESULT'"
+            [[ "$RESULT" -gt 0 ]] ||
+                fail "Field '$FIELD' is empty"
+        done
+    done < <(getRawAsts "$1" | jq -c '.[]')
+}
+
 # Test running infrastructure
 
 function getTests {
@@ -87,6 +105,7 @@ function getTests {
             msg "'$PKG' is buildable, so we'll use it for tests"
             echo "pkgTestGetRawAsts $PKG"
             echo "pkgTestDownloadAndDump $PKG"
+            echo "pkgTestHaveFields $PKG"
         else
             msg "Not testing with '$PKG' as it couldn't be built"
         fi
