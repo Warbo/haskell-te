@@ -92,7 +92,7 @@ EOF
 # Data generators
 
 function getRawAsts {
-    DUMPDIR=$(nix-build --no-out-link -E \
+    DUMPDIR=$(NIX_DO_CHECK=0 nix-build --no-out-link -E \
       "(import ./defs-default.nix).downloadAndDump \"$1\"") ||
         fail "Couldn't get raw ASTs for '$1'"
     DUMPJSON="$DUMPDIR/dump.json"
@@ -338,5 +338,5 @@ function runTests {
     return "$CODE"
 }
 
-TESTDIR=$(mktemp -d --tmpdir 'annotatedb-test-XXXXX')
+TESTDIR=$(mktemp -d '/tmp/annotatedb-test-XXXXX')
 runTests "$1"

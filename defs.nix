@@ -3,6 +3,7 @@
 rec {
   inherit (cabal2db-defs) downloadAndDump;
   inherit annotatedb;
-  annotateAsts    = import ./annotateAsts.nix    { inherit stdenv annotatedb; };
-  dumpAndAnnotate = import ./dumpAndAnnotate.nix { inherit downloadAndDump;   };
+  annotateAsts    = import ./annotateAsts.nix    { inherit stdenv annotatedb;    };
+  dumpAndAnnotate = import ./dumpAndAnnotate.nix { inherit downloadAndDump;      };
+  runTypes        = import ./runTypes.nix        { inherit stdenv annotatedb jq; };
 }
