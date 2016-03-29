@@ -3,10 +3,9 @@
 stdenv.mkDerivation {
   name = "cabal2db";
 
-  # Exclude .git and test-data from being imported into the Nix store
+  # Exclude .git from being imported into the Nix store
   src = builtins.filterSource (path: type:
-    baseNameOf path != ".git" &&
-    baseNameOf path != "test-data") ./.;
+    baseNameOf path != ".git") ./.;
 
   propagatedBuildInputs = [ nix haskellPackages.cabal-install jq ];
 
@@ -14,6 +13,7 @@ stdenv.mkDerivation {
   NIX_PATH = builtins.getEnv "NIX_PATH";
   doCheck = builtins.getEnv "NIX_DO_CHECK" != "0";
   checkPhase = ''
+    echo "Running $PWD/test.sh" 1>&2
     ./test.sh
   '';
 
