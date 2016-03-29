@@ -35,7 +35,6 @@ function buildable {
 }
 
 function getPkgDir {
-    rm -f result
     msg "Attempting to download '$1'"
     PKGDIR=$(nix-build --no-out-link -E \
       "with import <nixpkgs> {}; callPackage ./downloadToNix.nix {} \"$1\"") ||
@@ -94,10 +93,10 @@ function traceTest {
 }
 
 function runTest {
-    # Log stderr in $TESTDATA/debug. On failure, send "FAIL" and the debug
+    # Log stderr in $TESTDATA. On failure, send "FAIL" and the debug
     # path to stdout
     read -ra CMD <<<"$@" # Re-parse our args to split packages from functions
-    PTH=$(echo "$TESTDATA/debug/$*" | sed 's/ /_/g')
+    PTH=$(echo "$TESTDATA/$*" | sed 's/ /_/g')
     traceTest "${CMD[@]}" 2>> "$PTH" || {
         cat "$PTH"
         fail "$* failed"
@@ -127,52 +126,14 @@ function runTests {
     done < <(echo "$TESTS")
 
     # Remove directories, if necessary
-    cleanup
+    [[ "$CODE" -eq 0 ]] && rm -r "$TESTDATA"
 
     return "$CODE"
 }
 
 function init() {
     # Set the TESTDATA directory
-    if [[ -n "$CABAL2DBTESTDIR" ]]
-    then
-        TMPDIR=""
-        TESTDATA="$CABAL2DBTESTDIR/test-data"
-    elif [[ -n "$XDG_CACHE_HOME" ]] && [[ -d "$XDG_CACHE_HOME" ]]
-    then
-        TMPDIR="$XDG_CACHE_HOME/cabal2db"
-        TESTDATA="$TMPDIR/test-data"
-    elif [[ -n "$HOME" ]] && [[ -d "$HOME" ]]
-    then
-        TMPDIR="$HOME/.cache/cabal2db"
-        TESTDATA="$TMPDIR/test-data"
-    else
-        TMPDIR=$(mktemp -d -t 'cabal2db-test-XXXXX')
-        TESTDATA="$TMPDIR/test-data"
-    fi
-
-    [[ -n "$TESTDATA" ]] ||
-        abort "Error with test data dir"
-
-    INITIAL=$(echo "$TESTDATA" | cut -c 1)
-    [[ "x$INITIAL" = "x/" ]] ||
-        abort "Test data dir '$TESTDATA' must be absolute"
-
-    msg "Attempting to create test data dir '$TESTDATA'"
-    mkdir -p "$TESTDATA/debug" ||
-        abort "Couldn't make test data dir '$TESTDATA'"
-}
-
-function cleanup() {
-    # Remove the TESTDATA directory, if we've been asked
-    [[ -n "$CABAL2DBCLEANUP" ]] && {
-        msg "Removing test data dir '$TESTDATA', as instructed"
-        rm -r "$TESTDATA"
-        [[ -n "$TMPDIR" ]] && {
-            msg "Removing temp directory '$TMPDIR' as well"
-            rmdir "$TMPDIR"
-        }
-    }
+    TESTDATA=$(mktemp -d --tmpdir 'cabal2db-test-XXXXX')
 }
 
 runTests "$1"
