@@ -52,31 +52,6 @@ function getRawAsts {
 
 # Tests
 
-function pkgTestGetRawAsts {
-    COUNT=$(getRawAsts "$1" | jq -r "length")
-    [[ "$COUNT" -gt 0 ]] ||
-        fail "Couldn't get raw ASTs from '$1'"
-}
-
-function pkgTestDownloadAndDump {
-    RESULT=$(nix-build --no-out-link -E \
-      "(import ./defs-default.nix).downloadAndDump \"$1\"") ||
-        abort "Couldn't download and dump '$1'"
-    JSON="$RESULT/dump.json"
-    [[ -f "$JSON" ]] || {
-        fail "Didn't get '$JSON' for '$1'"
-        return 1
-    }
-    COUNT=$(jq -r 'length' < "$JSON") || {
-        fail "Couldn't get length of JSON '$JSON' for '$1'"
-        return 1
-    }
-    [[ "$COUNT" -gt 0 ]] || {
-        fail "Got '$COUNT' ASTs in '$JSON' for '$1'"
-        return 1
-    }
-}
-
 function pkgTestHaveFields {
     while read -r AST
     do
