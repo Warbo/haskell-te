@@ -1,8 +1,7 @@
 { stdenv, haskellPackages }:
 pkgName:
 
-let hash = builtins.hashString "sha256" pkgName;
-in stdenv.mkDerivation {
+stdenv.mkDerivation {
   inherit pkgName;
   name        = "download-to-nix-${pkgName}";
   buildInputs = [ haskellPackages.cabal-install ];
