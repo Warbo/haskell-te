@@ -1,4 +1,4 @@
-{ stdenv, nix, haskellPackages, jq }:
+{ stdenv, nix, haskellPackages, jq, doCheck ? true }:
 
 stdenv.mkDerivation {
   name = "cabal2db";
@@ -11,7 +11,7 @@ stdenv.mkDerivation {
 
   NIX_REMOTE = "daemon";
   NIX_PATH = builtins.getEnv "NIX_PATH";
-  doCheck = builtins.getEnv "NIX_DO_CHECK" != "0";
+  inherit doCheck;
   checkPhase = ''
     echo "Running $PWD/test.sh" 1>&2
     ./test.sh

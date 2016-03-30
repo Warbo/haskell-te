@@ -1,11 +1,13 @@
-{ stdenv, cabal2db }:
+{ stdenv, cabal2db, lib }:
 pkgDir:
 
-let hash = builtins.hashString "sha256" pkgDir;
+with builtins;
+with lib;
+let hash = unsafeDiscardStringContext (hashString "sha256" "${pkgDir}");
 in stdenv.mkDerivation {
   inherit pkgDir;
   name        = "dump-to-nix-${hash}";
-  buildInputs = [ cabal2db ];
+  buildInputs = [ cabal2db ] ++ (if isDerivation pkgDir then [ pkgDir ] else []);
 
   # Required for calling nix-shell during build
   NIX_REMOTE = "daemon";
@@ -18,8 +20,6 @@ in stdenv.mkDerivation {
     cp -rv "$pkgDir" ./pkgDir
     chmod +w -R pkgDir
 
-    mkdir -p "$out"
-    #HOME="$TMPDIR"
-    dump-package "$(readlink -f pkgDir)" > "$out/dump.json"
+    dump-package "$(readlink -f pkgDir)" > "$out"
   '';
 }

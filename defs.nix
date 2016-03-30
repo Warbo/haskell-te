@@ -1,9 +1,8 @@
-{ stdenv, haskellPackages, nix, jq, cabal2db }:
+{ stdenv, haskellPackages, nix, jq, cabal2db, lib }:
 
 rec {
-  #cabal2db        = import ./cabal2db.nix        { inherit stdenv haskellPackages nix jq; };
   downloadToNix   = import ./downloadToNix.nix   { inherit stdenv haskellPackages;        };
-  dumpToNix       = import ./dumpToNix.nix       { inherit stdenv cabal2db;               };
+  dumpToNix       = import ./dumpToNix.nix       { inherit stdenv cabal2db lib;           };
   build           = import ./build.nix           { inherit stdenv haskellPackages;        };
   downloadAndDump = import ./downloadAndDump.nix { inherit dumpToNix downloadToNix;       };
 }

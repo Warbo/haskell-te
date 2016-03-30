@@ -18,7 +18,7 @@ function fail {
     # Unconditional failure
     msg "FAIL $*"
     CODE=1
-    return 1
+    exit 1
 }
 
 # Test data

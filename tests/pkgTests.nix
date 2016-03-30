@@ -7,6 +7,6 @@ let hsPkgs       = [ "list-extras" "xmonad" ];
     runTest      = testName: all (runTestOnPkg testName) hsPkgs;
     runTestOnPkg = testName: hsPkg:
       let result = tests."${testName}" defs hsPkg;
-       in trace "Running test '${testName}' with Haskell package 'hsPkg'"
+       in trace "Running test '${testName}' with Haskell package '${hsPkg}'"
                 (assert result; result);
  in all runTest (attrNames tests)

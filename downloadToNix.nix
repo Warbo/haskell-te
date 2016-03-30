@@ -14,8 +14,8 @@ stdenv.mkDerivation {
   builder = builtins.toFile "download-to-nix-builder" ''
     source "$stdenv/setup"
 
-    mkdir -p "$out"
-    cd "$out"
+    DELETEME=$(mktemp -d --tmpdir "download-to-nix-XXXXX")
+    cd "$DELETEME"
 
     export HOME="$TMPDIR"
     cabal update
@@ -23,7 +23,11 @@ stdenv.mkDerivation {
     for D in ./*
     # */
     do
-      mv "$D" source
+      mv "$D" "$out"
+      break
     done
+
+    cd "$out"
+    rm -rf "$DELETEME"
   '';
 }
