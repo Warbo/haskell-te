@@ -1,4 +1,4 @@
-{ stdenv, haskellPackages, nix }:
+{ runScript, cabal-install, nix }:
 pkgName:
 
 # Try to download the given package from Hackage and add it to the Nix store.
@@ -9,19 +9,15 @@ pkgName:
 # source into the store, rather than using e.g. 'cp foo "$out"', so that our own
 # dependencies don't propagate to those who use this source.
 
-let fresh = stdenv.mkDerivation {
-  inherit pkgName;
-  name        = "download-to-nix-${pkgName}";
-  buildInputs = [ haskellPackages.cabal-install nix ];
+runScript {
+    inherit pkgName;
+    buildInputs = [ cabal-install nix ];
 
-  # Required for calling nix-shell during build
-  NIX_REMOTE = "daemon";
-  NIX_PATH   = builtins.getEnv "NIX_PATH";
-
-  # Download pkgName to the store
-  builder = builtins.toFile "download-to-nix-builder" ''
-    source "$stdenv/setup"
-
+    # Required for invoking Nix recursively
+    NIX_REMOTE = "daemon";
+    NIX_PATH   = builtins.getEnv "NIX_PATH";
+  }
+  ''
     DELETEME=$(mktemp -d --tmpdir "download-to-nix-XXXXX")
     cd "$DELETEME"
 
@@ -35,6 +31,4 @@ let fresh = stdenv.mkDerivation {
       printf '%s' "$DIR" > "$out"
       break
     done
-  '';
-};
-in with builtins; unsafeDiscardStringContext (readFile "${fresh}")
+  ''

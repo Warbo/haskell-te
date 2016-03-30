@@ -18,10 +18,4 @@ callPackage ./defs.nix {
      in fold addFile {}
              (filter (hasSuffix ".nix")
                      (builtins.attrNames (builtins.readDir dir)));
-
-  runScript = env: text: let hash   = unsafeDiscardStringContext (hashString "sha256" text);
-                             script = writeScript "script-${hash}" text;
-                             runner = runCommand  "runner-${hash}" env script;
-                          in readFile "${runner}";
-
 }
