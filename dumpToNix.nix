@@ -1,25 +1,23 @@
-{ stdenv, cabal2db, lib }:
+{ runScript, cabal2db }:
 pkgDir:
 
-with builtins;
-with lib;
-let hash = unsafeDiscardStringContext (hashString "sha256" "${pkgDir}");
-in stdenv.mkDerivation {
-  inherit pkgDir;
-  name        = "dump-to-nix-${hash}";
-  buildInputs = [ cabal2db ] ++ (if isDerivation pkgDir then [ pkgDir ] else []);
+runScript {
+    inherit pkgDir;
+    buildInputs = [ cabal2db ];
 
-  # Required for calling nix-shell during build
-  NIX_REMOTE = "daemon";
-  NIX_PATH   = builtins.getEnv "NIX_PATH";
-  HOME=builtins.getEnv "HOME";
+    # Required for calling nix-shell during build
+    NIX_REMOTE = "daemon";
+    NIX_PATH   = builtins.getEnv "NIX_PATH";
 
-  # Copy the pkgDir to the store and run dump-package
-  builder = builtins.toFile "dump-to-nix-builder-${hash}" ''
-    source "$stdenv/setup"
+    # Allows ~/.nixpkgs to be used during debug
+    HOME=builtins.getEnv "HOME";
+  }
+  ''
     cp -rv "$pkgDir" ./pkgDir
     chmod +w -R pkgDir
 
-    dump-package "$(readlink -f pkgDir)" > "$out"
-  '';
-}
+    dump-package "$(readlink -f pkgDir)" > dump.json
+
+    RESULT=$(nix-store --add dump.json)
+    printf '%s' "$RESULT" > "$out"
+  ''
