@@ -1,10 +1,7 @@
-defs: with defs;
-
-pkgName:
+defs: with defs; pkgName:
 
 let asts    = downloadAndDump pkgName;
-    counter = writeScript "counter" ''
+    count   = runScript { buildInputs = [ jq ]; } ''
         jq -r 'length' < "${asts}" > "$out"
       '';
-    count   = runCommand "count" { buildInputs = [ jq ]; } counter;
- in fromJSON (readFile "${count}") > 0
+ in fromJSON count > 0
