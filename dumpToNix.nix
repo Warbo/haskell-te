@@ -1,9 +1,9 @@
-{ runScript, scripts }:
+{ runScript, c2db-scripts }:
 pkgDir:
 
 runScript {
     inherit pkgDir;
-    buildInputs = [ scripts ];
+    buildInputs = [ c2db-scripts ];
 
     # Required for calling nix-shell during build
     NIX_REMOTE = "daemon";

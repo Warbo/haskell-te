@@ -1,7 +1,7 @@
 { stdenv, haskellPackages, nix, jq, lib, runCommand, writeScript, doCheck ? true }:
 
 rec {
-  scripts         = import ./scripts.nix {
+  c2db-scripts    = import ./scripts.nix {
                       inherit stdenv nix jq doCheck;
                       inherit (haskellPackages) cabal-install; };
 
@@ -13,7 +13,7 @@ rec {
                       inherit (haskellPackages) cabal-install; };
 
   dumpToNix       = import ./dumpToNix.nix       {
-                      inherit runScript scripts;               };
+                      inherit runScript c2db-scripts;          };
 
   downloadAndDump = import ./downloadAndDump.nix {
                       inherit dumpToNix downloadToNix;         };
