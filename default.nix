@@ -1,28 +1,18 @@
-{ stdenv, jq, getDeps, utillinux, nix }:
+{ stdenv, jq, getDeps, utillinux, nix, cabal2db, doCheck ? true }:
 
-stdenv.mkDerivation {
-  name = "annotatedb";
+with cabal2db;
+cabal2db // rec {
+  adb-scripts     = import ./scripts.nix         {
+                      inherit stdenv jq getDeps utillinux nix doCheck; };
+  annotateAsts    = import ./annotateAsts.nix    {
+                      inherit stdenv adb-scripts;                      };
+  runTypes        = import ./runTypes.nix        {
+                      inherit stdenv adb-scripts jq;                   };
+  annotate        = import ./annotate.nix        {
+                      inherit stdenv adb-scripts jq;                   };
+  dumpAndAnnotate = import ./dumpAndAnnotate.nix {
+                      inherit downloadAndDump;                         };
 
-  # Exclude .git and test-data from being imported into the Nix store
-  src = builtins.filterSource (path: type:
-    baseNameOf path != ".git" &&
-    baseNameOf path != "test-data") ./.;
-
-  propagatedBuildInputs = [ jq getDeps utillinux nix ];
-
-  NIX_REMOTE = "daemon";
-  NIX_PATH   = builtins.getEnv "NIX_PATH";
-  doCheck    = builtins.getEnv "NIX_DO_CHECK" != "0";
-  checkPhase = ''
-    ./test.sh
-  '';
-
-  installPhase = ''
-    mkdir -p "$out/bin"
-    for FILE in annotateAsts annotateDb getArities getDeps getTypes runTypes tagAsts
-    do
-        cp -v "$FILE" "$out/bin/"
-        chmod +x "$out/bin"
-    done
-  '';
+  assertMsg       = cond: msg:
+                      cond || builtins.trace msg (assert cond; cond);
 }

@@ -1,7 +1,17 @@
 #! /usr/bin/env nix-shell
 #! nix-shell -i bash -p jq getDeps
 
+set -o pipefail
+
 BASE=$(dirname "$0")
+
+# Using "exit" will only stop the current sub-shell. To stop the whole script,
+# we use "trap" to watch for a particular exit code (arbitrarily chosen as 77)
+# and propagate it up to kill the whole script.
+# See http://unix.stackexchange.com/a/48550/63735
+
+set -E
+trap '[ "$?" -ne 77 ] || exit 77' ERR
 
 # Assertion functions
 
@@ -11,9 +21,8 @@ function msg {
 
 function fail {
     # Unconditional failure
-    [[ "$#" -eq 0 ]] || msg "FAIL: $*"
-    CODE=1
-    return 1
+    msg "FAIL: $*"
+    exit 77
 }
 
 function assertNotEmpty {
@@ -91,18 +100,58 @@ EOF
 
 # Data generators
 
+function nixed {
+    # 'nixed foo bar baz' will call 'foo' from defs-default.nix with arguments
+    # '"bar"' and '"baz"'
+    NIXED_FUNCTION="$1"
+    shift
+
+    NIXED_ARGS=$(printf '"%s" ' "$@")
+    NIXED_EXPR="(import ./defs-default.nix).$NIXED_FUNCTION $NIXED_ARGS"
+
+    # Yo dawg, I heard you like tests, so we put a call to this test suite in
+    # the annotatedb installer, and calls to the annotatedb installer in this
+    # test suite, so you can test while you test.
+    # Since infinite recursion can take a while, we limit ourselves to one
+    # invocation using NIX_DO_CHECK=0
+    NIX_DO_CHECK=0 nix-build --no-out-link -E "$NIXED_EXPR" ||
+        fail "Error building '$NIXED_EXPR'"
+}
+
+function output {
+    cat "$1" || fail "Couldn't dump contents of '$1'"
+}
+
+function getRawAstsFile {
+    RAWASTSFILE_DUMP=$(nixed downloadAndDump "$1")
+    echo "$RAWASTSFILE_DUMP/dump.json"
+}
+
+function getRawDataFile {
+    RAWDATAFILE_ASTS=$(getRawAstsFile "$1")
+    RAWDATAFILE_TYPES=$(nixed runTypes "$RAWDATAFILE_ASTS" "$1")
+    echo "$RAWDATAFILE_TYPES/typed.json"
+}
+
+function getFinalFile {
+    FINALFILE_ASTS=$(getRawAstsFile "$1") || fail
+    FINALFILE_ANNOTATED=$(nixed annotate "$FINALFILE_ASTS" "$1") || fail
+    echo "$FINALFILE_ANNOTATED/annotated.json"
+}
+
 function getRawAsts {
-    DUMPDIR=$(NIX_DO_CHECK=0 nix-build --no-out-link -E \
-      "(import ./defs-default.nix).downloadAndDump \"$1\"") ||
-        fail "Couldn't get raw ASTs for '$1'"
-    DUMPJSON="$DUMPDIR/dump.json"
-    [[ -f "$DUMPJSON" ]] || fail "Got no '$DUMPJSON' for '$1'"
-    cat "$DUMPJSON"
+    RAWASTS_FILE=$(getRawAstsFile "$1") || fail
+    output "$RAWASTS_FILE"
 }
 
 function getRawData {
-    [[ -e "$BASE/runTypes" ]] || fail "Couldn't find runTypes in '$BASE'"
-    getRawAsts "$1" | "$BASE/runTypes" "$1"
+    RAWDATA_FILE=$(getRawDataFile "$1") || fail
+    output "$RAWDATA_FILE"
+}
+
+function getFinal {
+    FINAL_FILE=$(getFinalFile "$1") || fail
+    output "$FINAL_FILE"
 }
 
 function getTypeCmd {
@@ -151,11 +200,6 @@ function getDeps {
     getAsts "$1" | "$BASE/getDeps"
 }
 
-function getFinal {
-    [[ -e "$BASE/annotateDb" ]] || fail "Couldn't find annotateDb in '$BASE'"
-    getRawAsts "$1" | "$BASE/annotateDb" "$1"
-}
-
 # Tests
 
 function pkgTestGetRawData {
@@ -196,6 +240,12 @@ function pkgTestGetTypeTagged {
 
 function pkgTestGetAsts {
     getAsts        "$1" | assertJsonNotEmpty "Couldn't get ASTs from '$1'"
+}
+
+function pkgTestRawAstsCached {
+    # Prime the cache
+    getRawAsts "$1" > /dev/null
+    getRawAsts "$1" 2>&1 > /dev/null | grep
 }
 
 function pkgTestAstFields {
@@ -262,19 +312,12 @@ function pkgTestDepPackagesSeparateFromVersions {
 }
 
 function pkgTestFinalHasAllTags {
+    HASTAGS_FINAL=$(getFinal "$1")
     for FIELD in package module name ast type arity dependencies quickspecable
     do
-        getFinal "$1" | allObjectsHave "$FIELD" ||
+        echo "$HASTAGS_FINAL" | allObjectsHave "$FIELD" ||
             fail "Annotated DB of '$1' is missing some '$FIELD'"
     done
-}
-
-function testTagging {
-    INPUT1='[{"name": "n1", "module": "M1"}, {"name": "n2", "module": "M2"}]'
-    INPUT2='[{"name": "n2", "module": "M2", "foo": "bar"}]'
-    RESULT=$(echo "$INPUT1" | "$BASE/tagAsts" <(echo "$INPUT2") "{}")
-    TYPE=$(echo "$RESULT" | jq 'type')
-    [[ "x$TYPE" == 'x"array"' ]] || fail "tagAsts gave '$TYPE' not array"
 }
 
 # Test invocation
@@ -303,16 +346,15 @@ function runTest {
     # stdout
     read -ra CMD <<<"$@" # Re-parse our args to split packages from functions
     PTH=$(echo "$TESTDIR/$*" | sed 's/ /_/g')
+    msg "Logging to '$PTH'"
+
     traceTest "${CMD[@]}" 2>> "$PTH" || {
         cat "$PTH" 1>&2
-        fail "$* failed"
+        fail "$*"
     }
 }
 
 function runTests {
-    # Overall script exit code
-    CODE=0
-
     # Handle a regex, if we've been given one
     if [[ -z "$1" ]]
     then
@@ -324,18 +366,13 @@ function runTests {
     while read -r test
     do
         msg "Running test '$test'"
+
         # $test is either empty, successful or we're exiting with an error
-        [[ -z "$test" ]] || runTest "$test" || CODE=1
+        [[ -z "$test" ]] || runTest "$test"
+        [[ "$?" -eq 0 ]] || fail "FAIL: $test"
     done < <(echo "$TESTS")
 
-    if [[ "$CODE" -eq 0 ]]
-    then
-        msg "All tests passed"
-    else
-        msg "Tests failed"
-    fi
-
-    return "$CODE"
+    msg "All tests passed"
 }
 
 TESTDIR=$(mktemp -d '/tmp/annotatedb-test-XXXXX')

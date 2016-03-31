@@ -1,2 +1,2 @@
 with import <nixpkgs> {};
-callPackage ./defs.nix {}
+(callPackage ./default.nix { doCheck = false; })
