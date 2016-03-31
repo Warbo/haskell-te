@@ -1,23 +1,11 @@
-{ stdenv, adb-scripts, jq }:
+{ runScript, adb-scripts, jq, withNix }:
 asts: pkgName:
 
-let hash = builtins.hashString "sha256" asts;
-in stdenv.mkDerivation {
-  inherit asts pkgName;
-  name        = "typed-asts-${hash}";
-  buildInputs = [ adb-scripts jq ];
+runScript (withNix { inherit asts pkgName; buildInputs = [ adb-scripts jq ]; })
+          ''
+            set -e
+            runTypes "$pkgName" < "$asts" > typed.json
 
-  # Required for calling nix-shell during build
-  NIX_REMOTE = "daemon";
-  NIX_PATH   = builtins.getEnv "NIX_PATH";
-
-  # Download pkgName to the store
-  builder = builtins.toFile "run-types-builder" ''
-    source "$stdenv/setup"
-
-    runTypes "$pkgName" < "$asts" > typed.json || exit 1
-
-    RESULT=$(nix-store --add typed.json)
-    printf '%s' "$RESULT" > "$out"
-  '';
-}
+            RESULT=$(nix-store --add typed.json)
+            printf '%s' "$RESULT" > "$out"
+          ''

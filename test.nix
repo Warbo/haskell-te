@@ -6,6 +6,6 @@ let pkgs = import <nixpkgs> {};
 # Import all *.nix files from ./tests, pass defs to each and assert that they
 # return true
 let tests   = importDir ./tests;
-    runTest = name: let result = tests."${name}" defs;
-                     in trace "Running test '${name}'" (assert result; result);
+    runTest = name: assertMsg (tests."${name}" defs)
+                              "Running test '${name}'";
  in all runTest (attrNames tests)
