@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 
 BASE=$(dirname "$(dirname "$(readlink -f "$0")")")
+
+# shellcheck disable=SC2034
 NAME=$(basename "$0")
+
+# shellcheck source=../scripts/common.sh
 source "$BASE/scripts/common.sh"
 
 for CMD in build-env mlspec-bench

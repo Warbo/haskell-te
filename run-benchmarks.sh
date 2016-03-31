@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 BASE=$(dirname "$(readlink -f "$0")")
+# shellcheck source=scripts/common.sh
 source "$BASE/scripts/common.sh"
 
 requireCmd nix-env

@@ -2,13 +2,15 @@
 
 BASE=$(dirname "$(dirname "$(readlink -f "$0")")")
 NAME=$(basename "$0")
+
+# shellcheck source=../scripts/common.sh
 source "$BASE/scripts/common.sh"
 
 [[ -n "$1" ]] || abort "$NAME requires a package directory"
 
 [[ -d "$1" ]] || abort "Directory '$1' not found"
 
-cd "$1"
+cd "$1" || abort "Couldn't cd to '$1'"
 
 for CMD in cabal nix-shell cabal2nix dump-package
 do
@@ -26,8 +28,6 @@ export BENCHMARK_COMMAND
 # Use jq to wrap $1 in quotes, escape any nested quotes, etc.
 BENCHMARK_ARGS="[$(echo "$1" | jq -R '.')]"
 export BENCHMARK_ARGS
-
-CLEAN=$(echo "$PKG" | tr -cd '[:alnum:]')
 
 BENCH_DIR="$CACHE/benchmarks/dump/$PKG"
 export BENCH_DIR

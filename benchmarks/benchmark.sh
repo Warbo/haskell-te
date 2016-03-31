@@ -3,7 +3,11 @@
 # Benchmark ML4HS compared to GHC and QuickSpec
 
 BASE=$(dirname "$(dirname "$(readlink -f "$0")")")
+
+# shellcheck disable=SC2034
 NAME=$(basename "$0")
+
+# shellcheck source=../scripts/common.sh
 source "$BASE/scripts/common.sh"
 
 function unfetchable {
@@ -67,17 +71,11 @@ function pkgInList {
 COUNT=0
 while read -r LINE
 do
-    # Stop if disk is filling
-    SPACE=$(df -h | grep /dev/disk/by-label/nixos | sed -e 's@  *@ @g' | cut -d ' ' -f 5 | sed -e 's@%@@g')
-    info "Disk is $SPACE percent full"
-    [[ "$SPACE" -gt 98 ]] && abort "Disk full, stopping"
-
     [[ "$COUNT" -lt "$REPETITIONS" ]] || {
         info "Successfully processed '$COUNT' packages; stopping"
         break
     }
     PKG=$(echo "$LINE" | cut -f 1)
-    VERSION=$(echo "$LINE" | cut -f 2)
 
     # Skip packages which we've already processed
     SKIP=""

@@ -4,6 +4,8 @@
 
 BASE=$(dirname "$(dirname "$(readlink -f "$0")")")
 NAME=$(basename "$0")
+
+# shellcheck source=../scripts/common.sh
 source "$BASE/scripts/common.sh"
 
 [[ -n "$1" ]] || abort "$NAME requires a package directory"
