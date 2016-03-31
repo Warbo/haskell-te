@@ -1,9 +1,9 @@
-{ runScript, cabal2db }:
+{ runScript, scripts }:
 pkgDir:
 
 runScript {
     inherit pkgDir;
-    buildInputs = [ cabal2db ];
+    buildInputs = [ scripts ];
 
     # Required for calling nix-shell during build
     NIX_REMOTE = "daemon";

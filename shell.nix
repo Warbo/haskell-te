@@ -1,2 +1,1 @@
-with import <nixpkgs> {};
-callPackage ./. {}
+(import ./defs-default.nix).scripts

@@ -1,37 +1,23 @@
-{ stdenv, nix, haskellPackages, jq, doCheck ? true }:
+{ stdenv, haskellPackages, nix, jq, lib, runCommand, writeScript, doCheck ? true }:
 
-stdenv.mkDerivation {
-  name = "cabal2db";
+rec {
+  scripts         = import ./scripts.nix {
+                      inherit stdenv nix jq doCheck;
+                      inherit (haskellPackages) cabal-install; };
 
-  # Exclude .git from being imported into the Nix store
-  src = builtins.filterSource (path: type:
-    baseNameOf path != ".git") ./.;
+  runScript       = import ./runScript.nix {
+                      inherit lib writeScript runCommand;      };
 
-  propagatedBuildInputs = [ nix haskellPackages.cabal-install jq ];
+  downloadToNix   = import ./downloadToNix.nix   {
+                      inherit runScript nix;
+                      inherit (haskellPackages) cabal-install; };
 
-  NIX_REMOTE = "daemon";
-  NIX_PATH = builtins.getEnv "NIX_PATH";
-  inherit doCheck;
-  checkPhase = ''
-    echo "Running $PWD/test.sh" 1>&2
-    ./test.sh
-  '';
+  dumpToNix       = import ./dumpToNix.nix       {
+                      inherit runScript scripts;               };
 
-  installPhase = ''
-    mkdir -p "$out/bin"
+  downloadAndDump = import ./downloadAndDump.nix {
+                      inherit dumpToNix downloadToNix;         };
 
-    for CMD in dump-format dump-hackage dump-package dump-package-env \
-               dump-package-name runAstPlugin
-    do
-        cp -v "$CMD" "$out/bin/"
-    done
-
-    mkdir -p "$out/lib"
-    for F in *.nix
-    do
-        cp -v "$F" "$out/lib/"
-    done
-
-    chmod +x "$out/bin/"*
-  '';
+  importDir       = import ./importDir.nix {
+                      inherit lib;                             };
 }
