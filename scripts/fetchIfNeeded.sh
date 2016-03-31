@@ -2,6 +2,8 @@
 
 BASE=$(dirname "$(dirname "$(readlink -f "$0")")")
 NAME=$(basename "$0")
+
+# shellcheck source=common.sh
 source "$BASE/scripts/common.sh"
 
 function findInCache {

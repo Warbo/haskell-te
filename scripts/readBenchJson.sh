@@ -2,7 +2,11 @@
 #! nix-shell -i bash -p jq gnuplot
 
 BASE=$(dirname "$(dirname "$(readlink -f "$0")")")
+
+# shellcheck disable=SC2034
 NAME=$(basename "$0")
+
+# shellcheck source=common.sh
 source "$BASE/scripts/common.sh"
 
 shopt -s nullglob

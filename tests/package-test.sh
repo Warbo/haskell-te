@@ -8,7 +8,7 @@ BASE=$(dirname "$(dirname "$(readlink -f "$0")")")
 # Helper functions
 
 function msg {
-    echo -e "$1" >> /dev/null
+    echo -e "$1" >> /dev/stderr
 }
 
 function fail {
@@ -53,7 +53,9 @@ function testShellScripts {
 function runTests {
     while read -r TEST
     do
-        echo "TEST: $TEST"
+        msg "Running '$TEST'"
+        "$TEST"
+        msg "PASS: $TEST"
     done < <(declare -F | cut -d ' ' -f 3 | grep "^test")
 }
 

@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 BASE=$(dirname "$(dirname "$(readlink -f "$0")")")
+
+# shellcheck source=common.sh
 source "$BASE/scripts/common.sh"
 
 info "Ensuring we have a Hackage list"

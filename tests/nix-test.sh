@@ -3,6 +3,8 @@
 # Helpers
 
 BASE=$(dirname "$(dirname "$(readlink -f "$0")")")
+
+# shellcheck source=../scripts/common.sh
 source "$BASE/scripts/common.sh"
 
 function fail {

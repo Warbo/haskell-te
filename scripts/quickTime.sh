@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
 BASE=$(dirname "$(dirname "$(readlink -f "$0")")")
+
+# shellcheck source=common.sh
 source "$BASE/scripts/common.sh"
 
 # Turn our arguments into an array, if we have any
@@ -12,7 +14,7 @@ else
     eval "ARGARRAY=( $(echo "$BENCHMARK_ARGS" | jq -r '@sh') )"
 fi
 
-info "Quick benchmarking '$BENCHMARK_COMMAND' '${ARGARRAY[@]}'"
+info "Quick benchmarking '$BENCHMARK_COMMAND' '${ARGARRAY[*]}'"
 
 CLEAN_ARGS=$(echo "$BENCHMARK_ARGS" | tr -dc '[:alnum:]')
 
