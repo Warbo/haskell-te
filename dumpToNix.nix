@@ -1,23 +1,15 @@
-{ runScript, c2db-scripts }:
+{ runScript, c2db-scripts, withNix }:
 pkgDir:
 
-runScript {
-    inherit pkgDir;
-    buildInputs = [ c2db-scripts ];
+assert builtins.pathExists pkgDir;
 
-    # Required for calling nix-shell during build
-    NIX_REMOTE = "daemon";
-    NIX_PATH   = builtins.getEnv "NIX_PATH";
-
-    # Allows ~/.nixpkgs to be used during debug
-    HOME=builtins.getEnv "HOME";
-  }
+runScript (withNix { inherit pkgDir; buildInputs = [ c2db-scripts ]; })
   ''
-    cp -rv "$pkgDir" ./pkgDir
-    chmod +w -R pkgDir
+    cp -r "$pkgDir" ./pkgDir || exit 1
+    chmod +w -R pkgDir       || exit 1
 
-    dump-package "$(readlink -f pkgDir)" > dump.json
+    HOME="$USER_HOME" dump-package "$PWD/pkgDir" > dump.json || exit 1
 
-    RESULT=$(nix-store --add dump.json)
+    RESULT=$(nix-store --add dump.json) || exit 1
     printf '%s' "$RESULT" > "$out"
   ''

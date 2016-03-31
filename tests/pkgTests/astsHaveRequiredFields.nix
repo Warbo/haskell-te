@@ -1,6 +1,6 @@
 defs: with defs; pkgName:
 
-let asts   = downloadAndDump pkgName;
+let asts   = dumpedPackages."${pkgName}";
     result = runScript { buildInputs = [ jq ]; } ''
         RESULTS="{}"
         for FIELD in package module name ast
@@ -17,6 +17,6 @@ let asts   = downloadAndDump pkgName;
         done
         echo "$RESULTS" > "$out"
       '';
-    fields = fromJSON result;
+    fields     = fromJSON result;
     fieldFound = f: fields."${f}";
  in all fieldFound (attrNames fields)
