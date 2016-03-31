@@ -283,15 +283,6 @@ function pkgTestDepPackagesSeparateFromVersions {
     return 0
 }
 
-function pkgTestFinalHasAllTags {
-    HASTAGS_FINAL=$(getFinal "$1")
-    for FIELD in package module name ast type arity dependencies quickspecable
-    do
-        echo "$HASTAGS_FINAL" | allObjectsHave "$FIELD" ||
-            fail "Annotated DB of '$1' is missing some '$FIELD'"
-    done
-}
-
 # Test invocation
 
 function traceTest {

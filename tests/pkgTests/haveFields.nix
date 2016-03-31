@@ -24,4 +24,5 @@ let asts      = annotatedPackages."${pkgName}";
       "type"
       "arity"
       "quickspecable"
+      "dependencies"
     ]
