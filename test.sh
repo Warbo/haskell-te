@@ -202,10 +202,6 @@ function getDeps {
 
 # Tests
 
-function pkgTestGetRawData {
-    getRawData     "$1" | assertJsonNotEmpty "Couldn't get raw data from '$1'"
-}
-
 function pkgTestGetTypeCmd {
     getTypeCmd     "$1" | assertNotEmpty "Couldn't get type command from '$1'"
 }

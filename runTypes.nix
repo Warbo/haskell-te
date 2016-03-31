@@ -1,11 +1,11 @@
-{ stdenv, annotatedb, jq }:
+{ stdenv, adb-scripts, jq }:
 asts: pkgName:
 
 let hash = builtins.hashString "sha256" asts;
 in stdenv.mkDerivation {
   inherit asts pkgName;
   name        = "typed-asts-${hash}";
-  buildInputs = [ annotatedb jq ];
+  buildInputs = [ adb-scripts jq ];
 
   # Required for calling nix-shell during build
   NIX_REMOTE = "daemon";
@@ -15,7 +15,9 @@ in stdenv.mkDerivation {
   builder = builtins.toFile "run-types-builder" ''
     source "$stdenv/setup"
 
-    mkdir -p "$out"
-    runTypes "$pkgName" < "$asts" > "$out/typed.json" || exit 1
+    runTypes "$pkgName" < "$asts" > typed.json || exit 1
+
+    RESULT=$(nix-store --add typed.json)
+    printf '%s' "$RESULT" > "$out"
   '';
 }
