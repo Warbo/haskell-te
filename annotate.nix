@@ -1,21 +1,9 @@
-{ stdenv, annotatedb, jq }:
+{ runScript, adb-scripts, jq, withNix }:
 asts: pkgName:
 
-let hash = builtins.hashString "sha256" asts;
-in stdenv.mkDerivation {
-  inherit asts pkgName;
-  name        = "annotated-asts-${hash}";
-  buildInputs = [ annotatedb ];
-
-  # Required for calling nix-shell during build
-  NIX_REMOTE = "daemon";
-  NIX_PATH   = builtins.getEnv "NIX_PATH";
-
-  # Download pkgName to the store
-  builder = builtins.toFile "annotate-asts-builder" ''
-    source "$stdenv/setup"
-
-    mkdir -p "$out"
-    annotateDb "$pkgName" < "$asts" > "$out/annotated.json" || exit 1
-  '';
-}
+runScript (withNix { buildInputs = [ adb-scripts ]; }) ''
+    set -e
+    annotateDb "${pkgName}" < "${asts}" > annotated.json
+    RESULT=$(nix-store --add annotated.json)
+    printf '%s' "$RESULT" > "$out"
+  ''

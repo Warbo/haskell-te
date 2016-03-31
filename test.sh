@@ -154,14 +154,6 @@ function getFinal {
     output "$FINAL_FILE"
 }
 
-function getTypeCmd {
-    getRawData "$1" | jq -r '.cmd'
-}
-
-function getScopeCmd {
-    getRawData "$1" | jq -r '.scopecmd'
-}
-
 function getTypeResults {
     getRawData "$1" | jq -r '.result'
 }
@@ -201,22 +193,6 @@ function getDeps {
 }
 
 # Tests
-
-function pkgTestGetTypeCmd {
-    getTypeCmd     "$1" | assertNotEmpty "Couldn't get type command from '$1'"
-}
-
-function pkgTestGetScopeCmd {
-    getScopeCmd    "$1" | assertNotEmpty "Couldn't get scoped command from '$1'"
-}
-
-function pkgTestGetTypeResults {
-    getTypeResults "$1" | assertNotEmpty "Couldn't get type info from '$1'"
-}
-
-function pkgTestGetScopeResult {
-    getScopeResult "$1" | assertNotEmpty "Couldn't get scoped type info from '$1'"
-}
 
 function pkgTestGetArities {
     getArities     "$1" | assertJsonNotEmpty "Couldn't get arities from '$1'"
