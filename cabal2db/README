@@ -1,0 +1,62 @@
+Build a database of Haskell syntax trees from Cabal packages (local or remote)
+
+# Files #
+
+## dump-hackage ##
+
+Downloads a given package name from Hackage, and runs `dump-package` on it.
+
+Usage: `dump-hackage my-package-name`
+
+## dump-package ##
+
+Takes a directory containing a Haskell package as an argument, sets up a GHC environment with all of its dependencies and runs `runAstPlugin`.
+
+Usage: `dump-package path/to/package/`
+
+## runAstPlugin ##
+
+Extracts ASTs from a Cabal package, by compiling it with a special GHC plugin. It's recommended to use `dump-package` rather than calling this directly, to ensure all of the correct dependencies are available.
+
+Usage: `runAstPlugin path/to/package/`
+
+## ghcWithPlugin.nix ##
+
+Instructions for the [Nix package manager](https://nixos.org/nix/) to set up an environment with all dependencies of a given Haskell package. For example, `nix-shell -E 'import ./ghcWithPlugin.nix "foo"'` will create a shell environment including the Nix package `haskellPackages.foo`, hence making that package and its dependencies available to GHC. If `haskellPackages.foo` doesn't exist, you can add it using Nix's override mechanism.
+
+## test.sh ##
+
+Test test suite for these tools. Accepts a regex as argument, to filter which tests are run. Functions beginning with `test` will be executed once, whilst functions beginning with `pkgTest` will be executed multiple times, with different package names.
+
+`test.sh` tries to test with a selection of popular Hackage packages. Before running any tests, these packages are downloaded and built, as a sanity check to make sure any errors we run into are our own and not due to broken external packages. Hence, problems in this phase will be reported, but do not cause the test suite to fail. This cannot be skipped by filtering.
+
+The tests themselves run `dump-hackage` and ensure the result is valid JSON.
+
+The test script can also be controlled using the following environment variables:
+
+`CABAL2DBTESTDIR`
+
+If set, this will be used as the path for storing data (command outputs, debug traces, etc.). If not given, a temporary directory will be created. For example:
+
+    CABAL2DBTESTDIR=/tmp/foo ./test.sh
+
+This will store data in `/tmp/foo/test-data`.
+
+    CABAL2DBTESTDIR=/tmp/bar ./test.sh
+    CABAL2DBTESTDIR=/tmp/bar ./test.sh
+
+This will run `./test.sh` twice. The intermediate results of the first run, stored in `/tmp/bar/test-data`, will be re-used by the second run, speeding up testing considerably.
+
+`CABAL2DBCLEANUP`
+
+If set, e.g. to `1`, tells `test.sh` to delete the `test-data` directory (and any temporary directories it made, if any) after it's finished. For example:
+
+    CABAL2DBCLEANUP=1 ./test.sh
+
+This will store intermediate results in a temporary directory, and delete that temp directory when it's finished.
+
+    CABAL2DBCLEANUP=1 CABAL2DBTESTDIR=/tmp/foo ./test.sh
+
+This will store intermediate results in `/tmp/foo/test-data`, and remove that directory (but not `/tmp/foo`) after it's finished.
+
+Specifying the same `CABAL2DBTESTDIR` across multiple invocation, without setting `CABAL2DBCLEANUP`, will cause the results of the first run to be re-used by subsequent tests.

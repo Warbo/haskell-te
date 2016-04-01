@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+set -e
+
+function msg {
+    echo -e "$1" 1>&2
+}
+
+function findPkgInDir {
+    # Look through the contents of $DIR for entries of the form $1-1.2.3
+    for D in "$DIR"/*
+    do
+        if basename "$D" | grep "^$1[-0-9\.]*\$" > /dev/null
+        then
+            basename "$D"
+            return 0
+        fi
+    done
+    return 1
+}
+
+if [[ -n "$XDG_CACHE_HOME" ]] && [[ -d "$XDG_CACHE_HOME" ]]
+then
+    # On many systems, 'mktemp -d' will use an in-memory filesystem, which will
+    # quickly fill up. To avoid that, we try to use XDG_CACHE_HOME instead.
+    DIR="$XDG_CACHE_HOME/cabal2db"
+    mkdir -p "$DIR"
+elif [[ -n "$HOME" ]] && [[ -d "$HOME" ]]
+then
+    # If $HOME exists, try falling back to the recommended ~/.cache directory
+    DIR="$HOME/.cache/cabal2db"
+    mkdir -p "$DIR"
+else
+    # If $HOME doesn't exist, we're probably a daemon. Use mktemp, in the hope
+    # that it's sane.
+    DIR=$(mktemp -d --tmpdir "cabal2db.XXXXX")
+fi
+
+msg "Storing packages in '$DIR'"
+
+BASE=$(dirname "$(readlink -f "$0")")
+
+[[ -e "$BASE/dump-package" ]] || {
+    msg "Did not find dump-package in '$BASE'"
+    exit 1
+}
+
+pushd "$DIR" > /dev/null
+for PKG in "$@"
+do
+    if PKGDIR=$(findPkgInDir "$PKG")
+    then
+        true
+    else
+        nix-shell --show-trace \
+                  -p haskellPackages.cabal-install \
+                  --run "cabal update; cabal get $PKG" 1>&2
+        PKGDIR=$(findPkgInDir "$PKG") || {
+            msg "Failed to get '$PKG', aborting"
+            exit 1
+        }
+    fi
+
+    PROJECT=$(readlink -f "$DIR/$PKGDIR")
+    msg "Dumping package $PROJECT"
+    "$BASE/dump-package" "$PROJECT"
+done
