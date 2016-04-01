@@ -1,6 +1,6 @@
-{ time, writeScript, bash, coreutils }:
+{ time, writeScript, bash, jq, coreutils, lib }:
 
-with builtins;
+with builtins; with lib;
 
 rec {
   lastEntry = writeScript "last-entry" ''
@@ -66,7 +66,7 @@ rec {
                      "report" : ($report | flatten(1))}'
   '';
 
-  # A faster benchmark, which performs one run using the 'time' command
+  # A fast benchmark, which performs one run using the 'time' command
   withTime = cmd: args: let shellArgs = map escapeShellArg args;
                             argStr    = concatStringsSep " " shellArgs;
     in writeScript "with-time" ''
@@ -75,13 +75,15 @@ rec {
         cat stderr 1>&2
         exit 1
       }
+
+      echo "Benchmarked '${cmd}' at '$(cat time)' seconds" 1>&2
+
       "${jq}/bin/jq" -n --arg     time "$(cat time)"     \
                         --arg     cmd  "${cmd}"          \
-                        --argjson args "${toJSON args}"  \
+                        --argjson args '${toJSON args}'  \
                         --arg     stdout "$(cat stdout)" \
                         --arg     stderr "$(cat stderr)" \
-                        '{"time"   : $time,
-                          "cmd"    : $cmd,
+                        '{"cmd"    : $cmd,
                           "args"   : $args,
                           "stdout" : $stdout,
                           "stderr" : $stderr,
