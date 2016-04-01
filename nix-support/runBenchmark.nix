@@ -70,10 +70,15 @@ rec {
       }
     done
 
+    # Cache results in the store, so we make better use of the cache and avoid
+    # sending huge strings into Nix
+    STDOUT=$(nix-store --add stdout)
+    STDERR=$(nix-store --add stderr)
+
     "${jq}/bin/jq" -n --arg       cmd    '${cmd}'         \
                       --argjson   args   '${toJSON args}' \
-                      --arg       stdout "$(cat stdout)"  \
-                      --arg       stderr "$(cat stderr)"  \
+                      --arg       stdout "$STDOUT"        \
+                      --arg       stderr "$STDERR"        \
                       --slurpfile report report.json      \
                       '{"cmd"    : $cmd,
                         "args"   : $args,
@@ -96,11 +101,16 @@ rec {
 
       echo "Benchmarked '${cmd}' at '$(cat time)' seconds" 1>&2
 
-      "${jq}/bin/jq" -n --arg     time "$(cat time)"     \
-                        --arg     cmd  "${cmd}"          \
-                        --argjson args '${toJSON args}'  \
-                        --arg     stdout "$(cat stdout)" \
-                        --arg     stderr "$(cat stderr)" \
+      # Cache results in the store, so we make better use of the cache and avoid
+      # sending huge strings into Nix
+      STDOUT=$(nix-store --add stdout)
+      STDERR=$(nix-store --add stderr)
+
+      "${jq}/bin/jq" -n --arg     time "$(cat time)"    \
+                        --arg     cmd  "${cmd}"         \
+                        --argjson args '${toJSON args}' \
+                        --arg     stdout "$STDOUT"      \
+                        --arg     stderr "$STDERR"      \
                         '{"cmd"    : $cmd,
                           "args"   : $args,
                           "stdout" : $stdout,

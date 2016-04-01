@@ -1,6 +1,7 @@
 { dumpToNix, runScript, gnutar, haskellPackages, lib, withNix }:
 with builtins; with lib;
 
+quick:
 let extract = tarball:
                 assert pathExists (unsafeDiscardStringContext tarball);
                 runScript (withNix {
@@ -20,7 +21,7 @@ let extract = tarball:
                             done
                             exit 1
                           '';
-    dumpPkg = src: dumpToNix (extract "${src}");
+    dumpPkg = src: dumpToNix { inherit quick; pkgDir = extract "${src}"; };
     addDump = pkg: old: old // builtins.listToAttrs [{
                                  name  = pkg;
                                  value = dumpPkg "${haskellPackages."${pkg}".src}";

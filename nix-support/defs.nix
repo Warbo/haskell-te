@@ -6,13 +6,21 @@ rec {
   inherit (import ../cabal2db {
              inherit stdenv haskellPackages nix gnutar jq lib runCommand
                      writeScript;
-          }) c2db-scripts runScript downloadToNix dumpToNix downloadAndDump importDir assertMsg dumpedPackages withNix;
+          }) c2db-scripts runScript downloadToNix downloadAndDump importDir assertMsg withNix;
 
   inherit (import ./runBenchmark.nix {
              inherit bash coreutils explore-theories jq lib
                      mlspec-bench time writeScript;
            }) lastEntry withCriterion withTime
               benchmark;
+
+  inherit (import ./benchmarkOutputs.nix {
+             inherit dumpToNix gnutar haskellPackages lib runScript withNix;
+          }) dumpTimesQuick dumpTimesSlow quickDumpedPackages slowDumpedPackages;
+
+  dumpToNix = import ./dumpToNix.nix {
+    inherit benchmark c2db-scripts parseJSON runScript withNix;
+  };
 
   testPackageNames     = [ "list-extras" ];
 
