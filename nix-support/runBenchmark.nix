@@ -1,4 +1,4 @@
-{ time, writeScript, bash, jq, coreutils, lib }:
+{ time, writeScript, bash, jq, coreutils, lib, explore-theories, mlspec-bench }:
 
 with builtins; with lib;
 
@@ -27,6 +27,12 @@ rec {
     #!${bash}/bin/bash
     set -e
 
+    # Stop Perl (i.e. Nix) complaining about unset locale variables
+    export LOCALE_ARCHIVE=/run/current-system/sw/lib/locale/locale-archive
+
+    # Force Haskell to use UTF-8, or else we get I/O errors
+    export LANG="en_US.UTF-8"
+
     # Check if we need to provide any input; to prevent waiting for user input
     if [ -t 0 ]
     then
@@ -35,35 +41,45 @@ rec {
         INPUT=$(cat)
     fi
 
+    # Set up environment for mlspec-bench
     mkdir -p outputs
     export BENCH_DIR="$PWD"
     export BENCHMARK_COMMAND="${cmd}"
     export BENCHMARK_ARGS='${toJSON args}'
 
+    echo "Benchmarking '${cmd}'" 1>&2
+
     echo "$INPUT" | "${explore-theories}/bin/build-env"  \
                       "${mlspec-bench}/bin/mlspec-bench" \
-                        --template json --output report.json
+                        --template json --output report.json 1> bench.stdout \
+                                                             2> bench.stderr
+
+    cat bench.stdout 1>&2
 
     for F in stdout stderr
     do
-      [[ -f outputs/*."$F" ]] || {
-        # */
+      FOUND=0
+      while read -r FILE
+      do
+        FOUND=1
+        "${lastEntry}" "$FILE" > "./$F"
+      done < <(find ./outputs -name "*.$F")
+      [[ "$FOUND" -eq 1 ]] || {
         echo "Got no $F from mlspec-bench" 1>&2
         exit 1
       }
-      "${lastEntry}" outputs/*."$F" > "./$F" # */
     done
 
-    "${jq}/bin/jq" --arg       cmd    '${cmd}'         \
-                   --argjson   args   '${toJSON args}' \
-                   --arg       stdout "$(cat stdout)"  \
-                   --arg       stderr "$(cat stderr)"  \
-                   --slurpfile report report.json      \
-                   '{"cmd"    : $cmd,
-                     "args"   : $args,
-                     "stdout" : $stdout,
-                     "stderr" : $stderr,
-                     "report" : ($report | flatten(1))}'
+    "${jq}/bin/jq" -n --arg       cmd    '${cmd}'         \
+                      --argjson   args   '${toJSON args}' \
+                      --arg       stdout "$(cat stdout)"  \
+                      --arg       stderr "$(cat stderr)"  \
+                      --slurpfile report report.json      \
+                      '{"cmd"    : $cmd,
+                        "args"   : $args,
+                        "stdout" : $stdout,
+                        "stderr" : $stderr,
+                        "report" : ($report | flatten(1))}'
   '';
 
   # A fast benchmark, which performs one run using the 'time' command

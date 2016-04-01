@@ -1,27 +1,40 @@
 # Custom definitions
-{ callPackage, haskellPackages, buildEnv, real }:
-let cabal2db = callPackage ../packages/cabal2db {};
+{ bash, buildEnv, coreutils, gnutar, haskellPackages, jq, lib, nix, real,
+  runCommand, stdenv, time, writeScript }:
+let cabal2db = import ../packages/cabal2db {
+                 inherit stdenv haskellPackages nix gnutar jq lib runCommand writeScript;
+               };
+in with cabal2db;
 
-in cabal2db // rec {
-  inherit (callPackage ./runBenchmark.nix {}) lastEntry withCriterion withTime
+cabal2db // rec {
+  inherit (import ./runBenchmark.nix {
+             inherit bash coreutils explore-theories jq lib
+                     mlspec-bench time writeScript;
+           }) lastEntry withCriterion withTime
                                               benchmark;
 
-  annotatedb           = callPackage ../packages/annotatedb       {
+  parseJSON            = import ./parseJSON.nix {
+                           inherit jq runScript writeScript;
+                         };
+
+  annotatedb           = import ../packages/annotatedb       {
                            inherit getDeps;
                          };
 
-  explore-theories     = callPackage ../packages/explore-theories {};
-  ml4hs                = callPackage ../packages/ml4hs            {};
-  dumpToNix            = callPackage ./dumpToNix.nix              {
+  explore-theories     = import ../packages/explore-theories {
+                           inherit stdenv;
+                         };
+  ml4hs                = import ../packages/ml4hs            {};
+  dumpToNix            = import ./dumpToNix.nix              {
                            inherit cabal2db;
                          };
-  annotateAsts         = callPackage ./annotateAsts.nix           {
+  annotateAsts         = import ./annotateAsts.nix           {
                            inherit annotatedb;
                          };
-  dumpAndAnnotate      = callPackage ./dumpAndAnnotate.nix        {
+  dumpAndAnnotate      = import ./dumpAndAnnotate.nix        {
                            inherit dumpToNix annotateAsts;
                          };
-  recurrent-clustering = callPackage ../packages/recurrent-clustering {
+  recurrent-clustering = import ../packages/recurrent-clustering {
                            inherit order-deps ML4HSFE annotatedb;
                          };
 
