@@ -1,17 +1,24 @@
 # Custom definitions
 { bash, buildEnv, coreutils, gnutar, haskellPackages, jq, lib, nix, real,
   runCommand, stdenv, time, writeScript }:
-let cabal2db = import ../packages/cabal2db {
-                 inherit stdenv haskellPackages nix gnutar jq lib runCommand writeScript;
-               };
-in with cabal2db;
 
-cabal2db // rec {
+rec {
+  inherit (import ../cabal2db {
+             inherit stdenv haskellPackages nix gnutar jq lib runCommand
+                     writeScript;
+          }) c2db-scripts runScript downloadToNix dumpToNix downloadAndDump importDir assertMsg dumpedPackages withNix;
+
   inherit (import ./runBenchmark.nix {
              inherit bash coreutils explore-theories jq lib
                      mlspec-bench time writeScript;
            }) lastEntry withCriterion withTime
-                                              benchmark;
+              benchmark;
+
+  testPackageNames     = [ "list-extras" ];
+
+  totalTimes           = import ./totalTimes.nix {
+                           inherit haskellPackages lib;
+                         };
 
   parseJSON            = import ./parseJSON.nix {
                            inherit jq runScript writeScript;
@@ -25,9 +32,7 @@ cabal2db // rec {
                            inherit stdenv;
                          };
   ml4hs                = import ../packages/ml4hs            {};
-  dumpToNix            = import ./dumpToNix.nix              {
-                           inherit cabal2db;
-                         };
+
   annotateAsts         = import ./annotateAsts.nix           {
                            inherit annotatedb;
                          };
@@ -38,11 +43,12 @@ cabal2db // rec {
                            inherit order-deps ML4HSFE annotatedb;
                          };
 
+                         /*
   haskell-te = buildEnv {
     name = "haskell-te";
     paths = [
       # Our custom packages
-      annotatedb cabal2db explore-theories getDeps ML4HSFE mlspec-bench
+      annotatedb explore-theories getDeps ML4HSFE mlspec-bench
       mlspec order-deps recurrent-clustering ml4hs
 
       # Standard utilities we need
@@ -51,6 +57,7 @@ cabal2db // rec {
       real.utillinux
     ];
   };
+*/
 
   # Include our overridden Haskell packages
   inherit haskellPackages;

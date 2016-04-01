@@ -13,7 +13,6 @@ let result      = runScript (withNix {}) ''
       (assertField "stdout" "hello world")
       (assertField "cmd"    "echo")
       (assertField "args"   ["hello" "world"])
-      (assertMsg (jResult ? report) "Got report")
-      (assertMsg (isString (head jResult.report).reportAnalysis.anMean.estPoint)
-                 "Report has mean time")
+      (assertMsg (isString jResult.time.mean.estPoint)   "Got mean time")
+      (assertMsg (isString jResult.time.stddev.estPoint) "Got stddev")
     ]

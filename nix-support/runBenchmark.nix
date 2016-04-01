@@ -79,7 +79,9 @@ rec {
                         "args"   : $args,
                         "stdout" : $stdout,
                         "stderr" : $stderr,
-                        "report" : ($report | flatten(1))}'
+                        "time"   : {
+                          "mean"   : ($report[0][0].reportAnalysis.anMean),
+                          "stddev" : ($report[0][0].reportAnalysis.anStdDev)}}'
   '';
 
   # A fast benchmark, which performs one run using the 'time' command
@@ -103,9 +105,8 @@ rec {
                           "args"   : $args,
                           "stdout" : $stdout,
                           "stderr" : $stderr,
-                          "report" : [{"reportAnalysis" : {
-                                         "anMean"       : {
-                                           "estPoint"   : $time}}}]}'
+                          "time"   : {
+                            "mean" : {"estPoint": $time}}}'
     '';
   benchmark = quick: if quick then withTime else withCriterion;
 }
