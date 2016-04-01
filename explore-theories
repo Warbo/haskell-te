@@ -1,15 +1,19 @@
 #!/usr/bin/env bash
 
+function msg {
+    echo -e "$*" 1>&2
+}
+
 if [[ "$#" -gt 0 ]]
 then
-    echo "Reading clusters from '$1'" >> /dev/stderr
+    msg "Reading clusters from '$1'"
     INPUT=$(cat "$1")
 elif ! [ -t 0 ]
 then
-    echo "Reading clusters from stdin" >> /dev/stderr
+    msg "Reading clusters from stdin"
     INPUT=$(cat)
 else
-    echo "Error: Please supply a filename or input to stdin" >> /dev/stderr
+    msg "Error: Please supply a filename or input to stdin"
     exit 1
 fi
 

@@ -3,7 +3,7 @@
 BASE=$(dirname "$(readlink -f "$0")")
 
 function msg {
-    echo "$1" >> /dev/stderr
+    echo "$1" 1>&2
 }
 
 function fail {
@@ -24,22 +24,22 @@ function explore {
 }
 
 function testNoDupes {
-    echo "Making sure packages aren't checked over and over" >> /dev/stderr
+    msg "Making sure packages aren't checked over and over"
     for F in data/*
     do
-        echo "Exploring '$F'" >> /dev/stderr
+        msg "Exploring '$F'"
         OUTPUT=$(explore "$F") || fail "Failed to explore '$F'"
         echo "$OUTPUT" | noDupes
     done
-    echo "No duplicate checks were spotted" >> /dev/stderr
+    msg "No duplicate checks were spotted"
 }
 
 function testExplorationFindsEquations {
-    echo "Making sure exploration actually works" >> /dev/stderr
+    msg "Making sure exploration actually works"
     FOUND=0
     for F in data/*
     do
-        echo "Exploring '$F'" >> /dev/stderr
+        msg "Exploring '$F'"
         OUTPUT=$(explore "$F") || fail "Failed to explore '$F': $OUTPUT"
 
         echo "$OUTPUT" | grep "No clusters found" &&
@@ -93,7 +93,7 @@ function testEnvContainsPkgs {
                 fail "Couldn't run ghc-pkg in build-env for '$PKG' in '$PKGS'"
             echo "$OUTPUT" | grep "$PKG" > /dev/null ||
                 fail "Didn't find package '$PKG' in ghc-pkg output '$OUTPUT'"
-            echo "Package '$PKG' was found in the environment" >> /dev/stderr
+            msg "Package '$PKG' was found in the environment"
         done
     done
 }
@@ -103,12 +103,12 @@ function nixception {
     # initialised. We only keep it separate to avoid heredoc annoyances.
     # shellcheck disable=SC2086
     nix-shell --show-trace -p "$GHCPKG" $EXTRA --run bash <<EOF
-      echo "BEGIN INNER SHELL" >> /dev/stderr
+      echo "BEGIN INNER SHELL" 1>&2
       for PKG in $HLINE
       do
           ENVIRONMENT_PACKAGES="$EXTRAH" "$BASE/build-env" ghc-pkg list "\$PKG" |
                grep "\$PKG" > /dev/null || {
-              echo "Didn't find '\$PKG' in environment" >> /dev/stderr
+              echo "Didn't find '\$PKG' in environment" 1>&2
               exit 1
           }
       done

@@ -69,15 +69,15 @@ then
     # Sanity check
     if [[ -n "$ENVIRONMENT_PKGS" ]]
     then
-        echo "WARNING: 'ENVIRONMENT_PKGS' was found; did you mean 'ENVIRONMENT_PACKAGES'?" >> /dev/stderr
+        echo "WARNING: 'ENVIRONMENT_PKGS' was found; did you mean 'ENVIRONMENT_PACKAGES'?" 1>&2
         exit 1
     fi
 
-    echo "No extra packages given" >> /dev/stderr
+    echo "No extra packages given" 1>&2
     INPUT=""
     HPKGS=""
 else
-    echo "Extra packages given: $ENVIRONMENT_PACKAGES" >> /dev/stderr
+    echo "Extra packages given: $ENVIRONMENT_PACKAGES" 1>&2
     INPUT=$(echo "$ENVIRONMENT_PACKAGES" | sort -u | grep "^.")
     HPKGS=$(echo "$INPUT" | sed -e 's/^/h./')
 fi
@@ -87,9 +87,9 @@ ENVPKG=$(echo "$HPKGS" | mkEnvPkg "$NAME")
 
 if echo "$INPUT" | needEnv
 then
-    echo "build-env: Running '$*' in Nix environment '$ENVPKG'" >> /dev/stderr
+    echo "build-env: Running '$*' in Nix environment '$ENVPKG'" 1>&2
     EXPLORE_NAME="$NAME" nix-shell --show-trace --run "$*" -p "$ENVPKG"
 else
-    echo "build-env: Running '$*' in existing environment" >> /dev/stderr
+    echo "build-env: Running '$*' in existing environment" 1>&2
     "$@"
 fi

@@ -5,11 +5,11 @@ if DIR=$(echo "$PATH" | grep -o -- "[^:]*${EXPLORE_NAME}/[^:]*")
 then
     if ! [[ "x$FST" = "xDIR" ]]
     then
-        echo "Pushing '$DIR' to front of PATH" >> /dev/stderr
+        echo "Pushing '$DIR' to front of PATH" 1>&2
         PATH="$DIR":"$PATH"
         export PATH
     fi
 fi
 
-echo "path-to-front: Running '$*'" >> /dev/stderr
+echo "path-to-front: Running '$*'" 1>&2
 "$@"
