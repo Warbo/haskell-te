@@ -32,8 +32,10 @@ function runPlugin {
               --run "'$BASE/runAstPlugin' '$DIR'"
 }
 
-[[ "$#" -eq 0 ]] && echo "Please specify a Cabal project directory" && exit 1
-
-DIR="$1"
+[[ -n "$DIR" ]] || DIR="$1"
+[[ -n "$DIR" ]] || {
+    msg "Please provide a package directory, either as argument or DIR"
+    exit 1
+}
 
 runPlugin
