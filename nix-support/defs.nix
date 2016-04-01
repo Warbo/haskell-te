@@ -1,10 +1,15 @@
 # Custom definitions
 { callPackage, haskellPackages, buildEnv, real }:
-rec {
+let cabal2db = callPackage ../packages/cabal2db {};
+
+in cabal2db // rec {
+  inherit (callPackage ./runBenchmark.nix {}) lastEntry withCriterion withTime
+                                              benchmark;
+
   annotatedb           = callPackage ../packages/annotatedb       {
                            inherit getDeps;
                          };
-  cabal2db             = callPackage ../packages/cabal2db         {};
+
   explore-theories     = callPackage ../packages/explore-theories {};
   ml4hs                = callPackage ../packages/ml4hs            {};
   dumpToNix            = callPackage ./dumpToNix.nix              {
