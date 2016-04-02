@@ -56,7 +56,7 @@ while read -r FILE
 do
     rm -fv "$FILE"
 done < <(find "$CACHE" -maxdepth 1 -empty -type f \( \
-              -name "*.annotated" -o -name "*.asts" -o -name "*.formatted.*" \
+              -name "*.annotated"   -o -name "*.asts" -o -name "*.formatted.*" \
            -o -name "*.clustered.*" -o -name "*.explored.*" \) )
 
 [[ -n "$REPETITIONS" ]] || REPETITIONS=2
@@ -67,6 +67,11 @@ function pkgInList {
     touch "$CACHE/$2"
     grep -Fx -- "$1" < "$CACHE/$2" > /dev/null
 }
+
+SHUFFLE_LIST=$(nix-instantiate --read-write-mode --show-trace --eval -E \
+                              'with import <nixpkgs> {}; "${shuffled}"')
+[[ -f "$SHUFFLE_LIST" ]] ||
+    abort "Couldn't find shuffled packages '$SHUFFLE_LIST'"
 
 COUNT=0
 while read -r LINE
@@ -131,4 +136,4 @@ do
     echo "$PKG" >> "$CACHE/finished"
 
     #COUNT=$(( COUNT + 1 ))
-done < <("$BASE/scripts/shufflePackages.sh")
+done < "$SHUFFLE_LIST"

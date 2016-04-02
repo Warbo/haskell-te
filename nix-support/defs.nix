@@ -1,8 +1,10 @@
 # Custom definitions
-{ bash, bc, buildEnv, coreutils, gnutar, haskellPackages, jq, lib, nix, real,
-  runCommand, stdenv, time, writeScript }:
+{ bash, bc, buildEnv, coreutils, gnutar, haskellPackages, jq, lib, nix, pv,
+  real, runCommand, stdenv, time, wget, writeScript }:
 
 rec {
+  inherit coreutils;
+
   inherit (import ../cabal2db {
              inherit stdenv haskellPackages nix gnutar jq lib runCommand
                      writeScript;
@@ -11,12 +13,15 @@ rec {
   inherit (import ./runBenchmark.nix {
              inherit bash coreutils explore-theories jq lib
                      mlspec-bench time writeScript;
-           }) lastEntry withCriterion withTime
-              benchmark;
+           }) benchmark lastEntry withCriterion withTime;
 
   extractTarball = import ./extractTarball.nix {
                      inherit gnutar runScript withNix;
                    };
+
+  hte-scripts = import ./scripts.nix {
+                  inherit coreutils stdenv wget;
+                };
 
   processedPackages = (import ./benchmarkOutputs.nix {
                         inherit bc dumpPackage extractTarball haskellPackages
@@ -38,8 +43,8 @@ rec {
                 };
 
   dumpToNix = import ./dumpToNix.nix {
-    inherit benchmark c2db-scripts parseJSON runScript withNix;
-  };
+                inherit benchmark c2db-scripts parseJSON runScript withNix;
+              };
 
   testPackageNames     = [ "list-extras" ];
 
@@ -72,6 +77,11 @@ rec {
 
   assertMsg            = cond: msg:
                            builtins.addErrorContext msg (assert cond; cond);
+
+  shuffledList         = import ./shufflePackages.nix {
+                           inherit coreutils pv runScript wget withNix
+                                   writeScript;
+                         };
 
                          /*
   haskell-te = buildEnv {
