@@ -8,4 +8,6 @@ let pkgs = import <nixpkgs> {};
 let tests   = importDir ../tests;
     runTest = name: let msg = "Running test '${name}'";
                      in trace msg (assertMsg (tests."${name}" defs) msg);
- in all runTest (attrNames tests)
+    result  = all runTest (attrNames tests);
+ in trace (if result then "All tests passed"  else "Tests failed")
+          (assert result; result)
