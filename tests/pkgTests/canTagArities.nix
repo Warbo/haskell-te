@@ -1,10 +1,9 @@
 defs: with defs; pkg:
 
-let rawData = runTypes pkg.dump pkg.name;
-
-    typeResults = runScript (withNix {}) ''
+let typeResults = runScript (withNix {}) ''
       set -e
-      "${jq}/bin/jq" -r '.result' < "${rawData}" > typeResults.json
+      "${jq}/bin/jq" -r '.result' < "${testRunTypes."${pkg.name}"}" \
+                                  > typeResults.json
       "${storeResult}" typeResults.json "$out"
     '';
 

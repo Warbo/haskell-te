@@ -1,13 +1,6 @@
 defs: with defs; pkg:
 
-let rawData = runTypes pkg.dump pkg.name;
-
-    annotated = runScript (withNix { buildInputs = [ adb-scripts ]; }) ''
-      set -e
-      annotateAsts < "${rawData}" > annotated.json
-      "${storeResult}" annotated.json "$out"
-    '';
-
+let annotated   = testAnnotated."${pkg.name}";
     checkLabels = parseJSON (runScript { buildInputs = [ adb-scripts ]; } ''
       jq -c '.[] | .package'  < "${annotated}" | while read -r LINE
       do

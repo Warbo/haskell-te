@@ -2,6 +2,7 @@
 { bash, bc, buildEnv, coreutils, gnutar, haskellPackages, jq, lib, nix, pv,
   real, runCommand, stdenv, time, utillinux, wget, writeScript }:
 
+with builtins; with lib;
 rec {
   inherit coreutils;
 
@@ -82,6 +83,22 @@ rec {
                            inherit coreutils pv runScript wget withNix
                                    writeScript;
                          };
+
+  testRunTypes  = listToAttrs (map (n: {
+                    name  = n;
+                    value = runTypes (processedPackages."${n}".dump) n;
+                  }) testPackageNames);
+
+  testAnnotated = let ann = n: runScript
+                                 (withNix { buildInputs = [ adb-scripts ]; })
+                                 ''
+                                   set -e
+                                   annotateAsts < "${testRunTypes."${n}"}" \
+                                                > annotated.json
+                                   "${storeResult}" annotated.json "$out"
+                                 '';
+                      entry = n: { name = n; value = ann n; };
+                   in listToAttrs (map entry testPackageNames);
 
   storeResult = writeScript "store-result" ''
     set -e

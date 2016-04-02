@@ -194,15 +194,6 @@ function getDeps {
 
 # Tests
 
-function pkgTestAllTypeCmdPresent {
-    getAsts "$1" | jq -c -r '.[] | .module + "." + .name' |
-        while read -r LINE
-        do
-            getTypeCmd "$1" | grep "('$LINE)" > /dev/null ||
-                fail "$LINE not in '$1' type command"
-        done
-}
-
 function pkgTestAllAstsPreserved {
     getRawData "$1" | jq -c '.asts | .[]' |
         while read -r LINE
