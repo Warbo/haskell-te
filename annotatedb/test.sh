@@ -194,20 +194,6 @@ function getDeps {
 
 # Tests
 
-function pkgTestAllAstsPreserved {
-    getRawData "$1" | jq -c '.asts | .[]' |
-        while read -r LINE
-        do
-            NAME=$(echo "$LINE" | jq -r '.name')
-             MOD=$(echo "$LINE" | jq -r '.module')
-             PKG=$(echo "$LINE" | jq -r '.package')
-            PRED=".name == \"$NAME\" and .module == \"$MOD\" and .package == \"$PKG\""
-            COUNT=$(getAsts "$1" | jq "map(select($PRED)) | length")
-            [[ "$COUNT" -eq 1 ]] ||
-                fail "$PKG:$MOD.$NAME was in raw data but not ASTs"
-        done
-}
-
 function pkgTestNoCoreNames {
     COUNT=$(getAsts "$1" | jq -r '.[] | .name' | count '\.\$')
     [[ "$COUNT" -eq 0 ]] ||

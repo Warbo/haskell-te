@@ -3,6 +3,7 @@ defs: with defs; pkg:
 let rawData   = testRunTypes."${pkg.name}";
     annotated = testAnnotated."${pkg.name}";
     result    = parseJSON (runScript { buildInputs = [ adb-scripts ]; } ''
+      set -e
       jq -c -r '.[] | .module + "." + .name' < "${annotated}" |
       while read -r LINE
       do
