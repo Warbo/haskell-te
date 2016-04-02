@@ -23,4 +23,4 @@ let rawData = runTypes pkg.dump pkg.name;
     count = fromJSON (parseJSON (runScript {} ''
               "${jq}/bin/jq" -r 'length' < "${arityTagged}" > "$out"
             ''));
- in assertMsg (count > 0) "Found '${count}' arities for '${pkg.name}'"
+ in assertMsg (count > 0) "Found '${count}' tagged arities for '${pkg.name}'"

@@ -194,10 +194,6 @@ function getDeps {
 
 # Tests
 
-function pkgTestGetTypeTagged {
-    getTypeTagged  "$1" | assertJsonNotEmpty "Couldn't get typed ASTs from '$1'"
-}
-
 function pkgTestGetAsts {
     getAsts        "$1" | assertJsonNotEmpty "Couldn't get ASTs from '$1'"
 }
