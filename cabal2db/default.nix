@@ -11,28 +11,8 @@ rec {
                       inherit lib writeScript runCommand;
                     };
 
-  downloadToNix   = import ./downloadToNix.nix   {
-                      inherit runScript nix;
-                      inherit (haskellPackages) cabal-install;
-                    };
-
-  dumpToNix       = import ./dumpToNix.nix       {
-                      inherit runScript c2db-scripts withNix;
-                    };
-
-  downloadAndDump = import ./downloadAndDump.nix {
-                      inherit dumpToNix downloadToNix;
-                    };
-
   importDir       = import ./importDir.nix       {
                       inherit lib;
-                    };
-
-  assertMsg       = cond: msg: builtins.addErrorContext msg (assert cond; cond);
-
-  dumpedPackages  = import ./dumpedPackages.nix  {
-                      inherit dumpToNix runScript gnutar haskellPackages lib
-                              withNix;
                     };
 
   withNix         = env: let existing = if env ? buildInputs

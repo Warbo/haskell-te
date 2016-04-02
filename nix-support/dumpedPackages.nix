@@ -1,7 +1,7 @@
 { dumpToNix, runScript, gnutar, haskellPackages, lib, withNix }:
 with builtins; with lib;
 
-quick:
+{ quick }:
 let extract = tarball:
                 assert pathExists (unsafeDiscardStringContext tarball);
                 runScript (withNix {

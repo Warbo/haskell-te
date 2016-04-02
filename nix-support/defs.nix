@@ -6,7 +6,7 @@ rec {
   inherit (import ../cabal2db {
              inherit stdenv haskellPackages nix gnutar jq lib runCommand
                      writeScript;
-          }) c2db-scripts runScript downloadToNix downloadAndDump importDir assertMsg withNix;
+          }) c2db-scripts runScript importDir withNix;
 
   inherit (import ./runBenchmark.nix {
              inherit bash coreutils explore-theories jq lib
@@ -16,7 +16,13 @@ rec {
 
   inherit (import ./benchmarkOutputs.nix {
              inherit dumpToNix gnutar haskellPackages lib runScript withNix;
-          }) dumpTimesQuick dumpTimesSlow quickDumpedPackages slowDumpedPackages;
+          }) dumpTimesQuick dumpTimesSlow quickDumpedPackages slowDumpedPackages
+             quickDumps slowDumps;
+
+  downloadToNix   = import ./downloadToNix.nix   {
+                      inherit runScript nix;
+                      inherit (haskellPackages) cabal-install;
+                    };
 
   dumpToNix = import ./dumpToNix.nix {
     inherit benchmark c2db-scripts parseJSON runScript withNix;
@@ -24,9 +30,9 @@ rec {
 
   testPackageNames     = [ "list-extras" ];
 
-  totalTimes           = import ./totalTimes.nix {
-                           inherit haskellPackages lib;
-                         };
+  inherit (import ./totalTimes.nix {
+             inherit dumpTimesQuick dumpTimesSlow haskellPackages lib;
+          }) totalWithTime totalWithCriterion;
 
   parseJSON            = import ./parseJSON.nix {
                            inherit jq runScript writeScript;
@@ -50,6 +56,13 @@ rec {
   recurrent-clustering = import ../packages/recurrent-clustering {
                            inherit order-deps ML4HSFE annotatedb;
                          };
+
+  downloadAndDump      = import ./downloadAndDump.nix {
+                           inherit dumpToNix downloadToNix;
+                         };
+
+  assertMsg            = cond: msg:
+                           builtins.addErrorContext msg (assert cond; cond);
 
                          /*
   haskell-te = buildEnv {
