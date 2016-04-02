@@ -19,10 +19,6 @@ rec {
                      mlspec-bench time writeScript;
            }) benchmark lastEntry withCriterion withTime;
 
-  annotatedPackages = import ./annotatedPackages.nix {
-                        inherit annotate lib dumpedPackages;
-                      };
-
   extractTarball = import ./extractTarball.nix {
                      inherit gnutar runScript withNix;
                    };
