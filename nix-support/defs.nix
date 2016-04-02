@@ -1,5 +1,5 @@
 # Custom definitions
-{ bash, buildEnv, coreutils, gnutar, haskellPackages, jq, lib, nix, real,
+{ bash, bc, buildEnv, coreutils, gnutar, haskellPackages, jq, lib, nix, real,
   runCommand, stdenv, time, writeScript }:
 
 rec {
@@ -19,7 +19,8 @@ rec {
                    };
 
   processedPackages = (import ./benchmarkOutputs.nix {
-                        inherit dumpPackage extractTarball haskellPackages lib;
+                        inherit bc dumpPackage extractTarball haskellPackages
+                                lib parseJSON runScript;
                       });
 
   c2db-scripts    = import ../cabal2db/scripts.nix         {
