@@ -194,16 +194,6 @@ function getDeps {
 
 # Tests
 
-function pkgTestGetAsts {
-    getAsts        "$1" | assertJsonNotEmpty "Couldn't get ASTs from '$1'"
-}
-
-function pkgTestRawAstsCached {
-    # Prime the cache
-    getRawAsts "$1" > /dev/null
-    getRawAsts "$1" 2>&1 > /dev/null | grep
-}
-
 function pkgTestAstFields {
     for FIELD in package module name ast type arity quickspecable
     do
