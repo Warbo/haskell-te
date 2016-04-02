@@ -1,4 +1,4 @@
-{ stdenv, nix, cabal-install, jq, doCheck ? true }:
+{ stdenv, nix, cabal-install, jq }:
 
 stdenv.mkDerivation {
   name = "cabal2db";
@@ -12,11 +12,6 @@ stdenv.mkDerivation {
   USER_HOME  = builtins.getEnv "HOME";
   NIX_REMOTE = "daemon";
   NIX_PATH   = builtins.getEnv "NIX_PATH";
-  inherit doCheck;
-  checkPhase = ''
-    echo "Running $PWD/test.sh" 1>&2
-    HOME="$USER_HOME" ./test.sh
-  '';
 
   installPhase = ''
     mkdir -p "$out/bin"
