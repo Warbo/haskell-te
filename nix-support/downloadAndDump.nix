@@ -1,4 +1,4 @@
 { dumpToNix, downloadToNix }:
-pkgName:
+{ quick, pkgName}:
 
-dumpToNix (downloadToNix pkgName)
+dumpToNix { inherit quick; pkgDir = downloadToNix pkgName; }

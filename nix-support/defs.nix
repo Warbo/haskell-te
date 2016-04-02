@@ -6,7 +6,7 @@ rec {
   inherit (import ../cabal2db {
              inherit stdenv haskellPackages nix gnutar jq lib runCommand
                      writeScript;
-          }) c2db-scripts runScript importDir withNix;
+          }) runScript importDir withNix;
 
   inherit (import ./runBenchmark.nix {
              inherit bash coreutils explore-theories jq lib
@@ -18,6 +18,11 @@ rec {
              inherit dumpToNix gnutar haskellPackages lib runScript withNix;
           }) dumpTimesQuick dumpTimesSlow quickDumpedPackages slowDumpedPackages
              quickDumps slowDumps;
+
+  c2db-scripts    = import ../cabal2db/scripts.nix         {
+                      inherit stdenv nix jq;
+                      inherit (haskellPackages) cabal-install;
+                    };
 
   downloadToNix   = import ./downloadToNix.nix   {
                       inherit runScript nix;

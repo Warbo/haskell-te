@@ -2,11 +2,6 @@
   doCheck ? true }:
 
 rec {
-  c2db-scripts    = import ./scripts.nix         {
-                      inherit stdenv nix jq doCheck;
-                      inherit (haskellPackages) cabal-install;
-                    };
-
   runScript       = import ./runScript.nix       {
                       inherit lib writeScript runCommand;
                     };

@@ -9,10 +9,6 @@ stdenv.mkDerivation {
 
   propagatedBuildInputs = [ nix cabal-install jq ];
 
-  USER_HOME  = builtins.getEnv "HOME";
-  NIX_REMOTE = "daemon";
-  NIX_PATH   = builtins.getEnv "NIX_PATH";
-
   installPhase = ''
     mkdir -p "$out/bin"
 
