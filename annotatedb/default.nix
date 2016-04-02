@@ -1,9 +1,8 @@
-{ stdenv, jq, getDeps, utillinux, nix, cabal2db, lib, doCheck ? true }:
+{ getDeps, jq, lib, nix, runScript, stdenv, utillinux, withNix }:
 
-with cabal2db;
-cabal2db // rec {
+rec {
   adb-scripts     = import ./scripts.nix         {
-                      inherit stdenv jq getDeps utillinux nix doCheck; };
+                      inherit stdenv jq getDeps utillinux nix; };
   annotateAsts    = import ./annotateAsts.nix    {
                       inherit stdenv adb-scripts;                      };
   runTypes        = import ./runTypes.nix        {
@@ -11,9 +10,6 @@ cabal2db // rec {
   annotate        = import ./annotate.nix        {
                       inherit runScript adb-scripts jq withNix;        };
 
-  annotatedPackages = import ./annotatedPackages.nix {
-                        inherit annotate lib dumpedPackages;
-                      };
   dumpAndAnnotate = import ./dumpAndAnnotate.nix {
                       inherit downloadAndDump;                         };
 }

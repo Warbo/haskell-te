@@ -1,6 +1,6 @@
 # Custom definitions
 { bash, bc, buildEnv, coreutils, gnutar, haskellPackages, jq, lib, nix, pv,
-  real, runCommand, stdenv, time, wget, writeScript }:
+  real, runCommand, stdenv, time, utillinux, wget, writeScript }:
 
 rec {
   inherit coreutils;
@@ -10,10 +10,18 @@ rec {
                      writeScript;
           }) runScript importDir withNix;
 
+  inherit (import ../annotatedb {
+             inherit getDeps jq lib nix runScript stdenv utillinux withNix;
+          }) adb-scripts annotateAsts runTypes annotate dumpAndAnnotate;
+
   inherit (import ./runBenchmark.nix {
              inherit bash coreutils explore-theories jq lib
                      mlspec-bench time writeScript;
            }) benchmark lastEntry withCriterion withTime;
+
+  annotatedPackages = import ./annotatedPackages.nix {
+                        inherit annotate lib dumpedPackages;
+                      };
 
   extractTarball = import ./extractTarball.nix {
                      inherit gnutar runScript withNix;
@@ -59,14 +67,9 @@ rec {
   explore-theories     = import ../packages/explore-theories {
                            inherit stdenv;
                          };
+
   ml4hs                = import ../packages/ml4hs            {};
 
-  annotateAsts         = import ./annotateAsts.nix           {
-                           inherit annotatedb;
-                         };
-  dumpAndAnnotate      = import ./dumpAndAnnotate.nix        {
-                           inherit dumpToNix annotateAsts;
-                         };
   recurrent-clustering = import ../packages/recurrent-clustering {
                            inherit order-deps ML4HSFE annotatedb;
                          };

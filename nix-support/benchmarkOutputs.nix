@@ -23,7 +23,14 @@ let floatAdd         = x: y:
       # AST dumps
       quickDump = dumpPackage { quick = true;  inherit src; };
       slowDump  = dumpPackage { quick = false; inherit src; };
-      dump      = quickDump.stdout; # Stick to the quick output, arbitrarily
+
+      # Annotated ASTs
+      quickAnnotated = annotate { quick = true;  inherit dump; };
+      slowAnnotated  = annotate { quick = false; inherit dump; };
+
+      # Stick to the quick output, so testing is faster
+      dump      = quickDump.stdout;
+      annotated = quickAnnotated.stdout;
 
       # Total benchmark times
       totalWithTime      = sumWithTime      [ quickDump.time ];
