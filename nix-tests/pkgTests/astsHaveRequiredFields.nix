@@ -1,4 +1,4 @@
-defs: with defs; pkgName:
+defs: with defs; pkg:
 
 let result = asts:
       let str = runScript {} ''
@@ -24,4 +24,4 @@ let result = asts:
           json;
     check = asts: all id (mapAttrsToList (f: b: assertMsg b "Checking for ${f}")
                                          (result asts));
- in all check [ quickDumps."${pkgName}" slowDumps."${pkgName}" ]
+ in all check [ pkg.dump pkg.quickDump.stdout pkg.slowDump.stdout ]

@@ -3,8 +3,12 @@ defs: with defs;
 # Run the tests in ./pkgTests with a selection of Haskell package names
 
 let tests        = importDir ./pkgTests;
-    runTest      = testName: all (runTestOnPkg testName) testPackageNames;
-    runTestOnPkg = testName: hsPkg:
-      let msg =  "Running test '${testName}' with Haskell package '${hsPkg}'";
-       in trace msg (assertMsg (tests."${testName}" defs hsPkg) msg);
+    hsPkgs       = listToAttrs (map (n: { name = n;
+                                          value = processedPackages."${n}"; })
+                                    testPackageNames);
+    runTest      = testName: collate (mapAttrs (runTestOnPkg testName) hsPkgs);
+    runTestOnPkg = testName: pkgName: pkg:
+      let msg =  "Running test '${testName}' with Haskell package '${pkgName}'";
+       in trace msg (assertMsg (tests."${testName}" defs pkg) msg);
+    collate      = xs: all (n: xs."${n}") (attrNames xs);
  in all runTest (attrNames tests)

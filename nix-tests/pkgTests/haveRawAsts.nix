@@ -1,4 +1,4 @@
-defs: with defs; pkgName:
+defs: with defs; pkg:
 
 let doCheck = asts:
   let astsNonempty   = assertMsg (readFile "${asts}" != "")
@@ -9,4 +9,4 @@ let doCheck = asts:
       jCount         = addErrorContext "Parsing: '${count}'" (fromJSON count);
       jCountNonempty = assertMsg (jCount > 0) "Found no ASTs in '${asts}'";
    in astsNonempty && jCountNonempty;
- in doCheck quickDumps."${pkgName}" && doCheck slowDumps."${pkgName}"
+ in doCheck pkg.quickDump.stdout && doCheck pkg.slowDump.stdout

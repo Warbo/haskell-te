@@ -1,16 +1,19 @@
-{ dumpToNix, gnutar, haskellPackages, lib, runScript, withNix }:
+{ dumpPackage, extractTarball, haskellPackages, lib }:
 with lib;
 
-let getTime        = name: result: result.time;
-    getOutput      = name: result: result.stdout;
-    dumpedPackages = import ./dumpedPackages.nix {
-      inherit dumpToNix gnutar haskellPackages lib runScript withNix;
+let addTimes         = x: y: {
+                         mean = {
+                           estPoint = x.mean.estPoint + y.mean.estPoint;
+                         };
+                       };
+    addCriterion     = x: y: x + y; # FIXME
+    sumWithTime      = fold addTimes { mean = { estPoint = 0; }; };
+    sumWithCriterion = fold addCriterion 0;
+    processPkg       = name: pkg: rec {
+      inherit name pkg;
+      src       = extractTarball pkg.src;
+      quickDump = dumpPackage { quick = true;  inherit src; };
+      slowDump  = dumpPackage { quick = false; inherit src; };
+      dump      = quickDump.stdout; # Stick to the quick output, arbitrarily
     };
-in rec {
-  quickDumpedPackages = dumpedPackages { quick = true;  };
-  slowDumpedPackages  = dumpedPackages { quick = false; };
-  dumpTimesQuick      = mapAttrs getTime   quickDumpedPackages;
-  dumpTimesSlow       = mapAttrs getTime   slowDumpedPackages;
-  quickDumps          = mapAttrs getOutput quickDumpedPackages;
-  slowDumps           = mapAttrs getOutput slowDumpedPackages;
-}
+ in mapAttrs processPkg haskellPackages

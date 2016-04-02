@@ -1,6 +1,6 @@
-defs: with defs; pkgName:
+defs: with defs; pkg:
 
-let asts    = quick: downloadAndDump { inherit pkgName quick; };
+let asts    = quick: downloadAndDump { inherit quick; pkgName = pkg.name; };
     count   = quick: parseJSON (runScript { buildInputs = [ jq ]; } ''
                 jq -r 'length' < "${(asts quick).stdout}" > "$out"
               '');

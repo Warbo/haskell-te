@@ -14,10 +14,13 @@ rec {
            }) lastEntry withCriterion withTime
               benchmark;
 
-  inherit (import ./benchmarkOutputs.nix {
-             inherit dumpToNix gnutar haskellPackages lib runScript withNix;
-          }) dumpTimesQuick dumpTimesSlow quickDumpedPackages slowDumpedPackages
-             quickDumps slowDumps;
+  extractTarball = import ./extractTarball.nix {
+                     inherit gnutar runScript withNix;
+                   };
+
+  processedPackages = (import ./benchmarkOutputs.nix {
+                        inherit dumpPackage extractTarball haskellPackages lib;
+                      });
 
   c2db-scripts    = import ../cabal2db/scripts.nix         {
                       inherit stdenv nix jq;
@@ -25,19 +28,19 @@ rec {
                     };
 
   downloadToNix   = import ./downloadToNix.nix   {
-                      inherit runScript nix;
+                      inherit runScript withNix;
                       inherit (haskellPackages) cabal-install;
                     };
+
+  dumpPackage = import ./dumpPackage.nix {
+                  inherit dumpToNix gnutar lib runScript withNix;
+                };
 
   dumpToNix = import ./dumpToNix.nix {
     inherit benchmark c2db-scripts parseJSON runScript withNix;
   };
 
   testPackageNames     = [ "list-extras" ];
-
-  inherit (import ./totalTimes.nix {
-             inherit dumpTimesQuick dumpTimesSlow haskellPackages lib;
-          }) totalWithTime totalWithCriterion;
 
   parseJSON            = import ./parseJSON.nix {
                            inherit jq runScript writeScript;
