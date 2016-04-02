@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+# Top-level interface for annotatedb. Turns output from dump-package or
+# dump-hackage into a form suitable for ML4HS.
+
+BASE=$(dirname "$0")
+
+[[ -n "$1" ]] || {
+    echo "annotateDb needs a package name as argument" 1>&2
+    exit 1
+}
+
+"$BASE/runTypes" "$1" | "$BASE/annotateAsts" | "$BASE/getDeps"

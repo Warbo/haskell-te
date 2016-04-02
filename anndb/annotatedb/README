@@ -1,0 +1,57 @@
+# ML4HS database annotators #
+
+ML4HS (Machine Learning for Haskell) is built around a database of Haskell
+expressions.
+
+To generate a database, you can use cabal2db. These tools will annotate an
+existing database, appending properties like arity and dependencies to each
+definition.
+
+These annotations can then be used to aid feature extraction, clustering and
+theory exploration.
+
+## Components ##
+
+### `annotateAsts` ###
+
+High-level script. Sends its input through `getTypes` and `getArities`, and
+appends the results using `tagAsts`
+
+### `getArities` ###
+
+Takes the `result` output from `runTypes` and splits its qualified identifiers
+into separate `module` and `name`, ready for `tagAsts` to splice into a DB.
+
+### `getDeps` ###
+
+Looks up the symbols used in each definition, and collects them into a
+`dependencies` field.
+
+### `getTypes` ###
+
+Finds type annotations in its stdin, taken from GHCi.
+
+Annotations have the form `(foo)::bar::baz`, where `foo` is a Haskell
+expression, `bar` is a type annotation given *to* GHCi, and `baz` is the result
+given *by* GHCi. This lets us check that we've correctly monomorphised a
+function, by giving a command like `:t (id)::(Integer -> Integer)` and receiving
+a result `(id)::(Integer -> Integer)::(Integer -> Integer)`. We receive no such
+result for incorrectly monomorphised functions, like
+`:t (fmap)::((Integer -> Integer) -> Integer Integer -> Integer Integer`.
+
+The result is suitable for splicing into a DB by `tagAsts`.
+
+### `runTypes` ###
+
+Runs the definitions given on stdin through GHCi, attempting to monomorphise the
+types and satisfy QuickSpec's constraints. Those which give errors are skipped.
+Also skips those definitions whose types can't be imported.
+
+Does very little processing of the output; mainly just putting GHCi's output
+into a canonical form. Results are given in a JSON object, along with the
+commands given to GHCi (to aid with debugging).
+
+### `tagAsts` ###
+
+Takes a DB on stdin and a file (descriptor) containing JSON objects as $1.
+Output is the JOIN of the two, on their `name` and `module` fields.
