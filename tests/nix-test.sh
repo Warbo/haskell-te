@@ -36,36 +36,6 @@ EOF
 
 # Tests
 
-function testNixPackagesAugmented {
-    OUTPUT=$(nixEval "<nixpkgs>")
-    [[ "x$OUTPUT" = "x$BASE/nix-support" ]] ||
-        fail "Nix points to '$OUTPUT' instead of '$BASE/nix-support'"
-}
-
-function testNixPackagesPristine {
-    # Check that custom packages, e.g. defined in ~/.nixpkgs, don't interfere
-    # with ./nix-support. These examples are from the author's configuration.
-    # To avoid interference see the use of 'pristine' in nix-support/default.nix
-    for QUERY in " ? warbo-utilities" \
-                 " ? fs-uae" \
-                 ".haskellPackages ? haskell-example"
-    do
-        # Check if the query matches by default
-        EXPR="(import <nixpkgs> {})$QUERY"
-        OUTPUT=$(nix-instantiate --show-trace --eval -E "$EXPR") ||
-            fail "Failed to query default packages for '$QUERY'"
-
-        # Skipping queries which don't even match a default config
-        [[ "x$OUTPUT" = "xtrue" ]] || continue
-
-        # Make sure the query doesn't match our augmented packages
-        OUTPUT=$(nixEval "$EXPR") ||
-            fail "Failed to query augmented packages for '$QUERY'"
-        [[ "x$OUTPUT" = "xfalse" ]] ||
-            fail "Didn't expect query '$QUERY' to match augmented packages"
-    done
-}
-
 function testNixPackagesAvailable {
     while read -r ATTR
     do
