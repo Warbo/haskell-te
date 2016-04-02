@@ -194,14 +194,6 @@ function getDeps {
 
 # Tests
 
-function pkgTestAstFields {
-    for FIELD in package module name ast type arity quickspecable
-    do
-        getAsts "$1" | allObjectsHave "$FIELD" ||
-            fail "ASTs for '$1' don't all have '$FIELD'"
-    done
-}
-
 function pkgTestAstLabelled {
     getAsts "$1" | jq -c '.[] | .package' |
         while read -r LINE
