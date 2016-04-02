@@ -1,4 +1,4 @@
-{ stdenv, jq, getDeps, utillinux, nix, doCheck ? true }:
+{ stdenv, jq, getDeps, utillinux }:
 
 stdenv.mkDerivation {
   name = "annotatedb";
@@ -8,14 +8,7 @@ stdenv.mkDerivation {
     baseNameOf path != ".git" &&
     baseNameOf path != "test-data") ./.;
 
-  propagatedBuildInputs = [ jq getDeps utillinux nix ];
-
-  NIX_REMOTE = "daemon";
-  NIX_PATH   = builtins.getEnv "NIX_PATH";
-  inherit doCheck;
-  checkPhase = ''
-    ./test.sh
-  '';
+  propagatedBuildInputs = [ jq getDeps utillinux ];
 
   installPhase = ''
     mkdir -p "$out/bin"

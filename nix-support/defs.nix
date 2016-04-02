@@ -11,7 +11,8 @@ rec {
           }) runScript importDir withNix;
 
   inherit (import ../annotatedb {
-             inherit getDeps jq lib nix runScript stdenv utillinux withNix;
+             inherit downloadAndDump getDeps jq lib nix runScript stdenv
+                     utillinux withNix;
           }) adb-scripts annotateAsts runTypes annotate dumpAndAnnotate;
 
   inherit (import ./runBenchmark.nix {
@@ -81,6 +82,12 @@ rec {
                            inherit coreutils pv runScript wget withNix
                                    writeScript;
                          };
+
+  storeResult = writeScript "store-result" ''
+    set -e
+    RESULT=$(nix-store --add "$1")
+    printf '%s' "$RESULT" > "$out"
+  '';
 
                          /*
   haskell-te = buildEnv {
