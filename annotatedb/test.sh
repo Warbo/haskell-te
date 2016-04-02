@@ -194,10 +194,6 @@ function getDeps {
 
 # Tests
 
-function pkgTestGetArityTagged {
-    getArityTagged "$1" | assertJsonNotEmpty "Couldn't get ASTs with aritiesfrom '$1'"
-}
-
 function pkgTestGetTypeTagged {
     getTypeTagged  "$1" | assertJsonNotEmpty "Couldn't get typed ASTs from '$1'"
 }
