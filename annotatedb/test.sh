@@ -194,14 +194,6 @@ function getDeps {
 
 # Tests
 
-function pkgTestAstLabelled {
-    getAsts "$1" | jq -c '.[] | .package' |
-        while read -r LINE
-        do
-            [[ "x$LINE" = "x\"$1\"" ]] || fail "Unlabelled: $1 $LINE"
-        done
-}
-
 function pkgTestAllTypeCmdPresent {
     getAsts "$1" | jq -c -r '.[] | .module + "." + .name' |
         while read -r LINE
