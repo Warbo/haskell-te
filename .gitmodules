@@ -1,9 +1,6 @@
 [submodule "packages/mlspec-bench"]
 	path = packages/mlspec-bench
 	url = http://chriswarbo.net/git/mlspec-bench.git
-[submodule "packages/annotatedb"]
-	path = packages/annotatedb
-	url = http://chriswarbo.net/git/annotatedb.git
 [submodule "packages/ast-plugin"]
 	path = packages/ast-plugin
 	url = http://chriswarbo.net/git/ast-plugin.git
