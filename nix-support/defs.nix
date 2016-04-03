@@ -36,8 +36,9 @@ rec {
                 };
 
   processedPackages = (import ./benchmarkOutputs.nix {
-                        inherit annotate bc dumpPackage extractTarball
-                                haskellPackages lib parseJSON runScript;
+                        inherit annotate bc buildPackage dumpPackage
+                                extractTarball haskellPackages lib parseJSON
+                                runScript;
                       });
 
   c2db-scripts    = import ../cabal2db/scripts.nix         {
@@ -92,6 +93,9 @@ rec {
                       inherit adb-scripts jq storeResult runScript withNix;
                     };
 
+  plotResults = import ./plotResults.nix {};
+
+  benchmarks = import ./benchmarks.nix {};
 
   # FIXME: Move test-related definitions to a separate defs file
   testPackages  = import ./testPackages.nix {
@@ -105,6 +109,11 @@ rec {
     RESULT=$(nix-store --add "$1")
     printf '%s' "$RESULT" > "$out"
   '';
+
+  buildPackage = import ./buildPackage.nix {
+                   inherit benchmark parseJSON runScript withNix;
+                   inherit (haskellPackages) cabal2nix cabal-install;
+                 };
 
                          /*
   haskell-te = buildEnv {

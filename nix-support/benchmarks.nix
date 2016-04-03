@@ -1,114 +1,24 @@
 {}:
+{ repetitions ? 2, shuffledPackages }:
 
-runScript {} ''
-#!/usr/bin/env bash
+let bench = pkg: runScript {} ''
+      set -e
+      # Check as many pre-conditions as we can here
+      for CMD in annotateDb build-env cabal cabal2nix cluster dump-format \
+                 dump-package dump-package-env dump-package-name jq \
+                 mlspec-bench \
+                 nix-shell runAstPlugin time
+      do
+        command -v "$CMD" > /dev/null || {
+          echo "Need '$CMD'" 1>&2
+          exit 1
+        }
+      done
 
-# Benchmark ML4HS compared to GHC and QuickSpec
-
-BASE=$(dirname "$(dirname "$(readlink -f "$0")")")
-
-# shellcheck disable=SC2034
-NAME=$(basename "$0")
-
-# shellcheck source=../scripts/common.sh
-source "$BASE/scripts/common.sh"
-
-function unfetchable {
-    echo "$1" >> "$CACHE/unfetchable"
-    uniqueLines "$CACHE/unfetchable"
-}
-
-function unbuildable {
-    echo "$1" >> "$CACHE/unbuildable"
-    uniqueLines "$CACHE/unbuildable"
-}
-
-function featureless {
-    echo "$1" >> "$CACHE/featureless"
-    uniqueLines "$CACHE/featureless"
-}
-
-# Ensure our Nix packages are in use
-echo "$NIX_PATH" | grep "$BASE/nix-support" > /dev/null ||
-    abort "$BASE/nix-support not found in NIX_PATH; try using run-benchmarks.sh"
-
-# Check as many pre-conditions as we can here
-for CMD in annotateDb build-env cabal cabal2nix cluster dump-format \
-           dump-package dump-package-env dump-package-name jq mlspec-bench \
-           nix-shell runAstPlugin time
-do
-    requireCmd "$CMD"
-done
-
-# Clean out stale/erroneous data from cache
-[[ -d "$CACHE" ]] || mkdir -p "$CACHE"
-
-# Remove unparseable times
-rm -f "$CACHE"/*.time  # Left-over files
-while read -r FILE
-do
-    jq '.' < "$FILE" > /dev/null || {
-        warn "Deleting unparseable benchmark result '$FILE'"
-        rm -f "$FILE"
-    }
-done < <(find "$CACHE/benchmarks" -name "*.json")
-
-# Remove empty results
-shopt -s nullglob
-while read -r FILE
-do
-    rm -fv "$FILE"
-done < <(find "$CACHE" -maxdepth 1 -empty -type f \( \
-              -name "*.annotated"   -o -name "*.asts" -o -name "*.formatted.*" \
-           -o -name "*.clustered.*" -o -name "*.explored.*" \) )
-
-[[ -n "$REPETITIONS" ]] || REPETITIONS=2
-
-info "Benchmarking '$REPETITIONS' packages"
-
-function pkgInList {
-    touch "$CACHE/$2"
-    grep -Fx -- "$1" < "$CACHE/$2" > /dev/null
-}
-
-SHUFFLE_LIST=$(nix-instantiate --read-write-mode --show-trace --eval -E \
-                              'with import <nixpkgs> {}; "${shuffled}"')
-[[ -f "$SHUFFLE_LIST" ]] ||
-    abort "Couldn't find shuffled packages '$SHUFFLE_LIST'"
-
-COUNT=0
-while read -r LINE
-do
-    [[ "$COUNT" -lt "$REPETITIONS" ]] || {
-        info "Successfully processed '$COUNT' packages; stopping"
-        break
-    }
-    PKG=$(echo "$LINE" | cut -f 1)
-
-    # Skip packages which we've already processed
-    SKIP=""
-    for LIST in finished unfetchable unbuildable unexplorable unquickspecable \
-                featureless unclusterable
-    do
-        if pkgInList "$PKG" "$LIST"
-        then
-            SKIP="$LIST"
-            break
-        fi
-    done
-
-    if [[ -n "$SKIP" ]]
-    then
-        info "Skipping '$PKG' as it is $SKIP"
-        continue
-    fi
-
-    info "Benchmarking '$PKG'"
-    if ! DIR=$("$BASE/scripts/fetchIfNeeded.sh" "$PKG")
-    then
-        unfetchable "$PKG"
-        continue
-    fi
+      function pkgInList {
+        touch "$CACHE/$2"
+        grep -Fx -- "$1" < "$CACHE/$2" > /dev/null
+      }
 
     if ! "$BASE/benchmarks/benchmark-ghc.sh" "$DIR"
     then
@@ -137,7 +47,4 @@ do
     done < <(clusterNums)
 
     echo "$PKG" >> "$CACHE/finished"
-
-    #COUNT=$(( COUNT + 1 ))
-done < "$SHUFFLE_LIST"
 ''

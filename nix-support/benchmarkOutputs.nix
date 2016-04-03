@@ -1,5 +1,5 @@
-{ annotate, bc, dumpPackage, extractTarball, haskellPackages, lib, parseJSON,
-  runScript }:
+{ annotate, bc, buildPackage, dumpPackage, extractTarball, haskellPackages, lib,
+  parseJSON, runScript }:
 with lib;
 
 let floatAdd         = x: y:
@@ -20,6 +20,14 @@ let floatAdd         = x: y:
       # Original Haskell fields
       inherit name pkg;
       src = extractTarball pkg.src;
+
+      # Building with regular GHC
+      quickBuild = buildPackage { inherit src;
+                                  quick = true;
+                                  hsEnv = pkg.env; };
+      slowBuild  = buildPackage { inherit src;
+                                  quick = false;
+                                  hsEnv = pkg.env; };
 
       # AST dumps
       quickDump = dumpPackage { quick = true;  inherit src; };
