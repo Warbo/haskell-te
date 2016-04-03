@@ -1,15 +1,8 @@
 defs: with defs; pkg:
 
-let typeResults = runScript (withNix {}) ''
+let arities = runScript (withNix { buildInputs = [ adb-scripts ]; }) ''
       set -e
-      "${jq}/bin/jq" -r '.result' < "${testRunTypes."${pkg.name}"}" \
-                                  > typeResults.json
-      "${storeResult}" typeResults.json "$out"
-    '';
-
-    arities = runScript (withNix { buildInputs = [ adb-scripts ]; }) ''
-      set -e
-      getArities < "${typeResults}" > arities.json
+      getArities < "${pkg.typeResults}" > arities.json
       "${storeResult}" arities.json "$out"
     '';
 

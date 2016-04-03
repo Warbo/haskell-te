@@ -84,27 +84,56 @@ rec {
                                    writeScript;
                          };
 
-  testRunTypes  = listToAttrs (map (n: {
+  # Attach a bunch of intermediate results to test packages, so we can check
+  # and cache them
+  testPackages  = listToAttrs (map (n: {
                     name  = n;
-                    value = runTypes (processedPackages."${n}".dump) n;
-                  }) testPackageNames);
+                    value =
+                      let pkg = processedPackages."${n}";
+                       in with pkg; pkg // rec {
+                         ranTypes  = runTypes dump n;
 
-  testAnnotated = let entry = n:
-                        let runT = testRunTypes."${n}";
-                            ann  = runScript
-                                     (withNix { buildInputs = [
-                                         adb-scripts
-                                         #storeResult
-                                       ];
-                                     })
-                                     ''
-                                       set -e
-                                       annotateAsts < "${runT}" \
-                                                    > annotated.json
-                                       "${storeResult}" annotated.json "$out"
-                                     '';
-                         in { name = n; value = ann; };
-                   in listToAttrs (map entry testPackageNames);
+                         annotated = runScript
+                           (withNix { buildInputs = [ adb-scripts ]; })
+                           ''
+                             set -e
+                             annotateAsts < "${ranTypes}" > annotated.json
+                             "${storeResult}" annotated.json "$out"
+                           '';
+
+                         scopeResults = runScript
+                           (withNix { buildInputs = [ jq ]; })
+                           ''
+                             set -e
+                             jq -r '.scoperesult' < "${ranTypes}" \
+                                                  > scopeResults.json
+                             "${storeResult}" scopeResults.json "$out"
+                           '';
+
+                         gotTypes  = runScript
+                           (withNix { buildInputs = [ adb-scripts ]; })
+                           ''
+                             set -e
+                             getTypes < "${scopeResults}" > types.json
+                             "${storeResult}" types.json "$out"
+                           '';
+
+                         typeResults = runScript (withNix {}) ''
+                           set -e
+                           "${jq}/bin/jq" -r '.result' < "${ranTypes}" \
+                                                       > typeResults.json
+                           "${storeResult}" typeResults.json "$out"
+                         '';
+
+                         deps = runScript
+                           (withNix { buildInputs = [ adb-scripts ]; })
+                           ''
+                             set -e
+                             getDeps < "${annotated}" > deps.json
+                             "${storeResult}" deps.json "$out"
+                           '';
+                       };
+                  }) testPackageNames);
 
   storeResult = writeScript "store-result" ''
     set -e

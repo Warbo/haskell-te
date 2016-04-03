@@ -2,7 +2,7 @@ defs: with defs; pkg:
 
 let typeResults = runScript (withNix {}) ''
       set -e
-      "${jq}/bin/jq" -r '.result' < "${testRunTypes."${pkg.name}"}" \
+      "${jq}/bin/jq" -r '.result' < "${pkg.ranTypes}" \
                                   > typeResults.json
       "${storeResult}" typeResults.json "$out"
     '';

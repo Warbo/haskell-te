@@ -2,7 +2,7 @@ defs: with defs; pkg:
 
 let scopeResults = runScript (withNix {}) ''
       set -e
-      "${jq}/bin/jq" -r '.scoperesult' < "${testRunTypes."${pkg.name}"}" \
+      "${jq}/bin/jq" -r '.scoperesult' < "${pkg.ranTypes}" \
                                        > scopeResults.json
       "${storeResult}" scopeResults.json "$out"
     '';
