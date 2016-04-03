@@ -189,9 +189,6 @@ function pkgTestPackageNamesUnversioned {
 
 # Feature extraction tests
 
-function pkgTestGetFeatures {
-    getFeatures "$1" | assertNotEmpty "Couldn't get features from '$1'"
-}
 
 function featuresConform {
     FEATURELENGTHS=$(jq -r '.[] | .features | length')
@@ -203,10 +200,6 @@ function featuresConform {
             fail "Found '$LINE' features, was expecting '$COUNT'"
         fi
     done
-}
-
-function pkgTestFeaturesConform {
-    getFeatures "$1" | featuresConform
 }
 
 function extractionMatchesHaskell {
