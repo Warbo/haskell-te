@@ -2,7 +2,7 @@ defs: with defs; pkg:
 
 parseJSON (runScript { buildInputs = [ adb-scripts ]; } ''
   set -e
-  jq -c '.[] | .package'  < "${pkg.annotated}" | while read -r LINE
+  jq -c '.[] | .package'  < "${pkg.preAnnotated}" | while read -r LINE
   do
     [[ "x$LINE" = "x\"${pkg.name}\"" ]] || {
       echo "Unlabelled: '${pkg.name}' '$LINE'" 1>&2

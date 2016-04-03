@@ -1,9 +1,6 @@
-defs: with defs;
+defs: with defs; pkg:
 
-pkgName:
-
-assert isString pkgName;
-let asts      = annotatedPackages."${pkgName}";
+let asts      = pkg.annotated;
     haveField = field:
                   assert isString field;
                   assert pathExists "${asts}";

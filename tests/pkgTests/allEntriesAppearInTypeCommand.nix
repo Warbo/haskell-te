@@ -2,7 +2,8 @@ defs: with defs; pkg: with pkg;
 
 parseJSON (runScript {} ''
   set -e
-  jq -c -r '.[] | .module + "." + .name' < "${annotated}" | while read -r LINE
+  jq -c -r '.[] | .module + "." + .name' < "${preAnnotated}" |
+  while read -r LINE
   do
     "${jq}/bin/jq" -r '.cmd' < "${pkg.ranTypes}" |
       grep "('$LINE)" > /dev/null || {

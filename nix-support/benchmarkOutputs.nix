@@ -1,4 +1,5 @@
-{ bc, dumpPackage, extractTarball, haskellPackages, lib, parseJSON, runScript }:
+{ annotate, bc, dumpPackage, extractTarball, haskellPackages, lib, parseJSON,
+  runScript }:
 with lib;
 
 let floatAdd         = x: y:
@@ -25,8 +26,12 @@ let floatAdd         = x: y:
       slowDump  = dumpPackage { quick = false; inherit src; };
 
       # Annotated ASTs
-      quickAnnotated = annotate { quick = true;  inherit dump; };
-      slowAnnotated  = annotate { quick = false; inherit dump; };
+      quickAnnotated = annotate { quick   = true;
+                                  asts    = dump;
+                                  pkgName = name; };
+      slowAnnotated  = annotate { quick   = false;
+                                  asts    = dump;
+                                  pkgName = name; };
 
       # Stick to the quick output, so testing is faster
       dump      = quickDump.stdout;

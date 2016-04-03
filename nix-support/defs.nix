@@ -14,7 +14,7 @@ rec {
   inherit (import ../annotatedb {
              inherit downloadAndDump getDeps jq lib nix runScript stdenv
                      utillinux withNix;
-          }) adb-scripts annotateAsts runTypes annotate dumpAndAnnotate;
+          }) adb-scripts annotateAsts runTypes dumpAndAnnotate;
 
   inherit (import ./runBenchmark.nix {
              inherit bash coreutils explore-theories jq lib
@@ -25,13 +25,19 @@ rec {
                      inherit gnutar runScript withNix;
                    };
 
+  annotate        = import ./annotate.nix        {
+                      inherit adb-scripts benchmark jq parseJSON runScript
+                              withNix;
+                    };
+
+
   hte-scripts = import ./scripts.nix {
                   inherit coreutils stdenv wget;
                 };
 
   processedPackages = (import ./benchmarkOutputs.nix {
-                        inherit bc dumpPackage extractTarball haskellPackages
-                                lib parseJSON runScript;
+                        inherit annotate bc dumpPackage extractTarball
+                                haskellPackages lib parseJSON runScript;
                       });
 
   c2db-scripts    = import ../cabal2db/scripts.nix         {
@@ -81,6 +87,11 @@ rec {
                            inherit coreutils pv runScript wget withNix
                                    writeScript;
                          };
+
+  runTypes        = import ./runTypes.nix        {
+                      inherit withNix runScript adb-scripts jq;
+                    };
+
 
   # FIXME: Move test-related definitions to a separate defs file
   testPackages  = import ./testPackages.nix {

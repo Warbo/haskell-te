@@ -1,9 +1,7 @@
-{ runScript, adb-scripts, jq, withNix }:
-asts: pkgName:
+{ adb-scripts, benchmark, jq, parseJSON, runScript, withNix }:
+{ asts, pkgName, quick }:
 
-runScript (withNix { buildInputs = [ adb-scripts ]; }) ''
-    set -e
-    annotateDb "${pkgName}" < "${asts}" > annotated.json
-    RESULT=$(nix-store --add annotated.json)
-    printf '%s' "$RESULT" > "$out"
-  ''
+parseJSON (runScript (withNix { buildInputs = [ adb-scripts ]; }) ''
+  set -e
+  "${benchmark quick "annotateDb" [pkgName]}" < "${asts}" > "$out"
+'')

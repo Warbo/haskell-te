@@ -1,6 +1,6 @@
 defs: with defs;
 
-pkgName:
+pkg:
 
-let rawData = runTypes (downloadAndDump pkgName) pkgName;
+let rawData = runTypes (downloadAndDump pkg.name) pkg.name;
  in (readFile "${rawData}") != ""

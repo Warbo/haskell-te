@@ -9,7 +9,7 @@ let testPackageNames = [ "list-extras" ];
     extend           = pkg: with pkg; pkg // rec {
       ranTypes  = runTypes dump pkg.name;
 
-      annotated = runScript
+      preAnnotated = runScript
         (withNix { buildInputs = [ adb-scripts ]; })
         ''
           set -e
