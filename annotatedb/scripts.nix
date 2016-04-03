@@ -5,8 +5,7 @@ stdenv.mkDerivation {
 
   # Exclude .git and test-data from being imported into the Nix store
   src = builtins.filterSource (path: type:
-    baseNameOf path != ".git" &&
-    baseNameOf path != "test-data") ./.;
+    baseNameOf path != ".git") ./.;
 
   propagatedBuildInputs = [ jq getDeps utillinux ];
 
