@@ -1,8 +1,5 @@
 defs: with defs;
 
-pkgName:
+pkg:
 
-let rawData = runTypes (dumpedPackages."${pkgName}") pkgName;
-    result  = addErrorContext "Parsing contents of '${rawData}'"
-                              (fromJSON (readFile "${rawData}"));
- in result ? scopecmd
+parseJSON (readFile pkg.ranTypes) ? scopecmd

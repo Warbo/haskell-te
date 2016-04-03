@@ -14,7 +14,7 @@ rec {
   inherit (import ../annotatedb {
              inherit downloadAndDump getDeps jq lib nix runScript stdenv
                      utillinux withNix;
-          }) adb-scripts annotateAsts runTypes dumpAndAnnotate;
+          }) adb-scripts annotateAsts dumpAndAnnotate;
 
   inherit (import ./runBenchmark.nix {
              inherit bash coreutils explore-theories jq lib
@@ -89,7 +89,7 @@ rec {
                          };
 
   runTypes        = import ./runTypes.nix        {
-                      inherit withNix runScript adb-scripts jq;
+                      inherit adb-scripts jq storeResult runScript withNix;
                     };
 
 
