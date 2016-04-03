@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+BASE=$(readlink -f "$(dirname "$0")")
+
+if [[ -e "$BASE/weka-cli.nix" ]]
+then
+    WEKACLI="$BASE/weka-cli.nix"
+elif [[ -e "$BASE/../lib/weka-cli.nix" ]]
+then
+    WEKACLI="$BASE/../lib/weka-cli.nix"
+else
+    echo "Cannot find weka-cli.nix in '$BASE' or '$BASE/../lib/'" 1>&2
+    exit 1
+fi
+
+if command -v weka-cli > /dev/null
+then
+    "$BASE/recurrentClustering"
+else
+    # nix-shell shebangs don't like whitespace, so we call nix-shell explicitly
+    nix-shell --show-trace -p "import \"$WEKACLI\"" jq order-deps \
+              --run "$BASE/recurrentClustering"
+fi

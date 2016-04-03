@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+BASE=$(dirname "$0")
+
+WIDTH=30 HEIGHT=30 ml4hsfe-loop | "$BASE/nix_recurrentClustering"
