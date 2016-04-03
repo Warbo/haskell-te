@@ -1,8 +1,8 @@
-{ benchmark, fromJSON, recurrent-clustering, runScript, withNix }:
+{ benchmark, parseJSON, recurrent-clustering, runScript, withNix }:
 
 { quick, annotated, clusters }:
 
-let go = c: fromJSON (runScript (withNix {
+let go = c: parseJSON (runScript (withNix {
                                   buildInputs = [ recurrent-clustering ];
                                 }) ''
              set -e

@@ -45,7 +45,7 @@ rec {
   defaultClusters = [ 1 2 4 ];
 
   cluster = import ./cluster.nix {
-              inherit benchmark fromJSON recurrent-clustering runScript withNix;
+              inherit benchmark parseJSON recurrent-clustering runScript withNix;
             };
 
   c2db-scripts    = import ../cabal2db/scripts.nix         {
@@ -76,8 +76,8 @@ rec {
 
   ml4hs                = import ../packages/ml4hs            {};
 
-  recurrent-clustering = import ../packages/recurrent-clustering {
-                           inherit annotatedb ML4HSFE nix order-deps stdenv;
+  recurrent-clustering = import ../recurrent-clustering {
+                           inherit adb-scripts ML4HSFE nix order-deps stdenv;
                          };
 
   downloadAndDump      = import ./downloadAndDump.nix {

@@ -1,5 +1,5 @@
 #! /usr/bin/env nix-shell
-#! nix-shell -i bash -p annotatedb jq ML4HSFE
+#! nix-shell -i bash -p adb-scripts jq ML4HSFE
 
 BASE=$(dirname "$0")
 
@@ -173,13 +173,6 @@ function getExampleFiles {
 }
 
 # Validation
-
-function testExamplesValid {
-    while read -r EXAMPLE
-    do
-        jq '.' < "$EXAMPLE" > /dev/null || fail "Failed to parse '$EXAMPLE'"
-    done < <(getExampleFiles)
-}
 
 function packageNamesUnversioned {
     INPUT=$(cat)

@@ -1,4 +1,4 @@
-{ stdenv, order-deps, ML4HSFE, nix, annotatedb }:
+{ stdenv, order-deps, ML4HSFE, nix, adb-scripts }:
 
 stdenv.mkDerivation {
   name = "recurrent-clustering";
@@ -8,7 +8,7 @@ stdenv.mkDerivation {
     baseNameOf path != ".git" &&
     baseNameOf path != "test-data") ./.;
 
-  buildInputs = [ annotatedb ];
+  buildInputs = [ adb-scripts ];
 
   propagatedBuildInputs = [
     (import ./weka-cli.nix)
@@ -16,13 +16,6 @@ stdenv.mkDerivation {
     ML4HSFE
     nix
   ];
-
-  NIX_REMOTE = "daemon";
-  NIX_PATH   = builtins.getEnv "NIX_PATH";
-  doCheck    = true;
-  checkPhase = ''
-    ./test.sh
-  '';
 
   installPhase = ''
     mkdir -p "$out/bin"
