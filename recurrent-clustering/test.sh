@@ -209,13 +209,6 @@ function pkgTestFeaturesConform {
     getFeatures "$1" | featuresConform
 }
 
-function testExampleFeaturesConform {
-    while read -r EXAMPLE
-    do
-        exampleFeatures "$EXAMPLE" | featuresConform
-    done < <(getExampleFiles)
-}
-
 function extractionMatchesHaskell {
     # extractFeatures is written in bash + jq, and is really slow. We've
     # replaced it with ml4hsfe-loop, but keep it around for testing
