@@ -21,12 +21,13 @@ stdenv.mkDerivation {
     mkdir -p "$out/bin"
     for FILE in recurrentClustering nix_recurrentClustering runWeka cluster
     do
-        cp -v "$FILE" "$out/bin/"
+        cp "$FILE" "$out/bin/"
     done
 
     mkdir -p "$out/lib"
-    cp -v weka-cli.nix "$out/lib/"
+    cp weka-cli.nix "$out/lib/"
+    cp extractFeatures "$out/lib"
 
-    chmod +x "$out/bin/"*
+    chmod +x "$out/bin/"* "$out/lib/extractFeatures"
   '';
 }

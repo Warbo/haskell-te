@@ -172,35 +172,7 @@ function getExampleFiles {
     done < <(find examples -type f)
 }
 
-# Validation
-
-function packageNamesUnversioned {
-    INPUT=$(cat)
-    echo "$INPUT" | jq -rc '.[] | .package'                       |
-        assertNoVersions "'$1'"
-
-    echo "$INPUT" | jq -rc '.[] | .dependencies | .[] | .package' |
-        assertNoVersions "dependencies of '$1'"
-}
-
-function pkgTestPackageNamesUnversioned {
-    getAsts "$1" | packageNamesUnversioned "$1"
-}
-
 # Feature extraction tests
-
-
-function featuresConform {
-    FEATURELENGTHS=$(jq -r '.[] | .features | length')
-    COUNT=$(echo "$FEATURELENGTHS" | head -n 1)
-    echo "$FEATURELENGTHS" | while read -r LINE
-    do
-        if [[ "$LINE" -ne "$COUNT" ]]
-        then
-            fail "Found '$LINE' features, was expecting '$COUNT'"
-        fi
-    done
-}
 
 function extractionMatchesHaskell {
     # extractFeatures is written in bash + jq, and is really slow. We've
