@@ -194,12 +194,6 @@ function getDeps {
 
 # Tests
 
-function pkgTestNoCoreNames {
-    COUNT=$(getAsts "$1" | jq -r '.[] | .name' | count '\.\$')
-    [[ "$COUNT" -eq 0 ]] ||
-        fail "ASTs for '$1' contain Core names beginning with \$"
-}
-
 function pkgTestDeps {
     HAVE=$(getDeps "$1" | jq 'map(has("dependencies")) | all')
     [[ "x$HAVE" = "xtrue" ]] ||

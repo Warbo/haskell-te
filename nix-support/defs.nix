@@ -89,15 +89,21 @@ rec {
                     value = runTypes (processedPackages."${n}".dump) n;
                   }) testPackageNames);
 
-  testAnnotated = let ann = n: runScript
-                                 (withNix { buildInputs = [ adb-scripts ]; })
-                                 ''
-                                   set -e
-                                   annotateAsts < "${testRunTypes."${n}"}" \
-                                                > annotated.json
-                                   "${storeResult}" annotated.json "$out"
-                                 '';
-                      entry = n: { name = n; value = ann n; };
+  testAnnotated = let entry = n:
+                        let runT = testRunTypes."${n}";
+                            ann  = runScript
+                                     (withNix { buildInputs = [
+                                         adb-scripts
+                                         #storeResult
+                                       ];
+                                     })
+                                     ''
+                                       set -e
+                                       annotateAsts < "${runT}" \
+                                                    > annotated.json
+                                       "${storeResult}" annotated.json "$out"
+                                     '';
+                         in { name = n; value = ann; };
                    in listToAttrs (map entry testPackageNames);
 
   storeResult = writeScript "store-result" ''

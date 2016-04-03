@@ -1,9 +1,7 @@
 defs: with defs; pkg:
 
-let annotated  = testAnnotated."${pkg.name}";
-
-    checkField = f: parseJSON (runScript {} ''
-      "${jq}/bin/jq" 'map(has("${f}")) | all' < "${annotated}" > "$out"
+let checkField = f: parseJSON (runScript {} ''
+      "${jq}/bin/jq" 'map(has("${f}")) | all' < "${pkg.annotated}" > "$out"
     '');
 
     fields = [ "package" "module" "name" "ast" "type" "arity" "quickspecable" ];
