@@ -52,8 +52,6 @@ rec {
                 inherit benchmark c2db-scripts parseJSON runScript withNix;
               };
 
-  testPackageNames     = [ "list-extras" ];
-
   parseJSON            = import ./parseJSON.nix {
                            inherit jq runScript writeScript;
                          };
@@ -86,54 +84,10 @@ rec {
 
   # Attach a bunch of intermediate results to test packages, so we can check
   # and cache them
-  testPackages  = listToAttrs (map (n: {
-                    name  = n;
-                    value =
-                      let pkg = processedPackages."${n}";
-                       in with pkg; pkg // rec {
-                         ranTypes  = runTypes dump n;
-
-                         annotated = runScript
-                           (withNix { buildInputs = [ adb-scripts ]; })
-                           ''
-                             set -e
-                             annotateAsts < "${ranTypes}" > annotated.json
-                             "${storeResult}" annotated.json "$out"
-                           '';
-
-                         scopeResults = runScript
-                           (withNix { buildInputs = [ jq ]; })
-                           ''
-                             set -e
-                             jq -r '.scoperesult' < "${ranTypes}" \
-                                                  > scopeResults.json
-                             "${storeResult}" scopeResults.json "$out"
-                           '';
-
-                         gotTypes  = runScript
-                           (withNix { buildInputs = [ adb-scripts ]; })
-                           ''
-                             set -e
-                             getTypes < "${scopeResults}" > types.json
-                             "${storeResult}" types.json "$out"
-                           '';
-
-                         typeResults = runScript (withNix {}) ''
-                           set -e
-                           "${jq}/bin/jq" -r '.result' < "${ranTypes}" \
-                                                       > typeResults.json
-                           "${storeResult}" typeResults.json "$out"
-                         '';
-
-                         deps = runScript
-                           (withNix { buildInputs = [ adb-scripts ]; })
-                           ''
-                             set -e
-                             getDeps < "${annotated}" > deps.json
-                             "${storeResult}" deps.json "$out"
-                           '';
-                       };
-                  }) testPackageNames);
+  testPackages  = import ./testPackages.nix {
+                    inherit adb-scripts jq processedPackages runScript runTypes
+                            storeResult withNix;
+                  };
 
   storeResult = writeScript "store-result" ''
     set -e
