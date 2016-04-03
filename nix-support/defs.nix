@@ -82,13 +82,13 @@ rec {
                                    writeScript;
                          };
 
-  # Attach a bunch of intermediate results to test packages, so we can check
-  # and cache them
+  # FIXME: Move test-related definitions to a separate defs file
   testPackages  = import ./testPackages.nix {
                     inherit adb-scripts jq processedPackages runScript runTypes
                             storeResult withNix;
                   };
 
+  # FIXME: Replace other occurrences of nix-store with storeResult
   storeResult = writeScript "store-result" ''
     set -e
     RESULT=$(nix-store --add "$1")

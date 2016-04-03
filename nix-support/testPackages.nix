@@ -2,6 +2,9 @@
   withNix }:
 with builtins;
 
+# Attach a bunch of intermediate results to test packages, so we can check
+# and cache them
+
 let testPackageNames = [ "list-extras" ];
     extend           = pkg: with pkg; pkg // rec {
       ranTypes  = runTypes dump pkg.name;
