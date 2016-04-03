@@ -1,6 +1,8 @@
-{ annotate, bc, buildPackage, dumpPackage, extractTarball, haskellPackages, lib,
-  parseJSON, runScript }:
+{ annotate, bc, buildPackage, cluster, dumpPackage, extractTarball,
+  haskellPackages, lib, parseJSON, runScript }:
 with lib;
+
+{ clusters }:
 
 let floatAdd         = x: y:
                          assert isString x;
@@ -41,9 +43,16 @@ let floatAdd         = x: y:
                                   asts    = dump;
                                   pkgName = name; };
 
+      # Clustered ASTs
+      quickClustered = cluster { inherit annotated clusters;
+                                 quick = true; };
+      slowClustered  = cluster { inherit annotated clusters;
+                                 quick = false; };
+
       # Stick to the quick output, so testing is faster
       dump      = quickDump.stdout;
       annotated = quickAnnotated.stdout;
+      clustered = quickClustered.stdout;
 
       # Total benchmark times
       totalWithTime      = sumWithTime      [ quickDump.time ];

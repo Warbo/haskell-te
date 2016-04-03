@@ -52,7 +52,8 @@ rec {
     echo "$INPUT" | "${explore-theories}/bin/build-env"  \
                       "${mlspec-bench}/bin/mlspec-bench" \
                         --template json --output report.json 1> bench.stdout \
-                                                             2> bench.stderr
+                                                             2> bench.stderr ||
+    { echo "Benchmark exited with error" 1>&2; exit 1; }
 
     cat bench.stdout 1>&2
 

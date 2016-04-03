@@ -35,11 +35,18 @@ rec {
                   inherit coreutils stdenv wget;
                 };
 
-  processedPackages = (import ./benchmarkOutputs.nix {
-                        inherit annotate bc buildPackage dumpPackage
+  benchmarkPackages = (import ./benchmarkOutputs.nix {
+                        inherit annotate bc buildPackage cluster dumpPackage
                                 extractTarball haskellPackages lib parseJSON
-                                runScript;
-                      });
+                                runScript; });
+
+  processedPackages = benchmarkPackages { clusters = defaultClusters; };
+
+  defaultClusters = [ 1 2 4 ];
+
+  cluster = import ./cluster.nix {
+              inherit benchmark fromJSON recurrent-clustering runScript withNix;
+            };
 
   c2db-scripts    = import ../cabal2db/scripts.nix         {
                       inherit stdenv nix jq;
@@ -63,10 +70,6 @@ rec {
                            inherit jq runScript writeScript;
                          };
 
-  annotatedb           = import ../packages/annotatedb       {
-                           inherit getDeps;
-                         };
-
   explore-theories     = import ../packages/explore-theories {
                            inherit stdenv;
                          };
@@ -74,7 +77,7 @@ rec {
   ml4hs                = import ../packages/ml4hs            {};
 
   recurrent-clustering = import ../packages/recurrent-clustering {
-                           inherit order-deps ML4HSFE annotatedb;
+                           inherit annotatedb ML4HSFE nix order-deps stdenv;
                          };
 
   downloadAndDump      = import ./downloadAndDump.nix {

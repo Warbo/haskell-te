@@ -20,18 +20,6 @@ let bench = pkg: runScript {} ''
         grep -Fx -- "$1" < "$CACHE/$2" > /dev/null
       }
 
-    if ! "$BASE/benchmarks/benchmark-ghc.sh" "$DIR"
-    then
-        unbuildable "$PKG"
-        continue
-    fi
-
-    if ! "$BASE/benchmarks/benchmark-features.sh" "$DIR"
-    then
-        featureless "$PKG"
-        continue
-    fi
-
     # Make sure we run all clusters for this package
     while read -r CLUSTERS
     do
