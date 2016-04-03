@@ -1,23 +1,6 @@
-#! /usr/bin/env nix-shell
-#! nix-shell -i bash -p jq gnuplot
+{}:
 
-BASE=$(dirname "$(dirname "$(readlink -f "$0")")")
-
-# shellcheck disable=SC2034
-NAME=$(basename "$0")
-
-# shellcheck source=common.sh
-source "$BASE/scripts/common.sh"
-
-shopt -s nullglob
-
-for CMD in jq gnuplot
-do
-    requireCmd "$CMD"
-done
-
-mkdir -p "$CACHE/results"
-
+runScript {} ''
 function clusteringData {
     echo -e "Clusters\tTime"
     while read -r FILE
@@ -86,3 +69,4 @@ function plotOverhead {
 
 plotOverhead
 plotClustering
+''
