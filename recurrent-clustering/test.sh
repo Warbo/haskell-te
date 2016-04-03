@@ -183,13 +183,6 @@ function packageNamesUnversioned {
         assertNoVersions "dependencies of '$1'"
 }
 
-function testExamplePackageNamesUnversioned {
-    while read -r EXAMPLE
-    do
-        packageNamesUnversioned "$EXAMPLE" < "$EXAMPLE"
-    done < <(getExampleFiles)
-}
-
 function pkgTestPackageNamesUnversioned {
     getAsts "$1" | packageNamesUnversioned "$1"
 }
@@ -198,14 +191,6 @@ function pkgTestPackageNamesUnversioned {
 
 function pkgTestGetFeatures {
     getFeatures "$1" | assertNotEmpty "Couldn't get features from '$1'"
-}
-
-function testExampleFeatures {
-    while read -r EXAMPLE
-    do
-        exampleFeatures "$EXAMPLE" |
-            assertNotEmpty "Couldn't get features from '$EXAMPLE'"
-    done < <(getExampleFiles)
 }
 
 function featuresConform {

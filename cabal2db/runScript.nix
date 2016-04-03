@@ -5,5 +5,4 @@ env: text:
 
 let script = writeScript "script" text;
     runner = runCommand  "runner" env script;
- in #unsafeDiscardStringContext
-    (readFile "${runner}")
+ in readFile "${runner}"
