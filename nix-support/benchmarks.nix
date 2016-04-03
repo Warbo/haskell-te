@@ -1,3 +1,6 @@
+{}:
+
+runScript {} ''
 #!/usr/bin/env bash
 
 # Benchmark ML4HS compared to GHC and QuickSpec
@@ -137,3 +140,4 @@ do
 
     #COUNT=$(( COUNT + 1 ))
 done < "$SHUFFLE_LIST"
+''
