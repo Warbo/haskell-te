@@ -34,3 +34,6 @@
 [submodule "packages/order-deps"]
 	path = packages/order-deps
 	url = http://chriswarbo.net/git/order-deps.git/
+[submodule "packages/ifcxt"]
+	path = packages/ifcxt
+	url = http://chriswarbo.net/git/ifcxt.git
