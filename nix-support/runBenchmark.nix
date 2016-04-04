@@ -22,8 +22,12 @@ rec {
     "${coreutils}/bin/tac" "$1" | upToDashes | "${coreutils}/bin/tac"
   '';
 
+  # FIXME: Temporarily make withCriterion an alias for withTime, for speed
+  withCriterion = cmd: args: writeScript "fixme" ''
+    "${withTime cmd args}" | "${jq}/bin/jq" '. + {"time":{"mean":{"estPoint":1},"stddev":{"estPoint":1}}}'
+  '';
   # A thorough benchmark, which performs multiple runs using Criterion
-  withCriterion = cmd: args: writeScript "with-criterion" ''
+  withCriterion2 = cmd: args: writeScript "with-criterion" ''
     #!${bash}/bin/bash
     set -e
 
@@ -49,11 +53,17 @@ rec {
 
     echo "Benchmarking '${cmd}'" 1>&2
 
-    echo "$INPUT" | "${explore-theories}/bin/build-env"  \
-                      "${mlspec-bench}/bin/mlspec-bench" \
-                        --template json --output report.json 1> bench.stdout \
-                                                             2> bench.stderr ||
+    START_TIME="$SECONDS" # Not part of the benchmark, just info for user
+
+    echo "$INPUT" | "${explore-theories}/bin/build-env"   \
+                      "${mlspec-bench}/bin/mlspec-bench"   \
+                        --template json                     \
+                        --output report.json 1> bench.stdout \
+                                             2> bench.stderr ||
     { echo "Benchmark exited with error" 1>&2; exit 1; }
+
+    DURATION=$(( SECONDS - START_TIME ))
+    echo "Benchmarking took '$DURATION' seconds" 1>&2
 
     cat bench.stdout 1>&2
 
