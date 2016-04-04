@@ -187,24 +187,6 @@ function clusterNums {
 EOF
 }
 
-function allClustered {
-    while read -r CLUSTERS
-    do
-        if "$2" "$1" | jq '.[] | .tocluster' | grep "false" > /dev/null
-        then
-            fail "Clustering '$1' into '$CLUSTERS' clusters didn't include everything"
-        fi
-    done < <(clusterNums)
-}
-
-function pkgTestAllClustered {
-    allClustered "$1" getClusters
-}
-
-function pkgTestAllEndToEnd {
-    allClustered "$1" getEndToEnd
-}
-
 ###
 
 function haveAllClusters {
