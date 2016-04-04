@@ -224,54 +224,6 @@ function pkgTestEndToEndJson {
     checkJsonEqs "$1" getEndToEnd
 }
 
-# Tests requiring no arguments
-
-function testShellCheck {
-    SCERR=0
-    IGNORE=(
-        -e SC1008 # #!/usr/bin/env nix-shell is OK
-        -e SC2016 # "jq '$foo'" is OK
-        -e SC2001 # Complex sed can't be replaced by bash builtins
-    )
-    for file in *.sh
-    do
-        shellcheck -s bash "${IGNORE[@]}" "$file" || SCERR=1
-    done
-    return "$SCERR"
-}
-
-function testShebangs {
-    ERR=0
-    for file in *.sh
-    do
-        SHEBANGS=$(grep "^#!" < "$file")
-        if echo "$SHEBANGS" | grep "/bin/sh" > /dev/null
-        then
-            fail "$file won't work on Debian. Use #!/usr/bin/env bash"
-            ERR=1
-        fi
-        if echo "$SHEBANGS" | grep "/bin/bash" > /dev/null
-        then
-            fail "$file won't work on NixOS. Use #!/usr/bin/env bash"
-            ERR=1
-        fi
-    done
-    return "$ERR"
-}
-
-function testStderr {
-    ERR=0
-    for file in *.sh
-    do
-        if grep "[^>]>[ ]*/dev/stderr" < "$file" > /dev/null
-        then
-            fail "$file overwrites stderr instead of appending"
-            ERR=1
-        fi
-    done
-    return "$ERR"
-}
-
 # Test invocation
 
 function traceTest {
