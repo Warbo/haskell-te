@@ -1,74 +1,124 @@
-{}:
+{ gnuplot, lib, runScript, storeResult, withNix, writeScript }:
+with builtins;
+with lib;
 
-FIXME
-
-runScript {} ''
-function clusteringData {
-    echo -e "Clusters\tTime"
-    while read -r FILE
-    do
+let clusteringData = writeScript "clustering-data" ''
+      echo -e "Clusters\tTime"
+      while read -r FILE
+      do
         CLUSTER=$(echo "$FILE" | grep -o "/[0-9]*-clusters/" | grep -o "[0-9]*")
         MEAN=$(jq '.[] | .reportAnalysis | .anMean | .estPoint' < "$FILE")
         echo -e "$CLUSTER\t$MEAN"
-    done < <(find "$CACHE/benchmarks/cluster" -name "*.json")
-}
+      done < <(find "$CACHE/benchmarks/cluster" -name "*.json")
+    '';
 
-function timeFor {
-    DIR="$CACHE/benchmarks/$2/$1"
-    if [[ -d "$DIR" ]]
-    then
-        for FILE in "$DIR/outputs"/*.json
-        do
+    overheadData = writeScript "overhead-data" ''
+      set -e
+
+      function timeFor {
+        DIR="$CACHE/benchmarks/$2/$1"
+        if [[ -d "$DIR" ]]
+        then
+          for FILE in "$DIR/outputs"/*.json
+          # */
+          do
             jq '.[] | .reportAnalysis | .anMean | .estPoint' < "$FILE"
             return
+          done
+        fi
+        echo "-"
+      }
+
+      function pkgsWith {
+        for DIR in "$CACHE/benchmarks/$1"/*
+        # */
+        do
+          basename "$DIR"
         done
-    fi
-    echo "-"
-}
+      }
 
-function pkgsWith {
-    for DIR in "$CACHE/benchmarks/$1"/*
-    do
-        basename "$DIR"
-    done
-}
+      function pkgsWithOverhead {
+        printf '%s\n%s\n%s' "$(pkgsWith ghc)"  \
+                            "$(pkgsWith dump)" \
+                            "$(pkgsWith annotate)" | sort -u | grep -v "^$"
+      }
 
-function pkgsWithOverhead {
-    printf '%s\n%s\n%s' "$(pkgsWith ghc)"  \
-                        "$(pkgsWith dump)" \
-                        "$(pkgsWith annotate)" | sort -u | grep -v "^$"
-}
-
-function overheadData {
-    while read -r PKG
-    do
+      while read -r PKG
+      do
         GHC=$(timeFor "$PKG" ghc)
         DUMP=$(timeFor "$PKG" dump)
         ANNOTATION=$(timeFor "$PKG" annotate)
         printf 'Package\tGHC\tExtraction\tAnnotation\n'
         printf '%s\t%s\t%s\n' "$PKG" "$GHC" "$DUMP" "$ANNOTATION"
-    done < <(pkgsWithOverhead)
-}
+      done < <(pkgsWithOverhead)
+    '';
 
-function plotClustering {
-    DATA_FILE="$CACHE/results/clustering.gnuplotdata"
-    clusteringData > "$DATA_FILE"
+    plotOverhead = runScript {} ''
+      "${overheadData}" > ./data
+      gnuplot -e "filename='data';ofilename='plot.png'" "${bars}"
+    '';
 
-    PLOT_FILE="$CACHE/results/clustering.png"
+    bars = writeScript "bars.gnuplot" ''
+      set terminal pngcairo font "arial,10" size 500,500
+      set output ofilename
 
-    gnuplot -e "filename='$DATA_FILE';ofilename='$PLOT_FILE'" "$BASE/scripts/plot.gnu"
-}
+      set boxwidth 0.75 absolute
+      set style fill solid 1.00 border -1
+      set style data histogram
+      set style histogram cluster gap 1
+      set xtics rotate by -90
 
-function plotOverhead {
-    DATA_FILE="$CACHE/results/overhead.gnuplotdata"
+      set title "ML4HS overhead compared to GHC"
+      set ylabel "Total time (seconds)"
+      set xlabel "Package"
 
-    overheadData > "$DATA_FILE"
+      plot filename using 2:xtic(1) title col, \
+                ''' using 3:xtic(1) title col, \
+    '';
 
-    PLOT_FILE="$CACHE/results/overhead.png"
+    plotClustering = runScript {} ''
+      "${clusteringData}" > ./data
+      gnuplot -e "filename='data';ofilename='plot.png'" "${plot}"
+    '';
 
-    gnuplot -e "filename='$DATA_FILE';ofilename='$PLOT_FILE'" "$BASE/scripts/bars.gnu"
-}
+    plot = writeScript "plot.gnu" ''
+      set terminal png
+      set output ofilename
+      set yrange [0:*]
+      plot filename using 1:2 with points
+    '';
 
-plotOverhead
-plotClustering
-''
+    mkTbl = keyAttrs: dataAttrs:
+      let joinCells = concatStringsSep "\t";
+          joinRows  = concatStringsSep "\n";
+          mkRow     = _: data: map (key: data."${key}") keys;
+
+          keys = map (a: a.key)  keyAttrs;
+
+          head = joinCells (map (a: a.name) keyAttrs);
+
+          tblA = mapAttrs mkRow dataAttrs;
+          tblL = map (n: joinCells tblA."${n}") (attrNames tblA);
+       in joinRows ([head] ++ tblL);
+
+    sizeVsThroughputGnus = writeScript "size-vs-throughput.gnu" ''
+      set terminal png
+      set output ofilename
+      set yrange [0:*]
+      plot filename using 2:3 with points
+    '';
+
+    plotSizeVsThroughput = data:
+      let fields = [ { name = "Label";      key = "label"; }
+                     { name = "Size";       key = "size"; }
+                     { name = "Throughput"; key = "throughput"; } ];
+          tbl    = toFile "size-vs-throughput" (mkTbl fields data);
+      in runScript (withNix { buildInputs = [ gnuplot ]; }) ''
+           set -e
+           DATA="${tbl}"
+           gnuplot -e "filename='$DATA';ofilename='plot.png'" \
+                      "${sizeVsThroughputGnus}"
+           "${storeResult}" "plot.png" "$out"
+         '';
+
+in { inherit mkTbl plotOverhead plotClustering plotSizeVsThroughput; }

@@ -1,6 +1,6 @@
 # Custom definitions
-{ bash, bc, buildEnv, coreutils, gnutar, haskellPackages, jq, lib, nix, pv,
-  real, runCommand, stdenv, time, utillinux, wget, writeScript }:
+{ bash, bc, buildEnv, coreutils, gnuplot, gnutar, haskellPackages, jq, lib, nix,
+  pv, real, runCommand, stdenv, time, utillinux, wget, writeScript }:
 
 with builtins; with lib;
 rec {
@@ -43,7 +43,8 @@ rec {
   processedPackages = benchmarkPackages { clusters = defaultClusters; };
 
   explore = import ./explore.nix {
-              inherit benchmark lib ml4hs parseJSON runScript withNix;
+              inherit benchmark explore-theories lib ml4hs parseJSON runScript
+                      withNix writeScript;
             };
 
   defaultClusters = [ 1 2 4 ];
@@ -102,8 +103,6 @@ rec {
                       inherit adb-scripts jq storeResult runScript withNix;
                     };
 
-  plotResults = import ./plotResults.nix {};
-
   benchmarks = import ./benchmarks.nix {};
 
   # FIXME: Move test-related definitions to a separate defs file
@@ -124,6 +123,11 @@ rec {
                    inherit benchmark parseJSON runScript withNix;
                    inherit (haskellPackages) cabal2nix cabal-install;
                  };
+
+  inherit (import ./plotResults.nix {
+            inherit gnuplot lib runScript storeResult withNix writeScript;
+          })
+          mkTbl plotSizeVsThroughput;
 
                          /*
   haskell-te = buildEnv {
