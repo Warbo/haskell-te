@@ -7,7 +7,7 @@ command -v MLSpec > /dev/null || {
 
 # shellcheck disable=SC2153
 [[ -n "$CLUSTERS" ]] || {
-    echo "run-exploration.sh needs CLUSTERS to be set" >> /dev/stderr
+    echo "run-exploration.sh needs CLUSTERS to be set" 1>&2
     exit 1
 }
 

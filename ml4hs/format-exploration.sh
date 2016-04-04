@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
 command -v jq > /dev/null || {
-    echo "format-exploration.sh requires jq" >> /dev/stderr
+    echo "format-exploration.sh requires jq" 1>&2
     exit 1
 }
 
 # shellcheck disable=SC2153
 [[ -n "$CLUSTERS" ]] || {
-    echo "format-exploration.sh needs CLUSTERS to be set" >> /dev/stderr
+    echo "format-exploration.sh needs CLUSTERS to be set" 1>&2
     exit 1
 }
 

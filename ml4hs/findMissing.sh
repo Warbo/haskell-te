@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 command -v jq > /dev/null || {
-    echo "findMissing.sh requires jq" >> /dev/stderr
+    echo "findMissing.sh requires jq" 1>&2
     exit 1
 }
 

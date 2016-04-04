@@ -228,8 +228,8 @@ function pkgTestEndToEndJson {
 
 function traceTest {
     # Separate our stderr from the previous and give a timestamp
-    echo -e "\n\n" >> /dev/stderr
-    date           >> /dev/stderr
+    echo -e "\n\n" 1>&2
+    date           1>&2
 
     # Always set -x to trace tests, but remember our previous setting
     OLDDEBUG=0

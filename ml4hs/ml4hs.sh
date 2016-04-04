@@ -4,7 +4,7 @@ set -e
 for CMD in dump-package annotateDb cluster jq
 do
     command -v "$CMD" > /dev/null || {
-        echo "ml4hs.sh requires $CMD" >> /dev/stderr
+        echo "ml4hs.sh requires $CMD" 1>&2
         exit 1
     }
 done
@@ -20,7 +20,7 @@ then
 fi
 
 [[ -n "$CLUSTERS" ]] || {
-    echo "ML4HS needs the env var CLUSTERS to tell it how many clusters to use" >> /dev/stderr
+    echo "ML4HS needs the env var CLUSTERS to tell it how many clusters to use" 1>&2
     exit 1
 }
 
@@ -30,7 +30,7 @@ ARG="${PACKAGE}"
 if [[ -n "$ML4HSDIR" ]]
 then
     [[ -d "$ML4HSDIR" ]] || {
-        echo "Given directory '$ML4HSDIR' doesn't exist" >> /dev/stderr
+        echo "Given directory '$ML4HSDIR' doesn't exist" 1>&2
         exit 1
     }
     DIR="$ML4HSDIR/${PACKAGE}"
@@ -44,19 +44,19 @@ if [[ -d "$DIR" ]]
 then
     echo "Directory '$DIR' already exists; leaving as-is" >> /dev/null
 else
-    mkdir -v "$DIR" >> /dev/stderr
+    mkdir -v "$DIR" 1>&2
 fi
 
 function phase {
     if [[ -e "$DIR/$2" ]]
     then
-        echo "Found '$DIR/$2'" >> /dev/stderr
+        echo "Found '$DIR/$2'" 1>&2
     else
-        echo "Running '${1}' with '${ARG}'" >> /dev/stderr
+        echo "Running '${1}' with '${ARG}'" 1>&2
         INPUT=""
         [[ -n "$3" ]] && INPUT=$(cat "${DIR}/${3}")
         echo "${INPUT}" | "${1}" "${ARG}" > "${DIR}/${2}" || {
-            echo "Failed to run '${1}'" >> /dev/stderr
+            echo "Failed to run '${1}'" 1>&2
             exit 1
         }
     fi
