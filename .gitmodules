@@ -34,6 +34,3 @@
 [submodule "packages/order-deps"]
 	path = packages/order-deps
 	url = http://chriswarbo.net/git/order-deps.git/
-[submodule "packages/ml4hs"]
-	path = packages/ml4hs
-	url = http://chriswarbo.net/git/ml4hs.git/
