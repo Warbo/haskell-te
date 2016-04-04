@@ -167,7 +167,6 @@ function checkExitCode {
     done < <(clusterNums)
 }
 
-
 function pkgTestEquationsCode {
     checkExitCode "$1" getEquations
 }

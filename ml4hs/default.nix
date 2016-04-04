@@ -1,4 +1,4 @@
-{ haskellPackages, jq, stdenv }:
+{ haskellPackages, jq, mlspec, stdenv }:
 
 stdenv.mkDerivation {
   name = "ml4hs";
@@ -10,6 +10,7 @@ stdenv.mkDerivation {
     (haskellPackages.ghcWithPackages (p: [
       p.QuickCheck
     ]))
+    mlspec
   ];
   installPhase = ''
     # Put scripts in place

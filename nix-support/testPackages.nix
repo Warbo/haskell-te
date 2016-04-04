@@ -78,6 +78,17 @@ let clusters         = listToAttrs (map (c: {
           "${ml4hs}/lib/ml4hs/format-exploration.sh" < "${data}" > formatted.json
           "${storeResult}" formatted.json "$out"
         '') clustered;
+
+      # Like 'explored', but comes from 'formatted', rather than using 'ml4hs'
+      # which acts on 'clustered'
+      preExplored = mapAttrs (c: data: runScript
+        (withNix { buildInputs = [ ml4hs ]; })
+        ''
+          set -e
+          export CLUSTERS="${c}"
+          "${ml4hs}/lib/ml4hs/run-exploration.sh" < "${data}" > equations.json
+          "${storeResult}" equations.json "$out"
+      '') formatted;
     };
 in listToAttrs (map (n: { name  = n;
                           value = extend processedPackages."${n}"; })

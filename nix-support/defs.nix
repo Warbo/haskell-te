@@ -37,10 +37,14 @@ rec {
 
   benchmarkPackages = (import ./benchmarkOutputs.nix {
                         inherit annotate bc buildPackage cluster dumpPackage
-                                extractTarball haskellPackages lib parseJSON
-                                runScript; });
+                                explore extractTarball haskellPackages lib
+                                parseJSON runScript; });
 
   processedPackages = benchmarkPackages { clusters = defaultClusters; };
+
+  explore = import ./explore.nix {
+              inherit benchmark lib ml4hs parseJSON runScript withNix;
+            };
 
   defaultClusters = [ 1 2 4 ];
 
@@ -75,7 +79,7 @@ rec {
                          };
 
   ml4hs                = import ../ml4hs            {
-                           inherit haskellPackages jq stdenv;
+                           inherit haskellPackages jq mlspec stdenv;
                          };
 
   recurrent-clustering = import ../recurrent-clustering {

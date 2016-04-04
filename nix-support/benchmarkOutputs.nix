@@ -1,4 +1,4 @@
-{ annotate, bc, buildPackage, cluster, dumpPackage, extractTarball,
+{ annotate, bc, buildPackage, cluster, dumpPackage, explore, extractTarball,
   haskellPackages, lib, parseJSON, runScript }:
 with lib;
 
