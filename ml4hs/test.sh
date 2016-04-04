@@ -157,34 +157,6 @@ function getEndToEnd {
 
 # Tests requiring a package as argument.
 
-function pkgTestValidFormatting {
-    while read -r CLUSTERS
-    do
-        FORMATTED=$(getFormattedClusters "$1") || {
-            fail "Couldn't get '$CLUSTERS' formatted clusters for '$1'"
-            return 1
-        }
-        LENGTH=$(echo "$FORMATTED" | jq -c 'length') || {
-            fail "Can't read '$CLUSTERS' formatted clusters for '$1'"
-            continue
-        }
-        [[ "$LENGTH" -eq "$CLUSTERS" ]] || [[ "$LENGTH" -lt "$CLUSTERS" ]] ||
-            fail "Formatted '$LENGTH' clusters for '$1' instead of '$CLUSTERS'"
-    done < <(clusterNums)
-}
-
-function pkgTestOnlyQuickspecableFormatted {
-    while read -r CLUSTERS
-    do
-        QS=$(getFormattedClusters "$1" | jq 'map(.[] | .quickspecable) | all') || {
-            fail "Couldn't see if '$1' with '$CLUSTERS' clusters are quickspecable"
-            return 1
-        }
-        [[ "x$QS" = "xtrue" ]] ||
-            fail "Got '$QS' not 'true' for '$1' in '$CLUSTERS' clusters"
-    done < <(clusterNums)
-}
-
 # We run tests of the equations twice: once on the equations built from the
 # cache, and once with the output of ml4hs.sh, to ensure that they're the same
 
