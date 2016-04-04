@@ -1,6 +1,6 @@
 # Custom definitions
-{ bash, bc, buildEnv, coreutils, gnuplot, gnutar, haskellPackages, jq, lib, nix,
-  pv, real, runCommand, stdenv, time, utillinux, wget, writeScript }:
+{ bash, bc, buildEnv, coreutils, file, gnuplot, gnutar, haskellPackages, jq,
+  lib, nix, pv, real, runCommand, stdenv, time, utillinux, wget, writeScript }:
 
 with builtins; with lib;
 rec {
