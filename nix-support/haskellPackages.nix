@@ -8,6 +8,7 @@ haskellPackages.override {
           AstPlugin         = cabalPath ../packages/ast-plugin;
           getDeps           = cabalPath ../packages/get-deps;
           HS2AST            = cabalPath ../packages/hs2ast;
+          ifcxt             = cabalPath ../packages/ifcxt;
           ML4HSFE           = cabalPath ../packages/ml4hsfe;
           mlspec            = cabalPath ../packages/mlspec;
           mlspec-bench      = cabalPath ../packages/mlspec-bench;
