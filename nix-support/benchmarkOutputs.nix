@@ -49,10 +49,15 @@ let floatAdd         = x: y:
       slowClustered  = cluster { inherit annotated clusters;
                                  quick = false; };
 
+      # Exploration results
+      quickExplored = explore { quick = true;  inherit clustered; };
+      slowExplored  = explore { quick = false; inherit clustered; };
+
       # Stick to the quick output, so testing is faster
       dump      = quickDump.stdout;
       annotated = quickAnnotated.stdout;
       clustered = mapAttrs (n: v: v.stdout) quickClustered;
+      explored  = mapAttrs (n: v: v.stdout) quickExplored;
 
       # Total benchmark times
       totalWithTime      = sumWithTime      [ quickDump.time ];

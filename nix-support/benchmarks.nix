@@ -23,10 +23,6 @@ let bench = pkg: runScript {} ''
     # Make sure we run all clusters for this package
     while read -r CLUSTERS
     do
-        "$BASE/benchmarks/benchmark-cluster.sh"  "$DIR" "$CLUSTERS" || {
-            echo "$PKG" >> "$CACHE/unclusterable"
-            continue
-        }
         "$BASE/benchmarks/benchmark-explore.sh"  "$DIR" "$CLUSTERS" || {
             echo "$PKG" >> "$CACHE/unexplorable"
             continue
