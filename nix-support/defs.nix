@@ -74,7 +74,9 @@ rec {
                            inherit stdenv;
                          };
 
-  ml4hs                = import ../packages/ml4hs            {};
+  ml4hs                = import ../ml4hs            {
+                           inherit haskellPackages jq stdenv;
+                         };
 
   recurrent-clustering = import ../recurrent-clustering {
                            inherit adb-scripts jq ML4HSFE nix order-deps stdenv;
@@ -102,9 +104,9 @@ rec {
 
   # FIXME: Move test-related definitions to a separate defs file
   testPackages  = import ./testPackages.nix {
-                    inherit adb-scripts defaultClusters jq ML4HSFE parseJSON
-                            processedPackages recurrent-clustering runScript
-                            runTypes storeResult withNix;
+                    inherit adb-scripts defaultClusters jq lib ml4hs ML4HSFE
+                            parseJSON processedPackages recurrent-clustering
+                            runScript runTypes storeResult withNix;
                   };
 
   # FIXME: Replace other occurrences of nix-store with storeResult

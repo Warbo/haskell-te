@@ -1,4 +1,4 @@
-{ stdenv, haskellPackages }:
+{ haskellPackages, jq, stdenv }:
 
 stdenv.mkDerivation {
   name = "ml4hs";
@@ -6,6 +6,7 @@ stdenv.mkDerivation {
 
   # Used for testing script
   propagatedBuildInputs = [
+    jq
     (haskellPackages.ghcWithPackages (p: [
       p.QuickCheck
     ]))
