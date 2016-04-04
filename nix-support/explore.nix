@@ -6,7 +6,8 @@ with lib;
 
 let formatAndExplore = writeScript "format-and-explore" ''
       set -e
-      "${ml4hs}/lib/ml4hs/format-exploration.sh" | explore-theories
+      "${ml4hs}/lib/ml4hs/format-exploration.sh" |
+        explore-theories | grep -v "^Depth"
     '';
     go = c: data: parseJSON (runScript (withNix {
                                          buildInputs = [ explore-theories ml4hs ];

@@ -107,9 +107,10 @@ rec {
 
   # FIXME: Move test-related definitions to a separate defs file
   testPackages  = import ./testPackages.nix {
-                    inherit adb-scripts defaultClusters jq lib ml4hs ML4HSFE
-                            parseJSON processedPackages recurrent-clustering
-                            runScript runTypes storeResult withNix;
+                    inherit adb-scripts defaultClusters explore-theories jq lib
+                            ml4hs ML4HSFE parseJSON processedPackages
+                            recurrent-clustering runScript runTypes storeResult
+                            withNix;
                   };
 
   # FIXME: Replace other occurrences of nix-store with storeResult

@@ -1,6 +1,6 @@
-{ adb-scripts, defaultClusters, jq, lib, ml4hs, ML4HSFE, parseJSON,
-  processedPackages, recurrent-clustering, runScript, runTypes, storeResult,
-  withNix }:
+{ adb-scripts, defaultClusters, explore-theories, jq, lib, ml4hs, ML4HSFE,
+  parseJSON, processedPackages, recurrent-clustering, runScript, runTypes,
+  storeResult, withNix }:
 with builtins;
 with lib;
 
@@ -82,11 +82,11 @@ let clusters         = listToAttrs (map (c: {
       # Like 'explored', but comes from 'formatted', rather than using 'ml4hs'
       # which acts on 'clustered'
       preExplored = mapAttrs (c: data: runScript
-        (withNix { buildInputs = [ ml4hs ]; })
+        (withNix { buildInputs = [ explore-theories ]; })
         ''
           set -e
           export CLUSTERS="${c}"
-          "${ml4hs}/lib/ml4hs/run-exploration.sh" < "${data}" > equations.json
+          explore-theories < "${data}" | grep -v "^Depth" > equations.json
           "${storeResult}" equations.json "$out"
       '') formatted;
     };

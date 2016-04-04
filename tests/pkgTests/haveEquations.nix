@@ -4,8 +4,7 @@ with builtins;
 let check = label: c: data: parseJSON (runScript { buildInputs = [ jq ]; } ''
       set -e
       echo "Looking for equations in '${data}' (${label})" 1>&2
-      grep -c '^' < "${data}" # set -e will treat no matches as an error
-      echo "true" > "$out"
+      jq -s 'length | . > 0' < "${data}" > "$out"
     '');
     result   = src: label: c:
       assertMsg (mapAttrs (check label) src)."${toString c}"
