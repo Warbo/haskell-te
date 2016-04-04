@@ -189,48 +189,6 @@ EOF
 
 ###
 
-function haveAllClusters {
-    while read -r CLUSTERS
-    do
-        FOUND=$("$2" "$1" | jq '.[] | .cluster')
-        for NUM in $(seq 1 "$CLUSTERS")
-        do
-            echo "$FOUND" | grep "^${NUM}$" > /dev/null ||
-                fail "Clustering '$1' into '$CLUSTERS' clusters, '$NUM' was empty"
-        done
-    done < <(clusterNums)
-}
-
-function pkgTestHaveAllClusters {
-    haveAllClusters "$1" getClusters
-}
-
-function pkgTestHaveAllEndToEnd {
-    haveAllClusters "$1" getEndToEnd
-}
-
-###
-
-function clusterFields {
-    while read -r CLUSTERS
-    do
-        for field in arity name module type package ast features cluster quickspecable
-        do
-            RESULT=$("$2" "$1" | jq "map(has(\"$field\")) | all")
-            [[ "x$RESULT" = "xtrue" ]] ||
-                fail "Clustering '$1' into '$CLUSTERS' clusters missed some '$field' entries"
-        done
-    done < <(clusterNums)
-}
-
-function pkgTestClusterFields {
-    clusterFields "$1" getClusters
-}
-
-function pkgTestEndToEndFields {
-    clusterFields "$1" getEndToEnd
-}
-
 # Test invocation
 
 function traceTest {
