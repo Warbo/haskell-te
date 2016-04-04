@@ -9,12 +9,7 @@ parseJSON (runScript { buildInputs = [ jq ML4HSFE ]; } ''
     exit 2
   }
 
-  HASKELL_RESULT=$(WIDTH=30 HEIGHT=30 ml4hsfe-loop < "${pkg.annotated}" | jq '.') || {
-    echo "Couldn't extract features with haskell: $HASKELL_RESULT" 1>&2
-    exit 3
-  }
-
   jq -n --argfile bash    <(echo "$BASH_RESULT")    \
-        --argfile haskell <(echo "$HASKELL_RESULT") \
+        --argfile haskell "${pkg.features}" \
         '$bash == $haskell' > "$out"
 '')

@@ -52,7 +52,7 @@ let floatAdd         = x: y:
       # Stick to the quick output, so testing is faster
       dump      = quickDump.stdout;
       annotated = quickAnnotated.stdout;
-      clustered = quickClustered.stdout;
+      clustered = mapAttrs (n: v: v.stdout) quickClustered;
 
       # Total benchmark times
       totalWithTime      = sumWithTime      [ quickDump.time ];

@@ -16,8 +16,7 @@ parseJSON (runScript { buildInputs = [ jq ML4HSFE ]; } ''
     done
   }
 
-  WIDTH=30 HEIGHT=30 ml4hsfe-loop < "${pkg.annotated}" |
-    featuresConform
+  featuresConform  < "${pkg.features}"
 
   echo "true" > "$out"
 '')

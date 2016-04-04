@@ -174,32 +174,6 @@ function getExampleFiles {
 
 # Feature extraction tests
 
-function extractionMatchesHaskell {
-    # extractFeatures is written in bash + jq, and is really slow. We've
-    # replaced it with ml4hsfe-loop, but keep it around for testing
-    set +x
-    INPUT=$(cat)
-    BASH_RESULT=$(echo "$INPUT" | "$BASE/extractFeatures" | jq '.') ||
-        fail "Couldn't extract features with bash: $BASH_RESULT"
-    HASKELL_RESULT=$(echo "$INPUT" | WIDTH=30 HEIGHT=30 ml4hsfe-loop | jq '.') ||
-        fail "Couldn't extract features with haskell: $HASKELL_RESULT"
-
-    # shellcheck disable=SC2016
-    RESULT=$(jq -n --argfile bash    <(echo "$BASH_RESULT")    \
-                   --argfile haskell <(echo "$HASKELL_RESULT") \
-                   '$bash == $haskell') || {
-        set -x
-        fail "jq failed to process extracted features"
-        return 1
-    }
-    set -x
-    [[ "x$RESULT" = "xtrue" ]] || fail "Bash/Haskell comparison gave '$RESULT'"
-}
-
-function pkgTestExtractionMatchesHaskell {
-    getAsts "$1" | extractionMatchesHaskell
-}
-
 # Clustering tests; each is tested with the feature extraction output and via
 # the top-level "cluster" command, on test packages and examples
 

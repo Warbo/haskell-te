@@ -1,4 +1,4 @@
-{ stdenv, order-deps, ML4HSFE, nix, adb-scripts }:
+{ stdenv, jq, order-deps, ML4HSFE, nix, adb-scripts }:
 
 stdenv.mkDerivation {
   name = "recurrent-clustering";
@@ -15,6 +15,7 @@ stdenv.mkDerivation {
     order-deps
     ML4HSFE
     nix
+    jq
   ];
 
   installPhase = ''
