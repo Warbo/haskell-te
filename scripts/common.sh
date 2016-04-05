@@ -26,10 +26,6 @@ function requireCmd {
     command -v "$1" > /dev/null || abort "$NAME needs $1"
 }
 
-function packageName {
-    dump-package-name "$1" || abort "Couldn't get package name from '$1'"
-}
-
 function clusterNums {
     # The cluster parameters to use, one per line
     seq 1 3
