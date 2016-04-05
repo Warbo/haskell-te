@@ -22,10 +22,11 @@ rec {
     "${coreutils}/bin/tac" "$1" | upToDashes | "${coreutils}/bin/tac"
   '';
 
-  # FIXME: Temporarily make withCriterion an alias for withTime, for speed
-  withCriterion = cmd: args: writeScript "fixme" ''
-    "${withTime cmd args}" | "${jq}/bin/jq" '. + {"time":{"mean":{"estPoint":1},"stddev":{"estPoint":1}}}'
-  '';
+  withCriterion = cmd: args: trace
+    "FIXME: Temporarily make withCriterion an alias for withTime, for speed"
+    (writeScript "fixme" ''
+      "${withTime cmd args}" | "${jq}/bin/jq" '. + {"time":{"mean":{"estPoint":1},"stddev":{"estPoint":1}}}'
+    '');
   # A thorough benchmark, which performs multiple runs using Criterion
   withCriterion2 = cmd: args: writeScript "with-criterion" ''
     #!${bash}/bin/bash
