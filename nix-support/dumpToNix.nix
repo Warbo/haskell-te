@@ -1,4 +1,4 @@
-{ benchmark, c2db-scripts, parseJSON, runScript, withNix }:
+{ benchmark, c2db-scripts, dump-package, parseJSON, runScript, withNix }:
 { quick, pkgDir }:
 
 assert builtins.pathExists pkgDir;
@@ -10,5 +10,5 @@ parseJSON (runScript (withNix { buildInputs = [ c2db-scripts ]; }) ''
 
   echo "Dumping '${pkgDir}'" 1>&2
   HOME="$USER_HOME" DIR="$PWD/pkgDir" \
-    "${benchmark quick "dump-package" []}" > "$out"
+    "${benchmark quick dump-package []}" > "$out"
 '')

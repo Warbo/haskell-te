@@ -9,7 +9,7 @@ rec {
   inherit (import ../cabal2db {
              inherit stdenv haskellPackages nix gnutar jq lib runCommand
                      writeScript;
-          }) runScript importDir withNix;
+          }) dump-package runScript importDir withNix;
 
   inherit (import ../annotatedb {
              inherit downloadAndDump getDeps jq lib nix runScript stdenv
@@ -68,7 +68,8 @@ rec {
                 };
 
   dumpToNix = import ./dumpToNix.nix {
-                inherit benchmark c2db-scripts parseJSON runScript withNix;
+                inherit benchmark c2db-scripts dump-package parseJSON runScript
+                        withNix;
               };
 
   parseJSON            = import ./parseJSON.nix {
