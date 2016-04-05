@@ -6,7 +6,7 @@ with builtins; with lib;
 rec {
   inherit coreutils;
 
-  inherit (import ../cabal2db {
+  inherit (import ./dumping.nix {
              inherit stdenv haskellPackages nix gnutar jq lib runCommand
                      writeScript;
           }) dump-package runScript importDir withNix;
