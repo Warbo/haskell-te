@@ -1,9 +1,9 @@
-{ benchmark, c2db-scripts, dump-package, parseJSON, runScript, withNix }:
+{ benchmark, dump-package, parseJSON, runScript, withNix }:
 { quick, pkgDir }:
 
 assert builtins.pathExists pkgDir;
 
-parseJSON (runScript (withNix { buildInputs = [ c2db-scripts ]; }) ''
+parseJSON (runScript (withNix { buildInputs = [  ]; }) ''
   set -e
   cp -r "${pkgDir}" ./pkgDir
   chmod +w -R pkgDir

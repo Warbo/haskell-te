@@ -22,8 +22,6 @@ rec {
                                USER_HOME   = builtins.getEnv "HOME";
                              };
 
-  runAstPlugin = ./runAstPlugin;
-
   dump-package-env = writeScript "dump-package-env" ''
     #!/usr/bin/env bash
     set -e

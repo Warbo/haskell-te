@@ -53,11 +53,6 @@ rec {
               inherit benchmark parseJSON recurrent-clustering runScript withNix;
             };
 
-  c2db-scripts    = import ../cabal2db/scripts.nix         {
-                      inherit stdenv nix jq;
-                      inherit (haskellPackages) cabal-install;
-                    };
-
   downloadToNix   = import ./downloadToNix.nix   {
                       inherit runScript withNix;
                       inherit (haskellPackages) cabal-install;
@@ -68,7 +63,7 @@ rec {
                 };
 
   dumpToNix = import ./dumpToNix.nix {
-                inherit benchmark c2db-scripts dump-package parseJSON runScript
+                inherit benchmark dump-package parseJSON runScript
                         withNix;
               };
 
