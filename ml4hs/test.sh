@@ -157,43 +157,7 @@ function getEndToEnd {
 
 # Tests requiring a package as argument.
 
-# We run tests of the equations twice: once on the equations built from the
-# cache, and once with the output of ml4hs.sh, to ensure that they're the same
-
-function checkExitCode {
-    while read -r CLUSTERS
-    do
-        "$2" "$1" || fail "'$2' exited with error for '$1'"
-    done < <(clusterNums)
-}
-
-function pkgTestEquationsCode {
-    checkExitCode "$1" getEquations
-}
-
-function pkgTestEndToEndCode {
-    checkExitCode "$1" getEndToEnd
-}
-
 ###
-
-function checkJsonEqs {
-    while read -r CLUSTERS
-    do
-        while read -r LINE
-        do
-            [[ -z "$LINE" ]] || fail "Unexpected output for '$1': $LINE"
-        done < <("$2" "$1" | grep -v '^{' | grep -v '^Depth')
-    done < <(clusterNums)
-}
-
-function pkgTestClusterJson {
-    checkJsonEqs "$1" getEquations
-}
-
-function pkgTestEndToEndJson {
-    checkJsonEqs "$1" getEndToEnd
-}
 
 # Test invocation
 
