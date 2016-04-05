@@ -1,24 +1,12 @@
 { annotate, bc, buildPackage, cluster, dumpPackage, explore, extractTarball,
-  haskellPackages, lib, parseJSON, runScript }:
+  haskellPackages, jq, lib, parseJSON, runScript, timeCalc }:
+with builtins;
 with lib;
+with timeCalc;
 
 { clusters }:
 
-let floatAdd         = x: y:
-                         assert isString x;
-                         assert isString y;
-                         parseJSON (runScript { buildInputs = [ bc ]; } ''
-                           echo 'scale=16; ${x} + ${y}' | bc
-                         '');
-    addTimes         = x: y: if y == null then x else {
-                         mean = {
-                           estPoint = floatAdd x.mean.estPoint y.mean.estPoint;
-                         };
-                       };
-    addCriterion     = x: y: if y == null then x else floatAdd x y; # FIXME
-    sumWithTime      = fold addTimes     null;
-    sumWithCriterion = fold addCriterion null;
-    processPkg       = name: pkg: rec {
+let processPkg       = name: pkg: rec {
       # Original Haskell fields
       inherit name pkg;
       src = extractTarball pkg.src;
@@ -58,9 +46,19 @@ let floatAdd         = x: y:
       annotated = quickAnnotated.stdout;
       clustered = mapAttrs (n: v: v.stdout) quickClustered;
       explored  = mapAttrs (n: v: v.stdout) quickExplored;
+      equations = trace "FIXME: Reduce equations" explored;
 
-      # Total benchmark times
-      totalWithTime      = sumWithTime      [ quickDump.time ];
-      totalWithCriterion = sumWithCriterion [ slowDump.time  ];
+      # Useful for benchmarking
+      equationCount = mapAttrs (_: f: parseJSON (runScript {} ''
+        "${jq}/bin/jq" -s 'length' < "${f}" > "$out"
+      '')) equations;
+
+      # Total benchmark times (split up according to clusters)
+      totalWithTime      = mapAttrs (c: _: sumWithTime [
+                                      quickDump.time
+                                    ]) equations;
+      totalWithCriterion = mapAttrs (c: _: sumWithCriterion [
+                                      slowDump.time
+                                    ]) equations;
     };
  in mapAttrs processPkg haskellPackages

@@ -108,9 +108,9 @@ let clusteringData = writeScript "clustering-data" ''
       plot filename using 2:3 with points
     '';
 
-    plotSizeVsThroughput = data:
-      let fields = [ { name = "Label";      key = "label"; }
-                     { name = "Size";       key = "size"; }
+    plotSizeVsThroughput = label: data:
+      let fields = [ { name = "Label";      key = "label";      }
+                     { name = label;        key = "size";       }
                      { name = "Throughput"; key = "throughput"; } ];
           tbl    = toFile "size-vs-throughput" (mkTbl fields data);
       in runScript (withNix { buildInputs = [ gnuplot ]; }) ''

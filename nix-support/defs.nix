@@ -37,8 +37,8 @@ rec {
 
   benchmarkPackages = (import ./benchmarkOutputs.nix {
                         inherit annotate bc buildPackage cluster dumpPackage
-                                explore extractTarball haskellPackages lib
-                                parseJSON runScript; });
+                                explore extractTarball haskellPackages jq lib
+                                parseJSON runScript timeCalc; });
 
   processedPackages = benchmarkPackages { clusters = defaultClusters; };
 
@@ -123,6 +123,14 @@ rec {
             inherit gnuplot lib runScript storeResult withNix writeScript;
           })
           mkTbl plotSizeVsThroughput;
+
+  # Nix doesn't handle floats, so use bc
+  floatDiv = x: y: runScript { buildInputs = [ bc ]; }
+                             ''echo "scale=16; ${x}/${y}" | bc > "$out"'';
+
+  timeCalc = import ./timeCalc.nix {
+               inherit bc lib;
+             };
 
   checkPlot = plot: let w = "640"; h = "480"; in
     assertMsg (pathExists plot) "Checking if plot '${plot}' exists" &&
