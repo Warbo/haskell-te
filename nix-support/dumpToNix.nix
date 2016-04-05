@@ -3,7 +3,7 @@
 
 assert builtins.pathExists pkgDir;
 
-parseJSON (runScript (withNix { buildInputs = [  ]; }) ''
+parseJSON (runScript (withNix { buildInputs = [ ]; }) ''
   set -e
   cp -r "${pkgDir}" ./pkgDir
   chmod +w -R pkgDir

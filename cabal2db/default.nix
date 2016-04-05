@@ -44,7 +44,12 @@ rec {
 
   ghcWithPlugin = ./ghcWithPlugin.nix;
 
-  dump-format = ./dump-format;
+  dump-format = writeScript "dump-format" ''
+    #!/usr/bin/env bash
+    set -e
+    PKG=$("${dump-package-name}" "$1")
+    jq -c ". + {package: \"$PKG\"}" | jq -s '.'
+  '';
 
   dump-package-name = writeScript "dump-package-name" ''
     #!/usr/bin/env bash
