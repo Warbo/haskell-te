@@ -12,7 +12,7 @@ stdenv.mkDerivation {
   installPhase = ''
     mkdir -p "$out/bin"
 
-    for CMD in dump-format dump-hackage dump-package dump-package-env \
+    for CMD in dump-format dump-package dump-package-env \
                dump-package-name runAstPlugin
     do
         cp "$CMD" "$out/bin/"
