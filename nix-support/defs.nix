@@ -103,8 +103,6 @@ rec {
                       inherit adb-scripts jq storeResult runScript withNix;
                     };
 
-  benchmarks = import ./benchmarks.nix {};
-
   # FIXME: Move test-related definitions to a separate defs file
   testPackages  = import ./testPackages.nix {
                     inherit adb-scripts defaultClusters explore-theories jq lib
