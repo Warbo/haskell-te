@@ -22,7 +22,7 @@ rec {
            }) benchmark lastEntry withCriterion withTime;
 
   extractTarball = import ./extractTarball.nix {
-                     inherit gnutar runScript withNix;
+                     inherit gnutar runScript storeResult withNix;
                    };
 
   annotate        = import ./annotate.nix        {
@@ -88,7 +88,9 @@ rec {
                          };
 
   assertMsg            = cond: msg:
-                           builtins.addErrorContext msg (assert cond; cond);
+                           builtins.addErrorContext
+                             "not ok - ${msg}"
+                             (assert cond; trace "ok - ${msg}" cond);
 
   shuffledList         = import ./shufflePackages.nix {
                            inherit coreutils pv runScript wget withNix
@@ -132,22 +134,27 @@ rec {
                inherit bc lib;
              };
 
-  checkPlot = plot: let w = "640"; h = "480"; in
-    assertMsg (pathExists plot) "Checking if plot '${plot}' exists" &&
-    assertMsg (parseJSON (runScript { buildInputs = [ file jq ]; } ''
-      set -e
-      echo "Checking '${plot}' bigger than ${w}x${h}" 1>&2
-      GEOM=$(file "${plot}" | # filename: foo, W x H, baz
-             cut -d : -f 2  | # bar, W x H,baz
-             cut -d , -f 2  ) # W x H
-             W=$(echo "$GEOM" | cut -d x -f 1)
-             H=$(echo "$GEOM" | cut -d x -f 2)
+  tabulate = import ./tabulate.nix {};
 
-             echo "Checking '$W'x'$H' against '${w}'x'${h}'" 1>&2
-             jq -n --argjson width  "$W" \
-                   --argjson height "$H" \
-                   '$width >= ${w} and $height >= ${h}' > "$out"
-  '')) "Plot has sufficient dimensions (indicates GNUPlot succeeded)";
+  checkPlot = plot:
+    let w      = "640";
+        h      = "480";
+        exists = assertMsg (pathExists plot) "Checking if plot '${plot}' exists";
+        dims   = assertMsg (parseJSON (runScript { buildInputs = [ file jq ]; } ''
+          set -e
+          echo "Checking '${plot}' bigger than ${w}x${h}" 1>&2
+          GEOM=$(file "${plot}" | # filename: foo, W x H, baz
+                 cut -d : -f 2  | # bar, W x H,baz
+                 cut -d , -f 2  ) # W x H
+          W=$(echo "$GEOM" | cut -d x -f 1)
+          H=$(echo "$GEOM" | cut -d x -f 2)
+
+          echo "Checking '$W'x'$H' against '${w}'x'${h}'" 1>&2
+          jq -n --argjson width  "$W" \
+                --argjson height "$H" \
+                '$width >= ${w} and $height >= ${h}' > "$out"
+        '')) "Plot has sufficient dimensions (indicates GNUPlot succeeded)";
+     in trace "Checking plot ${plot}" (exists && dims);
 
                          /*
   haskell-te = buildEnv {
