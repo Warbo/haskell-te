@@ -2,5 +2,5 @@ defs: with defs;
 
 pkg:
 
-assertMsg (isString pkg.quickBuild.time.mean.estPoint) "Quick build" &&
-assertMsg (isString pkg.slowBuild.time.mean.estPoint)  "Slow build"
+testMsg (isString pkg.quickBuild.time.mean.estPoint) "Quick build" &&
+testMsg (isString pkg.slowBuild.time.mean.estPoint)  "Slow build"

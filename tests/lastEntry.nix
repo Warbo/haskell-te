@@ -5,4 +5,4 @@ let result = runScript {} ''
                "${lastEntry}" input > "$out"
              '';
     expected = "baz\n";
- in assertMsg (result == expected) "Checking if '${result}' == '${expected}'"
+ in testMsg (result == expected) "Checking if '${result}' == '${expected}'"

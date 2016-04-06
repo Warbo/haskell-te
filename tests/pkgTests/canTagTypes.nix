@@ -22,4 +22,5 @@ let scopeResults = runScript (withNix {}) ''
     count = fromJSON (parseJSON (runScript {} ''
               "${jq}/bin/jq" -r 'length' < "${typeTagged}" > "$out"
             ''));
- in assertMsg (count > 0) "Found '${count}' tagged types for '${pkg.name}'"
+ in testMsg (count > 0)
+            "Found '${toString count}' tagged types for '${pkg.name}'"

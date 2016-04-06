@@ -8,6 +8,6 @@ let checkField = f: parseJSON (runScript {} ''
 
     results = listToAttrs (map (f: { name = f; value = checkField f; }) fields);
 
- in all (f: assertMsg results."${f}"
-                      "PreAnnotated ASTs for '${pkg.name}' have field '${f}'")
+ in all (f: testMsg results."${f}"
+                    "PreAnnotated ASTs for '${pkg.name}' have field '${f}'")
         fields

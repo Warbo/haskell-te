@@ -14,7 +14,7 @@ let shuffleExists = pathExists "${shuffledList}";
       }
       echo "true" > "$out"
     '');
-in all (t: assertMsg t.val t.msg) [
+in all (t: testMsg t.val t.msg) [
      { val = shuffleExists;
        msg = "Shuffled package list is created"; }
      { val = shuffleUnique;

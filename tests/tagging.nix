@@ -7,4 +7,4 @@ let result = runScript { buildInputs = [ adb-scripts ]; } ''
         echo "$RESULT" | jq 'type' > "$out"
       '';
     jResult = fromJSON result;
- in assertMsg (jResult == "array") "Expected 'array', got '${jResult}'"
+ in testMsg (jResult == "array") "Expected 'array', got '${jResult}'"

@@ -2,7 +2,7 @@ defs: with defs;
 
 let examples = map (f: ./clusteringExamples + "/${f}")
                    (builtins.attrNames (builtins.readDir ./clusteringExamples));
-    valid    = f: assertMsg (parseJSON (runScript { buildInputs = [ jq ]; } ''
+    valid    = f: testMsg (parseJSON (runScript { buildInputs = [ jq ]; } ''
                  #!/usr/bin/env bash
                  set -e
                  function assertNoVersions {

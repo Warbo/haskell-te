@@ -106,8 +106,10 @@ rec {
                             argStr    = concatStringsSep " " shellArgs;
     in writeScript "with-time" ''
       "${time}/bin/time" -f '%e' -o time "${cmd}" ${argStr} 1> stdout 2> stderr || {
-        echo "Failed to time '$*'" 1>&2
-        cat stderr 1>&2
+        { echo "Failed to time '${cmd}' with '${argStr}'"
+          echo "Contents of stderr:"
+          cat stderr
+          echo "End of stderr"; } 1>&2
         exit 1
       }
 

@@ -7,9 +7,9 @@ let check = label: c: data: parseJSON (runScript { buildInputs = [ jq ]; } ''
       jq -s 'length | . > 0' < "${data}" > "$out"
     '');
     result   = src: label: c:
-      assertMsg (mapAttrs (check label) src)."${toString c}"
-                "Equations for '${pkg.name}.${label}' in ''${toString c}' clusters";
-    checkAll = label: src: assertMsg (all (result src label) defaultClusters)
-                                    "All clusters of ${label} have equations";
+      testMsg (mapAttrs (check label) src)."${toString c}"
+              "Equations for '${pkg.name}.${label}' in ''${toString c}' clusters";
+    checkAll = label: src: testMsg (all (result src label) defaultClusters)
+                                   "All clusters of ${label} have equations";
  in checkAll "explored"    pkg.explored &&
     checkAll "preExplored" pkg.preExplored

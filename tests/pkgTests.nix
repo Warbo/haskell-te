@@ -7,6 +7,6 @@ let tests        = importDir ./pkgTests;
                                                testPackages);
     runTestOnPkg = testName: pkgName: pkg:
       let msg =  "Running test '${testName}' with Haskell package '${pkgName}'";
-       in trace msg (assertMsg (tests."${testName}" defs pkg) msg);
+       in trace msg (testMsg (tests."${testName}" defs pkg) msg);
     collate      = xs: all (n: xs."${n}") (attrNames xs);
  in all runTest (attrNames tests)

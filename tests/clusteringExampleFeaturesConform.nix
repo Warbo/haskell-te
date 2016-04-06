@@ -2,9 +2,9 @@ defs: with defs;
 
 let examples = map (f: ./clusteringExamples + "/${f}")
                    (builtins.attrNames (builtins.readDir ./clusteringExamples));
-    valid    = f: assertMsg (parseJSON (runScript {
-                              buildInputs = [ jq ML4HSFE ];
-                            } ''
+    valid    = f: testMsg (parseJSON (runScript {
+                             buildInputs = [ jq ML4HSFE ];
+                           } ''
                    set -e
                    function featuresConform {
                      FEATURELENGTHS=$(jq -r '.[] | .features | length')

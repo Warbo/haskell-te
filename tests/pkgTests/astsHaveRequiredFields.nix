@@ -22,6 +22,6 @@ let result = asts:
           assert isString str;
           assert isAttrs  json;
           json;
-    check = asts: all id (mapAttrsToList (f: b: assertMsg b "Checking for ${f}")
+    check = asts: all id (mapAttrsToList (f: b: testMsg b "Checking for ${f}")
                                          (result asts));
  in all check [ pkg.dump pkg.quickDump.stdout pkg.slowDump.stdout ]

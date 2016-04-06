@@ -92,6 +92,12 @@ rec {
                              "not ok - ${msg}"
                              (assert cond; trace "ok - ${msg}" cond);
 
+  testMsg              = cond: msg:
+                           let ok    = "ok - ${msg}";
+                               notOk = "not ok - ${msg}";
+                           in builtins.addErrorContext notOk
+                                (trace (if cond then ok else notOk) cond);
+
   shuffledList         = import ./shufflePackages.nix {
                            inherit coreutils pv runScript wget withNix
                                    writeScript;
@@ -139,8 +145,8 @@ rec {
   checkPlot = plot:
     let w      = "640";
         h      = "480";
-        exists = assertMsg (pathExists plot) "Checking if plot '${plot}' exists";
-        dims   = assertMsg (parseJSON (runScript { buildInputs = [ file jq ]; } ''
+        exists = testMsg (pathExists plot) "Checking if plot '${plot}' exists";
+        dims   = testMsg (parseJSON (runScript { buildInputs = [ file jq ]; } ''
           set -e
           echo "Checking '${plot}' bigger than ${w}x${h}" 1>&2
           GEOM=$(file "${plot}" | # filename: foo, W x H, baz
