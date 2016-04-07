@@ -2,7 +2,57 @@
 with builtins;
 with lib;
 
-let clusteringData = writeScript "clustering-data" ''
+rec {
+
+renderTable = t:
+  assert t ? matrix;
+  assert t ? header;
+  assert t ? axis;
+
+  assert isList t.axis;
+  assert isList t.header;
+  assert isList t.matrix;
+
+  assert all isString t.axis;
+  assert all isString t.header;
+  assert all isList   t.matrix;
+  assert all (all isString) t.matrix;
+
+  let rows        = zipListsWith (x: y: [x] ++ y) t.axis t.matrix;
+      renderCells = concatStringsSep "\t";
+      renderRows  = concatStringsSep "\n";
+   in renderRows (map renderCells ([t.header] ++ rows));
+
+scatterPlot = tbl:
+  let data        = writeScript "scatter.tsv" (renderTable tbl);
+      scatterGnus = writeScript "scatter.gnus" ''
+        set terminal png
+        set output ofilename
+        set yrange [0:*]
+        plot filename using 2:3 with points
+      '';
+   in runScript (withNix { buildInputs = [ gnuplot ]; }) ''
+        set -e
+        gnuplot -e "filename='${data}';ofilename='plot.png'" "${scatterGnus}"
+        "${storeResult}" "plot.png" "$out"
+      '';
+
+# Mostly for tests
+mkTbl = keyAttrs: dataAttrs:
+  let joinCells = concatStringsSep "\t";
+      joinRows  = concatStringsSep "\n";
+      mkRow     = _: data: map (key: data."${key}") keys;
+
+      keys = map (a: a.key)  keyAttrs;
+      head = joinCells (map (a: a.name) keyAttrs);
+
+      tblA = mapAttrs mkRow dataAttrs;
+      tblL = map (n: joinCells tblA."${n}") (attrNames tblA);
+   in joinRows ([head] ++ tblL);
+}
+
+/* TODO: Old cruft; delete if not needed
+clusteringData = writeScript "clustering-data" ''
       echo -e "Clusters\tTime"
       while read -r FILE
       do
@@ -20,7 +70,7 @@ let clusteringData = writeScript "clustering-data" ''
         if [[ -d "$DIR" ]]
         then
           for FILE in "$DIR/outputs"/*.json
-          # */
+          #
           do
             jq '.[] | .reportAnalysis | .anMean | .estPoint' < "$FILE"
             return
@@ -31,7 +81,7 @@ let clusteringData = writeScript "clustering-data" ''
 
       function pkgsWith {
         for DIR in "$CACHE/benchmarks/$1"/*
-        # */
+        #
         do
           basename "$DIR"
         done
@@ -88,19 +138,6 @@ let clusteringData = writeScript "clustering-data" ''
       plot filename using 1:2 with points
     '';
 
-    mkTbl = keyAttrs: dataAttrs:
-      let joinCells = concatStringsSep "\t";
-          joinRows  = concatStringsSep "\n";
-          mkRow     = _: data: map (key: data."${key}") keys;
-
-          keys = map (a: a.key)  keyAttrs;
-
-          head = joinCells (map (a: a.name) keyAttrs);
-
-          tblA = mapAttrs mkRow dataAttrs;
-          tblL = map (n: joinCells tblA."${n}") (attrNames tblA);
-       in joinRows ([head] ++ tblL);
-
     sizeVsThroughputGnus = writeScript "size-vs-throughput.gnu" ''
       set terminal png
       set output ofilename
@@ -122,3 +159,4 @@ let clusteringData = writeScript "clustering-data" ''
          '';
 
 in { inherit mkTbl plotOverhead plotClustering plotSizeVsThroughput; }
+*/

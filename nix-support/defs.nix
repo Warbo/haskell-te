@@ -127,10 +127,10 @@ rec {
                    inherit (haskellPackages) cabal2nix cabal-install;
                  };
 
-  inherit (import ./plotResults.nix {
-            inherit gnuplot lib runScript storeResult withNix writeScript;
-          })
-          mkTbl plotSizeVsThroughput;
+  plotResults = import ./plotResults.nix {
+                  inherit gnuplot lib runScript storeResult withNix writeScript;
+                };
+  inherit (plotResults) mkTbl;
 
   # Nix doesn't handle floats, so use bc
   floatDiv = x: y: runScript { buildInputs = [ bc ]; }
@@ -143,6 +143,10 @@ rec {
   tabulate = import ./tabulate.nix {
                inherit lib processedPackages;
              };
+
+  plots = import ./plots.nix {
+            inherit defaultClusters plotResults tabulate;
+          };
 
   checkPlot = plot:
     let w      = "640";

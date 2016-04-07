@@ -1,6 +1,7 @@
 defs: with defs;
 with lib;
 with tabulate;
+with plotResults;
 with builtins;
 
 # Checks all elements of the given set
@@ -24,13 +25,16 @@ mkTblWorks =
         7	8	9'';
    in testMsg (linesEq calc expect) "mkTbl works";
 
-eqsVsTimeForKsWorks = with eqsVsTimeForKs (map toString defaultClusters)
-                                          ["list-extras"];
-  testMsg (all id [
-    (testMsg (all isString axis)          "Axis is a list of values")
-    (testMsg (all isString header)        "Header is a list of strings")
-    (testMsg (head header == "Equations") "Axis column is equations")
-  ]) "Equations vs time for clusters works";
+eqsVsTimeForKsWorks =
+  let tbl = eqsVsTimeForKs (map toString defaultClusters)
+                                               ["list-extras"];
+   in testMsg (all id [
+        (testMsg (all isString tbl.axis)          "Axis is a list of values")
+        (testMsg (all isString tbl.header)        "Header is a list of strings")
+        (testMsg (head tbl.header == "Equations") "Axis column is equations")
+        (testMsg (isString (renderTable tbl))     "Can render table")
+        (testMsg (renderTable tbl != "")          "Rendered table isn't empty")
+      ]) "Equations vs time for clusters works";
 };
 
 in all (n: testMsg tests."${n}" "Checking ${n}") (attrNames tests)

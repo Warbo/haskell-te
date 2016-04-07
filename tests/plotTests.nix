@@ -1,9 +1,7 @@
 defs: with defs;
+with lib;
+with plots;
 
-let SvT = plotSizeVsThroughput "Size" { foo = { label      = "FOO";
-                                                size       = "123";
-                                                throughput = "3.14"; };
-                                        bar = { label      = "BAR";
-                                                size       = "456";
-                                                throughput = "2.72"; }; };
- in checkPlot SvT
+testMsg (all id [
+  (checkPlot plotEqsVsTimeForKs)
+]) "Checking final plots"

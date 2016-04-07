@@ -4,30 +4,31 @@ with lib;
 
 rec {
   eqsVsTimeForKs = clusters: pkgNames:
-    # Each column is a cluster number
+    # For each number of clusters, construct a list of points {x, y} where x is
+    # the time and y is the equation count.
     let points = listToAttrs (map (cluster: {
                                     name  = cluster;
                                     value = map (name: {
-                                                  eqs  = processedPackages."${name}".equationCount."${cluster}";
-                                                  time = processedPackages."${name}".totalWithTime."${cluster}";
+                                                  y = processedPackages."${name}".equationCount."${cluster}";
+                                                  x = processedPackages."${name}".totalWithTime."${cluster}";
                                                 })
                                                 pkgNames;
                                   })
                                   clusters);
-        # Choose one column for an axis, get all of its values and sort them
-        axisCol  = "eqs";
-        axisVals = concatMap (c: map (p: p."${axisCol}")
+        # Get all of the possible y values and sort them
+        axisVals = concatMap (c: map (p: p.y)
                                      points."${c}")
                              clusters;
-        axis     = sort (x: y: x < y) axisVals;
+        axis     = sort (a: b: a < b) axisVals;
 
         # Generate a matrix (list of rows)
         matrix = map (v: map (findCell v) clusters) axis;
 
         # Returns the value from the given cluster at the given axis point;
         # missing data points become "-"
-        findCells = v: cluster:
-          let vals = filter (p: p."${axisCol}" == v) points."${cluster}";
+        findCell = v: cluster:
+          let ps   = filter (p: p.y == v) points."${cluster}";
+              vals = map    (p: p.y)      ps;
            in head (vals ++ ["-"]);
 
         header = ["Equations"] ++ map (c: "${c} clusters") clusters;
