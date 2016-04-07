@@ -25,9 +25,9 @@ mkTblWorks =
         7	8	9'';
    in testMsg (linesEq calc expect) "mkTbl works";
 
-eqsVsTimeForKsWorks =
-  let tbl = eqsVsTimeForKs (map toString defaultClusters)
-                                               ["list-extras"];
+eqsVsTimeForClustersWorks =
+  let tbl = eqsVsTimeForClusters (map toString defaultClusters)
+                                 ["list-extras"];
    in testMsg (all id [
         (testMsg (all isString tbl.axis)          "Axis is a list of values")
         (testMsg (all isString tbl.header)        "Header is a list of strings")

@@ -24,18 +24,21 @@ renderTable = t:
    in renderRows (map renderCells ([t.header] ++ rows));
 
 scatterPlot = tbl:
-  let data        = writeScript "scatter.tsv" (renderTable tbl);
+  let data        = addErrorContext
+                      "Rendering scatter plot data"
+                      (writeScript "scatter.tsv" (renderTable tbl));
       scatterGnus = writeScript "scatter.gnus" ''
         set terminal png
         set output ofilename
         set yrange [0:*]
         plot filename using 2:3 with points
       '';
-   in runScript (withNix { buildInputs = [ gnuplot ]; }) ''
+      scatterResult = runScript (withNix { buildInputs = [ gnuplot ]; }) ''
         set -e
         gnuplot -e "filename='${data}';ofilename='plot.png'" "${scatterGnus}"
         "${storeResult}" "plot.png" "$out"
       '';
+   in addErrorContext "Plotting scatter chart" scatterResult;
 
 # Mostly for tests
 mkTbl = keyAttrs: dataAttrs:
