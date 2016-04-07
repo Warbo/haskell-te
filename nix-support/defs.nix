@@ -140,7 +140,9 @@ rec {
                inherit bc lib;
              };
 
-  tabulate = import ./tabulate.nix {};
+  tabulate = import ./tabulate.nix {
+               inherit lib processedPackages;
+             };
 
   checkPlot = plot:
     let w      = "640";

@@ -85,8 +85,13 @@ let clusters         = listToAttrs (map (c: {
         (withNix { buildInputs = [ explore-theories ]; })
         ''
           set -e
+
+          function shallow {
+            grep -v "^Depth" || true # Prevent set -e choking on empty input
+          }
+
           export CLUSTERS="${c}"
-          explore-theories < "${data}" | grep -v "^Depth" > equations.json
+          explore-theories < "${data}" | shallow > equations.json
           "${storeResult}" equations.json "$out"
       '') formatted;
     };

@@ -4,7 +4,7 @@ with builtins;
 let check = label: c: data: parseJSON (runScript { buildInputs = [ jq ]; } ''
       set -e
       echo "Looking for equations in '${data}' (${label})" 1>&2
-      jq -s 'length | . > 0' < "${data}" > "$out"
+      jq -s 'type == "array"' < "${data}" > "$out"
     '');
     result   = src: label: c:
       testMsg (mapAttrs (check label) src)."${toString c}"
