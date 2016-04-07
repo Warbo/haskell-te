@@ -1,21 +1,21 @@
 #!/usr/bin/env bash
 set -e
 
-# Calls Nix to evaluate tests, but output is messy
-function run {
+# Calls Nix to evaluate tests, but output is messy and it might die silently
+function runIgnoreFailure {
     BASE=$(dirname "$(readlink -f "$0")")
     NIX_PATH="$("$BASE/nix-support/nixPath.sh")" nix-instantiate \
         --read-write-mode --show-trace --eval                    \
         -E 'import ./nix-support/test.nix'
 }
 
-# Runs tests, along with an additional test for whether the test command failed
-function runSpotFailure {
-    if run
+# Runs tests, with an additional pass/fail for whether the test command died
+function run {
+    if runIgnoreFailure
     then
-        echo "ok Test suite succeeded"
+        echo "ok Test suite exited gracefully"
     else
-        echo "not ok Test suite failed"
+        echo "not ok Test suite exited gracefully"
         return 1
     fi
 }
@@ -31,7 +31,7 @@ function report {
     #                                 \
     #                                  `--stderr-----> stderr (no TAP)
     #
-    { runSpotFailure 2>&1 1>&3 | stderrToTap; } 3>&1
+    { run 2>&1 1>&3 | stderrToTap; } 3>&1
     return "${PIPESTATUS[0]}"
 }
 
@@ -39,9 +39,9 @@ function report {
 function stderrToTap {
     while read -r ERRLINE
     do
-        if echo "$ERRLINE" | grep "^trace: ok" > /dev/null
+        if echo "$ERRLINE" | grep "^trace: \(not \)\?ok" > /dev/null
         then
-            echo "$ERRLINE" | sed -e 's/^trace: ok/ok/g'
+            echo "$ERRLINE" | sed -e 's/^trace: //g'
         else
             echo "$ERRLINE" 1>&2
         fi
