@@ -1,21 +1,24 @@
-{ buildPythonPackage, gnutar, pythonPackages, runScript, storeResult, pip2nix }:
+{ buildPythonPackage, gnutar, pythonPackages, runScript, storeResult }:
 
-let expr = runScript { buildInputs = [ pip2nix.pip2nix.python27 ]; } ''
-  set -e
+buildPythonPackage {
+  name = "csvkit";
+  #version = "2014-11-28";
 
-  cp -r "${../packages/csvkit}" ./csvkit
-  chmod -R +w ./csvkit
-  cd ./csvkit
+  src = runScript { buildInputs = [ gnutar ]; } ''
+    set -e
+    # We don't want the tar to contain the whole hierarchy, only "./csvkit"
+    OLD_DIR="$PWD"
+    ARCHIVE="$/csvkit.tar.gz"
+    cd "${../packages}"
 
-  pip2nix scaffold --package csvkit
-  cat > pip2nix.ini <<EOF
-  [pip2nix]
-  requirements = ./requirements-py2.txt
-  EOF
-  pip2nix generate
+    tar czf "$OLD_DIR/csvkit.tar.gz" ./csvkit
 
-  cd ..
-  "${storeResult}" ./csvkit
-'';
+    cd "$OLD_DIR"
+    "${storeResult}" csvkit.tar.gz
+  '';
 
-in import expr
+  propagatedBuildInputs = [
+    pythonPackages.python
+    pythonPackages.dateutil
+  ];
+}
