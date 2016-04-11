@@ -1,42 +1,47 @@
-{ lib, processedPackages }:
+{ lib, processPackages }:
 with builtins;
 with lib;
 
-rec {
-    eqsVsTime = label: seriess: pkgNames:
-    # For each series, construct a list of points {x, y} where x is the time and
-    # y is the equation count.
-    let points = listToAttrs (map (series: {
-                                    name  = series;
-                                    value = map (name: {
-                                                  y = processedPackages."${name}".equationCount."${series}";
-                                                  x = processedPackages."${name}".totalWithTime."${series}";
-                                                })
-                                                pkgNames;
-                                  })
-                                  seriess);
-        # Get all of the possible y values and sort them
-        axisVals = concatMap (series: map (p: p.y)
-                                          points."${series}")
-                             seriess;
-        axis     = unique (sort (a: b: a < b) axisVals);
+{ clusters, quick }:
+let processedPackages = processPackages { inherit clusters; } { inherit quick; };
+in rec {
+    xVsYForZ = x: y: z: data:
+      addErrorContext "Tabulating '${x}' vs '${y}' for values of '${z}'" (let
 
-        # Generate a matrix (list of rows)
-        matrix = map (v: map (findCell v) seriess) axis;
+      # Pull out the required data, and give generic labels (x, y, z)
+      points = map (p: { x = p."${x}"; y = p."${y}"; z = p."${z}"; }) data;
 
-        # Returns the value from the given series at the given axis point;
-        # missing data points become "-"
-        findCell = v: series:
-          let ps   = filter (p: p.y == v) points."${series}";
-              vals = map    (p: p.y)      ps;
-           in head (vals ++ ["-"]);
+      # Get all of the possible y values and sort them, to get our axis values
+      axisVals = map (p: p.x) points;
+      axis     = unique (sort (a: b: a < b) axisVals);
 
-        header = ["Equations"] ++ map (series: "${label}{series}") seriess;
-     in { inherit axis header matrix; };
+      # Find the values of z we have
+      series = unique (map (p: p.z) points);
 
-  eqsVsTimeForClusters = addErrorContext
-    "Tabulating equations against time for various cluster counts"
-    (eqsVsTime "Clusters");
+      # Generate a matrix (list of rows)
+      matrix = map (v: map (findCell v) series) axis;
+
+      # Returns the value from the given series at the given axis point;
+      # missing data points become "-"
+      findCell = v: series: let
+         # Those points which match v and series
+         ps = filter (p: p.z == series && p.x == v) points;
+         # The corresponding y values for these points, if any
+         vals = p.map  (p: p.y)      ps;
+      in if length vals == []
+            then ["-"]
+            else vals;
+
+        header = map (series: "${label}{series}") series;
+     in { inherit axis header matrix; });
+
+  eqsVsTimeForClusters =
+    /*seriess: map (pkg: addErrorContext
+    "Tabulating '${pkg}' equations against time for various cluster counts"
+    (eqsVsTime "Clusters" { y = "eqs"; x = "withTime"; } seriess
+               processedPackages."${pkg}".byClusterSize));*/
+
+               xVsYForZ "eqCount" "withTime" "size";
 
   eqsVsTimeForSizes    = addErrorContext
     "Tabulating equations against time for various sig sizes"

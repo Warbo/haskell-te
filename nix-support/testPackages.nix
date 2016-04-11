@@ -1,5 +1,5 @@
-{ adb-scripts, defaultClusters, explore-theories, jq, lib, ml4hs, ML4HSFE,
-  parseJSON, processedPackages, recurrent-clustering, runScript, runTypes,
+{ adb-scripts, defaultClusters, defaultPackages, explore-theories, jq, lib, ml4hs, ML4HSFE,
+  parseJSON, processPackages, recurrent-clustering, runScript, runTypes,
   storeResult, withNix }:
 with builtins;
 with lib;
@@ -11,8 +11,12 @@ let clusters         = listToAttrs (map (c: {
                                           name  = toString c;
                                           value = null;
                                         }) defaultClusters);
-    testPackageNames = [ "list-extras" ];
-    extend           = pkg: with pkg; pkg // rec {
+
+    testPackageNames  = [ "list-extras" ];
+
+    processedPackages = defaultPackages { quick = true; };
+
+    extend            = pkg: with pkg; pkg // rec {
       ranTypes  = runTypes dump pkg.name;
 
       preAnnotated = runScript
@@ -95,6 +99,12 @@ let clusters         = listToAttrs (map (c: {
           "${storeResult}" equations.json "$out"
       '') formatted;
     };
-in listToAttrs (map (n: { name  = n;
-                          value = extend processedPackages."${n}"; })
-                    testPackageNames)
+
+in
+
+assert isAttrs processedPackages;
+assert all (n: elem n (attrNames processedPackages)) testPackageNames;
+
+listToAttrs (map (n: { name  = n;
+                       value = extend processedPackages."${n}"; })
+                 testPackageNames)

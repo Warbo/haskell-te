@@ -3,7 +3,7 @@
 
 rec {
   runScript       = import ./runScript.nix       {
-                      inherit lib writeScript runCommand;
+                      inherit lib runCommand withNix writeScript;
                     };
 
   importDir       = import ./importDir.nix       {

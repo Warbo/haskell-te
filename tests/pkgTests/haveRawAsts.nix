@@ -9,4 +9,4 @@ let doCheck = asts:
       jCount         = addErrorContext "Parsing: '${count}'" (fromJSON count);
       jCountNonempty = testMsg (jCount > 0) "Found no ASTs in '${asts}'";
    in astsNonempty && jCountNonempty;
- in doCheck pkg.quickDump.stdout && doCheck pkg.slowDump.stdout
+ in doCheck pkg.rawDump.stdout

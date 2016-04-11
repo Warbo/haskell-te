@@ -1,6 +1,7 @@
 # Custom definitions
-{ bash, bc, buildEnv, coreutils, file, gnuplot, gnutar, haskellPackages, jq,
-  lib, nix, pv, real, runCommand, stdenv, time, utillinux, wget, writeScript }:
+{ fetchurl, bash, bc, buildEnv, buildPythonPackage, coreutils, file, gnuplot, gnutar,
+  haskellPackages, jq, lib, nix, pv, pythonPackages,
+  real, runCommand, stdenv, time, utillinux, wget, writeScript }:
 
 with builtins; with lib;
 rec {
@@ -30,21 +31,25 @@ rec {
                               withNix;
                     };
 
+  format = import ./format.nix {
+             inherit jq parseJSON runScript storeResult;
+           };
 
   hte-scripts = import ./scripts.nix {
                   inherit coreutils stdenv wget;
                 };
 
-  benchmarkPackages = (import ./benchmarkOutputs.nix {
-                        inherit annotate bc buildPackage cluster dumpPackage
-                                explore extractTarball haskellPackages jq lib
-                                parseJSON runScript timeCalc; });
+  processPackages = (import ./benchmarkOutputs.nix {
+                       inherit annotate assertMsg bc buildPackage cluster
+                               dumpPackage explore extractTarball format
+                               haskellPackages jq lib parseJSON runScript
+                               timeCalc; });
 
-  processedPackages = benchmarkPackages { clusters = defaultClusters; };
+  defaultPackages = processPackages { clusters = defaultClusters; };
 
   explore = import ./explore.nix {
-              inherit benchmark explore-theories lib ml4hs parseJSON runScript
-                      withNix writeScript;
+              inherit benchmark explore-theories format lib ml4hs parseJSON
+                      runScript withNix writeScript;
             };
 
   defaultClusters = [ 1 2 4 ];
@@ -110,9 +115,9 @@ rec {
   # FIXME: Move test-related definitions to a separate defs file
   testPackages  = import ./testPackages.nix {
                     inherit adb-scripts defaultClusters explore-theories jq lib
-                            ml4hs ML4HSFE parseJSON processedPackages
+                            ml4hs ML4HSFE parseJSON defaultPackages
                             recurrent-clustering runScript runTypes storeResult
-                            withNix;
+                            withNix processPackages;
                   };
 
   # FIXME: Replace other occurrences of nix-store with storeResult
@@ -141,7 +146,7 @@ rec {
              };
 
   tabulate = import ./tabulate.nix {
-               inherit lib processedPackages;
+               inherit lib processPackages;
              };
 
   plots = import ./plots.nix {

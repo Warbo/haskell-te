@@ -1,64 +1,96 @@
-{ annotate, bc, buildPackage, cluster, dumpPackage, explore, extractTarball,
-  haskellPackages, jq, lib, parseJSON, runScript, timeCalc }:
+{ annotate, assertMsg, bc, buildPackage, cluster, dumpPackage, explore,
+  extractTarball, format, haskellPackages, jq, lib, parseJSON, runScript,
+  timeCalc }:
 with builtins;
 with lib;
 with timeCalc;
 
-{ clusters }:
+{ clusters }: { quick }:
 
-let processPkg       = name: pkg: rec {
-      # Original Haskell fields
-      inherit name pkg;
-      src = extractTarball pkg.src;
+let sum = fold (x: y: x + y) 0;
+    nth = n: lst: if n == 0 then head lst else nth (n - 1) (tail lst);
+    processPkg       = name: pkg:
+      let result = rec {
+        # Original Haskell fields
+        inherit name pkg;
+        src = extractTarball pkg.src;
 
-      # Building with regular GHC
-      quickBuild = buildPackage { inherit src;
-                                  quick = true;
-                                  hsEnv = pkg.env; };
-      slowBuild  = buildPackage { inherit src;
-                                  quick = false;
-                                  hsEnv = pkg.env; };
+        # Building with regular GHC
+        build = buildPackage { inherit src quick; hsEnv = pkg.env; };
 
-      # AST dumps
-      quickDump = dumpPackage { quick = true;  inherit src; };
-      slowDump  = dumpPackage { quick = false; inherit src; };
+        rawDump = dumpPackage { inherit quick src; };
 
-      # Annotated ASTs
-      quickAnnotated = annotate { quick   = true;
-                                  asts    = dump;
-                                  pkgName = name; };
-      slowAnnotated  = annotate { quick   = false;
+        rawAnnotated = annotate { inherit quick;
                                   asts    = dump;
                                   pkgName = name; };
 
-      # Clustered ASTs
-      quickClustered = cluster { inherit annotated clusters;
-                                 quick = true; };
-      slowClustered  = cluster { inherit annotated clusters;
-                                 quick = false; };
+        rawClustered = cluster { inherit annotated clusters quick; };
 
-      # Exploration results
-      quickExplored = explore { quick = true;  inherit clustered; };
-      slowExplored  = explore { quick = false; inherit clustered; };
+        # Simple format change; don't benchmark
+        formatted = mapAttrs (clusterCount: clusters:
+                                format clusterCount clusters)
+                             clustered;
 
-      # Stick to the quick output, so testing is faster
-      dump      = quickDump.stdout;
-      annotated = quickAnnotated.stdout;
-      clustered = mapAttrs (n: v: v.stdout) quickClustered;
-      explored  = mapAttrs (n: v: v.stdout) quickExplored;
-      equations = trace "FIXME: Reduce equations" explored;
+        rawExplored = explore { inherit formatted quick; };
 
-      # Useful for benchmarking
-      equationCount = mapAttrs (_: f: parseJSON (runScript {} ''
-        "${jq}/bin/jq" -s 'length' < "${f}" > "$out"
-      '')) equations;
+        # Stick to the quick output, so testing is faster
+        dump      = rawDump.stdout;
+        annotated = rawAnnotated.stdout;
+        clustered = mapAttrs (_: v: v.stdout) rawClustered;
+        explored  =
+          assert assertMsg (isAttrs rawExplored)
+                           "rawExplored isAttrs '${toJSON rawExplored}'";
+          assert assertMsg (all (n:     isList  rawExplored.${n}) (attrNames rawExplored))
+                           "All rawExplored are lists '${toJSON rawExplored}'";
+          assert assertMsg (all (n: all isAttrs rawExplored.${n}) (attrNames rawExplored))
+                           "All rawExplored.X contain sets '${toJSON rawExplored}'";
+          mapAttrs (_: map (x: x.stdout)) rawExplored;
+        equations = trace "FIXME: Reduce equations" explored;
 
-      # Total benchmark times (split up according to clusters)
-      totalWithTime      = mapAttrs (c: _: sumWithTime [
-                                      quickDump.time
-                                    ]) equations;
-      totalWithCriterion = mapAttrs (c: _: sumWithCriterion [
-                                      slowDump.time
-                                    ]) equations;
-    };
+        # Useful for benchmarking
+        equationCounts = mapAttrs (_: map (f: fromJSON (runScript {} ''
+          "${jq}/bin/jq" -s 'length' < "${f}" > "$out"
+        ''))) equations;
+
+        sizeCounts = mapAttrs (_: map (f: fromJSON (runScript {} ''
+            "${jq}/bin/jq" -s 'length' < "${f}" > "$out"
+          '')))
+          formatted;
+
+        # Gather all values into a list of points
+        sizeDataPoints = import ./getSizeDataPoints.nix {
+                           inherit assertMsg equations lib equationCounts
+                                   sizeCounts totalTime;
+                         };
+
+        # Make another list of points, with clustering runs aggregated together
+        clusterDataPoints = let
+          # Combine one cluster with the others from the same run
+          addTo = x: y: {
+            eqCount = x.eqCount + y.eqCount;
+          };
+          # Given a new point, partition the previous points into those from the
+          # same run ("right") and those from other runs ("wrong"). If there's a
+          # "right" point add the new one to it; otherwise use the new point as-is
+          accum = newP: old:
+            with partition (oldP: oldP.clusterCount == newP.clusterCount) old;
+            assert (length right < 2);
+            wrong ++ (if length right == 1
+                         then [addTo newP (head right)]
+                         else [newP]);
+        in fold accum [] sizeDataPoints;
+
+        # Total benchmark times (split up according to clusters)
+        staticTime = sumTimes [ rawDump.time rawAnnotated.time ];
+
+        dynamicTime = mapAttrs (c: _: map (n: sumTimes [
+                                        (nth n rawClustered."${c}")
+                                        (nth n rawExplored."${c}")
+                                      ])) equations;
+
+        totalTime = mapAttrs (c: map (t: sumTimes [t staticTime]))
+                                 dynamicTime;
+      };
+    in assert isAttrs result;
+       result;
  in mapAttrs processPkg haskellPackages

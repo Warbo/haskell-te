@@ -21,9 +21,13 @@ let allNumsToStrings = writeScript "nums-to-strings" ''
 
       do_walk(if type == "number" then tostring else . end)
     '';
+    parseString = txt: addErrorContext
+      "Given JSON is '${txt}'; stringifying numbers too"
+      (fromJSON (runScript {} ''
+         "${allNumsToStrings}" < "${toFile "json-string" txt}" > "$out"
+      ''));
 in txt:
-
-addErrorContext "Parsing '${txt}' as JSON, stringifying floats"
-  (fromJSON (runScript {} ''
-     "${allNumsToStrings}" < "${toFile "json-string" txt}" > "$out"
-   ''))
+   addErrorContext "Parsing JSON value"
+     (if isString txt
+         then parseString txt
+         else abort "Asked to parse a ${typeOf txt} as JSON")

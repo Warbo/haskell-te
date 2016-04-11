@@ -1,24 +1,34 @@
-{ benchmark, explore-theories, lib, ml4hs, parseJSON, runScript, withNix,
-  writeScript }:
+{ benchmark, explore-theories, format, lib, ml4hs, parseJSON,
+  runScript, withNix, writeScript }:
+with builtins;
 with lib;
 
-{ quick, clustered }:
+{ quick, formatted }:
 
-let formatAndExplore = writeScript "format-and-explore" ''
+assert isAttrs formatted;
+assert all (n: isString n)                    (attrNames formatted);
+assert all (n: isInt (fromJSON n))            (attrNames formatted);
+assert all (n: isList formatted."${n}")       (attrNames formatted);
+assert all (n: all isString formatted."${n}") (attrNames formatted);
+
+let explore = writeScript "format-and-explore" ''
       set -e
       function noDepth {
-        grep -v "^Depth" || true
+        grep -v "^Depth" || true # Don't abort if nothing found
       }
-
-      "${ml4hs}/lib/ml4hs/format-exploration.sh" |
-        explore-theories | noDepth
+      explore-theories | noDepth
     '';
-    go = c: data: parseJSON (runScript (withNix {
-                                         buildInputs = [ explore-theories ml4hs ];
-                                       }) ''
-      set -e
-      export CLUSTERS="${c}"
-      "${benchmark quick "${formatAndExplore}" []}" < "${data}" \
-                                                    > "$out"
-    '');
- in mapAttrs go clustered
+    doExplore = clusterCount: f:
+      parseJSON (runScript { buildInputs = [ explore-theories ]; } ''
+        set -e
+        export CLUSTERS="${clusterCount}"
+        "${benchmark quick "${explore}" []}" < "${f}" > "$out"
+      '');
+    go = clusterCount: clusters:
+           map (doExplore clusterCount) clusters;
+    result = mapAttrs go formatted;
+in
+assert isAttrs result;
+assert all (n: isInt  (fromJSON n))  (attrNames result);
+assert all (n: isList result."${n}") (attrNames result);
+result
