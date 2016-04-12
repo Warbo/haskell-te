@@ -1,5 +1,5 @@
 { annotate, bc, buildPackage, check, cluster, dumpPackage, explore,
-  extractTarball, format, haskellPackages, jq, lib, parseJSON, runScript,
+  extractTarball, format, haskellPackages, jq, lib, nth, parseJSON, runScript,
   timeCalc }:
 with builtins;
 with lib;
@@ -59,7 +59,7 @@ processPkg = name: pkg: rec {
 
   # Gather all values into a list of points
   sizeDataPoints = import ./getSizeDataPoints.nix {
-                     inherit check equations lib equationCounts
+                     inherit check equations lib equationCounts nth
                              sizeCounts totalTimes;
                    };
 

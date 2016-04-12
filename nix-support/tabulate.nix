@@ -27,21 +27,15 @@ in rec {
          # Those points which match v and series
          ps = filter (p: p.z == series && p.x == v) points;
          # The corresponding y values for these points, if any
-         vals = p.map  (p: p.y)      ps;
+         vals = map (p: p.y) ps;
       in if length vals == []
             then ["-"]
             else vals;
 
-        header = map (series: "${label}{series}") series;
+        header = map toString series;
      in { inherit axis header matrix; });
 
-  eqsVsTimeForClusters =
-    /*seriess: map (pkg: addErrorContext
-    "Tabulating '${pkg}' equations against time for various cluster counts"
-    (eqsVsTime "Clusters" { y = "eqs"; x = "withTime"; } seriess
-               processedPackages."${pkg}".byClusterSize));*/
-
-               xVsYForZ "eqCount" "withTime" "size";
+  eqsVsTimeForClusters = xVsYForZ "eqCount" "totalTime" "size";
 
   eqsVsTimeForSizes    = addErrorContext
     "Tabulating equations against time for various sig sizes"

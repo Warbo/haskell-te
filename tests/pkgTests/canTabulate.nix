@@ -1,5 +1,6 @@
 defs: with defs; pkg:
 with builtins;
+with lib;
 with tabulate { clusters = defaultClusters; quick = false; };
 
 # Checking the value types forces them to be evaluated

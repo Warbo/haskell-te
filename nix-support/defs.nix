@@ -42,7 +42,7 @@ rec {
   processPackages = (import ./benchmarkOutputs.nix {
                        inherit annotate bc buildPackage check cluster
                                dumpPackage explore extractTarball format
-                               haskellPackages jq lib parseJSON runScript
+                               haskellPackages jq lib nth parseJSON runScript
                                timeCalc; });
 
   defaultPackages = processPackages { clusters = defaultClusters; };
@@ -106,7 +106,7 @@ rec {
   check = msg: cond: builtins.addErrorContext msg (assert cond; cond);
 
   timeCalc = import ./timeCalc.nix {
-              inherit bc check lib parseJSON runScript;
+              inherit bc check lib nth parseJSON runScript;
              };
 
   shuffledList         = import ./shufflePackages.nix {
@@ -117,6 +117,15 @@ rec {
   runTypes        = import ./runTypes.nix        {
                       inherit adb-scripts jq storeResult runScript withNix;
                     };
+
+  nth = n: lst:
+    assert check "Given integer '${toJSON n}'" (isInt  n);
+    assert check "Expecting list, given '${typeOf lst}'" (isList lst);
+    assert check "Index '${toJSON n}' in bounds '${toJSON (length lst)}'"
+                 (n <= length lst);
+    if n == 1
+       then head lst
+       else nth (n - 1) (tail lst);
 
   # FIXME: Move test-related definitions to a separate defs file
   testPackages  = import ./testPackages.nix {

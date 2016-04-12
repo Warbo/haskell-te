@@ -1,4 +1,4 @@
-{ bc, check, lib, parseJSON, runScript }:
+{ bc, check, lib, nth, parseJSON, runScript }:
 { annotateTime, clusterTimes, dumpTime, exploreTimes }:
 with builtins;
 with lib;
@@ -78,15 +78,6 @@ addTimes = x: y:
 sumTimes = fold addTimes null;
 
 # Utilities
-
-nth = n: lst:
-  assert check "Given integer '${toJSON n}'" (isInt  n);
-  assert check "Expecting list, given '${typeOf lst}'" (isList lst);
-  assert check "Index '${toJSON n}' in bounds '${toJSON (length lst)}'"
-               (n <= length lst);
-  if n == 1
-     then head lst
-     else nth (n - 1) (tail lst);
 
 indices = l: range 1 (length l);
 
