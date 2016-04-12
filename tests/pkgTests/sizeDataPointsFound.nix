@@ -1,4 +1,6 @@
 defs: with defs; pkg:
+with builtins;
+with lib;
 
 all id [
 
