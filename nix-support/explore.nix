@@ -1,4 +1,4 @@
-{ benchmark, explore-theories, format, lib, ml4hs, parseJSON,
+{ benchmark, check, explore-theories, format, lib, ml4hs, parseJSON,
   runScript, withNix, writeScript }:
 with builtins;
 with lib;
@@ -6,10 +6,10 @@ with lib;
 { quick, formatted }:
 
 assert isAttrs formatted;
-assert all (n: isString n)                    (attrNames formatted);
-assert all (n: isInt (fromJSON n))            (attrNames formatted);
-assert all (n: isList formatted."${n}")       (attrNames formatted);
-assert all (n: all isString formatted."${n}") (attrNames formatted);
+assert all (n: isString n)                  (attrNames formatted);
+assert all (n: isInt (fromJSON n))          (attrNames formatted);
+assert all (n: isList formatted.${n})       (attrNames formatted);
+assert all (n: all isString formatted.${n}) (attrNames formatted);
 
 let explore = writeScript "format-and-explore" ''
       set -e
@@ -28,7 +28,24 @@ let explore = writeScript "format-and-explore" ''
            map (doExplore clusterCount) clusters;
     result = mapAttrs go formatted;
 in
-assert isAttrs result;
-assert all (n: isInt  (fromJSON n))  (attrNames result);
-assert all (n: isList result."${n}") (attrNames result);
+assert check "explored is set ${toJSON result}"
+             (isAttrs result);
+
+assert check "explored keys are numeric ${toJSON result}"
+             (all (n: isInt  (fromJSON n))  (attrNames result));
+
+assert check "explored values are lists ${toJSON result}"
+             (all (n: isList result.${n}) (attrNames result));
+
+assert check "explored values contain sets ${toJSON result}"
+             (all (n: all isAttrs result.${n}) (attrNames result));
+
+assert check "explored values have stdout ${toJSON result}"
+             (all (n: all (x: x ? stdout) result.${n})
+                  (attrNames result));
+
+assert check "explored values have time ${toJSON result}"
+             (all (n: all (x: x ? time) result.${n})
+                  (attrNames result));
+
 result

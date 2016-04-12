@@ -36,15 +36,8 @@ processPkg = name: pkg: rec {
   # Stick to the quick output, so testing is faster
   dump      = rawDump.stdout;
   annotated = rawAnnotated.stdout;
-  clustered = mapAttrs (_: v: v.stdout) rawClustered;
-  explored  =
-    assert check "rawExplored isAttrs '${toJSON rawExplored}'"
-                 (isAttrs rawExplored);
-    assert check "All rawExplored are lists '${toJSON rawExplored}'"
-                 (all (n:     isList  rawExplored.${n}) (attrNames rawExplored));
-    assert check "All rawExplored.X contain sets '${toJSON rawExplored}'"
-                 (all (n: all isAttrs rawExplored.${n}) (attrNames rawExplored));
-    mapAttrs (_: map (x: x.stdout)) rawExplored;
+  clustered = mapAttrs (_: v:      v.stdout)  rawClustered;
+  explored  = mapAttrs (_: map (x: x.stdout)) rawExplored;
   equations = trace "FIXME: Reduce equations" explored;
 
   # Useful for benchmarking

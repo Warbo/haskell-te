@@ -48,8 +48,8 @@ rec {
   defaultPackages = processPackages { clusters = defaultClusters; };
 
   explore = import ./explore.nix {
-              inherit benchmark explore-theories format lib ml4hs parseJSON
-                      runScript withNix writeScript;
+              inherit benchmark check explore-theories format lib ml4hs
+                      parseJSON runScript withNix writeScript;
             };
 
   defaultClusters = [ 1 2 4 ];
