@@ -1,4 +1,5 @@
 defs: with defs; pkg:
+with builtins;
 
 let count = parseJSON (runScript {} ''
       set -e

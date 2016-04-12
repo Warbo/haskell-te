@@ -1,5 +1,4 @@
-defs: with defs;
-
-pkg:
+defs: with defs; pkg:
+with builtins;
 
 parseJSON (readFile pkg.ranTypes) ? result
