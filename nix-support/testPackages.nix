@@ -73,31 +73,6 @@ let clusters         = listToAttrs (map (c: {
                     nix_recurrentClustering < "${features}" > pre-clustered.json
                     "${storeResult}" pre-clustered.json "$out"
                   '') clusters;
-
-      formatted = mapAttrs (c: data: runScript
-        (withNix { buildInputs = [ ml4hs ]; })
-        ''
-          set -e
-          export CLUSTERS="${c}"
-          "${ml4hs}/lib/ml4hs/format-exploration.sh" < "${data}" > formatted.json
-          "${storeResult}" formatted.json "$out"
-        '') clustered;
-
-      # Like 'explored', but comes from 'formatted', rather than using 'ml4hs'
-      # which acts on 'clustered'
-      preExplored = mapAttrs (c: data: runScript
-        (withNix { buildInputs = [ explore-theories ]; })
-        ''
-          set -e
-
-          function shallow {
-            grep -v "^Depth" || true # Prevent set -e choking on empty input
-          }
-
-          export CLUSTERS="${c}"
-          explore-theories < "${data}" | shallow > equations.json
-          "${storeResult}" equations.json "$out"
-      '') formatted;
     };
 
 in
