@@ -1,4 +1,6 @@
 defs: with defs;
+with builtins;
+with lib;
 
 # Run the tests in ./pkgTests with testPackages
 

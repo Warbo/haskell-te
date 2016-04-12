@@ -1,4 +1,5 @@
 defs: with defs;
+with builtins;
 
 let deps = [
       explore-theories

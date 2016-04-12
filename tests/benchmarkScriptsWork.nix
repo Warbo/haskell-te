@@ -1,4 +1,6 @@
 defs: with defs;
+with builtins;
+with lib;
 
 let result = script: parseJSON (runScript (withNix {}) ''
                         "${script}" > "$out"

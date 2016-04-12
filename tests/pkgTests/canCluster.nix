@@ -1,6 +1,5 @@
-defs: with defs;
-
-pkg:
+defs: with defs; pkg:
+with builtins;
 
 let check    = xs: n: isString xs."${n}".time.mean.estPoint;
     checkAll = xs: all (check xs) (attrNames xs);

@@ -40,7 +40,7 @@ rec {
                 };
 
   processPackages = (import ./benchmarkOutputs.nix {
-                       inherit annotate assertMsg bc buildPackage cluster
+                       inherit annotate bc buildPackage check cluster
                                dumpPackage explore extractTarball format
                                haskellPackages jq lib parseJSON runScript
                                timeCalc; });
@@ -103,6 +103,12 @@ rec {
                            in builtins.addErrorContext notOk
                                 (trace (if cond then ok else notOk) cond);
 
+  check = msg: cond: builtins.addErrorContext msg (assert cond; cond);
+
+  timeCalc = import ./timeCalc.nix {
+              inherit bc check lib parseJSON runScript;
+             };
+
   shuffledList         = import ./shufflePackages.nix {
                            inherit coreutils pv runScript wget withNix
                                    writeScript;
@@ -140,10 +146,6 @@ rec {
   # Nix doesn't handle floats, so use bc
   floatDiv = x: y: runScript { buildInputs = [ bc ]; }
                              ''echo "scale=16; ${x}/${y}" | bc > "$out"'';
-
-  timeCalc = import ./timeCalc.nix {
-               inherit bc lib;
-             };
 
   tabulate = import ./tabulate.nix {
                inherit lib processPackages;

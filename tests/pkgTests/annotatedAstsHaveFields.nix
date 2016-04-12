@@ -1,4 +1,5 @@
 defs: with defs; pkg:
+with builtins;
 
 let checkField = f: parseJSON (runScript {} ''
       "${jq}/bin/jq" 'map(has("${f}")) | all' < "${pkg.preAnnotated}" > "$out"

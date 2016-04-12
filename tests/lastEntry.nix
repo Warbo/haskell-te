@@ -1,4 +1,5 @@
 defs: with defs;
+with builtins;
 
 let result = runScript {} ''
                echo -e 'foo\n-----\nbar\n-----\nbaz' > input

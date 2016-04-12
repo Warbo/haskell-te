@@ -1,4 +1,5 @@
 defs: with defs; pkg:
+with builtins;
 
 let check = c: let sC = toString c;
       in parseJSON (runScript { buildInputs = [ jq ]; } ''

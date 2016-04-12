@@ -1,11 +1,10 @@
 # Import useful stuff
 let pkgs = import <nixpkgs> {};
-    defs = pkgs // pkgs.lib // builtins // import ./. {};
- in with defs;
+ in with pkgs; with builtins;
 
-# Import all *.nix files from ./tests, pass defs to each and assert that they
+# Import all *.nix files from ./tests, pass pkgs to each and assert that they
 # return true
 let tests   = importDir ../tests;
-    runTest = name: testMsg (tests."${name}" defs) "Running test '${name}'";
+    runTest = name: testMsg (tests."${name}" pkgs) "Running test '${name}'";
     result  = all runTest (attrNames tests);
  in testMsg result "All tests passed"
