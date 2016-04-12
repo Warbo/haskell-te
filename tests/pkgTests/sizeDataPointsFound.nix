@@ -12,6 +12,6 @@ all id [
 
 (all id (map (f: (testMsg (all (p: p ? "${f}") pkg.sizeDataPoints)
                           "Data points have field '${f}'"))
-             ["eqCount" "size" "withTime" "withCriterion" "clusterCount"]))
+             ["eqCount" "size" "totalTime" "clusterCount"]))
 
 ]
