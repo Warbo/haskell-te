@@ -1,4 +1,5 @@
 defs: with defs; pkg:
+with builtins;
 
 let asts    = quick: downloadAndDump { inherit quick; pkgName = pkg.name; };
     count   = quick: parseJSON (runScript { buildInputs = [ jq ]; } ''
