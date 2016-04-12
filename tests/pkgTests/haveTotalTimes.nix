@@ -1,9 +1,12 @@
 defs: with defs; pkg:
+with builtins;
 
-let check               = times: all (n: isString (times."${n}".mean.estPoint))
-                                     (attrNames times);
-    checksWithTime      = testMsg (check pkg.totalWithTime)
-                                  "Check ${pkg.name} has total quick time";
-    checksWithCriterion = testMsg (check pkg.totalWithCriterion)
-                                  "Check ${pkg.name} has total slow time";
- in checksWithTime && checksWithCriterion
+let slowPkgs    = defaultPackages { quick = false; };
+    check       = times: all (n: all (x: isString x.mean.estPoint)
+                                     times."${n}")
+                             (attrNames times);
+    checksQuick = testMsg (check pkg.totalTimes)
+                          "Check ${pkg.name} has total quick time";
+    checksSlow  = testMsg (check slowPkgs.${pkg.name}.totalTimes)
+                          "Check ${pkg.name} has total slow time";
+ in checksQuick && checksSlow
