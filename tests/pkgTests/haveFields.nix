@@ -1,4 +1,5 @@
 defs: with defs; pkg:
+with builtins;
 
 let asts      = pkg.annotated;
     haveField = field:
