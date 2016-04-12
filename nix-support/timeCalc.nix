@@ -17,23 +17,29 @@ isTime = t:
   t ? stddev -> check "Checking stddev" (checkStdDev t.stddev);
 
 areTimes = ts:
-  check "All attributes are times"
-        (all (n: check "'${n}' (${toJSON ts.${n}}) is time"
-                       (isTime ts.${n}))
-             (attrNames ts));
+  assert check "All attributes are times"
+               (all (n: assert check "'${n}' (${toJSON ts.${n}}) is time"
+                                     (isTime ts.${n});
+                        true)
+                    (attrNames ts));
+  true;
 
 areTimeLists = ts:
-  check "All attributes are time lists"
-        (all (n: check "'${n}' (${toJSON ts.${n}}) contains times"
-                       (all (x: check "isTime '${toJSON x}'"
-                                      (isTime x))
-                            ts.${n}))
-             (attrNames ts));
+  assert check "All attributes are time lists"
+               (all (n: assert check "'${n}' (${toJSON ts.${n}}) contains times"
+                                     (all (x: assert check "isTime ${toJSON x}"
+                                                           (isTime x);
+                                              true)
+                                          ts.${n});
+                        true)
+                    (attrNames ts));
+  true;
 
 checkStdDev = sd:
   assert check "isAttrs stddev '${toJSON sd}'" (isAttrs sd);
   assert check "Stddev '${toJSON sd}' has estPoint" (sd ? estPoint);
-  check "Stddev estPoint '${toJSON sd.estPoint}'" (isString st.estPoint);
+  assert check "Stddev estPoint '${toJSON sd.estPoint}'" (isString sd.estPoint);
+  true;
 
 # Arithmetic
 
@@ -50,29 +56,34 @@ addMeans = x: y:
   { mean = { estPoint = floatAdd x.mean.estPoint y.mean.estPoint; }; };
 
 addStdDevs = x: y:
-  assert isString x;
-  assert isString y;
+  assert check "stddev is string ${toJSON x}" (isString x);
+  assert check "stddev is string ${toJSON y}" (isString y);
   parseJSON (runScript { buildInputs = [ bc ]; } ''
-    echo 'scale=16; sqrt( ($x} * ${x}) + (${y} * ${y}))' | bc
+    echo 'scale=16; sqrt( (${x} * ${x}) + (${y} * ${y}))' | bc > "$out"
   '');
 
 addTimes = x: y:
-  assert x == null || isTime x;
-  assert y == null || isTime y;
+  assert check "Given time ${toJSON x}" (x == null || isTime x);
+  assert check "Given time ${toJSON y}" (y == null || isTime y);
   let result = if x == null
                   then y
                   else if y == null
                           then x
-                          else doSum;
+                          else assert check "doSum is a time ${toJSON doSum}"
+                                            (isTime doSum);
+                               assert check "doSum stddev OK"
+                                            (haveStdDev -> checkStdDev doSum.stddev);
+                               doSum;
       doSum = addMeans x y // (if haveStdDev
-                                  then { stddev = sumStdDev; }
+                                  then { stddev = { estPoint = sumStdDev; }; }
                                   else {});
-      haveStdDev = assert    x ? stddev  ->    y ? stddev;
-                   assert (! x ? stddev) -> (! y ? stddev);
+      haveStdDev = assert check "Both have stddev ${toJSON [x y]}"
+                                (   x ? stddev  ->    y ? stddev);
+                   assert check "Neither have stddev ${toJSON [x y]}"
+                                ((! x ? stddev) -> (! y ? stddev));
                    x ? stddev;
-      sumStdDev = addStdDevs x.stddev y.stddev;
-   in assert isTime result;
-      assert haveStdDev -> checkStdDev result.stddev;
+      sumStdDev = addStdDevs x.stddev.estPoint y.stddev.estPoint;
+   in assert check "Result is a time ${toJSON result}" (isTime result);
       result;
 
 sumTimes = fold addTimes null;

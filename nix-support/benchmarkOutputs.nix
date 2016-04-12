@@ -121,7 +121,6 @@ checkProcessed = p:
 
   p;
 
-processCheck = name: pkg: trace "FIXME: re-enable checks"
-  (/*checkProcessed*/ (processPkg name pkg));
+processCheck = name: pkg: checkProcessed (processPkg name pkg);
 
 in mapAttrs processCheck haskellPackages
