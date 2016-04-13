@@ -63,21 +63,35 @@ processPkg = name: pkg: rec {
                    };
 
   # Make another list of points, with clustering runs aggregated together
-  clusterDataPoints = let
+  clusterDataPoints =
+  assert check "isList sizeDataPoints"      (isList sizeDataPoints);
+  assert check "all isAttrs sizeDataPoints" (all isAttrs sizeDataPoints);
+  let
     # Combine one cluster with the others from the same run
-    addTo = x: y: {
-      eqCount = x.eqCount + y.eqCount;
-    };
+    addTo = x: y:
+      assert isInt x.eqCount;
+      assert isInt y.eqCount;
+      assert x.clusterCount == y.clusterCount;
+      {
+        inherit (x) clusterCount;
+        eqCount   = x.eqCount + y.eqCount;
+        totalTime = sumTimes [x.totalTime  y.totalTime];
+      };
+
     # Given a new point, partition the previous points into those from the
     # same run ("right") and those from other runs ("wrong"). If there's a
     # "right" point add the new one to it; otherwise use the new point as-is
     accum = newP: old:
-      assert check "isList  ${toJSON old}"  (isList  old);
-      assert check "isAttrs ${toJSON newP}" (isAttrs newP);
+      assert check "isList  ${toJSON old}"     (isList  old);
+      assert check "isAttrs ${toJSON newP}"    (isAttrs newP);
+      assert check "all isAttrs ${toJSON old}" (all isAttrs old);
+      assert check "newP has clusterCount ${toJSON newP}" (newP ? clusterCount);
+      assert check "Old points have clusterCount ${toJSON old}"
+                   (all (p: p ? clusterCount) old);
       with partition (oldP: oldP.clusterCount == newP.clusterCount) old;
       assert (length right < 2);
       wrong ++ (if length right == 1
-                   then [addTo newP (head right)]
+                   then [(addTo newP (head right))]
                    else [newP]);
   in fold accum [] sizeDataPoints;
 
