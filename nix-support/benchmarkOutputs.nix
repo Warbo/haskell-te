@@ -50,9 +50,15 @@ processPkg = name: pkg: rec {
     '')))
     formatted;
 
+  argCounts = trace "FIXME: Calculate argCount more appropriately"
+             (mapAttrs (_: map (f: fromJSON (runScript {} ''
+               echo "1" > "$out"
+             '')))
+             formatted);
+
   # Gather all values into a list of points
   sizeDataPoints = import ./getSizeDataPoints.nix {
-                     inherit check equations lib equationCounts nth
+                     inherit argCounts check equations lib equationCounts nth
                              sizeCounts totalTimes;
                    };
 
@@ -66,6 +72,8 @@ processPkg = name: pkg: rec {
     # same run ("right") and those from other runs ("wrong"). If there's a
     # "right" point add the new one to it; otherwise use the new point as-is
     accum = newP: old:
+      assert check "isList  ${toJSON old}"  (isList  old);
+      assert check "isAttrs ${toJSON newP}" (isAttrs newP);
       with partition (oldP: oldP.clusterCount == newP.clusterCount) old;
       assert (length right < 2);
       wrong ++ (if length right == 1

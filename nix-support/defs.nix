@@ -157,11 +157,12 @@ rec {
                              ''echo "scale=16; ${x}/${y}" | bc > "$out"'';
 
   tabulate = import ./tabulate.nix {
-               inherit lib processPackages;
+               inherit check lib processPackages;
              };
 
   plots = import ./plots.nix {
-            inherit defaultClusters plotResults tabulate;
+            inherit check defaultClusters parseJSON plotResults tabulate
+                    runScript;
           };
 
   checkPlot = plot:
@@ -183,22 +184,6 @@ rec {
                 '$width >= ${w} and $height >= ${h}' > "$out"
         '')) "Plot has sufficient dimensions (indicates GNUPlot succeeded)";
      in trace "Checking plot ${plot}" (exists && dims);
-
-                         /*
-  haskell-te = buildEnv {
-    name = "haskell-te";
-    paths = [
-      # Our custom packages
-      annotatedb explore-theories getDeps ML4HSFE mlspec-bench
-      mlspec order-deps recurrent-clustering ml4hs
-
-      # Standard utilities we need
-      real.bash real.cabal-install real.cabal2nix real.coreutils
-      real.findutils real.gnugrep real.gnused real.jq real.nix real.time
-      real.utillinux
-    ];
-  };
-*/
 
   # Include our overridden Haskell packages
   inherit haskellPackages;

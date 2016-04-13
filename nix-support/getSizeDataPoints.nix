@@ -1,4 +1,5 @@
-{ check, equations, lib, equationCounts, nth, sizeCounts, totalTimes }:
+{ argCounts, check, equations, lib, equationCounts, nth, sizeCounts,
+  totalTimes }:
 with builtins;
 with lib;
 
@@ -52,7 +53,7 @@ checkIndex   = cCount: cIndex:
   assert isInt cIndex;
   assert cIndex > 0;
   assert check "${toJSON equationCounts.${cCount}} has index ${cIndex}"
-               (cIndex <= length equationCounts."${cCount}");
+               (cIndex <= length equationCounts.${cCount});
   true;
 
 checkCount  = cCount:
@@ -112,13 +113,14 @@ checkSet = s:
 # Implementation
 
 mkPoint = cCount: cIndex: {
-  eqCount       = nth cIndex equationCounts."${cCount}";
-  size          = nth cIndex sizeCounts."${cCount}";
-  totalTime     = nth cIndex totalTimes."${cCount}";
+  eqCount       = nth cIndex equationCounts.${cCount};
+  size          = nth cIndex sizeCounts.${cCount};
+  argCount      = nth cIndex argCounts.${cCount};
+  totalTime     = nth cIndex totalTimes.${cCount};
   clusterCount  = cCount;
 };
 
-clusterIndices = cCount: range 1 (length equations."${cCount}");
+clusterIndices = cCount: range 1 (length equations.${cCount});
 
 clusterCounts = attrNames equations;
 
@@ -130,6 +132,7 @@ in
 assert check "Checking equations"      (checkSet equations);
 assert check "Checking equationCounts" (checkSet equationCounts);
 assert check "Checking sizeCounts"     (checkSet sizeCounts);
+assert check "Checking argCounts"      (checkSet argCounts);
 assert check "Checking totalTimes"     (checkSet totalTimes);
 
 assert check "Checking indices for sizeDataPoints" checkIndices;

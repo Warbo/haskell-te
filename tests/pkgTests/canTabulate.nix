@@ -1,7 +1,11 @@
 defs: with defs; pkg:
 with builtins;
 with lib;
-with tabulate { clusters = defaultClusters; quick = false; };
+with tabulate {
+  clusters     = defaultClusters;
+  quick        = false;
+  packageNames = [ pkg.name ];
+};
 
 # Checking the value types forces them to be evaluated
 let
