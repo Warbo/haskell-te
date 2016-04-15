@@ -75,7 +75,7 @@ processPkg = name: pkg: rec {
       {
         inherit (x) clusterCount;
         eqCount   = x.eqCount + y.eqCount;
-        totalTime = sumTimes [x.totalTime  y.totalTime];
+        totalTime = timeCalc.sumTimes [x.totalTime  y.totalTime];
       };
 
     # Given a new point, partition the previous points into those from the
@@ -96,7 +96,7 @@ processPkg = name: pkg: rec {
   in fold accum [] sizeDataPoints;
 
   # Total benchmark times (split up according to clusters)
-  inherit (timeCalc {
+  inherit (timeCalc.pkgTimes {
             dumpTime     = rawDump.time;
             annotateTime = rawAnnotated.time;
             clusterTimes = mapAttrs (_:      v: v.time)  rawClustered;
