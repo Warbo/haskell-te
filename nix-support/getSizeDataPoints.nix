@@ -1,5 +1,5 @@
 { argCounts, check, equations, lib, equationCounts, nth, sizeCounts,
-  totalTimes }:
+  timeToBucket, totalTimes }:
 with builtins;
 with lib;
 
@@ -112,11 +112,12 @@ checkSet = s:
 
 # Implementation
 
-mkPoint = cCount: cIndex: {
+mkPoint = cCount: cIndex: rec {
   eqCount       = nth cIndex equationCounts.${cCount};
   size          = nth cIndex sizeCounts.${cCount};
   argCount      = nth cIndex argCounts.${cCount};
   totalTime     = nth cIndex totalTimes.${cCount};
+  timeBucket    = timeToBucket totalTime;
   clusterCount  = cCount;
 };
 

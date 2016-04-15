@@ -30,5 +30,5 @@ checkTable = tbl: addErrorContext "Checking table '${toJSON tbl}'"
 in
 
 all checkTable [
-  (eqsVsTimeForClusters pkg.sizeDataPoints)
+  eqsVsTimeForClusters
 ]

@@ -60,6 +60,7 @@ processPkg = name: pkg: rec {
   sizeDataPoints = import ./getSizeDataPoints.nix {
                      inherit argCounts check equations lib equationCounts nth
                              sizeCounts totalTimes;
+                     inherit (timeCalc) timeToBucket;
                    };
 
   # Make another list of points, with clustering runs aggregated together
@@ -72,10 +73,11 @@ processPkg = name: pkg: rec {
       assert isInt x.eqCount;
       assert isInt y.eqCount;
       assert x.clusterCount == y.clusterCount;
-      {
+      rec {
         inherit (x) clusterCount;
-        eqCount   = x.eqCount + y.eqCount;
-        totalTime = timeCalc.sumTimes [x.totalTime  y.totalTime];
+        eqCount    = x.eqCount + y.eqCount;
+        totalTime  = timeCalc.sumTimes [x.totalTime  y.totalTime];
+        timeBucket = timeCalc.timeToBucket totalTime;
       };
 
     # Given a new point, partition the previous points into those from the

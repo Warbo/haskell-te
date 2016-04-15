@@ -105,8 +105,25 @@ rec {
 
   check = msg: cond: builtins.addErrorContext msg (assert cond; cond);
 
+  checkStdDev = sd:
+    assert check "isAttrs stddev '${toJSON sd}'"
+                 (isAttrs sd);
+    assert check "Stddev '${toJSON sd}' has estPoint"
+                 (sd ? estPoint);
+    assert check "Stddev estPoint '${toJSON sd.estPoint}'"
+                 (isString sd.estPoint);
+    true;
+
+  checkTime = t:
+    assert check "isAttrs '${toJSON t}'"           (isAttrs t);
+    assert check "${toJSON t} has mean"            (t ? mean);
+    assert check "isAttrs '${toJSON t.mean}'"      (isAttrs t.mean);
+    assert check "'${toJSON t.mean}' has estPoint" (t.mean ? estPoint);
+    t ? stddev -> check "Checking stddev" (checkStdDev t.stddev);
+
   timeCalc = import ./timeCalc.nix {
-              inherit bc check lib nth parseJSON runScript;
+              inherit bc check checkStdDev checkTime lib nth parseJSON
+                      runScript;
              };
 
   shuffledList         = import ./shufflePackages.nix {
@@ -157,7 +174,7 @@ rec {
                              ''echo "scale=16; ${x}/${y}" | bc > "$out"'';
 
   tabulate = import ./tabulate.nix {
-               inherit check lib processPackages;
+               inherit check checkTime lib processPackages;
              };
 
   plots = import ./plots.nix {

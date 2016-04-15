@@ -29,6 +29,14 @@ areTimeLists = ts:
 
 # Arithmetic
 
+floatLessThan = x: y:
+  assert isString x;
+  assert isString y;
+  let result = parseJSON (runScript { buildInputs = [ bc ]; } ''
+                 echo 'scale=16; ${x} < ${y}' | bc > "$out"
+               '');
+   in result == "1";
+
 floatAdd = x: y:
   assert isString x;
   assert isString y;
@@ -73,6 +81,16 @@ addTimes = x: y:
       result;
 
 sumTimes = fold addTimes null;
+
+# For coarse-grained series, we want to group together many times. To achieve
+# this, we group them into "buckets" based on their mean
+timeToBucket = t:
+  let findBucket = n:
+        if floatLessThan t.mean.estPoint (toString n)
+           then n
+           else findBucket (n * 10);
+   in assert check "Bucketing a time ${toJSON t}" (checkTime t);
+      findBucket 1;
 
 # Utilities
 

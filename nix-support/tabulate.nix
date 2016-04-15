@@ -25,9 +25,12 @@ compareAsInts = a: b:
 
 processedPackages = processPackages { inherit clusters; } { inherit quick; };
 
-collectData = field: fold (name: old: old ++ processedPackages.${name}.${field})
-                          []
-                          packageNames;
+collectData = field:
+  assert check "Field is string ${toJSON field}" (isString field);
+  assert check "Package names are strings" (all isString packageNames);
+  fold (name: old: old ++ processedPackages.${name}.${field})
+       []
+       packageNames;
 
 # Each data point is a particular cluster
 dataBySize         = collectData "sizeDataPoints";
@@ -82,6 +85,13 @@ postConditions = result: all id [
 
   (check "Matrix is 2D" (all (x: check "isList ${toJSON x}" (isList x))
                              result.matrix))
+
+  (check "Forcing components of result"
+         (all (x: check "Forcing field ${x}"
+                        (isString "${toJSON result.${x}}"))
+              (attrNames result)))
+
+  (check "Force result" (isString "${toJSON result}"))
 
 ];
 
@@ -162,7 +172,7 @@ tabulated = listToAttrs
            name = "eqsVsClustersForTimes";
            x    = "eqCount";
            y    = "clusterCount";
-           z    = "totalTime";
+           z    = "timeBucket";
            data = dataByClusterCount;
          }
 
@@ -170,7 +180,7 @@ tabulated = listToAttrs
            name = "eqsVsSizeForTimes";
            x    = "eqCount";
            y    = "size";
-           z    = "totalTime";
+           z    = "timeBucket";
            data = dataBySize;
          }
 
@@ -178,7 +188,7 @@ tabulated = listToAttrs
            name = "eqsVsArgsForTimes";
            x    = "eqCount";
            y    = "argCount";
-           z    = "totalTime";
+           z    = "timeBucket";
            data = dataBySize;
          }
 

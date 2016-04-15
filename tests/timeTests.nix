@@ -26,4 +26,10 @@ all id [
 
   (testMsg (four.mean.estPoint == "4")
            "sum [2 2] should equal 4, got ${toJSON four}")
+
+  (testMsg (tC.floatLessThan "1.2345678" "2.3456789") "1.x < 2.x")
+
+  (testMsg (! tC.floatLessThan "1.2345678" "0.1234567") "0.x < 1.x")
+
+  (testMsg (! tC.floatLessThan "1.2345678" "1.2345678") "! (x < x)")
 ]
