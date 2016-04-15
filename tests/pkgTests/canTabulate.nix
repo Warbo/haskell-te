@@ -10,22 +10,9 @@ with tabulate {
 # Checking the value types forces them to be evaluated
 let
 
-sensibleStdDev = x: x ? stddev -> all id [
-  (isAttrs x.stddev)
-  (x.stddev ? estPoint)
-  (isString x.stddev.estPoint)
-];
-
-isTime = x: all id [
-  (isAttrs x)
-  (x ? mean)
-  (x.mean ? estPoint)
-  (sensibleStdDev x)
-];
-
 hasValues = x: testMsg (isList x && all isValue x) "${toJSON x} hasValues";
 
-isValue = x: testMsg (isString x || isTime x)
+isValue = x: testMsg (isString x || checkTime x)
                      "isValue ${toJSON x}";
 
 checkTable = tbl: addErrorContext "Checking table '${toJSON tbl}'"

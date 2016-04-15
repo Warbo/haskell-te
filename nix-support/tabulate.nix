@@ -1,9 +1,27 @@
-{ check, lib, processPackages }:
+{ check, checkTime, lib, processPackages }:
 with builtins;
 with lib;
 
 { clusters, quick, packageNames }:
 let
+
+looksNumeric = x: any id [
+  (isInt    x -> checkNumeric x)
+  (isString x -> checkNumeric x)
+  (isAttrs  x -> checkTime    x)
+];
+
+checkNumeric = x: "" == replaceStrings
+                          ["0" "1" "2" "3" "4" "5" "6" "7" "8" "9" "."]
+                          [""  ""  ""  ""  ""  ""  ""  ""  ""  ""  "" ]
+                          (toString x);
+
+compareAsInts = a: b:
+  let aI = fromJSON (toString a);
+      bI = fromJSON (toString b);
+   in assert check "Argument ${toJSON a} became int ${toJSON aI}" (isInt aI);
+      assert check "Argument ${toJSON b} became int ${toJSON bI}" (isInt bI);
+      aI < bI;
 
 processedPackages = processPackages { inherit clusters; } { inherit quick; };
 
@@ -17,75 +35,178 @@ dataBySize         = collectData "sizeDataPoints";
 # Each data point is a package split into k clusters
 dataByClusterCount = collectData "clusterDataPoints";
 
+preConditions = x: y: z: data: all id [
+
+  (check "Field names are strings" (all isString [x y z]))
+
+  (check "Forcing data" (isString "${toJSON data}"))
+
+  (check "isList data (${typeOf data})" (isList data))
+
+  (check "Data contains sets"
+         (all (p: check "isAttrs ${toJSON p}"
+                        (isAttrs p))
+              data))
+
+  (check "Points have ${x}" (all (p: check "Has ${x} ${toJSON p}"
+                                           (p ? ${x}))
+                                 data))
+
+  (check "Points have ${y}" (all (p: check "Has ${y} ${toJSON p}"
+                                           (p ? ${y}))
+                                 data))
+
+  (check "Points have ${z}" (all (p: check "Has ${z} ${toJSON p}"
+                                           (p ? ${z}))
+                            data))
+
+  (check "Can sort ${x}" (all (p: check "checkNumeric ${toJSON p.${x}}"
+                                        (checkNumeric p.${x}))
+                              data))
+
+  (check "${y} looks numeric" (all (p: check "Looks numeric ${toJSON p.${y}}"
+                                             (looksNumeric p.${y}))
+                                   data))
+
+  (check "${z} looks numeric" (all (p: check "Looks numeric ${toJSON p.${z}}"
+                                             (looksNumeric p.${z}))
+                                   data))
+
+];
+
+postConditions = result: all id [
+
+  (check "isList axis (${typeOf result.axis})"     (isList result.axis))
+
+  (check "isList matrix (${typeOf result.matrix})" (isList result.matrix))
+
+  (check "Matrix is 2D" (all (x: check "isList ${toJSON x}" (isList x))
+                             result.matrix))
+
+];
+
+# Wrap our tabulation function in a load of assertions, since there is a lot of
+# room for errors which may slip through unnoticed (e.g. one int looks just like
+# another).
 xVsYForZ = x: y: z: data:
-  addErrorContext "Tabulating '${x}' vs '${y}' for values of '${z}'" (let
+  let result = addErrorContext "Tabulating ${x} vs ${y} for values of ${z}"
+                               (xVsYForZReal x y z data);
+   in assert check "Pre-conditions for ${x} vs ${y} per ${z}"
+                   (preConditions x y z data);
+      assert check "Post-conditions for ${x} vs ${y} per ${z}"
+                   (postConditions result);
+      result;
 
-    # Pull out the required data, and give generic labels (x, y, z)
-    points = map (p: { x = p."${x}"; y = p."${y}"; z = p."${z}"; }) data;
+# Performs the actual tabulation of fields
+xVsYForZReal = x: y: z: data:
+  let # Pull out the required data, and give generic labels (x, y, z)
+      points = map (p: { x = p.${x}; y = p.${y}; z = p.${z}; }) data;
 
-    # Get all of the possible y values and sort them, to get our axis values
-    axisVals = map (p: p.x) points;
-    axis     = unique (sort (a: b: a < b) axisVals);
+      # Get all of the possible y values and sort them, to get our axis values
+      axisVals = map (p: p.x) points;
+      axis     = unique (sort compareAsInts axisVals);
 
-    # Find the values of z we have
-    series = unique (map (p: p.z) points);
+      # Find the values of z we have
+      series = unique (map (p: p.z) points);
 
-    # Generate a matrix (list of rows)
-    matrix = map (v: map (findCell v) series) axis;
+      # Generate a matrix (list of rows)
+      matrix = map (v: map (findCell v) series) axis;
 
-    # Returns the value from the given series at the given axis point;
-    # missing data points become "-"
-    findCell = v: series: let
-       # Those points which match v and series
-       ps = filter (p: p.z == series && p.x == v) points;
-       # The corresponding y values for these points, if any
-       vals = map (p: p.y) ps;
-    in if length vals == []
-          then ["-"]
-          else vals;
+      # Returns the value from the given series at the given axis point;
+      # missing data points become "-"
+      findCell = v: series:
+        let # Those points which match v and series
+            ps = filter (p: p.z == series && p.x == v) points;
+            # The corresponding y values for these points, if any
+            vals = map (p: p.y) ps;
+         in if length vals == []
+               then ["-"]
+               else vals;
 
       header = map toString series;
-  in { inherit axis header matrix; });
 
-tabulated = {
+   in { inherit axis header matrix; };
 
-  eqsVsTimeForClusters = addErrorContext
-    "Tabularing equations against time for various cluster counts"
-    (xVsYForZ "eqCount" "totalTime" "clusterCount" dataByClusterCount);
+tabulated = listToAttrs
+  (map ({ x, y, z, data, name }:
+          addErrorContext "Tabulating ${x} vs ${y} for ${z}" {
+            inherit name;
+            value = xVsYForZ x y z data;
+          })
+       [
+         {
+           name = "eqsVsTimeForClusters";
+           x    = "eqCount";
+           y    = "totalTime";
+           z    = "clusterCount";
+           data = dataByClusterCount;
+         }
 
-  eqsVsTimeForSizes    = addErrorContext
-    "Tabulating equations against time for various sig sizes"
-    (xVsYForZ "eqCount" "totalTime" "size" dataBySize);
+         {
+           name = "eqsVsTimeForSizes";
+           x    = "eqCount";
+           y    = "totalTime";
+           z    = "size";
+           data = dataBySize;
+         }
 
-  eqsVsTimeForArgs     = addErrorContext
-    "Tabulating equations against time for various arg counts"
-    (xVsYForZ "eqCount" "totalTime" "argCount" dataBySize);
+         {
+           name = "eqsVsTimeForArgs";
+           x    = "eqCount";
+           y    = "totalTime";
+           z    = "argCount";
+           data = dataBySize;
+         }
 
-  eqsVsClustersForTimes = addErrorContext
-    "Tabulating equations against cluster count for various time periods"
-    (xVsYForZ "eqCount" "clusterCount" "totalTime" dataByClusterCount);
+         {
+           name = "eqsVsClustersForTimes";
+           x    = "eqCount";
+           y    = "clusterCount";
+           z    = "totalTime";
+           data = dataByClusterCount;
+         }
 
-  eqsVsSizeForTimes     = addErrorContext
-    "Tabulating equations against sig size for various time periods"
-    (xVsYForZ "eqCount" "size" "totalTime" dataBySize);
+         {
+           name = "eqsVsSizeForTimes";
+           x    = "eqCount";
+           y    = "size";
+           z    = "totalTime";
+           data = dataBySize;
+         }
 
-  eqsVsArgsForTimes     = addErrorContext
-    "Tabulating equations against arg count for various time periods"
-    (xVsYForZ "eqCount" "argCount" "totalTime" dataBySize);
+         {
+           name = "eqsVsArgsForTimes";
+           x    = "eqCount";
+           y    = "argCount";
+           z    = "totalTime";
+           data = dataBySize;
+         }
 
-  timeVsClustersForEqs = addErrorContext
-    "Tabulating time against cluster count for various equation counts"
-    (xVsYForZ "totalTime" "clusterCount" "eqCount" dataByClusterCount);
+         {
+           name = "timeVsClustersForEqs";
+           x    = "clusterCount";
+           y    = "totalTime";
+           z    = "eqCount";
+           data = dataByClusterCount;
+         }
 
-  timeVsSizeForEqs     = addErrorContext
-    "Tabulating time against sig size for various equation counts"
-    (xVsYForZ "totalTime" "size" "eqCount" dataBySize);
+         {
+           name = "timeVsSizeForEqs";
+           x    = "size";
+           y    = "totalTime";
+           z    = "eqCount";
+           data = dataBySize;
+         }
 
-  timeVsArgsForEqs     = addErrorContext
-    "Tabulating time against arg counts for various equation counts"
-    (xVsYForZ "totalTime" "argCount" "eqCount" dataBySize);
+         {
+           name = "timeVsArgsForEqs";
+           x    = "argCount";
+           y    = "totalTime";
+           z    = "eqCount";
+           data = dataBySize;
+         }
 
-};
+       ]);
 
 in
 
@@ -125,10 +246,20 @@ assert check "Checking tabulate data" (all id [
 
 ]);
 
-assert check "Forcing tabulated results"
-             (all (n: assert check "Forcing ${n}"
-                                   (isString "${toJSON tabulated.${n}}");
-                      true)
-                  (attrNames tabulated));
+assert check "Checking tabulate output" (all id [
+
+  (check "isAttrs tabulated (${typeOf tabulated})" (isAttrs tabulated))
+
+  (check "tabulated contains sets"
+         (all (t: check "isAttrs ${typeOf tabulated.${t}}"
+                        (isAttrs tabulated.${t}))
+              (attrNames tabulated)))
+
+  (check "Forcing tabulated results"
+         (all (n: check "Forcing ${n}"
+                        (isString "${toJSON tabulated.${n}}"))
+              (attrNames tabulated)))
+
+]);
 
 tabulated
