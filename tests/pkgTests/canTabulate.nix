@@ -12,19 +12,19 @@ let
 
 hasValues = x: testMsg (isList x && all isValue x) "${toJSON x} hasValues";
 
-isValue = x: testMsg (isString x || checkTime x)
+isValue = x: testMsg (isInt x || isString x)
                      "isValue ${toJSON x}";
 
 checkTable = tbl: addErrorContext "Checking table '${toJSON tbl}'"
-  (with tbl; all id [
-    (testMsg (isList matrix)
-             "Table body is a list ${toJSON matrix}")
+  (all id [
+    (testMsg (isAttrs tbl)
+             "Table is a set of series ${toJSON tbl}")
 
-    (testMsg (all isList matrix)
-             "Table rows are lists ${toJSON matrix}")
+    (testMsg (all (n: isList tbl.${n}) (attrNames tbl))
+             "Table rows are lists ${toJSON tbl}")
 
-    (testMsg (all (all hasValues) matrix)
-             "Table cells contain values ${toJSON matrix}")
+    (testMsg (all (n: all hasValues tbl.${n}) (attrNames tbl))
+             "Table cells contain values ${toJSON tbl}")
   ]);
 
 in

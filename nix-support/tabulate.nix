@@ -14,11 +14,14 @@ looksNumeric = x: any id [
 checkNumeric = x: "" == replaceStrings
                           ["0" "1" "2" "3" "4" "5" "6" "7" "8" "9" "."]
                           [""  ""  ""  ""  ""  ""  ""  ""  ""  ""  "" ]
-                          (toString x);
+                          (addErrorContext "Checking ${toJSON x} is numeric"
+                                           (toString x));
 
 compareAsInts = a: b:
-  let aI = fromJSON (toString a);
-      bI = fromJSON (toString b);
+  let aI = addErrorContext "Turning ${toJSON a} into int"
+                           (fromJSON (toString a));
+      bI = addErrorContext "Turning ${toJSON b} into int"
+                           (fromJSON (toString b));
    in assert check "Argument ${toJSON a} became int ${toJSON aI}" (isInt aI);
       assert check "Argument ${toJSON b} became int ${toJSON bI}" (isInt bI);
       aI < bI;
@@ -79,12 +82,17 @@ preConditions = x: y: z: data: all id [
 
 postConditions = result: all id [
 
-  (check "isList axis (${typeOf result.axis})"     (isList result.axis))
+  (check "isAttrs result.series ${toJSON result.series}" (isAttrs result.series))
 
-  (check "isList matrix (${typeOf result.matrix})" (isList result.matrix))
+  (check "Each series is a list ${toJSON result.series}"
+         (all (n: isList result.series.${n}) (attrNames result.series)))
 
-  (check "Matrix is 2D" (all (x: check "isList ${toJSON x}" (isList x))
-                             result.matrix))
+  (check "Series are (x,y) or (x,y,stddev) ${toJSON result.series}"
+         (all (n: any id [
+                    (all (row: length row == 2) result.series.${n})
+                    (all (row: length row == 3) result.series.${n})
+                  ])
+              (attrNames result.series)))
 
   (check "Forcing components of result"
          (all (x: check "Forcing field ${x}"
@@ -110,32 +118,34 @@ xVsYForZ = x: y: z: data:
 # Performs the actual tabulation of fields
 xVsYForZReal = x: y: z: data:
   let # Pull out the required data, and give generic labels (x, y, z)
-      points = map (p: { x = p.${x}; y = p.${y}; z = p.${z}; }) data;
+      points = map (p: {
+                     x = p.${x};
+                     y = p.${y};
+                     z = addErrorContext "toString ${toJSON p.${z}}"
+                                         (toString p.${z});
+                   }) data;
 
-      # Get all of the possible y values and sort them, to get our axis values
-      axisVals = map (p: p.x) points;
-      axis     = unique (sort compareAsInts axisVals);
+      # Format points into series, based on their z values
+      series = fold ({x, y, z}: out: out // {
+                      ${z} = [(formatPoint x y)] ++ (if out ? ${z}
+                                                        then out.${z}
+                                                        else []);
+                    })
+                    {}
+                    points;
 
-      # Find the values of z we have
-      series = unique (map (p: p.z) points);
+      formatPoint = x: y:
+        let xval   = addErrorContext "Rendering ${toJSON x}" (toString x);
+            yval   = if isAttrs y
+                        then y.mean.estPoint
+                        else addErrorContext "Rendering ${toJSON y}"
+                                             (toString y);
+            stddev = if isAttrs y && y ? stddev
+                        then [y.stddev.estPoint]
+                        else [];
+         in [xval yval] ++ stddev;
 
-      # Generate a matrix (list of rows)
-      matrix = map (v: map (findCell v) series) axis;
-
-      # Returns the value from the given series at the given axis point;
-      # missing data points become "-"
-      findCell = v: series:
-        let # Those points which match v and series
-            ps = filter (p: p.z == series && p.x == v) points;
-            # The corresponding y values for these points, if any
-            vals = map (p: p.y) ps;
-         in if length vals == []
-               then ["-"]
-               else vals;
-
-      header = map toString series;
-
-   in { inherit axis header matrix; };
+   in { inherit x y z series; };
 
 tabulated = listToAttrs
   (map ({ x, y, z, data, name }:

@@ -4,54 +4,56 @@ with builtins;
 let quick = trace "FIXME: Take 'quick' from environment" true; in
 
 with plotResults;
-with tabulate { clusters = defaultClusters; inherit quick; };
 
 let
 
-clusters = map toString defaultClusters;
+clusters     = map toString defaultClusters;
 
-pkgList  = trace "FIXME: Use shuffled list" [ "list-extras" "split" ];
+packageNames = trace "FIXME: Use shuffled list" [ "list-extras" "split" ];
 
-plots    = {
+tab          = tabulate { inherit quick packageNames;
+                          clusters = defaultClusters; };
+
+plots        = with tab; {
 
 # Equations vs time, for fixed "sizes" (cluster count, cluster size, arguments)
 plotEqsVsTimeForClusters = addErrorContext
   "Plotting EqsVsTimeForClusters"
-  (scatterPlot (eqsVsTimeForClusters clusters pkgList));
+  (scatterPlot eqsVsTimeForClusters);
 
 plotEqsVsTimeForSizes    = addErrorContext
   "Plotting EqsVsTimeForSizes"
-  (scatterPlot (eqsVsTimeForSizes    clusters pkgList));
+  (scatterPlot eqsVsTimeForSizes);
 
 plotEqsVsTimeForArgs     = addErrorContext
   "Plotting EqsVsTimeForArgs"
-  (scatterPlot (eqsVsTimeForArgs     clusters pkgList));
+  (scatterPlot eqsVsTimeForArgs);
 
 # Equations vs "size", in a given amount of time
 plotEqsVsClustersForTimes = addErrorContext
   "Plotting EqsVsClustersForTimes"
-  (scatterPlot (eqsVsClustersForTimes clusters pkgList));
+  (scatterPlot eqsVsClustersForTimes);
 
 plotEqsVsSizeForTimes     = addErrorContext
   "Plotting EqsVsSizeForTimes"
-  (scatterPlot (eqsVsSizeForTimes     clusters pkgList));
+  (scatterPlot eqsVsSizeForTimes);
 
 plotEqsVsArgsForTimes     = addErrorContext
   "Plotting EqsVsArgsForTimes"
-  (scatterPlot (eqsVsArgsForTimes     clusters pkgList));
+  (scatterPlot eqsVsArgsForTimes);
 
 # Time vs "size", for a given number of equations
 plotTimeVsClustersForEqs = addErrorContext
   "Plotting TimeVsClustersForEqs"
-  (scatterPlot (timeVsClustersForEqs clusters pkgList));
+  (scatterPlot timeVsClustersForEqs);
 
 plotTimeVsSizeForEqs     = addErrorContext
   "Plotting TimeVsSizeForEqs"
-  scatterPlot (timeVsSizeForEqs     clusters pkgList);
+  (scatterPlot timeVsSizeForEqs);
 
 plotTimeVsArgsForEqs     = addErrorContext
   "Plotting TimeVsArgsForEqs"
-  scatterPlot (timeVsArgsForEqs     clusters pkgList);
+  (scatterPlot timeVsArgsForEqs);
 
 };
 

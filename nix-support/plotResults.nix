@@ -1,44 +1,56 @@
-{ gnuplot, lib, runScript, storeResult, withNix, writeScript }:
+{ check, gnuplot, lib, runScript, storeResult, withNix, writeScript }:
 with builtins;
 with lib;
 
 rec {
 
-renderTable = t:
-  assert t ? matrix;
-  assert t ? header;
-  assert t ? axis;
+hasSD = any (r: length r == 3);
 
-  assert isList t.axis;
-  assert isList t.header;
-  assert isList t.matrix;
-
-  assert all isString t.axis;
-  assert all isString t.header;
-  assert all isList   t.matrix;
-  assert all (all isString) t.matrix;
-
-  let rows        = zipListsWith (x: y: [x] ++ y) t.axis t.matrix;
-      renderCells = concatStringsSep "\t";
+renderTable = x: y: rows:
+  let renderCells = concatStringsSep "\t";
       renderRows  = concatStringsSep "\n";
-   in renderRows (map renderCells ([t.header] ++ rows));
+      sdHead      = if hasSD rows then ["stddev"] else [];
+      headRow     = [([x y] ++ sdHead)];
+      result      = renderRows (map renderCells
+                                    rows);
+   in assert check "isList rows ${toJSON rows}"
+                   (isList rows);
+
+      assert check "all isList rows ${toJSON rows}"
+                   (all isList rows);
+
+      assert check "all (all isString) rows ${toJSON rows}"
+                   (all (all isString) rows);
+
+      assert check "Forcing renderTable result" (isString "${toJSON result}");
+      result;
 
 scatterPlot = tbl:
-  let data        = addErrorContext
-                      "Rendering scatter plot data"
-                      (writeScript "scatter.tsv" (renderTable tbl));
+  let data        = mapAttrs (dataFile tbl.x tbl.y) tbl.series;
+      dataFile    = x: y: series: rows:
+                      let file = writeScript "scatter-${x}-${y}-${series}.tsv"
+                                             (renderTable x y rows);
+                       in "${file}";
+      dataLines   = map (n: "'${data.${n}}' with errorbars")
+                        (attrNames data);
+      dataLine    = concatStringsSep ", " dataLines;
       scatterGnus = writeScript "scatter.gnus" ''
         set terminal png
         set output ofilename
         set yrange [0:*]
-        plot filename using 2:3 with points
+        plot ${dataLine}
       '';
-      scatterResult = runScript (withNix { buildInputs = [ gnuplot ]; }) ''
-        set -e
-        gnuplot -e "filename='${data}';ofilename='plot.png'" "${scatterGnus}"
-        "${storeResult}" "plot.png" "$out"
-      '';
-   in addErrorContext "Plotting scatter chart" scatterResult;
+      scatterResult = addErrorContext
+        "Running GNUPlot: Program ${toJSON scatterGnus}, Data ${toJSON data}"
+        (runScript (withNix { buildInputs = [ gnuplot ]; }) ''
+          set -e
+          gnuplot -e "ofilename='plot.png'" "${scatterGnus}"
+          "${storeResult}" "plot.png" "$out"
+        '');
+   in assert check "Forcing scatterGnus"   (isString "${toJSON scatterGnus}");
+      assert check "Forcing data"          (isString "${toJSON data}");
+      assert check "Forcing scatterResult" (isString "${toJSON scatterResult}");
+      addErrorContext "Plotting scatter chart" scatterResult;
 
 # Mostly for tests
 mkTbl = keyAttrs: dataAttrs:

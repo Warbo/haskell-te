@@ -165,7 +165,8 @@ rec {
                  };
 
   plotResults = import ./plotResults.nix {
-                  inherit gnuplot lib runScript storeResult withNix writeScript;
+                  inherit check gnuplot lib runScript storeResult withNix
+                          writeScript;
                 };
   inherit (plotResults) mkTbl;
 
