@@ -1,6 +1,6 @@
 # Import useful stuff
 let pkgs = import <nixpkgs> {};
- in with pkgs; with builtins;
+ in with pkgs; with builtins; with lib;
 
 # Import all *.nix files from ./tests, pass pkgs to each and assert that they
 # return true

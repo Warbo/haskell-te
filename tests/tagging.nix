@@ -1,4 +1,5 @@
 defs: with defs;
+with builtins;
 
 let result = runScript { buildInputs = [ adb-scripts ]; } ''
         INPUT1='[{"name": "n1", "module": "M1"}, {"name": "n2", "module": "M2"}]'
