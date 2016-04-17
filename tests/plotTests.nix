@@ -1,7 +1,8 @@
 defs: with defs;
+with builtins;
 with lib;
 
-all (n: testMsg (checkPlot (plots { quick = true; }).${n})
+all (n: testMsg (checkPlot plots.${n})
                 "Checking plot ${n}")
     [
       "plotEqsVsTimeForClusters"
