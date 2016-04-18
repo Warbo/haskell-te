@@ -31,11 +31,13 @@ mkTblWorks =
    in testMsg (linesEq calc expect) "mkTbl works";
 
 eqsVsTimeForClustersWorks =
-  let tbl = eqsVsTimeForClusters;
-   in testMsg (all id [
-        (testMsg (isString (renderTable tbl))     "Can render table")
-        (testMsg (renderTable tbl != "")          "Rendered table isn't empty")
-      ]) "Equations vs time for clusters works";
+  let rendered = mapAttrs (_: renderTable "x" "y") eqsVsTimeForClusters.series;
+      doTest   = series:
+        let rows = rendered.${series};
+         in (testMsg (isString rows) "Can render table ${toJSON rows}") &&
+            (testMsg (rows != "")    "Rendered table isn't empty ${toJSON rows}");
+   in testMsg (all doTest (attrNames rendered))
+              "Equations vs time for clusters works";
 };
 
 in testMsg (all (n: testMsg tests.${n} "Checking ${n}")

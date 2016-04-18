@@ -17,14 +17,14 @@ isValue = x: testMsg (isInt x || isString x)
 
 checkTable = tbl: addErrorContext "Checking table '${toJSON tbl}'"
   (all id [
-    (testMsg (isAttrs tbl)
-             "Table is a set of series ${toJSON tbl}")
+    (testMsg (isAttrs tbl.series)
+             "Table has a set of series ${toJSON tbl.series}")
 
-    (testMsg (all (n: isList tbl.${n}) (attrNames tbl))
-             "Table rows are lists ${toJSON tbl}")
+    (testMsg (all (n: isList tbl.series.${n}) (attrNames tbl.series))
+             "Table rows are lists ${toJSON tbl.series}")
 
-    (testMsg (all (n: all hasValues tbl.${n}) (attrNames tbl))
-             "Table cells contain values ${toJSON tbl}")
+    (testMsg (all (n: all hasValues tbl.series.${n}) (attrNames tbl.series))
+             "Table cells contain values ${toJSON tbl.series}")
   ]);
 
 in
