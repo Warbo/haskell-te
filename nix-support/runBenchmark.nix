@@ -7,6 +7,7 @@ with builtins; with lib;
 let knownErrors = writeScript "known-error" ''
       jq: error
       MLSpec: Failed
+      syntax error
     '';
     checkStderr = writeScript "check-stderr" ''
       set -e

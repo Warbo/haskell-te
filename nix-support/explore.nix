@@ -67,9 +67,10 @@ path-to-front = writeScript "path-to-front" ''
 '';
 
 build-env = writeScript "build-env" ''
+  #!/usr/bin/env bash
+
   # Run the command given in argv in an environment containing the Haskell
   # packages given on stdin
-  BASE=$(dirname "$(readlink -f "$0")")
 
   function extraHaskellPackages {
     # Haskell packages required for MLSpec

@@ -30,8 +30,11 @@ scatterPlot = tbl:
       dataFile    = x: y: series: rows:
                       let file = writeScript "scatter-${x}-${y}-${series}.tsv"
                                              (renderTable x y rows);
-                       in "${file}";
-      dataLines   = map (n: "'${data.${n}}' with errorbars")
+                       in { data = "${file}"; hasSD = hasSD rows; };
+      dataLines   = map (n: let f  = data.${n}.data;
+                                eb = if data.${n}.hasSD then "with errorbars"
+                                                        else "";
+                                in "'${f}' ${eb}")
                         (attrNames data);
       dataLine    = concatStringsSep ", " dataLines;
       scatterGnus = writeScript "scatter.gnus" ''
