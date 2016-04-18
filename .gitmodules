@@ -37,9 +37,3 @@
 [submodule "packages/ifcxt"]
 	path = packages/ifcxt
 	url = http://chriswarbo.net/git/ifcxt.git
-[submodule "packages/csvkit"]
-	path = packages/csvkit
-	url = https://github.com/wireservice/csvkit
-[submodule "packages/pip2nix"]
-	path = packages/pip2nix
-	url = https://github.com/ktosiek/pip2nix
