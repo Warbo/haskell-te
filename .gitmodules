@@ -4,9 +4,6 @@
 [submodule "packages/ast-plugin"]
 	path = packages/ast-plugin
 	url = http://chriswarbo.net/git/ast-plugin.git
-[submodule "packages/explore-theories"]
-	path = packages/explore-theories
-	url = http://chriswarbo.net/git/explore-theories.git
 [submodule "packages/get-deps"]
 	path = packages/get-deps
 	url = http://chriswarbo.net/git/get-deps.git
