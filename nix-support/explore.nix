@@ -3,7 +3,30 @@
 with builtins;
 with lib;
 
-{ quick, formatted }:
+let
+
+explore = writeScript "format-and-explore" ''
+            set -e
+            function noDepth {
+              grep -v "^Depth" || true # Don't abort if nothing found
+            }
+            explore-theories | noDepth
+          '';
+
+doExplore = quick: clusterCount: f:
+              parseJSON (runScript { buildInputs = [ explore-theories ]; } ''
+                set -e
+                export CLUSTERS="${clusterCount}"
+                "${benchmark quick "${explore}" []}" < "${f}" > "$out"
+              '');
+
+go = quick: clusterCount: clusters:
+       map (doExplore quick clusterCount) clusters;
+
+in { quick, formatted }:
+
+let result = mapAttrs (go quick) formatted;
+in
 
 assert isAttrs formatted;
 assert all (n: isString n)                  (attrNames formatted);
@@ -11,23 +34,6 @@ assert all (n: isInt (fromJSON n))          (attrNames formatted);
 assert all (n: isList formatted.${n})       (attrNames formatted);
 assert all (n: all isString formatted.${n}) (attrNames formatted);
 
-let explore = writeScript "format-and-explore" ''
-      set -e
-      function noDepth {
-        grep -v "^Depth" || true # Don't abort if nothing found
-      }
-      explore-theories | noDepth
-    '';
-    doExplore = clusterCount: f:
-      parseJSON (runScript { buildInputs = [ explore-theories ]; } ''
-        set -e
-        export CLUSTERS="${clusterCount}"
-        "${benchmark quick "${explore}" []}" < "${f}" > "$out"
-      '');
-    go = clusterCount: clusters:
-           map (doExplore clusterCount) clusters;
-    result = mapAttrs go formatted;
-in
 assert check "explored is set ${toJSON result}"
              (isAttrs result);
 
