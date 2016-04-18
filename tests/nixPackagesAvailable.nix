@@ -2,7 +2,6 @@ defs: with defs;
 with builtins;
 
 all isAttrs [
-  explore-theories
   mlspec
   mlspec-bench
   haskellPackages.ArbitraryHaskell

@@ -2,7 +2,6 @@ defs: with defs;
 with builtins;
 
 let deps = [
-      explore-theories
       mlspec
       mlspec-bench
       haskellPackages.ArbitraryHaskell

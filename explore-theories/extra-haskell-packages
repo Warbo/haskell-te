@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-
-# Specify these once and only once
-cat <<EOF
-mlspec
-mlspec-helper
-runtime-arbitrary
-quickspec
-EOF

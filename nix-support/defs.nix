@@ -18,8 +18,9 @@ rec {
           }) adb-scripts annotateAsts dumpAndAnnotate;
 
   inherit (import ./runBenchmark.nix {
-             inherit bash check coreutils explore-theories jq lib
+             inherit bash check coreutils jq lib
                      mlspec-bench time writeScript;
+             inherit (explore) build-env;
            }) benchmark lastEntry withCriterion withTime;
 
   extractTarball = import ./extractTarball.nix {
@@ -48,7 +49,7 @@ rec {
   defaultPackages = processPackages { clusters = defaultClusters; };
 
   explore = import ./explore.nix {
-              inherit benchmark check explore-theories format lib ml4hs
+              inherit benchmark check format jq lib ml4hs
                       parseJSON runScript withNix writeScript;
             };
 
@@ -74,19 +75,6 @@ rec {
 
   parseJSON            = import ./parseJSON.nix {
                            inherit jq runScript writeScript;
-                         };
-
-  explore-theories     = stdenv.mkDerivation {
-                           name = "explore-theories";
-                           src = ../explore-theories;
-                           installPhase = ''
-                             mkdir -p "$out/bin"
-                             for F in build-env explore-theories extra-haskell-packages extra-packages path-to-front
-                             do
-                               cp -v "$F" "$out/bin/"
-                               chmod +x "$out/bin/$F"
-                             done
-                           '';
                          };
 
   ml4hs                = import ../ml4hs            {
@@ -155,7 +143,7 @@ rec {
 
   # FIXME: Move test-related definitions to a separate defs file
   testPackages  = import ./testPackages.nix {
-                    inherit adb-scripts defaultClusters explore-theories jq lib
+                    inherit adb-scripts defaultClusters jq lib
                             ml4hs ML4HSFE parseJSON defaultPackages
                             recurrent-clustering runScript runTypes storeResult
                             withNix processPackages;

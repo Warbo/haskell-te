@@ -31,7 +31,7 @@ processPkg = name: pkg: rec {
                           format clusterCount clusters)
                        clustered;
 
-  rawExplored = explore { inherit formatted quick; };
+  rawExplored = explore.explore { inherit formatted quick; };
 
   # Stick to the quick output, so testing is faster
   dump      = rawDump.stdout;

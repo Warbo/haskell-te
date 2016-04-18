@@ -1,4 +1,4 @@
-{ adb-scripts, defaultClusters, defaultPackages, explore-theories, jq, lib, ml4hs, ML4HSFE,
+{ adb-scripts, defaultClusters, defaultPackages, jq, lib, ml4hs, ML4HSFE,
   parseJSON, processPackages, recurrent-clustering, runScript, runTypes,
   storeResult, withNix }:
 with builtins;

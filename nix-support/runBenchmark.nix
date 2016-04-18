@@ -1,5 +1,5 @@
-{ bash, check, coreutils, explore-theories, jq, lib, mlspec-bench, time,
-  writeScript }:
+{ bash, build-env, check, coreutils, jq, lib, mlspec-bench,
+  time, writeScript }:
 
 with builtins; with lib;
 
@@ -71,7 +71,7 @@ in rec {
 
     START_TIME="$SECONDS" # Not part of the benchmark, just info for user
 
-    echo "$INPUT" | "${explore-theories}/bin/build-env"   \
+    echo "$INPUT" | "${build-env}"   \
                       "${mlspec-bench}/bin/mlspec-bench"   \
                         --template json                     \
                         --output report.json 1> bench.stdout \
