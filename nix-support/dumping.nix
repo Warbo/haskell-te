@@ -13,11 +13,13 @@ rec {
   withNix         = env: let existing = if env ? buildInputs
                                            then env.buildInputs
                                            else [];
+                             parts    = [ "nixpkgs=${./.}"
+                                          "${builtins.getEnv "NIX_PATH"}" ];
                           in env // {
                                # Required for calling nix recursively
                                buildInputs = existing ++ [ nix ];
                                NIX_REMOTE  = "daemon";
-                               NIX_PATH    = builtins.getEnv "NIX_PATH";
+                               NIX_PATH    = concatStringsSep ":" parts;
                                # Allows ~/.nixpkgs/config.nix to help debugging
                                USER_HOME   = builtins.getEnv "HOME";
                              };

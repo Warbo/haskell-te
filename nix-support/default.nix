@@ -1,13 +1,10 @@
-# A drop-in replacement for <nixpkgs>
-# WATCH OUT! callPackage can introduce references to the underlying <nixpkgs>
-# behind your back. If in doubt, pass arguments explicitly.
+# Augments <nixpkgs> with our own packages and utilities
 args:
 
-let real = import <real> args; # <real> should point to the 'real' <nixpkgs>
-
+let pkgs = import <nixpkgs> {};
     # If your <nixpkgs> is heavily customised, you can provide a pristine
     # version to use as 'original.pristine'
-    original = if real ? pristine then real.pristine else real;
+    original = if pkgs ? pristine then pkgs.pristine else real;
 
     # haskellPackages.override ensures dependencies are overridden too
     haskellPackages = import ./haskellPackages.nix {
@@ -15,7 +12,6 @@ let real = import <real> args; # <real> should point to the 'real' <nixpkgs>
                         nixFromCabal = import ./nixFromCabal.nix;
                       };
 
-    overridden = original // original.callPackage ./defs.nix {
-                               inherit real haskellPackages;
-                             };
-in overridden
+in original // original.callPackage ./defs.nix {
+                 inherit haskellPackages;
+               };

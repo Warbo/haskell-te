@@ -3,10 +3,8 @@ set -e
 
 # Calls Nix to evaluate tests, but output is messy and it might die silently
 function runIgnoreFailure {
-    BASE=$(dirname "$(readlink -f "$0")")
-    NIX_PATH="$("$BASE/nix-support/nixPath.sh")" nix-instantiate \
-        --read-write-mode --show-trace --eval                    \
-        -E 'import ./nix-support/test.nix'
+    nix-instantiate --read-write-mode --show-trace --eval \
+                    -E 'import ./nix-support/test.nix'
 }
 
 # Runs tests, with an additional pass/fail for whether the test command died

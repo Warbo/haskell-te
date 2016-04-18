@@ -1,7 +1,7 @@
 # Custom definitions
 { fetchurl, bash, bc, buildEnv, buildPythonPackage, coreutils, file, gnuplot, gnutar,
   haskellPackages, jq, lib, nix, pv, pythonPackages,
-  real, runCommand, stdenv, time, utillinux, wget, writeScript }:
+  runCommand, stdenv, time, utillinux, wget, writeScript }:
 
 with builtins; with lib;
 rec {
