@@ -25,7 +25,7 @@ explore-theories = writeScript "explore-theories" ''
 
   function pkgsFromInput {
     # Extracts packages as unquoted strings
-    "${jq}/bin/jq" -r '.[] | .[] | .package'
+    "${jq}/bin/jq" -r '.[] | .package'
   }
 
   function explore {
