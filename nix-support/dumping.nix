@@ -1,5 +1,6 @@
 { stdenv, haskellPackages, nix, gnutar, jq, lib, runCommand, writeScript,
   doCheck ? true }:
+with builtins;
 
 rec {
   runScript       = import ./runScript.nix       {
@@ -13,13 +14,21 @@ rec {
   withNix         = env: let existing = if env ? buildInputs
                                            then env.buildInputs
                                            else [];
-                             parts    = [ "nixpkgs=${./.}"
+                             # If we don't have <real> yet, use <nixpkgs>
+                             real     = toString
+                                          (if any (p: p.prefix == "real")
+                                                  nixPath
+                                              then <real>
+                                              else <nixpkgs>);
+                             # Override <nixpkgs>, with <real> as a fallback
+                             parts    = [ "nixpkgs=${toString ./.}"
+                                          "real=${real}"
                                           "${builtins.getEnv "NIX_PATH"}" ];
                           in env // {
                                # Required for calling nix recursively
                                buildInputs = existing ++ [ nix ];
                                NIX_REMOTE  = "daemon";
-                               NIX_PATH    = concatStringsSep ":" parts;
+                               NIX_PATH    = lib.concatStringsSep ":" parts;
                                # Allows ~/.nixpkgs/config.nix to help debugging
                                USER_HOME   = builtins.getEnv "HOME";
                              };

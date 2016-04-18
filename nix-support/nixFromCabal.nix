@@ -1,3 +1,4 @@
+{ haskellPackages, lib, stdenv }:
 with builtins;
 
 # Make a Nix package definition from a Cabal project. The result is a function,
@@ -18,12 +19,11 @@ dir: f:
 assert typeOf dir == "path" || isString dir;
 assert f == null || isFunction f;
 
-let pkgs  = import <nixpkgs> {};
-    hsVer = pkgs.haskellPackages.ghc.version;
-    nixed = pkgs.stdenv.mkDerivation {
+let hsVer = haskellPackages.ghc.version;
+    nixed = stdenv.mkDerivation {
       inherit dir;
       name         = "nixFromCabal-${hsVer}";
-      buildInputs  = [ pkgs.haskellPackages.cabal2nix ];
+      buildInputs  = [ haskellPackages.cabal2nix ];
       buildCommand = ''
         source $stdenv/setup
 
@@ -55,7 +55,7 @@ let pkgs  = import <nixpkgs> {};
     # defaults
     resultArgs = functionArgs result;
     required   = filter (n: !resultArgs.${n}) (attrNames resultArgs);
-    arglist    = pkgs.lib.concatStrings (pkgs.lib.intersperse "," required);
+    arglist    = lib.concatStrings (lib.intersperse "," required);
 
     # Strip the dependencies off our strings, so they can be embedded
     arglistF   = unsafeDiscardStringContext arglist;
