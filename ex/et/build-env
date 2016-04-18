@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+
+# Run the command given in argv in an environment containing the Haskell
+# packages given on stdin
+BASE=$(dirname "$(readlink -f "$0")")
+
+function extraHaskellPackages {
+    # Haskell packages required for MLSpec
+    "$BASE/extra-haskell-packages" | grep "^." | sed -e 's/^/h./g'
+}
+
+function extraPackages {
+    "$BASE/extra-packages"
+}
+
+function allExtras {
+    printf "%s %s" "$(extraHaskellPackages)" "$(extraPackages)"
+}
+
+function mkGhcPkg {
+    GIVEN=$(cat)
+    printf "(haskellPackages.ghcWithPackages (h: [%s %s]))" "$GIVEN" "$(extraHaskellPackages)"
+}
+
+function mkName {
+    GOT=$(cat)
+    EXTRA=$(allExtras)
+    UNIQUEID=$(echo "$GOT $EXTRA" | tr ' ' '\n' | sort -u | tr -d '[:space:]')
+    MD5HASH=$(echo "$UNIQUEID" | md5sum | cut -d ' ' -f1)
+    printf "explore-theories-%s" "$MD5HASH"
+}
+
+function mkEnvPkg {
+    GHCPKG=$(mkGhcPkg)
+    printf 'buildEnv { name = "%s"; paths = [%s %s];}' "$1" "$GHCPKG" "$(extraPackages)"
+}
+
+function haveHaskell {
+    hash "ghc-pkg" > /dev/null 2>&1
+}
+
+function havePkg {
+    ghc-pkg list "$1" | grep "$1" > /dev/null
+}
+
+function needEnv {
+    # TODO: Doesn't take extraPackages into account yet
+    haveHaskell || return 0
+
+    while read -r PKG
+    do
+        havePkg "$PKG" || return 0
+    done < <(extraHaskellPackages | cut -c 3-)
+
+    NEEDED=$(cat)
+    if [[ -n "$NEEDED" ]]
+    then
+        while read -r PKG
+        do
+            havePkg "$PKG" || return 0
+        done < <(echo "$NEEDED")
+    fi
+
+    return 1
+}
+
+if [[ -z "$ENVIRONMENT_PACKAGES" ]]
+then
+    # Sanity check
+    if [[ -n "$ENVIRONMENT_PKGS" ]]
+    then
+        echo "WARNING: 'ENVIRONMENT_PKGS' was found; did you mean 'ENVIRONMENT_PACKAGES'?" 1>&2
+        exit 1
+    fi
+
+    echo "No extra packages given" 1>&2
+    INPUT=""
+    HPKGS=""
+else
+    echo "Extra packages given: $ENVIRONMENT_PACKAGES" 1>&2
+    INPUT=$(echo "$ENVIRONMENT_PACKAGES" | sort -u | grep "^.")
+    HPKGS=$(echo "$INPUT" | sed -e 's/^/h./')
+fi
+
+  NAME=$(echo "$HPKGS" | mkName)
+ENVPKG=$(echo "$HPKGS" | mkEnvPkg "$NAME")
+
+if echo "$INPUT" | needEnv
+then
+    echo "build-env: Running '$*' in Nix environment '$ENVPKG'" 1>&2
+    EXPLORE_NAME="$NAME" nix-shell --show-trace --run "$*" -p "$ENVPKG"
+else
+    echo "build-env: Running '$*' in existing environment" 1>&2
+    "$@"
+fi

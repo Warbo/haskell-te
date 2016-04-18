@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+
+function msg {
+    echo -e "$*" 1>&2
+}
+
+if [[ "$#" -gt 0 ]]
+then
+    msg "Reading clusters from '$1'"
+    INPUT=$(cat "$1")
+elif ! [ -t 0 ]
+then
+    msg "Reading clusters from stdin"
+    INPUT=$(cat)
+else
+    msg "Error: Please supply a filename or input to stdin"
+    exit 1
+fi
+
+BASE=$(dirname "$(readlink -f "$0")")
+
+function haveCmd {
+    command -v "$1" > /dev/null 2>&1
+}
+
+function pkgsFromInput {
+    # Extracts packages as unquoted strings
+    ARG='.[] | .[] | .package'
+    if haveCmd jq
+    then
+        jq -r "$ARG"
+    else
+        nix-shell --show-trace -p jq --run "jq -r '$ARG'"
+    fi
+}
+
+function explore {
+    PKGS=$(echo "$INPUT" | pkgsFromInput)
+    echo "$INPUT" | ENVIRONMENT_PACKAGES="$PKGS" "$BASE/build-env" "$BASE/path-to-front" MLSpec "$@"
+}
+
+explore "$@"
