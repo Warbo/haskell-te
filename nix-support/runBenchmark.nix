@@ -1,8 +1,23 @@
-{ time, writeScript, bash, jq, coreutils, lib, explore-theories, mlspec-bench }:
+{ bash, check, coreutils, explore-theories, jq, lib, mlspec-bench, time,
+  writeScript }:
 
 with builtins; with lib;
 
-rec {
+# A quick and dirty sanity check
+let knownErrors = writeScript "known-error" ''
+      jq: error
+      MLSpec: Failed
+    '';
+    checkStderr = writeScript "check-stderr" ''
+      set -e
+      if grep -Ff "${knownErrors}" < "$1" 1>&2
+      then
+        echo "Errors found in '$1'" 1>&2
+        exit 2
+      fi
+      exit
+    '';
+in rec {
   lastEntry = writeScript "last-entry" ''
     #!${bash}/bin/bash
 
@@ -87,6 +102,11 @@ rec {
     STDOUT=$(nix-store --add stdout)
     STDERR=$(nix-store --add stderr)
 
+    "${checkStderr}" "$STDERR" || {
+      echo "Errors found, aborting" 1>&2
+      exit 3
+    }
+
     "${jq}/bin/jq" -n --arg       cmd    '${cmd}'         \
                       --argjson   args   '${toJSON args}' \
                       --arg       stdout "$STDOUT"        \
@@ -119,6 +139,11 @@ rec {
       # sending huge strings into Nix
       STDOUT=$(nix-store --add stdout)
       STDERR=$(nix-store --add stderr)
+
+      "${checkStderr}" "$STDERR" || {
+        echo "Errors found, aborting" 1>&2
+        exit 3
+      }
 
       "${jq}/bin/jq" -n --arg     time "$(cat time)"    \
                         --arg     cmd  "${cmd}"         \

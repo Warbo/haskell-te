@@ -18,7 +18,7 @@ rec {
           }) adb-scripts annotateAsts dumpAndAnnotate;
 
   inherit (import ./runBenchmark.nix {
-             inherit bash coreutils explore-theories jq lib
+             inherit bash check coreutils explore-theories jq lib
                      mlspec-bench time writeScript;
            }) benchmark lastEntry withCriterion withTime;
 
@@ -201,7 +201,7 @@ rec {
                 --argjson height "$H" \
                 '$width >= ${w} and $height >= ${h}' > "$out"
         '')) "Plot has sufficient dimensions (indicates GNUPlot succeeded)";
-     in trace "Checking plot ${plot}" (exists && dims);
+     in (exists && dims);
 
   # Include our overridden Haskell packages
   inherit haskellPackages;
