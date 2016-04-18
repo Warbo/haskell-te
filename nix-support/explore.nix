@@ -211,6 +211,6 @@ checkAndExplore = { quick, formatted }:
      result;
 
 in {
-  inherit build-env extra-haskell-packages extra-packages;
+  inherit build-env extra-haskell-packages extra-packages explore-theories;
   explore = checkAndExplore;
 }
