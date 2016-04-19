@@ -34,13 +34,16 @@ scatterPlot = tbl:
       dataLines   = map (n: let f  = data.${n}.data;
                                 eb = if data.${n}.hasSD then "with errorbars"
                                                         else "";
-                                in "'${f}' ${eb}")
+                                in "'${f}' ${eb} title \"${n}\"")
                         (attrNames data);
       dataLine    = concatStringsSep ", " dataLines;
       scatterGnus = writeScript "scatter.gnus" ''
         set terminal png
         set output ofilename
         set yrange [0:*]
+        set xrange [0:*]
+        set xlabel "${tbl.x}"
+        set ylabel "${tbl.y}"
         plot ${dataLine}
       '';
       scatterResult = addErrorContext

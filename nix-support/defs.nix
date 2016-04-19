@@ -157,7 +157,7 @@ rec {
   '';
 
   buildPackage = import ./buildPackage.nix {
-                   inherit benchmark parseJSON runScript withNix;
+                   inherit benchmark parseJSON runScript writeScript;
                    inherit (haskellPackages) cabal2nix cabal-install;
                  };
 

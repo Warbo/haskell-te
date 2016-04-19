@@ -31,7 +31,9 @@ processedPackages = processPackages { inherit clusters; } { inherit quick; };
 collectData = field:
   assert check "Field is string ${toJSON field}" (isString field);
   assert check "Package names are strings" (all isString packageNames);
-  fold (name: old: old ++ processedPackages.${name}.${field})
+  fold (name: old: old ++ (if processedPackages.${name}.failed
+                              then trace "Skip failed package '${name}'" []
+                              else processedPackages.${name}.${field}))
        []
        packageNames;
 

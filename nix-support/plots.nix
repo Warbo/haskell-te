@@ -9,7 +9,7 @@ let
 
 clusters     = map toString defaultClusters;
 
-packageNames = trace "FIXME: Use shuffled list" [ "list-extras" "split" ];
+packageNames = trace "FIXME: Use shuffled list" [ "hastily" "quickcheck-relaxng" "IFS" "lambdacube" ];
 
 tab          = tabulate { inherit quick packageNames;
                           clusters = defaultClusters; };

@@ -131,7 +131,8 @@ in rec {
           echo "Contents of stderr:"
           cat stderr
           echo "End of stderr"; } 1>&2
-        exit 1
+        echo '{"failed": true}'
+        exit 0
       }
 
       echo "Benchmarked '${cmd}' at '$(cat time)' seconds" 1>&2
@@ -143,7 +144,8 @@ in rec {
 
       "${checkStderr}" "$STDERR" || {
         echo "Errors found, aborting" 1>&2
-        exit 3
+        echo '{"failed": true}'
+        exit 0
       }
 
       "${jq}/bin/jq" -n --arg     time "$(cat time)"    \
@@ -151,7 +153,8 @@ in rec {
                         --argjson args '${toJSON args}' \
                         --arg     stdout "$STDOUT"      \
                         --arg     stderr "$STDERR"      \
-                        '{"cmd"    : $cmd,
+                        '{"failed" : false,
+                          "cmd"    : $cmd,
                           "args"   : $args,
                           "stdout" : $stdout,
                           "stderr" : $stderr,

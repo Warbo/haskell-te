@@ -33,11 +33,19 @@ processPkg = name: pkg: rec {
 
   rawExplored = explore.explore { inherit formatted quick; };
 
+  failed = any id [
+             build.failed
+             rawDump.failed
+             rawAnnotated.failed
+             rawClustered.failed
+             rawExplored.failed
+           ];
+
   # Stick to the quick output, so testing is faster
   dump      = rawDump.stdout;
   annotated = rawAnnotated.stdout;
-  clustered = mapAttrs (_: v:      v.stdout)  rawClustered;
-  explored  = mapAttrs (_: map (x: x.stdout)) rawExplored;
+  clustered = mapAttrs (_: v:      v.stdout)  rawClustered.results;
+  explored  = mapAttrs (_: map (x: x.stdout)) rawExplored.results;
   equations = trace "FIXME: Reduce equations" explored;
 
   # Useful for benchmarking
@@ -101,8 +109,8 @@ processPkg = name: pkg: rec {
   inherit (timeCalc.pkgTimes {
             dumpTime     = rawDump.time;
             annotateTime = rawAnnotated.time;
-            clusterTimes = mapAttrs (_:      v: v.time)  rawClustered;
-            exploreTimes = mapAttrs (_: map (c: c.time)) rawExplored;
+            clusterTimes = mapAttrs (_:      v: v.time)  rawClustered.results;
+            exploreTimes = mapAttrs (_: map (c: c.time)) rawExplored.results;
           })
           dynamicTimes staticTime totalTimes;
 };
@@ -115,6 +123,9 @@ forceAttr = p: a:
   assert check "Looking for attribute '${a}'" (p ? ${a});
   assert forceVal p.${a} "Forcing attribute '${a}'";
   true;
+
+processedOrFailed = p: if p.failed then p
+                                   else checkProcessed p;
 
 checkProcessed = p:
   assert isAttrs p;
@@ -138,6 +149,6 @@ checkProcessed = p:
 
   p;
 
-processCheck = name: pkg: checkProcessed (processPkg name pkg);
+processCheck = name: pkg: processedOrFailed (processPkg name pkg);
 
 in mapAttrs processCheck haskellPackages

@@ -14,15 +14,20 @@ go = c: parseJSON
               "${benchmark quick "cluster" []}" < "${annotated}" > "$out"
             '');
 
-result = listToAttrs (map (c: { name  = toString c;
-                                value = go c; })
-                     clusters);
+results = listToAttrs (map (c: { name  = toString c;
+                                 value = go c; })
+                      clusters);
+
+result = { inherit results;
+           failed = any (n: results.${n}.failed) (attrNames results); };
+
+checkedResult = assert isAttrs results;
+                assert all (n: isInt (fromJSON n))    (attrNames results);
+                assert all (n: results.${n} ? stdout) (attrNames results);
+                assert all (n: results.${n} ? time)   (attrNames results);
+                result;
 
 in
 
-assert isAttrs result;
-assert all (n: isInt (fromJSON n))   (attrNames result);
-assert all (n: result.${n} ? stdout) (attrNames result);
-assert all (n: result.${n} ? time)   (attrNames result);
-
-result
+if result.failed then result
+                 else checkedResult
