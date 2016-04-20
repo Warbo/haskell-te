@@ -36,6 +36,10 @@ rec {
              inherit jq parseJSON runScript storeResult;
            };
 
+  random = import ./random.nix {
+             inherit jq lib nth parseJSON runScript writeScript;
+           };
+
   hte-scripts = import ./scripts.nix {
                   inherit coreutils stdenv wget;
                 };
@@ -123,14 +127,14 @@ rec {
                       runScript;
              };
 
-  shuffledList         = import ./shufflePackages.nix {
-                           inherit coreutils pv runScript wget withNix
-                                   writeScript;
-                         };
+  shuffledList = import ./shufflePackages.nix {
+                   inherit coreutils jq parseJSON pv runScript wget
+                           writeScript;
+                 };
 
-  runTypes        = import ./runTypes.nix        {
-                      inherit adb-scripts jq storeResult runScript withNix;
-                    };
+  runTypes = import ./runTypes.nix        {
+               inherit adb-scripts jq storeResult runScript withNix;
+             };
 
   nth = n: lst:
     assert check "Given integer '${toJSON n}'" (isInt  n);
@@ -141,20 +145,33 @@ rec {
        then head lst
        else nth (n - 1) (tail lst);
 
-  # FIXME: Move test-related definitions to a separate defs file
-  testPackages  = import ./testPackages.nix {
-                    inherit adb-scripts defaultClusters jq lib
-                            ml4hs ML4HSFE parseJSON defaultPackages
-                            recurrent-clustering runScript runTypes storeResult
-                            withNix processPackages;
-                  };
+  testPackages = trace
+    "FIXME: Move test-related definitions to a separate defs file"
+    (import ./testPackages.nix {
+       inherit adb-scripts defaultClusters jq lib
+               ml4hs ML4HSFE parseJSON defaultPackages
+               recurrent-clustering runScript runTypes storeResult
+               withNix processPackages;
+     });
 
-  # FIXME: Replace other occurrences of nix-store with storeResult
-  storeResult = writeScript "store-result" ''
-    set -e
-    RESULT=$(nix-store --add "$1")
-    printf '%s' "$RESULT" > "$out"
-  '';
+  uniq =
+    let uniq' = list: acc:
+          seq acc (if list == []
+                      then acc
+                      else let x  = head   list;
+                               xs = drop 1 list;
+                            in uniq' xs (acc ++ (if elem x xs
+                                                    then []
+                                                    else [x])));
+     in l: uniq' l [];
+
+  storeResult = trace
+    "FIXME: Replace other occurrences of nix-store with storeResult"
+    (writeScript "store-result" ''
+      set -e
+      RESULT=$(nix-store --add "$1")
+      printf '%s' "$RESULT" > "$out"
+    '');
 
   buildPackage = import ./buildPackage.nix {
                    inherit benchmark parseJSON runScript writeScript;
@@ -176,8 +193,8 @@ rec {
              };
 
   plots = import ./plots.nix {
-            inherit check defaultClusters parseJSON plotResults tabulate
-                    runScript;
+            inherit check defaultClusters parseJSON plotResults runScript
+                    shuffledList tabulate;
           };
 
   checkPlot = plot:

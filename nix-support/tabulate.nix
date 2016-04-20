@@ -2,7 +2,7 @@
 with builtins;
 with lib;
 
-{ clusters, quick, packageNames }:
+{ clusters, count, quick, packageNames }:
 let
 
 looksNumeric = x: any id [
@@ -28,14 +28,21 @@ compareAsInts = a: b:
 
 processedPackages = processPackages { inherit clusters; } { inherit quick; };
 
+appendData = field: name: { pkgCount, data }:
+  let stop   = pkgCount >= count;
+      failed = if processedPackages.${name}.failed
+                  then trace "Skip failed package '${name}'" true
+                  else false;
+      output = if stop || failed
+                   then { inherit data pkgCount; }
+                   else { data     = data ++ processedPackages.${name}.${field};
+                          pkgCount = pkgCount + 1; };
+   in output;
+
 collectData = field:
   assert check "Field is string ${toJSON field}" (isString field);
   assert check "Package names are strings" (all isString packageNames);
-  fold (name: old: old ++ (if processedPackages.${name}.failed
-                              then trace "Skip failed package '${name}'" []
-                              else processedPackages.${name}.${field}))
-       []
-       packageNames;
+  (fold (appendData field) { pkgCount = 0; data = []; } packageNames).data;
 
 # Each data point is a particular cluster
 dataBySize         = collectData "sizeDataPoints";

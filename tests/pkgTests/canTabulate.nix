@@ -2,6 +2,7 @@ defs: with defs; pkg:
 with builtins;
 with lib;
 with tabulate {
+  count        = 1;
   clusters     = defaultClusters;
   quick        = false;
   packageNames = [ pkg.name ];

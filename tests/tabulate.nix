@@ -1,6 +1,7 @@
 defs: with defs;
 with lib;
 with tabulate { clusters     = defaultClusters;
+                count        = 1;
                 quick        = true;
                 packageNames = [ "list-extras" ]; };
 with plotResults;

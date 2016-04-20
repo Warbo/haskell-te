@@ -1,9 +1,9 @@
-{ coreutils, pv, runScript, wget, withNix, writeScript }:
+{ coreutils, jq, parseJSON, pv, runScript, wget, writeScript }:
 with builtins;
 
 let listUrl     = "http://hackage.haskell.org/packages/index.tar.gz";
 
-    packageList = runScript (withNix {}) ''
+    packageList = runScript {} ''
       set -e
       "${wget}/bin/wget" -O "index.tar.gz" "${listUrl}"
       RESULT=$(nix-store --add index.tar.gz)
@@ -33,7 +33,7 @@ let listUrl     = "http://hackage.haskell.org/packages/index.tar.gz";
       echo -e "$PKG\t$LATEST"
     '';
 
-    shuffled = runScript (withNix {}) ''
+    shuffled = runScript {} ''
       set -e
       "${extractVersions}" | "${coreutils}/bin/uniq" | \
                              "${coreutils}/bin/shuf" > shuffled
@@ -41,5 +41,17 @@ let listUrl     = "http://hackage.haskell.org/packages/index.tar.gz";
       printf '%s' "$RESULT" > "$out"
     '';
 
-    given = getEnv "SHUFFLED_LIST";
-in if given == "" then shuffled else given
+    given  = getEnv "SHUFFLED_LIST";
+    stored = ../data/shuffled;
+    file   = if given == ""
+                then if pathExists stored
+                        then trace "Using existing packages ${toString stored}"
+                                   stored
+                        else trace "No package list found, generating new one"
+                                   shuffled
+                else trace "Using package list from SHUFFLED_LIST ${given}"
+                           given;
+in parseJSON (runScript { buildInputs = [ jq ]; } ''
+  set -e
+  cut -f 1 < "${file}" | jq -R '.' | jq -s '.' > "$out"
+'')

@@ -1,4 +1,5 @@
-{ check, defaultClusters, parseJSON, plotResults, runScript, tabulate }:
+{ check, defaultClusters, parseJSON, plotResults, runScript, shuffledList,
+  tabulate }:
 with builtins;
 
 let quick = trace "FIXME: Take 'quick' from environment" true; in
@@ -7,12 +8,17 @@ with plotResults;
 
 let
 
+count        = if getEnv "PLOT_COUNT" == ""
+                  then 1
+                  else fromJSON (getEnv "PLOT_COUNT");
+
 clusters     = map toString defaultClusters;
 
-packageNames = trace "FIXME: Use shuffled list" [ "hastily" "quickcheck-relaxng" "IFS" "lambdacube" ];
-
-tab          = tabulate { inherit quick packageNames;
-                          clusters = defaultClusters; };
+tab          = tabulate {
+                 inherit count quick;
+                 clusters     = defaultClusters;
+                 packageNames = shuffledList;
+               };
 
 plots        = with tab; {
 
