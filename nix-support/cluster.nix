@@ -1,4 +1,4 @@
-{ benchmark, parseJSON, recurrent-clustering, runScript, withNix }:
+{ benchmark, parseJSON, recurrent-clustering, runScript }:
 with builtins;
 
 { quick, annotated, clusters }:
@@ -6,13 +6,11 @@ with builtins;
 let
 
 go = c: parseJSON
-          (runScript
-            (withNix { buildInputs = [ recurrent-clustering ]; })
-            ''
-              set -e
-              export CLUSTERS="${toString c}"
-              "${benchmark quick "cluster" []}" < "${annotated}" > "$out"
-            '');
+          (runScript { buildInputs = [ recurrent-clustering ]; } ''
+            set -e
+            export CLUSTERS="${toString c}"
+            "${benchmark quick "cluster" []}" < "${annotated}" > "$out"
+          '');
 
 results = listToAttrs (map (c: { name  = toString c;
                                  value = go c; })

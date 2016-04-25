@@ -1,20 +1,20 @@
 defs: with defs; pkg:
 with builtins;
 
-let scopeResults = runScript (withNix {}) ''
+let scopeResults = runScript {} ''
       set -e
       "${jq}/bin/jq" -r '.scoperesult' < "${pkg.ranTypes}" \
                                        > scopeResults.json
       "${storeResult}" scopeResults.json "$out"
     '';
 
-    types = runScript (withNix { buildInputs = [ adb-scripts ]; }) ''
+    types = runScript { buildInputs = [ adb-scripts ]; } ''
       set -e
       getTypes < "${scopeResults}" > types.json
       "${storeResult}" types.json "$out"
     '';
 
-    typeTagged = runScript (withNix { buildInputs = [ adb-scripts ]; }) ''
+    typeTagged = runScript { buildInputs = [ adb-scripts ]; } ''
       set -e
       tagAsts "${types}" "{}" < "${pkg.dump}" > tagged.json
       "${storeResult}" tagged.json "$out"

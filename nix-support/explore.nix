@@ -1,5 +1,5 @@
 { benchmark, check, format, jq, lib, ml4hs, parseJSON,
-  runScript, withNix, writeScript }:
+  runScript, writeScript }:
 with builtins;
 with lib;
 

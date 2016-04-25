@@ -1,9 +1,9 @@
-{ benchmark, dump-package, parseJSON, runScript, withNix }:
+{ benchmark, dump-package, parseJSON, runScript }:
 { quick, pkgDir }:
 
 assert builtins.pathExists pkgDir;
 
-parseJSON (runScript (withNix { buildInputs = [ ]; }) ''
+parseJSON (runScript { buildInputs = [ ]; } ''
   set -e
   cp -r "${pkgDir}" ./pkgDir
   chmod +w -R pkgDir

@@ -1,4 +1,4 @@
-{ downloadAndDump, getDeps, jq, lib, nix, runScript, stdenv, utillinux, withNix }:
+{ downloadAndDump, getDeps, jq, lib, nix, runScript, stdenv, utillinux }:
 
 rec {
   adb-scripts     = import ./scripts.nix         {

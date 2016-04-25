@@ -10,11 +10,11 @@ rec {
   inherit (import ./dumping.nix {
              inherit stdenv haskellPackages nix gnutar jq lib runCommand
                      writeScript;
-          }) dump-package runScript importDir withNix;
+          }) dump-package runScript importDir;
 
   inherit (import ../annotatedb {
              inherit downloadAndDump getDeps jq lib nix runScript stdenv
-                     utillinux withNix;
+                     utillinux;
           }) adb-scripts annotateAsts dumpAndAnnotate;
 
   inherit (import ./runBenchmark.nix {
@@ -24,12 +24,11 @@ rec {
            }) benchmark lastEntry withCriterion withTime;
 
   extractTarball = import ./extractTarball.nix {
-                     inherit gnutar runScript storeResult withNix;
+                     inherit gnutar runScript storeResult;
                    };
 
   annotate        = import ./annotate.nix        {
-                      inherit adb-scripts benchmark jq parseJSON runScript
-                              withNix;
+                      inherit adb-scripts benchmark jq parseJSON runScript;
                     };
 
   format = import ./format.nix {
@@ -54,27 +53,26 @@ rec {
 
   explore = import ./explore.nix {
               inherit benchmark check format jq lib ml4hs
-                      parseJSON runScript withNix writeScript;
+                      parseJSON runScript writeScript;
             };
 
   defaultClusters = [ 1 2 4 ];
 
   cluster = import ./cluster.nix {
-              inherit benchmark parseJSON recurrent-clustering runScript withNix;
+              inherit benchmark parseJSON recurrent-clustering runScript;
             };
 
   downloadToNix   = import ./downloadToNix.nix   {
-                      inherit runScript withNix;
+                      inherit runScript;
                       inherit (haskellPackages) cabal-install;
                     };
 
   dumpPackage = import ./dumpPackage.nix {
-                  inherit dumpToNix gnutar lib runScript withNix;
+                  inherit dumpToNix gnutar lib runScript;
                 };
 
   dumpToNix = import ./dumpToNix.nix {
-                inherit benchmark dump-package parseJSON runScript
-                        withNix;
+                inherit benchmark dump-package parseJSON runScript;
               };
 
   parseJSON            = import ./parseJSON.nix {
@@ -133,7 +131,7 @@ rec {
                  };
 
   runTypes = import ./runTypes.nix        {
-               inherit adb-scripts jq storeResult runScript withNix;
+               inherit adb-scripts jq storeResult runScript;
              };
 
   nth = n: lst:
@@ -151,7 +149,7 @@ rec {
        inherit adb-scripts defaultClusters jq lib
                ml4hs ML4HSFE parseJSON defaultPackages
                recurrent-clustering runScript runTypes storeResult
-               withNix processPackages;
+               processPackages;
      });
 
   uniq =
@@ -179,8 +177,7 @@ rec {
                  };
 
   plotResults = import ./plotResults.nix {
-                  inherit check gnuplot lib runScript storeResult withNix
-                          writeScript;
+                  inherit check gnuplot lib runScript storeResult writeScript;
                 };
   inherit (plotResults) mkTbl;
 

@@ -1,7 +1,7 @@
-{ adb-scripts, benchmark, jq, parseJSON, runScript, withNix }:
+{ adb-scripts, benchmark, jq, parseJSON, runScript }:
 { asts, pkgName, quick }:
 
-parseJSON (runScript (withNix { buildInputs = [ adb-scripts ]; }) ''
+parseJSON (runScript { buildInputs = [ adb-scripts ]; } ''
   set -e
   "${benchmark quick "annotateDb" [pkgName]}" < "${asts}" > "$out"
 '')
