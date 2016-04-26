@@ -1,7 +1,7 @@
 # Custom definitions
-{ fetchurl, bash, bc, buildEnv, buildPythonPackage, coreutils, file, gnuplot, gnutar,
-  haskellPackages, jq, lib, nix, pv, pythonPackages,
-  runCommand, stdenv, time, utillinux, wget, writeScript }:
+{ fetchurl, bash, bc, buildEnv, coreutils, file, gnuplot, gnutar,
+  haskellPackages, jq, lib, nix, perl, pv, runCommand, stdenv, time, utillinux,
+  wget, writeScript }:
 
 with builtins; with lib;
 rec {
@@ -46,9 +46,14 @@ rec {
   inherit (import ./benchmarkOutputs.nix {
             inherit annotate bc buildPackage check cluster
                     defaultClusters dumpPackage explore
-                    extractTarball format haskellPackages jq lib nth
-                    parseJSON runScript timeCalc;
+                    extractTarball format haskellPackages jq lib nixFromCabal
+                    nth parseJSON perl runScript stdenv storeResult timeCalc
+                    writeScript;
           }) processPackage processPackages;
+
+  nixFromCabal = import ./nixFromCabal.nix {
+                   inherit haskellPackages lib stdenv;
+                 };
 
   explore = import ./explore.nix {
               inherit benchmark check format jq lib ml4hs

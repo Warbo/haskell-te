@@ -1,14 +1,21 @@
 { benchmark, dump-package, parseJSON, runScript }:
 { quick, pkgDir }:
 
-assert builtins.pathExists pkgDir;
+let dir = builtins.unsafeDiscardStringContext "${toString pkgDir}";
+ in parseJSON (runScript { buildInputs = [ ]; } ''
+      set -e
 
-parseJSON (runScript { buildInputs = [ ]; } ''
-  set -e
-  cp -r "${pkgDir}" ./pkgDir
-  chmod +w -R pkgDir
+      D="${toString pkgDir}"
 
-  echo "Dumping '${pkgDir}'" 1>&2
-  HOME="$USER_HOME" DIR="$PWD/pkgDir" \
-    "${benchmark quick dump-package []}" > "$out"
-'')
+      [[ -d "$D" ]] || {
+        echo "Couldn't find directory to dump '$D'" 1>&2
+        exit 1
+      }
+
+      cp -r "$D" ./pkgDir
+      chmod +w -R pkgDir
+
+      echo "Dumping '$D'" 1>&2
+      HOME="$USER_HOME" DIR="$PWD/pkgDir" \
+        "${benchmark quick dump-package []}" > "$out"
+    '')

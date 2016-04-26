@@ -43,6 +43,7 @@ let hsVer = haskellPackages.ghc.version;
 
         echo "Generating package definition"
         cabal2nix ./. > default.nix
+        echo "Finished generating"
       '';
     };
     result = import "${nixed}";

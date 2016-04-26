@@ -16,23 +16,8 @@ DEPS=$(cat)
 while read -r SCC
 do
     msg "Next SCC"
-    while read -r ID
-    do
-        # TODO: Make this a more generic sub-set relation
-        NAME=$(echo "$ID" | jq -r '.name')
-        MOD=$( echo "$ID" | jq -r '.module')
-        PKG=$( echo "$ID" | jq -r '.package')
-
-        # shellcheck disable=SC2016
-        COND='.name == $name and .module == $mod and .package == $pkg'
-
-        msg "Marking '$ID' for clustering"
-        DEPS=$(echo "$DEPS" | jq \
-            --arg name "$NAME"   \
-            --arg mod  "$MOD"    \
-            --arg pkg  "$PKG"    \
-            "map(if $COND then (. + {\"tocluster\": true}) else . end)")
-    done < <(echo "$SCC" | jq -c '.[]')
+    DEPS=$(echo "$DEPS" | jq --argjson scc "$SCC" \
+             'map(. as $elem | if ($scc | map(.name == $elem.name and .module == $elem.module and .package == $elem.package) | any) then . + {"tocluster":true} else . end)')
 
     # Update all features with the latest clusters
 

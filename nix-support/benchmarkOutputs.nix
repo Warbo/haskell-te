@@ -1,6 +1,6 @@
 { annotate, bc, buildPackage, check, cluster, defaultClusters, dumpPackage,
-  explore, extractTarball, format, haskellPackages, jq, lib, nth, parseJSON,
-  runScript, timeCalc }:
+  explore, extractTarball, format, haskellPackages, jq, lib, nixFromCabal,
+  nth, parseJSON, perl, runScript, stdenv, storeResult, timeCalc, writeScript }:
 with builtins;
 with lib;
 
@@ -11,7 +11,9 @@ sum = fold (x: y: x + y) 0;
 processPkg = { clusters, quick }: name: pkg: rec {
   # Original Haskell fields
   inherit name pkg;
-  src = extractTarball pkg.src;
+  src = if typeOf pkg.src == "path"
+           then                pkg.src
+           else extractTarball pkg.src;
 
   # Building with regular GHC
   build = buildPackage { inherit src quick; hsEnv = pkg.env; };
@@ -149,10 +151,43 @@ checkProcessed = p:
 
 processCheck = args: name: pkg: processedOrFailed (processPkg args name pkg);
 
+basic = clusters: quick: mapAttrs (processCheck { inherit clusters quick; })
+                                  haskellPackages;
+
+bootstraps = clusters: quick: mapAttrs (processCheck { inherit clusters quick; })
+                                       bootstrapped;
+
+bootstrapped =
+  let src = extractTarball "${toString haskellPackages.ghc.src}";
+   in {
+     base =
+       let patched = stdenv.mkDerivation {
+             name    = "base-src";
+             builder = writeScript "base-patcher" ''
+               source $stdenv/setup
+               set -e
+               cp -r "${src}/libraries/base" .
+               chmod -R +w base
+
+               patch base/base.cabal << EndOfPatch
+               58c58
+               <     Default: False
+               ---
+               >     Default: True
+               EndOfPatch
+
+               cp -r base "$out"
+             '';
+           };
+           p = haskellPackages.callPackage
+                 (nixFromCabal "${patched}" null)
+                 {};
+        in p // { name = "base"; pkg = p; };
+  };
+
 in {
   processPackage  = { clusters ? defaultClusters, quick }:
                         processCheck { inherit clusters quick; };
   processPackages = { clusters ? defaultClusters, quick }:
-                      mapAttrs (processCheck { inherit clusters quick; })
-                               haskellPackages;
+                      basic clusters quick // bootstraps clusters quick;
 }
