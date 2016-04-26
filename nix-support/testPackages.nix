@@ -1,5 +1,5 @@
 { adb-scripts, defaultClusters, jq, lib, ml4hs, ML4HSFE, parseJSON,
-  recurrent-clustering, runScript, runTypes, storeResult }:
+  processPackages, recurrent-clustering, runScript, runTypes, storeResult }:
 with builtins;
 with lib;
 
@@ -13,8 +13,7 @@ let clusters         = listToAttrs (map (c: {
 
     testPackageNames  = [ "list-extras" ];
 
-    processedPackages = processPackages { clusters = defaultClusters;
-                                          quick    = true; };
+    processedPackages = processPackages { quick = true; };
 
     extend            = pkg: with pkg; pkg // rec {
       ranTypes  = runTypes dump pkg.name;

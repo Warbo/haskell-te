@@ -26,6 +26,6 @@ let result = asts:
           json;
     check = asts: all id (mapAttrsToList (f: b: testMsg b "Checking for ${f}")
                                          (result asts));
-    slow    = defaultPackages { quick = false; };
+    slow    = processPackages { quick = false; };
     slowPkg = slow."${pkg.name}";
  in all check [ pkg.dump pkg.rawDump.stdout slowPkg.dump slowPkg.rawDump.stdout ]

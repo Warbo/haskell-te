@@ -1,16 +1,14 @@
-{ annotate, bc, buildPackage, check, cluster, dumpPackage, explore,
-  extractTarball, format, haskellPackages, jq, lib, nth, parseJSON, runScript,
-  timeCalc }:
+{ annotate, bc, buildPackage, check, cluster, defaultClusters, dumpPackage,
+  explore, extractTarball, format, haskellPackages, jq, lib, nth, parseJSON,
+  runScript, timeCalc }:
 with builtins;
 with lib;
-
-{ clusters }: { quick }:
 
 let
 
 sum = fold (x: y: x + y) 0;
 
-processPkg = name: pkg: rec {
+processPkg = { clusters, quick }: name: pkg: rec {
   # Original Haskell fields
   inherit name pkg;
   src = extractTarball pkg.src;
@@ -149,6 +147,12 @@ checkProcessed = p:
 
   p;
 
-processCheck = name: pkg: processedOrFailed (processPkg name pkg);
+processCheck = args: name: pkg: processedOrFailed (processPkg args name pkg);
 
-in mapAttrs processCheck haskellPackages
+in {
+  processPackage  = { clusters ? defaultClusters, quick }:
+                        processCheck { inherit clusters quick; };
+  processPackages = { clusters ? defaultClusters, quick }:
+                      mapAttrs (processCheck { inherit clusters quick; })
+                               haskellPackages;
+}

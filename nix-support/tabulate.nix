@@ -26,7 +26,7 @@ compareAsInts = a: b:
       assert check "Argument ${toJSON b} became int ${toJSON bI}" (isInt bI);
       aI < bI;
 
-processedPackages = processPackages { inherit clusters; } { inherit quick; };
+processedPackages = processPackages { inherit clusters quick; };
 
 appendData = field: name: { pkgCount, data }:
   let stop   = pkgCount >= count;

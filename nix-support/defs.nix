@@ -43,13 +43,12 @@ rec {
                   inherit coreutils stdenv wget;
                 };
 
-  processPackages = (import ./benchmarkOutputs.nix {
-                       inherit annotate bc buildPackage check cluster
-                               dumpPackage explore extractTarball format
-                               haskellPackages jq lib nth parseJSON runScript
-                               timeCalc; });
-
-  defaultPackages = processPackages { clusters = defaultClusters; };
+  inherit (import ./benchmarkOutputs.nix {
+            inherit annotate bc buildPackage check cluster
+                    defaultClusters dumpPackage explore
+                    extractTarball format haskellPackages jq lib nth
+                    parseJSON runScript timeCalc;
+          }) processPackage processPackages;
 
   explore = import ./explore.nix {
               inherit benchmark check format jq lib ml4hs
@@ -147,9 +146,8 @@ rec {
     "FIXME: Move test-related definitions to a separate defs file"
     (import ./testPackages.nix {
        inherit adb-scripts defaultClusters jq lib
-               ml4hs ML4HSFE parseJSON defaultPackages
-               recurrent-clustering runScript runTypes storeResult
-               processPackages;
+               ml4hs ML4HSFE parseJSON recurrent-clustering runScript runTypes
+               storeResult processPackages;
      });
 
   uniq =
