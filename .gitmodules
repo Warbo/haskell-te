@@ -34,3 +34,6 @@
 [submodule "packages/ifcxt"]
 	path = packages/ifcxt
 	url = http://chriswarbo.net/git/ifcxt.git
+[submodule "packages/runWeka"]
+	path = packages/runWeka
+	url = http://chriswarbo.net/git/run-weka.git
