@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -e
 
 function msg {
     echo -e "$1" 1>&2
@@ -7,6 +8,11 @@ function msg {
 # shellcheck disable=SC2153
 [[ -n "$CLUSTERS" ]] || {
     msg "No CLUSTERS found in environment"
+    exit 1
+}
+
+[[ -n "$RUN_WEKA_CMD" ]] || {
+    msg "No RUN_WEKA_CMD found in environment"
     exit 1
 }
 
@@ -36,7 +42,7 @@ do
     CLUSTERED=$(
         echo "$DEPS" |
         jq '. as $deps | $deps | map(. + {"features": '"$FEATURES"'})' |
-        "$BASE/runWeka")
+        "$RUN_WEKA_CMD")
 
     # Add new clusters to DEPS
     msg "Collating..."

@@ -62,9 +62,10 @@ rec {
 
   defaultClusters = [ 1 2 4 ];
 
-  cluster = import ./cluster.nix {
-              inherit benchmark parseJSON recurrent-clustering runScript;
-            };
+  inherit (import ./cluster.nix {
+             inherit benchmark parseJSON recurrent-clustering runScript
+                     writeScript;
+          }) cluster nixRecurrentClusteringScript;
 
   downloadToNix   = import ./downloadToNix.nix   {
                       inherit runScript;
@@ -151,8 +152,9 @@ rec {
     "FIXME: Move test-related definitions to a separate defs file"
     (import ./testPackages.nix {
        inherit adb-scripts defaultClusters jq lib
-               ml4hs ML4HSFE parseJSON recurrent-clustering runScript runTypes
-               storeResult processPackages;
+               ml4hs ML4HSFE nixRecurrentClusteringScript parseJSON
+               recurrent-clustering runScript runTypes storeResult
+               processPackages;
      });
 
   uniq =

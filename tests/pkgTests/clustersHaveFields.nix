@@ -17,7 +17,10 @@ go = src: c:
             done | jq -s '.' > "$out"
           '');
 
-checkCluster = src: c: all (x: all (n: x."${n}") (attrNames x)) (go src c);
+checkCluster = src: c:
+  all (x: all (n: testMsg x."${n}" "Clusters of ${pkg.name} have field '${n}'")
+              (attrNames x))
+      (go src c);
 
 in all (src: all (checkCluster src) defaultClusters) [
   pkg.clustered

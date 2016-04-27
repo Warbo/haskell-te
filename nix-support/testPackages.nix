@@ -1,5 +1,6 @@
-{ adb-scripts, defaultClusters, jq, lib, ml4hs, ML4HSFE, parseJSON,
-  processPackages, recurrent-clustering, runScript, runTypes, storeResult }:
+{ adb-scripts, defaultClusters, jq, lib, ml4hs, ML4HSFE,
+  nixRecurrentClusteringScript, parseJSON, processPackages,
+  recurrent-clustering, runScript, runTypes, storeResult }:
 with builtins;
 with lib;
 
@@ -60,7 +61,8 @@ let clusters         = listToAttrs (map (c: {
       preClustered = mapAttrs (c: _:
         runScript { buildInputs = [ recurrent-clustering ]; } ''
           export CLUSTERS="${c}"
-          nix_recurrentClustering < "${features}" > pre-clustered.json
+          export RUN_WEKA_CMD="${toString ../packages/runWeka/runWeka}"
+          "${nixRecurrentClusteringScript}" < "${features}" > pre-clustered.json
           "${storeResult}" pre-clustered.json "$out"
         '') clusters;
     };
