@@ -16,8 +16,8 @@ DEPS=$(cat)
 while read -r SCC
 do
     msg "Next SCC"
-    DEPS=$(echo "$DEPS" | jq --argjson scc "$SCC" \
-             'map(. as $elem | if ($scc | map(.name == $elem.name and .module == $elem.module and .package == $elem.package) | any) then . + {"tocluster":true} else . end)')
+    DEPS=$(echo "$DEPS" | jq --slurpfile scc <(echo "$SCC") \
+             'map(. as $elem | if ($scc[0] | map(.name == $elem.name and .module == $elem.module and .package == $elem.package) | any) then . + {"tocluster":true} else . end)')
 
     # Update all features with the latest clusters
 

@@ -8,6 +8,7 @@ let knownErrors = writeScript "known-error" ''
       jq: error
       MLSpec: Failed
       syntax error
+      Argument list too long
     '';
     checkStderr = writeScript "check-stderr" ''
       set -e

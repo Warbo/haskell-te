@@ -6,8 +6,6 @@ function msg {
     echo -e "$1" 1>&2
 }
 
-# Cluster the features extracted by TreeFeatures
-
 RAW=$(cat)
 INLINES=$(echo "$RAW" | jq '[.[] | select(has("features")) | select(has("tocluster")) | select(.tocluster == true)]')
 CSV=""
