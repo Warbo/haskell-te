@@ -1,6 +1,6 @@
 { annotate, bc, buildPackage, check, cluster, defaultClusters, dumpPackage,
   explore, extractTarball, format, haskellPackages, jq, lib, nixFromCabal,
-  nth, parseJSON, perl, runScript, stdenv, storeResult, timeCalc, writeScript }:
+  nth, parseJSON, runScript, stdenv, storeResult, timeCalc, writeScript }:
 with builtins;
 with lib;
 

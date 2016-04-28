@@ -1,12 +1,10 @@
 # Custom definitions
 { fetchurl, bash, bc, buildEnv, coreutils, file, gnuplot, gnutar,
-  haskellPackages, jq, lib, nix, perl, pv, runCommand, stdenv, time, utillinux,
-  wget, writeScript }:
+  haskellPackages, jq, jre, lib, nix, pv, runCommand, stdenv, time,
+  utillinux, weka, wget, writeScript }:
 
 with builtins; with lib;
 rec {
-  inherit coreutils;
-
   inherit (import ./dumping.nix {
              inherit stdenv haskellPackages nix gnutar jq lib runCommand
                      writeScript;
@@ -47,7 +45,7 @@ rec {
             inherit annotate bc buildPackage check cluster
                     defaultClusters dumpPackage explore
                     extractTarball format haskellPackages jq lib nixFromCabal
-                    nth parseJSON perl runScript stdenv storeResult timeCalc
+                    nth parseJSON runScript stdenv storeResult timeCalc
                     writeScript;
           }) processPackage processPackages;
 
@@ -64,13 +62,17 @@ rec {
 
   inherit (import ./cluster.nix {
              inherit benchmark parseJSON recurrent-clustering runScript
-                     writeScript;
+                     runWeka writeScript;
           }) cluster nixRecurrentClusteringScript recurrentClusteringScript;
 
   downloadToNix   = import ./downloadToNix.nix   {
                       inherit runScript;
                       inherit (haskellPackages) cabal-install;
                     };
+
+  runWeka = import ../packages/runWeka {
+              inherit jq jre runCommand stdenv weka;
+            };
 
   dumpPackage = import ./dumpPackage.nix {
                   inherit dumpToNix gnutar lib runScript;
@@ -153,7 +155,7 @@ rec {
     (import ./testPackages.nix {
        inherit adb-scripts defaultClusters jq lib
                ml4hs ML4HSFE nixRecurrentClusteringScript parseJSON
-               recurrent-clustering runScript runTypes storeResult
+               recurrent-clustering runScript runTypes runWeka storeResult
                processPackages;
      });
 

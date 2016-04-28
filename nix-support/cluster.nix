@@ -1,4 +1,4 @@
-{ benchmark, parseJSON, recurrent-clustering, runScript, writeScript }:
+{ benchmark, parseJSON, recurrent-clustering, runScript, runWeka, writeScript }:
 with builtins;
 
 let
@@ -16,11 +16,6 @@ recurrentClusteringScript = writeScript "recurrent-clustering" ''
   # shellcheck disable=SC2153
   [[ -n "$CLUSTERS" ]] || {
     msg "No CLUSTERS found in environment"
-    exit 1
-  }
-
-  [[ -n "$RUN_WEKA_CMD" ]] || {
-    msg "No RUN_WEKA_CMD found in environment"
     exit 1
   }
 
@@ -50,7 +45,7 @@ recurrentClusteringScript = writeScript "recurrent-clustering" ''
     CLUSTERED=$(
       echo "$DEPS" |
       jq '. as $deps | $deps | map(. + {"features": '"$FEATURES"'})' |
-      "$RUN_WEKA_CMD")
+      runWeka)
 
     # Add new clusters to DEPS
     msg "Collating..."
@@ -82,7 +77,6 @@ nixRecurrentClusteringScript = writeScript "nix-recurrent-clustering" ''
 
 clusterScript = writeScript "cluster" ''
   set -e
-  export RUN_WEKA_CMD="${toString ../packages/runWeka/runWeka}"
   export WIDTH=30
   export HEIGHT=30
   ml4hsfe-loop | "${nixRecurrentClusteringScript}"
@@ -91,7 +85,7 @@ clusterScript = writeScript "cluster" ''
 cluster = { quick, annotated, clusters }: let
 
   go = c: parseJSON
-            (runScript { buildInputs = [ recurrent-clustering ]; } ''
+            (runScript { buildInputs = [ recurrent-clustering runWeka ]; } ''
               set -e
               export CLUSTERS="${toString c}"
               "${benchmark quick "${clusterScript}" []}" < "${annotated}" > "$out"
