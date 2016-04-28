@@ -5,6 +5,64 @@ let
 
 wekaCli = toString ../packages/runWeka/weka-cli.nix;
 
+recurrentClusteringScript = writeScript "recurrent-clustering" ''
+  #!/usr/bin/env bash
+  set -e
+
+  function msg {
+    echo -e "$1" 1>&2
+  }
+
+  # shellcheck disable=SC2153
+  [[ -n "$CLUSTERS" ]] || {
+    msg "No CLUSTERS found in environment"
+    exit 1
+  }
+
+  [[ -n "$RUN_WEKA_CMD" ]] || {
+    msg "No RUN_WEKA_CMD found in environment"
+    exit 1
+  }
+
+  BASE=$(dirname "$0")
+  DEPS=$(cat)
+
+  while read -r SCC
+  do
+    msg "Next SCC"
+    DEPS=$(echo "$DEPS" | jq --slurpfile scc <(echo "$SCC") \
+             'map(. as $elem | if ($scc[0] | map(.name == $elem.name and .module == $elem.module and .package == $elem.package) | any) then . + {"tocluster":true} else . end)')
+
+    # Update all features with the latest clusters
+
+    # Look up an ID in $deps
+    # shellcheck disable=SC2016
+    COND2='.name == $this.name and .module == $this.module and .package == $this.package'
+
+    # shellcheck disable=SC2016
+    LOOKUP='(. as $this | $deps | map(select('"$COND2"') | .cluster) | . + [0] | .[0] | . + 300)'
+    FEATURES="(.features | map(if type == \"object\" then ($LOOKUP) else . end))"
+
+    # Cluster. We call runWeka directly since nix-shell adds a lot of
+    # overhead, which we move outside the loop to our own invocation
+    msg "Clustering..."
+    # shellcheck disable=SC2016
+    CLUSTERED=$(
+      echo "$DEPS" |
+      jq '. as $deps | $deps | map(. + {"features": '"$FEATURES"'})' |
+      "$RUN_WEKA_CMD")
+
+    # Add new clusters to DEPS
+    msg "Collating..."
+    # shellcheck disable=SC2016
+    DEPS=$(echo "$DEPS" | jq --argfile clustered <(echo "$CLUSTERED") \
+                             'map(. as $this | $clustered | map(select(.name == $this.name and .module == $this.module and .package == $this.package)) | map(.cluster) | if length == 1 then $this + {"cluster": .[0]} else $this end)')
+  done < <(echo "$DEPS" | order-deps | jq -c '.[]')
+
+  msg "Done"
+  echo "$DEPS"
+'';
+
 nixRecurrentClusteringScript = writeScript "nix-recurrent-clustering" ''
   set -e
 
@@ -15,7 +73,7 @@ nixRecurrentClusteringScript = writeScript "nix-recurrent-clustering" ''
 
   if command -v weka-cli > /dev/null
   then
-    "${toString ../recurrent-clustering/recurrentClustering}"
+    "${recurrentClusteringScript}"
   else
     echo "No weka-cli found" 1>&2
     exit 2
@@ -55,4 +113,4 @@ cluster = { quick, annotated, clusters }: let
   in if result.failed then result
                       else checkedResult;
 
-in { inherit cluster nixRecurrentClusteringScript; }
+in { inherit cluster nixRecurrentClusteringScript recurrentClusteringScript; }

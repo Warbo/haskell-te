@@ -65,7 +65,7 @@ rec {
   inherit (import ./cluster.nix {
              inherit benchmark parseJSON recurrent-clustering runScript
                      writeScript;
-          }) cluster nixRecurrentClusteringScript;
+          }) cluster nixRecurrentClusteringScript recurrentClusteringScript;
 
   downloadToNix   = import ./downloadToNix.nix   {
                       inherit runScript;

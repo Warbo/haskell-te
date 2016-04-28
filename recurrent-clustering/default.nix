@@ -19,16 +19,10 @@ stdenv.mkDerivation {
   ];
 
   installPhase = ''
-    mkdir -p "$out/bin"
-    for FILE in recurrentClustering
-    do
-        cp "$FILE" "$out/bin/"
-    done
-
     mkdir -p "$out/lib"
     cp weka-cli.nix "$out/lib/"
     cp extractFeatures "$out/lib"
 
-    chmod +x "$out/bin/"* "$out/lib/extractFeatures"
+    chmod +x "$out/lib/extractFeatures"
   '';
 }

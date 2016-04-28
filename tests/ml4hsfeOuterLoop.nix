@@ -4,7 +4,7 @@ with builtins;
 let
 
 clusterScript = writeScript "cluster-script" ''
-  ml4hsfe-loop | "${toString ../recurrent-clustering/recurrentClustering}"
+  ml4hsfe-loop | "${recurrentClusteringScript}"
 '';
 
 wekaCli = import ../recurrent-clustering/weka-cli.nix;
