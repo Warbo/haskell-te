@@ -61,7 +61,7 @@ rec {
   defaultClusters = [ 1 2 4 ];
 
   inherit (import ./cluster.nix {
-             inherit benchmark parseJSON recurrent-clustering runScript
+             inherit benchmark ML4HSFE parseJSON recurrent-clustering runScript
                      runWeka writeScript;
           }) cluster nixRecurrentClusteringScript recurrentClusteringScript;
 

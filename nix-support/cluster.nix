@@ -1,4 +1,5 @@
-{ benchmark, parseJSON, recurrent-clustering, runScript, runWeka, writeScript }:
+{ benchmark, ML4HSFE, parseJSON, recurrent-clustering, runScript, runWeka,
+  writeScript }:
 with builtins;
 
 let
@@ -79,13 +80,13 @@ clusterScript = writeScript "cluster" ''
   set -e
   export WIDTH=30
   export HEIGHT=30
-  ml4hsfe-loop | "${nixRecurrentClusteringScript}"
+  ml4hsfe-outer-loop
 '';
 
 cluster = { quick, annotated, clusters }: let
 
   go = c: parseJSON
-            (runScript { buildInputs = [ recurrent-clustering runWeka ]; } ''
+            (runScript { buildInputs = [ recurrent-clustering runWeka ML4HSFE ]; } ''
               set -e
               export CLUSTERS="${toString c}"
               "${benchmark quick "${clusterScript}" []}" < "${annotated}" > "$out"
