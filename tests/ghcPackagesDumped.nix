@@ -21,5 +21,5 @@ test = p: all id [
 
   ];
 
-in trace "FIXME: Skipping expensive ghcPackagesDumped test" true
-# all test required
+in #trace "FIXME: Skipping expensive ghcPackagesDumped test" true
+ all test required

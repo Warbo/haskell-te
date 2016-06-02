@@ -33,6 +33,8 @@ processPkg = { clusters, quick }: name: pkg: rec {
 
   rawExplored = explore.explore { inherit formatted quick; };
 
+  rawReduced = reduce { inherit explored quick; };
+
   failed = any id [
              build.failed
              rawDump.failed
@@ -46,7 +48,7 @@ processPkg = { clusters, quick }: name: pkg: rec {
   annotated = rawAnnotated.stdout;
   clustered = mapAttrs (_: v:      v.stdout)  rawClustered.results;
   explored  = mapAttrs (_: map (x: x.stdout)) rawExplored.results;
-  equations = trace "FIXME: Reduce equations" explored;
+  equations = mapAttrs (_: map (x: x.stdout)) rawReduced.results;
 
   # Useful for benchmarking
   equationCounts = mapAttrs (_: map (f: fromJSON (runScript {} ''
