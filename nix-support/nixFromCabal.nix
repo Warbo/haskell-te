@@ -1,5 +1,5 @@
 { haskellPackages, lib, stdenv }:
-with builtins;
+with builtins; with lib;
 
 # Make a Nix package definition from a Cabal project. The result is a function,
 # accepting its dependencies as named arguments, returning a derivation. This
@@ -19,10 +19,17 @@ dir: f:
 assert typeOf dir == "path" || isString dir;
 assert f == null || isFunction f;
 
-let hsVer = haskellPackages.ghc.version;
-    nixed = stdenv.mkDerivation {
+let hsVer   = haskellPackages.ghc.version;
+    cabalF  = head (filter (x: hasSuffix ".cabal" x) (attrNames (readDir dir)));
+    cabalC  = map (replaceStrings [" " "\t"] ["" ""])
+                  (splitString "\n" (readFile (dir + "/${cabalF}")));
+    pkgName = replaceStrings ["name:"] [""]
+                             (head (filter (hasPrefix "name:") cabalC));
+    pkgV    = replaceStrings ["version:"] [""]
+                             (head (filter (hasPrefix "version:") cabalC));
+    nixed   = stdenv.mkDerivation {
       inherit dir;
-      name         = "nixFromCabal-${hsVer}";
+      name         = "nixFromCabal-${hsVer}-${pkgName}-${pkgV}";
       buildInputs  = [ haskellPackages.cabal2nix ];
       buildCommand = ''
         source $stdenv/setup
