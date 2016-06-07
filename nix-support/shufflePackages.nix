@@ -1,4 +1,4 @@
-{ coreutils, jq, parseJSON, pv, runScript, wget, writeScript }:
+{ coreutils, jq, parseJSON, pv, runScript, storeResult, wget, writeScript }:
 with builtins;
 
 let listUrl     = "http://hackage.haskell.org/packages/index.tar.gz";
@@ -6,8 +6,7 @@ let listUrl     = "http://hackage.haskell.org/packages/index.tar.gz";
     packageList = runScript {} ''
       set -e
       "${wget}/bin/wget" -O "index.tar.gz" "${listUrl}"
-      RESULT=$(nix-store --add index.tar.gz)
-      printf '%s' "$RESULT" > "$out"
+      "${storeResult}" index.tar.gz
     '';
 
     extractVersions = writeScript "extract-versions" ''
@@ -37,8 +36,7 @@ let listUrl     = "http://hackage.haskell.org/packages/index.tar.gz";
       set -e
       "${extractVersions}" | "${coreutils}/bin/uniq" | \
                              "${coreutils}/bin/shuf" > shuffled
-      RESULT=$(nix-store --add shuffled)
-      printf '%s' "$RESULT" > "$out"
+      "${storeResult}" shuffled
     '';
 
     given  = getEnv "SHUFFLED_LIST";

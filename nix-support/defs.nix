@@ -133,7 +133,7 @@ rec {
              };
 
   shuffledList = import ./shufflePackages.nix {
-                   inherit coreutils jq parseJSON pv runScript wget
+                   inherit coreutils jq parseJSON pv runScript storeResult wget
                            writeScript;
                  };
 
