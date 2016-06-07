@@ -103,12 +103,6 @@ rec {
                              "not ok - ${msg}"
                              (assert cond; trace "ok - ${msg}" cond);
 
-  testMsg              = cond: msg:
-                           let ok    = "ok - ${msg}";
-                               notOk = "not ok - ${msg}";
-                           in builtins.addErrorContext notOk
-                                (trace (if cond then ok else notOk) cond);
-
   check = msg: cond: builtins.addErrorContext msg (assert cond; cond);
 
   checkStdDev = sd:
@@ -150,14 +144,13 @@ rec {
        then head lst
        else nth (n - 1) (tail lst);
 
-  testPackages = trace
-    "FIXME: Move test-related definitions to a separate defs file"
-    (import ./testPackages.nix {
-       inherit adb-scripts defaultClusters jq lib
-               ml4hs ML4HSFE nixRecurrentClusteringScript parseJSON
-               recurrent-clustering runScript runTypes runWeka storeResult
-               processPackages;
-     });
+  inherit (import ./test-defs.nix {
+            inherit adb-scripts defaultClusters jq lib
+                    ml4hs ML4HSFE nixRecurrentClusteringScript parseJSON
+                    recurrent-clustering runScript runTypes runWeka storeResult
+                    processPackages;
+          })
+          testMsg testPackages;
 
   uniq =
     let uniq' = list: acc:
