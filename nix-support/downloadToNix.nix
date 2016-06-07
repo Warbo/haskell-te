@@ -1,4 +1,4 @@
-{ cabal-install, runScript }:
+{ cabal-install, runScript, storeResult }:
 with builtins;
 
 pkgName:
@@ -20,8 +20,7 @@ runScript { buildInputs = [ cabal-install ]; } ''
   for D in ./*
   # */
   do
-    DIR=$(nix-store --add "$D")
-    printf '%s' "$DIR" > "$out"
+    "${storeResult}" "$D"
     break
   done
 ''

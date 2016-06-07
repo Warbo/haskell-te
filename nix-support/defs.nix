@@ -66,7 +66,7 @@ rec {
           }) cluster nixRecurrentClusteringScript recurrentClusteringScript;
 
   downloadToNix   = import ./downloadToNix.nix   {
-                      inherit runScript;
+                      inherit runScript storeResult;
                       inherit (haskellPackages) cabal-install;
                     };
 
@@ -170,13 +170,11 @@ rec {
                                                     else [x])));
      in l: uniq' l [];
 
-  storeResult = trace
-    "FIXME: Replace other occurrences of nix-store with storeResult"
-    (writeScript "store-result" ''
+  storeResult = writeScript "store-result" ''
       set -e
       RESULT=$(nix-store --add "$1")
       printf '%s' "$RESULT" > "$out"
-    '');
+    '';
 
   buildPackage = import ./buildPackage.nix {
                    inherit benchmark parseJSON runScript writeScript;
