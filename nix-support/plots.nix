@@ -1,6 +1,7 @@
-{ check, defaultClusters, parseJSON, plotResults, runScript, shuffledList,
+{ check, defaultClusters, lib, parseJSON, plotResults, runScript, shuffledList,
   tabulate }:
 with builtins;
+with lib;
 
 let quick = trace "FIXME: Take 'quick' from environment" true; in
 
@@ -17,10 +18,10 @@ clusters     = map toString defaultClusters;
 tab          = tabulate {
                  inherit count quick;
                  clusters     = defaultClusters;
-                 packageNames = shuffledList;
+                 packageNames = take 10 shuffledList;
                };
 
-plots        = with tab; {
+plots        = with tab; trace "plots: tab=${toJSON tab}" {
 
 # Equations vs time, for fixed "sizes" (cluster count, cluster size, arguments)
 plotEqsVsTimeForClusters = addErrorContext
@@ -73,17 +74,22 @@ isFile = f: parseJSON (runScript {} ''
     echo "true" > "$out"
   '');
 
+haveData = ! (any (n: tab.${n}.series == {})
+                  (attrNames tab));
+
 in
 
-assert check "Forcing plots" (all (x: assert check "Forcing ${x}"
-                                             (isString "${plots.${x}}");
-                                      true)
-                                  (attrNames plots));
+if haveData
+   then assert check "Forcing plots" (all (x: assert check "Forcing ${x}"
+                                                           (isString "${plots.${x}}");
+                                              true)
+                                          (attrNames plots));
 
-assert check "Ensuring plots are files"
-             (all (x: assert check "Checking ${x} is a file"
-                                   (isFile plots.${x});
-                      true)
-                  (attrNames plots));
+        assert check "Ensuring plots are files"
+                     (all (x: assert check "Checking ${x} is a file"
+                                           (isFile plots.${x});
+                              true)
+                          (attrNames plots));
 
-plots
+        plots
+    else null

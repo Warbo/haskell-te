@@ -197,7 +197,7 @@ rec {
              };
 
   plots = import ./plots.nix {
-            inherit check defaultClusters parseJSON plotResults runScript
+            inherit check defaultClusters lib parseJSON plotResults runScript
                     shuffledList tabulate;
           };
 
@@ -219,7 +219,7 @@ rec {
                 --argjson height "$H" \
                 '$width >= ${w} and $height >= ${h}' > "$out"
         '')) "Plot has sufficient dimensions (indicates GNUPlot succeeded)";
-     in (exists && dims);
+     in plot != null && (exists && dims);
 
   # Include our overridden Haskell packages
   inherit haskellPackages;

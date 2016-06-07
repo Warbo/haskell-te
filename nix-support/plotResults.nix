@@ -37,7 +37,7 @@ scatterPlot = tbl:
                                 in "'${f}' ${eb} title \"${n}\"")
                         (attrNames data);
       dataLine    = concatStringsSep ", " dataLines;
-      scatterGnus = writeScript "scatter.gnus" ''
+      scatterGnus = trace "scatterPlot: ${toJSON tbl}" (writeScript "scatter.gnus" ''
         set terminal png
         set output ofilename
         set yrange [0:*]
@@ -45,7 +45,7 @@ scatterPlot = tbl:
         set xlabel "${tbl.x}"
         set ylabel "${tbl.y}"
         plot ${dataLine}
-      '';
+      '');
       scatterResult = addErrorContext
         "Running GNUPlot: Program ${toJSON scatterGnus}, Data ${toJSON data}"
         (runScript { buildInputs = [ gnuplot ]; } ''
@@ -53,10 +53,12 @@ scatterPlot = tbl:
           gnuplot -e "ofilename='plot.png'" "${scatterGnus}"
           "${storeResult}" "plot.png" "$out"
         '');
-   in assert check "Forcing scatterGnus"   (isString "${toJSON scatterGnus}");
-      assert check "Forcing data"          (isString "${toJSON data}");
-      assert check "Forcing scatterResult" (isString "${toJSON scatterResult}");
-      addErrorContext "Plotting scatter chart" scatterResult;
+   in if tbl.series == {}
+         then null
+         else assert check "Forcing scatterGnus"   (isString "${toJSON scatterGnus}");
+              assert check "Forcing data"          (isString "${toJSON data}");
+              assert check "Forcing scatterResult" (isString "${toJSON scatterResult}");
+              addErrorContext "Plotting scatter chart" scatterResult;
 
 # Mostly for tests
 mkTbl = keyAttrs: dataAttrs:

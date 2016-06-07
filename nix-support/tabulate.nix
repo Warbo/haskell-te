@@ -42,7 +42,9 @@ appendData = field: name: { pkgCount, data }:
 collectData = field:
   assert check "Field is string ${toJSON field}" (isString field);
   assert check "Package names are strings" (all isString packageNames);
-  (fold (appendData field) { pkgCount = 0; data = []; } packageNames).data;
+  (fold (appendData field)
+        { pkgCount = 0; data = []; }
+        (filter (n: !processedPackages.${n}.failed) packageNames)).data;
 
 # Each data point is a particular cluster
 dataBySize         = collectData "sizeDataPoints";

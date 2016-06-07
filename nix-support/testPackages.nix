@@ -71,6 +71,7 @@ in
 assert isAttrs processedPackages;
 assert all (n: elem n (attrNames processedPackages)) testPackageNames;
 
-listToAttrs (map (n: { name  = n;
-                       value = extend processedPackages."${n}"; })
-                 testPackageNames)
+listToAttrs (filter (x: !x.value.failed)
+                    (map (n: { name  = n;
+                               value = extend processedPackages."${n}"; })
+                         testPackageNames))

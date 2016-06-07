@@ -44,7 +44,7 @@ processPkg = { clusters, quick }: name: pkg: rec {
            ];
 
   # Stick to the quick output, so testing is faster
-  dump      = rawDump.stdout;
+  dump      = addErrorContext "rawDump: ${toJSON rawDump}" rawDump.stdout;
   annotated = rawAnnotated.stdout;
   clustered = mapAttrs (_: v:      v.stdout)  rawClustered.results;
   explored  = mapAttrs (_: map (x: x.stdout)) rawExplored.results;
