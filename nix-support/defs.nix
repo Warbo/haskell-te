@@ -174,7 +174,9 @@ rec {
                    inherit (haskellPackages) cabal2nix cabal-install;
                  };
 
-  tipBenchmarks = import ./tipBenchmarks.nix {};
+  tipBenchmarks = import ./tipBenchmarks.nix {
+                    inherit runScript storeResult;
+                  };
 
   plotResults = import ./plotResults.nix {
                   inherit check gnuplot lib runScript storeResult writeScript;
