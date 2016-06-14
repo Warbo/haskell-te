@@ -1,14 +1,19 @@
-{ runScript, storeResult }:
+{ runScript, storeResult, writeScript }:
 
 rec {
   path  = ../packages/te-benchmark;
 
-  rawHaskell = runScript {} ''
-    DIR="$PWD"
+  module = runScript {} ''
+    set -e
+
+    OUT_DIR="tip-benchmark-sig"
+    export OUT_DIR
+
+    mkdir -p "$OUT_DIR"
 
     cd "${path}"
-    ./mk_all_defs.sh > "$DIR/A.hs"
+    ./full_haskell_package.sh
 
-    "${storeResult}" "$DIR/A.hs"
+    "${storeResult}" "$OUT_DIR"
   '';
 }

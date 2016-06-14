@@ -175,7 +175,7 @@ rec {
                  };
 
   tipBenchmarks = import ./tipBenchmarks.nix {
-                    inherit runScript storeResult;
+                    inherit runScript storeResult writeScript;
                   };
 
   plotResults = import ./plotResults.nix {
