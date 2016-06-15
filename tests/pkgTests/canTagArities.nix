@@ -3,7 +3,7 @@ with builtins;
 
 let arities = runScript { buildInputs = [ adb-scripts ]; } ''
       set -e
-      getArities < "${pkg.typeResults}" > arities.json
+      "${getAritiesScript}" < "${pkg.typeResults}" > arities.json
       "${storeResult}" arities.json "$out"
     '';
 
