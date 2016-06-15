@@ -1,6 +1,6 @@
 { writeScript }:
 
-builtins.trace "FIXME: Port tagAsts, getTypes, getArities" writeScript "annotateAsts" ''
+builtins.trace "FIXME: Port getTypes, getArities" writeScript "annotateAsts" ''
   #!/usr/bin/env bash
 
   set -e
@@ -18,12 +18,12 @@ builtins.trace "FIXME: Port tagAsts, getTypes, getArities" writeScript "annotate
 
   function tagTypes {
     NOTYPE='{"type":null}'
-    "$BASE/tagAsts" <(echo "$RAWSCOPE" | "$BASE/getTypes") "$NOTYPE"
+    "${tagAstsScript}" <(echo "$RAWSCOPE" | "$BASE/getTypes") "$NOTYPE"
   }
 
   function tagArities {
     NOARITY='{"arity":null,"quickspecable":false}'
-    "$BASE/tagAsts" <(echo "$RAWTYPES" | "$BASE/getArities") "$NOARITY"
+    "${tagAstsScript}" <(echo "$RAWTYPES" | "$BASE/getArities") "$NOARITY"
   }
 
      INPUT=$(cat)

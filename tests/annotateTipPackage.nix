@@ -34,8 +34,18 @@ ranTypes = parseJSON (runScript env ''
                      "$STDOUT"       "$STDERR"       "$CODE" > "$out"
            '');
 
+checkStderr = parseJSON (runScript {} ''
+                if grep -v '<interactive>.*parse error on input' < "${ranTypes.stderr}" |
+                   grep "error" 1>&2
+                then
+                  echo "false" > "$out"
+                else
+                  echo "true" > "$out"
+                fi
+              '');
+
 canRunTypes = let err = readFile ranTypes.stderr;
-                  val = if match ".*error.*" err == null
+                  val = if checkStderr
                            then true
                            else trace (toJSON ranTypes) false;
                in testMsg (ranTypes.code == "0")

@@ -9,7 +9,7 @@ let arities = runScript { buildInputs = [ adb-scripts ]; } ''
 
     arityTagged = runScript { buildInputs = [ adb-scripts ]; } ''
       set -e
-      tagAsts "${arities}" "{}" < "${pkg.dump}" > tagged.json
+      "${tagAstsScript}" "${arities}" "{}" < "${pkg.dump}" > tagged.json
       "${storeResult}" tagged.json "$out"
     '';
 

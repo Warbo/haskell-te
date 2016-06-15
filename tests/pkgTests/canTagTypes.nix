@@ -16,7 +16,7 @@ let scopeResults = runScript {} ''
 
     typeTagged = runScript { buildInputs = [ adb-scripts ]; } ''
       set -e
-      tagAsts "${types}" "{}" < "${pkg.dump}" > tagged.json
+      "${tagAstsScript}" "${types}" "{}" < "${pkg.dump}" > tagged.json
       "${storeResult}" tagged.json "$out"
     '';
 

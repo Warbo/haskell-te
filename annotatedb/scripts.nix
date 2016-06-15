@@ -11,7 +11,7 @@ stdenv.mkDerivation {
 
   installPhase = ''
     mkdir -p "$out/bin"
-    for FILE in getArities getTypes tagAsts
+    for FILE in getArities getTypes
     do
         cp -v "$FILE" "$out/bin/"
         chmod +x "$out/bin"

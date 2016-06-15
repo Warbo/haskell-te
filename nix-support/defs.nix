@@ -25,6 +25,10 @@ rec {
                      inherit jq writeScript;
                    };
 
+  tagAstsScript = import ./tagAstsScript.nix {
+                    inherit jq writeScript;
+                  };
+
   extractTarball = import ./extractTarball.nix {
                      inherit gnutar runScript storeResult;
                    };

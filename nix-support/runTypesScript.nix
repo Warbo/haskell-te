@@ -18,7 +18,7 @@ replLines = writeScript "replLines" ''
 repl = let cmd    = "nix-shell --run 'ghci -v0 -XTemplateHaskell'";
            given  = if pkgDefFile == null
                        then "x.$1"
-                       else ''(import "${pkgDefFile}")'';
+                       else ''(x.callPackage "${pkgDefFile}" {})'';
            hsPkgs = "[x.QuickCheck x.quickspec ${given}]";
         in writeScript "repl" ''
              ${cmd} -p "haskellPackages.ghcWithPackages (x: ${hsPkgs})"
@@ -28,7 +28,7 @@ typeCommand = writeScript "typeCommand" ''
                 echo ":m"
                 grep "^{" | while read -r LINE
                 do
-                  QNAME=$(echo "$LINE" | jq -r '.module + "." + .name')
+                  QNAME=$(echo "$LINE" | "${jq}/bin/jq" -r '.module + "." + .name')
                   "${mkQuery}" "$QNAME"
                 done
               '';
