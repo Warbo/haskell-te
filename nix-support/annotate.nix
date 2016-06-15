@@ -7,7 +7,7 @@ let annotateDb = builtins.trace "FIXME: Port getDeps" writeScript "annotateDb" '
 
       # Turns output from dump-package or dump-hackage into a form suitable for ML4HS.
 
-      "${runTypesScript}" "${pkgName}" | "${annotateAstsScript}" | "${getDepsScript}"
+      "${runTypesScript {}}" "${pkgName}" | "${annotateAstsScript}" | "${getDepsScript}"
     '';
 
  in parseJSON (runScript { buildInputs = [ adb-scripts ]; } ''

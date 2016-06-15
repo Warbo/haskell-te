@@ -23,7 +23,8 @@ env       = { buildInputs = [ adb-scripts ]; };
 
 ranTypes = parseJSON (runScript env ''
              set -e
-             "${runTypesScript}" "${pkgName}" < "${asts}" > stdout 2> stderr
+             "${runTypesScript { pkgDefFile = tipBenchmarks.pkg.src; }}" \
+               "${pkgName}" < "${asts}" > stdout 2> stderr
              CODE="$?"
 
              STDOUT=$(nix-store --add stdout)
@@ -33,10 +34,13 @@ ranTypes = parseJSON (runScript env ''
                      "$STDOUT"       "$STDERR"       "$CODE" > "$out"
            '');
 
-canRunTypes = testMsg (ranTypes.code == "0")
-                      "Ran runTypesScript on tip module" &&
-              testMsg (match ".*error.*" (readFile ranTypes.stderr) == null)
-                      "No errors in runTypeScript stderr for tip module";
+canRunTypes = let err = readFile ranTypes.stderr;
+                  val = if match ".*error.*" err == null
+                           then true
+                           else trace (toJSON ranTypes) false;
+               in testMsg (ranTypes.code == "0")
+                          "Ran runTypesScript on tip module" &&
+                  testMsg val "No runTypeScript errors for tip module";
 
 annotatedAsts = runScript env ''
                   set -e
