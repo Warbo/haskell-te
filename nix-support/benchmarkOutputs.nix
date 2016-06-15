@@ -20,9 +20,9 @@ processPkg = { clusters, quick }: name: pkg: rec {
 
   rawDump = dumpPackage { inherit quick src; };
 
-  rawAnnotated = annotate { inherit quick;
+  rawAnnotated = annotate { inherit quick pkg;
                             asts    = dump;
-                            pkgName = name; };
+                            pkgSrc  = src; };
 
   rawClustered = cluster { inherit annotated clusters quick; };
 

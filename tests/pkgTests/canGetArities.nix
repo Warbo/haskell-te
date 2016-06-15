@@ -10,7 +10,7 @@ let typeResults = runScript {} ''
 
     arities = runScript { buildInputs = [ adb-scripts ]; } ''
       set -e
-      getArities < "${typeResults}" > arities.json
+      "${getAritiesScript}" < "${typeResults}" > arities.json
       "${storeResult}" arities.json "$out"
     '';
 

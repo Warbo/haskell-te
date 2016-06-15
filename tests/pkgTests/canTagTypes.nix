@@ -10,7 +10,7 @@ let scopeResults = runScript {} ''
 
     types = runScript { buildInputs = [ adb-scripts ]; } ''
       set -e
-      getTypes < "${scopeResults}" > types.json
+      "${getTypesScript}" < "${scopeResults}" > types.json
       "${storeResult}" types.json "$out"
     '';
 

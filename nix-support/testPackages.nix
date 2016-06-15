@@ -17,7 +17,7 @@ let clusters         = listToAttrs (map (c: {
     processedPackages = processPackages { quick = true; };
 
     extend            = pkg: with pkg; pkg // rec {
-      ranTypes  = runTypes dump pkg.name;
+      ranTypes  = runTypes dump pkg {};
 
       preAnnotated = runScript { buildInputs = [ adb-scripts ]; } ''
         set -e
@@ -34,7 +34,7 @@ let clusters         = listToAttrs (map (c: {
 
       gotTypes = runScript { buildInputs = [ adb-scripts ]; } ''
         set -e
-        getTypes < "${scopeResults}" > types.json
+        "${getTypesScript}" < "${scopeResults}" > types.json
         "${storeResult}" types.json "$out"
       '';
 

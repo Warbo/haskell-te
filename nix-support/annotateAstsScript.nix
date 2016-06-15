@@ -1,6 +1,6 @@
-{ writeScript }:
+{ getAritiesScript, getTypesScript, jq, tagAstsScript, writeScript }:
 
-builtins.trace "FIXME: Port getTypes, getArities" writeScript "annotateAsts" ''
+writeScript "annotateAsts" ''
   #!/usr/bin/env bash
 
   set -e
@@ -9,27 +9,20 @@ builtins.trace "FIXME: Port getTypes, getArities" writeScript "annotateAsts" ''
     echo -e "$1"
   }
 
-  command -v jq > /dev/null || {
-    msg "ERROR: annotateAsts requires jq"
-    exit 1
-  }
-
-  BASE=$(dirname "$0")
-
   function tagTypes {
     NOTYPE='{"type":null}'
-    "${tagAstsScript}" <(echo "$RAWSCOPE" | "$BASE/getTypes") "$NOTYPE"
+    "${tagAstsScript}" <(echo "$RAWSCOPE" | "${getTypesScript}") "$NOTYPE"
   }
 
   function tagArities {
     NOARITY='{"arity":null,"quickspecable":false}'
-    "${tagAstsScript}" <(echo "$RAWTYPES" | "$BASE/getArities") "$NOARITY"
+    "${tagAstsScript}" <(echo "$RAWTYPES" | "${getAritiesScript}") "$NOARITY"
   }
 
      INPUT=$(cat)
-   RAWASTS=$(echo "$INPUT" | jq -c '.asts')
-  RAWTYPES=$(echo "$INPUT" | jq -r '.result')
-  RAWSCOPE=$(echo "$INPUT" | jq -r '.scoperesult')
+   RAWASTS=$(echo "$INPUT" | "${jq}/bin/jq" -c '.asts')
+  RAWTYPES=$(echo "$INPUT" | "${jq}/bin/jq" -r '.result')
+  RAWSCOPE=$(echo "$INPUT" | "${jq}/bin/jq" -r '.scoperesult')
 
   echo "$RAWASTS" | tagTypes | tagArities
 ''

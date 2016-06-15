@@ -1,6 +1,6 @@
 { stdenv, jq, getDeps, utillinux }:
 
-stdenv.mkDerivation {
+builtins.trace "FIXME: Get rid of annotatedb/scripts.nix" stdenv.mkDerivation {
   name = "annotatedb";
 
   # Exclude .git and test-data from being imported into the Nix store
@@ -11,10 +11,5 @@ stdenv.mkDerivation {
 
   installPhase = ''
     mkdir -p "$out/bin"
-    for FILE in getArities getTypes
-    do
-        cp -v "$FILE" "$out/bin/"
-        chmod +x "$out/bin"
-    done
   '';
 }

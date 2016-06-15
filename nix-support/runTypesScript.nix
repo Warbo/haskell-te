@@ -1,4 +1,4 @@
-{ jq, writeScript }: { pkgDefFile ? null }:
+{ haskellPackages, jq, writeScript }: { pkg, pkgSrc }:
 
 let
 
@@ -16,9 +16,11 @@ replLines = writeScript "replLines" ''
             '';
 
 repl = let cmd    = "nix-shell --run 'ghci -v0 -XTemplateHaskell'";
-           given  = if pkgDefFile == null
-                       then "x.$1"
-                       else ''(x.callPackage "${pkgDefFile}" {})'';
+           given  = if pkgSrc == null
+                       then if haskellPackages ? "${pkg.name}"
+                               then "x.${pkg.name}"
+                               else abort "haskellPackages doesn't contain '${pkg.name}'"
+                       else ''(x.callPackage "${pkgSrc}" {})'';
            hsPkgs = "[x.QuickCheck x.quickspec ${given}]";
         in writeScript "repl" ''
              ${cmd} -p "haskellPackages.ghcWithPackages (x: ${hsPkgs})"
@@ -94,10 +96,10 @@ writeScript "runTypes" ''
   }
 
          ASTS=$(cat)
-          CMD=$(echo "$ASTS" | jq -c '.[]' | "${typeCommand}")
-       RESULT=$(echo "$CMD" | "${repl}" "$1" | "${replLines}")
-     SCOPECMD=$(echo "$RESULT" | "${typeScopes}")
-  SCOPERESULT=$(echo "$SCOPECMD" | "${repl}" "$1" | "${replLines}")
+          CMD=$(echo "$ASTS"     | jq -c '.[]'     | "${typeCommand}")
+       RESULT=$(echo "$CMD"      | "${repl}"       | "${replLines}"  )
+     SCOPECMD=$(echo "$RESULT"   | "${typeScopes}"                   )
+  SCOPERESULT=$(echo "$SCOPECMD" | "${repl}"       | "${replLines}"  )
 
   # Output everything as JSON
   # shellcheck disable=SC2016

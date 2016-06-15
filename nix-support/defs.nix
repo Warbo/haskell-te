@@ -22,7 +22,7 @@ rec {
            }) benchmark lastEntry withCriterion withTime;
 
   runTypesScript = import ./runTypesScript.nix {
-                     inherit jq writeScript;
+                     inherit haskellPackages jq writeScript;
                    };
 
   tagAstsScript = import ./tagAstsScript.nix {
@@ -39,8 +39,17 @@ rec {
                               runTypesScript writeScript;
                     };
 
+  getTypesScript = import ./getTypesScript.nix {
+                     inherit writeScript;
+                   };
+
+  getAritiesScript = import ./getAritiesScript.nix {
+                       inherit writeScript;
+                     };
+
   annotateAstsScript = import ./annotateAstsScript.nix {
-                         inherit writeScript;
+                         inherit getAritiesScript getTypesScript jq tagAstsScript
+                                 writeScript;
                        };
 
   getDepsScript = import ./getDepsScript.nix {

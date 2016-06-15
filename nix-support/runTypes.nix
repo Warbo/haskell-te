@@ -1,8 +1,8 @@
 { adb-scripts, jq, runScript, runTypesScript, storeResult }:
-asts: pkgName:
+asts: pkg: { pkgSrc ? null }:
 
 runScript { buildInputs = [ adb-scripts jq ]; } ''
     set -e
-    "${runTypesScript {}}" "${pkgName}" < "${asts}" > typed.json
+    "${runTypesScript { inherit pkg pkgSrc; }}" < "${asts}" > typed.json
     "${storeResult}" typed.json "$out"
   ''

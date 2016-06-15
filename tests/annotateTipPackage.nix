@@ -23,8 +23,10 @@ env       = { buildInputs = [ adb-scripts ]; };
 
 ranTypes = parseJSON (runScript env ''
              set -e
-             "${runTypesScript { pkgDefFile = tipBenchmarks.pkg.src; }}" \
-               "${pkgName}" < "${asts}" > stdout 2> stderr
+             "${runTypesScript {
+                  inherit pkg;
+                  pkgSrc = pkg.src;
+              }}" < "${asts}" > stdout 2> stderr
              CODE="$?"
 
              STDOUT=$(nix-store --add stdout)
@@ -70,7 +72,8 @@ canGetDeps = testMsg ("${gotDeps}" != "")
                      "Can run getDepsScript on tip module";
 
 # Try the 'annotate' function, which combines the above pieces
-annotated = annotate { inherit quick asts pkgName; };
+annotated = annotate { inherit quick asts pkg;
+                       pkgSrc = pkg.src; };
 
 rawAnnotated = testMsg (!annotated.failed) "Tip module annotation succeeded";
 
