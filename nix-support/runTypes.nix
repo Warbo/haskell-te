@@ -1,8 +1,8 @@
-{ adb-scripts, jq, runScript, storeResult }:
+{ adb-scripts, jq, runScript, runTypesScript, storeResult }:
 asts: pkgName:
 
 runScript { buildInputs = [ adb-scripts jq ]; } ''
-  set -e
-  runTypes "${pkgName}" < "${asts}" > typed.json
-  "${storeResult}" typed.json "$out"
-''
+    set -e
+    "${runTypesScript}" "${pkgName}" < "${asts}" > typed.json
+    "${storeResult}" typed.json "$out"
+  ''

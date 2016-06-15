@@ -1,4 +1,5 @@
-{ runScript, storeResult, writeScript }:
+{ defaultClusters, haskellPackages, nixFromCabal, processPackage, runScript,
+  storeResult, writeScript }:
 
 rec {
   path  = ../packages/te-benchmark;
@@ -6,7 +7,7 @@ rec {
   module = runScript {} ''
     set -e
 
-    OUT_DIR="tip-benchmark-sig"
+    OUT_DIR="$PWD/tip-benchmark-sig"
     export OUT_DIR
 
     mkdir -p "$OUT_DIR"
@@ -16,4 +17,12 @@ rec {
 
     "${storeResult}" "$OUT_DIR"
   '';
+
+  pkgDef = nixFromCabal (toString module) null;
+
+  pkg = haskellPackages.callPackage pkgDef {};
+
+  process = { clusters ? defaultClusters, quick ? true }:
+              processPackage { inherit clusters quick; }
+                             pkg.name pkg;
 }

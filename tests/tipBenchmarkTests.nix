@@ -1,6 +1,6 @@
 defs: with defs;
 
-testMsg (parseJSON (runScript {} ''
+testMsg (parseJSON (runScript { buildInputs = [ cabal-install ]; } ''
    pushd "${tipBenchmarks.path}"
    if ./test.sh
    then

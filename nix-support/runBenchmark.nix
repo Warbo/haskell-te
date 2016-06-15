@@ -143,18 +143,21 @@ in rec {
       STDOUT=$(nix-store --add stdout)
       STDERR=$(nix-store --add stderr)
 
-      "${checkStderr}" "$STDERR" || {
-        echo "Errors found, aborting" 1>&2
-        echo '{"failed": true}'
-        exit 0
-      }
+      FAILED=false
+      if ! "${checkStderr}" "$STDERR"
+      then
+        echo "Errors found in '$STDERR'" 1>&2
+        FAILED=true
+        exit 1
+      fi
 
-      "${jq}/bin/jq" -n --arg     time "$(cat time)"    \
-                        --arg     cmd  "${cmd}"         \
-                        --argjson args '${toJSON args}' \
-                        --arg     stdout "$STDOUT"      \
-                        --arg     stderr "$STDERR"      \
-                        '{"failed" : false,
+      "${jq}/bin/jq" -n --arg     time   "$(cat time)"    \
+                        --arg     cmd    "${cmd}"         \
+                        --argjson args   '${toJSON args}' \
+                        --arg     stdout "$STDOUT"        \
+                        --arg     stderr "$STDERR"        \
+                        --argjson failed "$FAILED"        \
+                        '{"failed" : $failed,
                           "cmd"    : $cmd,
                           "args"   : $args,
                           "stdout" : $stdout,

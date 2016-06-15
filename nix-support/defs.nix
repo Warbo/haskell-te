@@ -21,13 +21,28 @@ rec {
              inherit (explore) build-env;
            }) benchmark lastEntry withCriterion withTime;
 
+  runTypesScript = import ./runTypesScript.nix {
+                     inherit jq writeScript;
+                   };
+
   extractTarball = import ./extractTarball.nix {
                      inherit gnutar runScript storeResult;
                    };
 
   annotate        = import ./annotate.nix        {
-                      inherit adb-scripts benchmark jq parseJSON runScript;
+                      inherit adb-scripts annotateAstsScript benchmark
+                              getDepsScript jq parseJSON runScript
+                              runTypesScript writeScript;
                     };
+
+  annotateAstsScript = import ./annotateAstsScript.nix {
+                         inherit writeScript;
+                       };
+
+  getDepsScript = import ./getDepsScript.nix {
+                    inherit jq utillinux writeScript;
+                    inherit (haskellPackages) getDeps;
+                  };
 
   format = import ./format.nix {
              inherit jq parseJSON runScript storeResult;
@@ -175,7 +190,8 @@ rec {
                  };
 
   tipBenchmarks = import ./tipBenchmarks.nix {
-                    inherit runScript storeResult writeScript;
+                    inherit defaultClusters haskellPackages nixFromCabal
+                            processPackage runScript storeResult writeScript;
                   };
 
   plotResults = import ./plotResults.nix {

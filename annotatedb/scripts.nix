@@ -11,7 +11,7 @@ stdenv.mkDerivation {
 
   installPhase = ''
     mkdir -p "$out/bin"
-    for FILE in annotateAsts annotateDb getArities getDeps getTypes runTypes tagAsts
+    for FILE in getArities getTypes tagAsts
     do
         cp -v "$FILE" "$out/bin/"
         chmod +x "$out/bin"

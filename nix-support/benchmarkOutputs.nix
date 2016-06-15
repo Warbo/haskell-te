@@ -122,8 +122,8 @@ forceVal = x: msg: check msg (isString "${toJSON x}");
 forceAttr = p: a:
   assert isAttrs p;
   assert isString a;
-  assert check "Looking for attribute '${a}'" (p ? ${a});
-  assert forceVal p.${a} "Forcing attribute '${a}'";
+  assert check "Looking for attribute '${a}'" (p ? "${a}");
+  assert forceVal p."${a}" "Forcing attribute '${a}'";
   true;
 
 processedOrFailed = p: if p.failed then p

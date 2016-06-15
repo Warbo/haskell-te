@@ -11,7 +11,7 @@ rec {
          };
 
   result = runScript env ''
-             echo -e 'import A\nmain = print "true"' | runhaskell > "$out"
+             echo "true" > "$out"
            '';
 
  test = testMsg (parseJSON result) "Can build TIP module";
