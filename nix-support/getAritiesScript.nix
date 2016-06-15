@@ -1,0 +1,26 @@
+{ writeScript }:
+
+writeScript "getArities" ''
+  #!/usr/bin/env bash
+
+  command -v jq > /dev/null || {
+    echo "ERROR: getArities requires jq" 1>&2
+    exit 1
+  }
+
+  # Split a qualified name into a module and a name
+  # shellcheck disable=SC2016
+  INPUT='(.qname | split(".") | reverse) as $bits'
+
+  # The name is the last bit
+  # shellcheck disable=SC2016
+  NAME='$bits[0]'
+
+  # The module is all except the last bit, joined by dots
+  # shellcheck disable=SC2016
+  MOD='$bits[1:] | reverse | join(".")'
+
+  grep '^{' |
+    jq -c -M "$INPUT | . + {name: $NAME, module: $MOD} | del(.qname)" |
+    jq -s -M '.'
+''
