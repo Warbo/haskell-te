@@ -33,6 +33,10 @@ rec {
                      inherit gnutar runScript storeResult;
                    };
 
+  reduce = import ./reduce.nix {
+             inherit benchmark haskellPackages lib parseJSON reduce-equations runScript writeScript;
+           };
+
   annotate        = import ./annotate.nix        {
                       inherit adb-scripts annotateAstsScript benchmark
                               getDepsScript jq parseJSON runScript
@@ -73,7 +77,7 @@ rec {
             inherit annotate bc buildPackage check cluster
                     defaultClusters dumpPackage explore
                     extractTarball format haskellPackages jq lib nixFromCabal
-                    nth parseJSON runScript stdenv storeResult timeCalc
+                    nth parseJSON reduce runScript stdenv storeResult timeCalc
                     writeScript;
           }) processPackage processPackages;
 
@@ -250,5 +254,5 @@ rec {
 
   # Pull out Haskell packages (e.g. because they provide executables)
   inherit (haskellPackages) AstPlugin getDeps ML4HSFE mlspec mlspec-bench
-                            order-deps;
+                            order-deps reduce-equations;
 }

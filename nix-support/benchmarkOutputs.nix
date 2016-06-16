@@ -1,6 +1,7 @@
 { annotate, bc, buildPackage, check, cluster, defaultClusters, dumpPackage,
   explore, extractTarball, format, haskellPackages, jq, lib, nixFromCabal,
-  nth, parseJSON, runScript, stdenv, storeResult, timeCalc, writeScript }:
+  nth, parseJSON, reduce, runScript, stdenv, storeResult, timeCalc, writeScript
+}:
 with builtins;
 with lib;
 
@@ -33,7 +34,7 @@ processPkg = { clusters, quick }: name: pkg: rec {
 
   rawExplored = explore.explore { inherit formatted quick; };
 
-  rawReduced = reduce { inherit explored quick; };
+  rawReduced = reduce.reduce { inherit explored quick; };
 
   failed = any id [
              build.failed

@@ -175,7 +175,7 @@ doExplore = quick: clusterCount: f:
               parseJSON (runScript {} ''
                 set -e
                 export CLUSTERS="${clusterCount}"
-                "${benchmark quick "${explore}" []}" < "${f}" > "$out"
+                "${benchmark quick (toString explore) []}" < "${f}" > "$out"
               '');
 
 go = quick: clusterCount: clusters:
@@ -185,8 +185,8 @@ doCheck = formatted: result:
   assert isAttrs formatted;
   assert all (n: isString n)                  (attrNames formatted);
   assert all (n: isInt (fromJSON n))          (attrNames formatted);
-  assert all (n: isList formatted.${n})       (attrNames formatted);
-  assert all (n: all isString formatted.${n}) (attrNames formatted);
+  assert all (n: isList formatted."${n}")       (attrNames formatted);
+  assert all (n: all isString formatted."${n}") (attrNames formatted);
 
   assert check "explored is set ${toJSON result}"
                (isAttrs result);
@@ -195,23 +195,23 @@ doCheck = formatted: result:
                (all (n: isInt  (fromJSON n))  (attrNames result));
 
   assert check "explored values are lists ${toJSON result}"
-               (all (n: isList result.${n}) (attrNames result));
+               (all (n: isList result."${n}") (attrNames result));
 
   assert check "explored values contain sets ${toJSON result}"
-               (all (n: all isAttrs result.${n}) (attrNames result));
+               (all (n: all isAttrs result."${n}") (attrNames result));
 
   assert check "explored values have stdout ${toJSON result}"
-               (all (n: all (x: x ? stdout) result.${n})
+               (all (n: all (x: x ? stdout) result."${n}")
                     (attrNames result));
 
   assert check "explored values have time ${toJSON result}"
-               (all (n: all (x: x ? time) result.${n})
+               (all (n: all (x: x ? time) result."${n}")
                     (attrNames result));
   true;
 
 checkAndExplore = { quick, formatted }:
   let results = mapAttrs (go quick) formatted;
-      failed  = any (n: any (x: x.failed) results.${n}) (attrNames results);
+      failed  = any (n: any (x: x.failed) results."${n}") (attrNames results);
       result  = { inherit results failed; };
    in if failed then result
                 else assert doCheck formatted result.results; result;

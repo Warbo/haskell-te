@@ -15,6 +15,7 @@ haskellPackages.override {
           mlspec-helper     = cabalPath ../packages/mlspec-helper;
           nix-eval          = cabalPath ../packages/nix-eval;
           order-deps        = cabalPath ../packages/order-deps;
+          reduce-equations  = cabalPath ../packages/reduce-equations;
           runtime-arbitrary = cabalPath ../packages/runtime-arbitrary;
         };
   }
