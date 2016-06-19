@@ -30,12 +30,12 @@ processedPackages = processPackages { inherit clusters quick; };
 
 appendData = field: name: { pkgCount, data }:
   let stop   = pkgCount >= count;
-      failed = if processedPackages.${name}.failed
+      failed = if processedPackages."${name}".failed
                   then trace "Skip failed package '${name}'" true
                   else false;
       output = if stop || failed
                    then { inherit data pkgCount; }
-                   else { data     = data ++ processedPackages.${name}.${field};
+                   else { data     = data ++ processedPackages."${name}"."${field}";
                           pkgCount = pkgCount + 1; };
    in output;
 
@@ -44,7 +44,7 @@ collectData = field:
   assert check "Package names are strings" (all isString packageNames);
   (fold (appendData field)
         { pkgCount = 0; data = []; }
-        (filter (n: !processedPackages.${n}.failed) packageNames)).data;
+        (filter (n: !processedPackages."${n}".failed) packageNames)).data;
 
 # Each data point is a particular cluster
 dataBySize         = collectData "sizeDataPoints";
@@ -66,27 +66,27 @@ preConditions = x: y: z: data: all id [
               data))
 
   (check "Points have ${x}" (all (p: check "Has ${x} ${toJSON p}"
-                                           (p ? ${x}))
+                                           (p ? "${x}"))
                                  data))
 
   (check "Points have ${y}" (all (p: check "Has ${y} ${toJSON p}"
-                                           (p ? ${y}))
+                                           (p ? "${y}"))
                                  data))
 
   (check "Points have ${z}" (all (p: check "Has ${z} ${toJSON p}"
-                                           (p ? ${z}))
+                                           (p ? "${z}"))
                             data))
 
   (check "Can sort ${x}" (all (p: check "checkNumeric ${toJSON p.${x}}"
-                                        (checkNumeric p.${x}))
+                                        (checkNumeric p."${x}"))
                               data))
 
   (check "${y} looks numeric" (all (p: check "Looks numeric ${toJSON p.${y}}"
-                                             (looksNumeric p.${y}))
+                                             (looksNumeric p."${y}"))
                                    data))
 
   (check "${z} looks numeric" (all (p: check "Looks numeric ${toJSON p.${z}}"
-                                             (looksNumeric p.${z}))
+                                             (looksNumeric p."${z}"))
                                    data))
 
 ];
@@ -96,12 +96,12 @@ postConditions = result: all id [
   (check "isAttrs result.series ${toJSON result.series}" (isAttrs result.series))
 
   (check "Each series is a list ${toJSON result.series}"
-         (all (n: isList result.series.${n}) (attrNames result.series)))
+         (all (n: isList result.series."${n}") (attrNames result.series)))
 
   (check "Series are (x,y) or (x,y,stddev) ${toJSON result.series}"
          (all (n: any id [
-                    (all (row: length row == 2) result.series.${n})
-                    (all (row: length row == 3) result.series.${n})
+                    (all (row: length row == 2) result.series."${n}")
+                    (all (row: length row == 3) result.series."${n}")
                   ])
               (attrNames result.series)))
 
@@ -130,16 +130,16 @@ xVsYForZ = x: y: z: data:
 xVsYForZReal = x: y: z: data:
   let # Pull out the required data, and give generic labels (x, y, z)
       points = map (p: {
-                     x = p.${x};
-                     y = p.${y};
+                     x = p."${x}";
+                     y = p."${y}";
                      z = addErrorContext "toString ${toJSON p.${z}}"
-                                         (toString p.${z});
+                                         (toString p."${z}");
                    }) data;
 
       # Format points into series, based on their z values
       series = fold ({x, y, z}: out: out // {
-                      ${z} = [(formatPoint x y)] ++ (if out ? ${z}
-                                                        then out.${z}
+                      "${z}" = [(formatPoint x y)] ++ (if out ? "${z}"
+                                                        then out."${z}"
                                                         else []);
                     })
                     {}
@@ -261,7 +261,7 @@ assert check "Checking tabulate data" (all id [
   (check "All dataBySize have required fields"
          (all (f: check "All dataBySize have ${f}"
                         (all (p: check "${f} appears in ${toJSON p}"
-                                       (p ? ${f}))
+                                       (p ? "${f}"))
                              dataBySize))
               [ "eqCount" "totalTime" "argCount" "size" ]))
 
@@ -271,7 +271,7 @@ assert check "Checking tabulate data" (all id [
   (check "All dataByClusterCount have required fields"
          (all (f: check "All dataByClusterCount have ${f}"
                         (all (p: check "${f} appears in ${toJSON p}"
-                                       (p ? ${f}))
+                                       (p ? "${f}"))
                              dataByClusterCount))
               ["eqCount" "totalTime" "clusterCount"]))
 
@@ -283,7 +283,7 @@ assert check "Checking tabulate output" (all id [
 
   (check "tabulated contains sets"
          (all (t: check "isAttrs ${typeOf tabulated.${t}}"
-                        (isAttrs tabulated.${t}))
+                        (isAttrs tabulated."${t}"))
               (attrNames tabulated)))
 
   (check "Forcing tabulated results"

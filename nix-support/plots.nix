@@ -74,8 +74,8 @@ isFile = f: parseJSON (runScript {} ''
     echo "true" > "$out"
   '');
 
-haveData = ! (any (n: tab.${n}.series == {})
-                  (attrNames tab));
+haveData = !(any (n: tab."${n}".series == {})
+                 (attrNames tab));
 
 in
 
@@ -87,7 +87,7 @@ if haveData
 
         assert check "Ensuring plots are files"
                      (all (x: assert check "Checking ${x} is a file"
-                                           (isFile plots.${x});
+                                           (isFile plots."${x}");
                               true)
                           (attrNames plots));
 
