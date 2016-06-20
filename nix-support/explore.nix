@@ -22,6 +22,8 @@ explore-theories = writeScript "explore-theories" ''
 extra-haskell-packages = [ "mlspec" "mlspec-helper" "runtime-arbitrary"
                            "quickspec" ];
 
+prefixed-haskell-packages = map (x: "h.${x}") extra-haskell-packages;
+
 extra-packages = [ "mlspec" ];
 
 mkGhcPkg = writeScript "mkGhcPkg" ''
@@ -60,9 +62,7 @@ build-env = writeScript "build-env" ''
 
   function extraHaskellPackages {
     # Haskell packages required for MLSpec
-    echo "${concatStringsSep "\n" extra-haskell-packages}" |
-      grep "^."                                            |
-      sed -e 's/^/h./g'
+    echo "${concatStringsSep "\n" prefixed-haskell-packages}"
   }
 
   function mkEnvPkg {
