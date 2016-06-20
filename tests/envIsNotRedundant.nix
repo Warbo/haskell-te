@@ -1,4 +1,4 @@
-defs: with defs;
+defs: with defs; with lib;
 
 let result = runScript {} ''
   set -e

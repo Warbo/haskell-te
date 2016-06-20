@@ -1,4 +1,4 @@
-{ benchmark, check, format, jq, lib, ml4hs, parseJSON,
+{ benchmark, check, defs, format, haskellPackages, jq, lib, ml4hs, parseJSON,
   runScript, writeScript }:
 with builtins;
 with lib;
@@ -12,19 +12,24 @@ explore-theories = writeScript "explore-theories" ''
   INPUT=$(cat)
 
   # Extracts packages as unquoted strings
-  ENVIRONMENT_PACKAGES=$(echo "$INPUT" | "${jq}/bin/jq" -r '.[] | .package' | sort -u)
+  ENVIRONMENT_PACKAGES=$(echo "$INPUT" | "${jq}/bin/jq" -r '.[] | .[] | .package' | sort -u)
   export ENVIRONMENT_PACKAGES
 
   echo "$INPUT" | "${build-env}" MLSpec "$@"
 '';
 
-# Specify these once and only once
+# Haskell packages required for MLSpec
 extra-haskell-packages = [ "mlspec" "mlspec-helper" "runtime-arbitrary"
                            "quickspec" ];
 
-prefixed-haskell-packages = map (x: "h.${x}") extra-haskell-packages;
+prefixed-haskell-packages = concatStringsSep "\n"
+                              (map (x: "h.${x}") extra-haskell-packages);
 
 extra-packages = [ "mlspec" ];
+
+exploreEnv = [ (haskellPackages.ghcWithPackages (h: map (n: h."${n}")
+                                                    extra-haskell-packages)) ] ++
+             (map (n: defs."${n}") extra-packages);
 
 mkGhcPkg = writeScript "mkGhcPkg" ''
   set -e
@@ -52,22 +57,16 @@ mkGhcPkg = writeScript "mkGhcPkg" ''
   echo "]))"
 '';
 
+# Run the command given in argv in an environment containing the Haskell
+# packages given on stdin
 build-env = writeScript "build-env" ''
   #!/usr/bin/env bash
   set -e
   set -o pipefail
 
-  # Run the command given in argv in an environment containing the Haskell
-  # packages given on stdin
-
-  function extraHaskellPackages {
-    # Haskell packages required for MLSpec
-    echo "${concatStringsSep "\n" prefixed-haskell-packages}"
-  }
-
   function mkEnvPkg {
     GIVEN=$(cat)
-    GHCPKG=$("${mkGhcPkg}" "$GIVEN" "$(extraHaskellPackages)")
+    GHCPKG=$("${mkGhcPkg}" "$GIVEN"  "${prefixed-haskell-packages}")
     printf 'buildEnv { name = "%s"; paths = [%s %s];}' \
                               "$1"          "$GHCPKG"  \
                                             "${concatStringsSep " " extra-packages}"
@@ -84,7 +83,7 @@ build-env = writeScript "build-env" ''
     while read -r PKG
     do
         havePkg "$PKG" || return 0
-    done < <(extraHaskellPackages | cut -c 3-)
+    done < <(echo "${concatStringsSep "\n" extra-haskell-packages}")
 
     NEEDED=$(cat)
     if [[ -n "$NEEDED" ]]
@@ -118,7 +117,8 @@ build-env = writeScript "build-env" ''
 
   function mkName {
     GOT=$(cat)
-    EXTRA=$(printf "%s %s" "$(extraHaskellPackages)" "${concatStringsSep " " extra-packages}")
+    EXTRA=$(printf "%s %s" "${concatStringsSep "\n" extra-haskell-packages}" \
+                           "${concatStringsSep " "  extra-packages}")
     MD5HASH=$(echo "$GOT $EXTRA" | tr ' ' '\n' | sort -u | tr -d '[:space:]' | md5sum | cut -d ' ' -f1)
     printf "explore-theories-%s" "$MD5HASH"
   }
@@ -200,6 +200,6 @@ checkAndExplore = { quick, formatted, standalone ? null }:
 
 in {
   inherit build-env extra-haskell-packages extra-packages explore-theories
-          exploration-env;
+          exploreEnv;
   explore = checkAndExplore;
 }

@@ -1,4 +1,4 @@
-defs: with defs;
+defs: with defs; with lib;
 
 # The contents of extra-haskell-packages should be available, even with no
 # ENVIRONMENT_PACKAGES given

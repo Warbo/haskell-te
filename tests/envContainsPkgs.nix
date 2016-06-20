@@ -1,7 +1,7 @@
 defs: with defs;
 
 # Append more and more Haskell packages to ENVIRONMENT_PACKAGES
-let result = runScript {} ''
+let result = runScript { buildInputs = explore.exploreEnv; } ''
   set -e
   PKGS=""
   for NEWPKG in text containers parsec aeson

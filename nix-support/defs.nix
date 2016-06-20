@@ -4,7 +4,7 @@
   utillinux, weka, wget, writeScript }:
 
 with builtins; with lib;
-rec {
+let defs = rec {
   inherit (import ./dumping.nix {
              inherit stdenv haskellPackages nix gnutar jq lib runCommand
                      writeScript;
@@ -86,8 +86,9 @@ rec {
                  };
 
   explore = import ./explore.nix {
-              inherit benchmark check format jq lib ml4hs
+              inherit benchmark check format haskellPackages jq lib ml4hs
                       parseJSON runScript writeScript;
+              defs = import <nixpkgs> {} // defs;
             };
 
   defaultClusters = [ 1 2 4 ];
@@ -256,4 +257,4 @@ rec {
   # Pull out Haskell packages (e.g. because they provide executables)
   inherit (haskellPackages) AstPlugin getDeps ML4HSFE mlspec mlspec-bench
                             order-deps reduce-equations;
-}
+}; in defs
