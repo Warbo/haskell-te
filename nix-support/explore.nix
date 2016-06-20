@@ -15,7 +15,7 @@ explore-theories = writeScript "explore-theories" ''
   ENVIRONMENT_PACKAGES=$(echo "$INPUT" | "${jq}/bin/jq" -r '.[] | .package' | sort -u)
   export ENVIRONMENT_PACKAGES
 
-  echo "$INPUT" | "${build-env}" "${path-to-front}" MLSpec "$@"
+  echo "$INPUT" | "${build-env}" MLSpec "$@"
 '';
 
 # Specify these once and only once
@@ -30,25 +30,6 @@ extra-haskell-packages = writeScript "extra-haskell-packages" ''
 
 extra-packages = writeScript "extra-packages" ''
 printf mlspec
-'';
-
-path-to-front = writeScript "path-to-front" ''
-  set -e
-  set -o pipefail
-
-  FST=$(echo "$PATH" | cut -d : -f1)
-  if DIR=$(echo "$PATH" | grep -o -- "[^:]*$EXPLORE_NAME/[^:]*")
-  then
-    if ! [[ "x$FST" = "xDIR" ]]
-    then
-      echo "Pushing '$DIR' to front of PATH" 1>&2
-      PATH="$DIR":"$PATH"
-      export PATH
-    fi
-  fi
-
-  echo "path-to-front: Running '$*'" 1>&2
-  "$@"
 '';
 
 mkGhcPkg = writeScript "mkGhcPkg" ''
@@ -169,7 +150,7 @@ build-env = writeScript "build-env" ''
   if echo "$INPUT" | needEnv
   then
     echo "build-env: Running '$*' in Nix environment '$ENVPKG'" 1>&2
-    EXPLORE_NAME="$NAME" nix-shell --show-trace --run "$*" -p "$ENVPKG"
+    nix-shell --show-trace --run "$*" -p "$ENVPKG"
   else
     echo "build-env: Running '$*' in existing environment" 1>&2
     "$@"
