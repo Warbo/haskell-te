@@ -28,9 +28,7 @@ extra-haskell-packages = writeScript "extra-haskell-packages" ''
   EOF
 '';
 
-extra-packages = writeScript "extra-packages" ''
-printf mlspec
-'';
+extra-packages = [ "mlspec" ];
 
 mkGhcPkg = writeScript "mkGhcPkg" ''
   set -e
@@ -71,34 +69,12 @@ build-env = writeScript "build-env" ''
     "${extra-haskell-packages}" | grep "^." | sed -e 's/^/h./g'
   }
 
-  function extraPackages {
-    "${extra-packages}"
-  }
-
-  function allExtras {
-    printf "%s %s" "$(extraHaskellPackages)" "$(extraPackages)"
-  }
-
-  function mkGhcPkg {
-    GIVEN=$(cat)
-    "${mkGhcPkg}" "$GIVEN" "$(extraHaskellPackages)"
-  }
-
-  function mkName {
-    GOT=$(cat)
-    EXTRA=$(allExtras)
-    UNIQUEID=$(echo "$GOT $EXTRA" | tr ' ' '\n' | sort -u | tr -d '[:space:]')
-    MD5HASH=$(echo "$UNIQUEID" | md5sum | cut -d ' ' -f1)
-    printf "explore-theories-%s" "$MD5HASH"
-  }
-
   function mkEnvPkg {
-    GHCPKG=$(mkGhcPkg)
-    printf 'buildEnv { name = "%s"; paths = [%s %s];}' "$1" "$GHCPKG" "$(extraPackages)"
-  }
-
-  function haveHaskell {
-    hash "ghc-pkg" > /dev/null 2>&1
+    GIVEN=$(cat)
+    GHCPKG=$("${mkGhcPkg}" "$GIVEN" "$(extraHaskellPackages)")
+    printf 'buildEnv { name = "%s"; paths = [%s %s];}' \
+                              "$1"          "$GHCPKG"  \
+                                            "${concatStringsSep " " extra-packages}"
   }
 
   function havePkg {
@@ -107,7 +83,7 @@ build-env = writeScript "build-env" ''
 
   function needEnv {
     # TODO: Doesn't take extraPackages into account yet
-    haveHaskell || return 0
+    hash "ghc-pkg" > /dev/null 2>&1 || return 0
 
     while read -r PKG
     do
@@ -143,6 +119,13 @@ build-env = writeScript "build-env" ''
     INPUT=$(echo "$ENVIRONMENT_PACKAGES" | sort -u | grep "^.")
     HPKGS=$(echo "$INPUT" | sed -e 's/^/h./')
   fi
+
+  function mkName {
+    GOT=$(cat)
+    EXTRA=$(printf "%s %s" "$(extraHaskellPackages)" "${concatStringsSep " " extra-packages}")
+    MD5HASH=$(echo "$GOT $EXTRA" | tr ' ' '\n' | sort -u | tr -d '[:space:]' | md5sum | cut -d ' ' -f1)
+    printf "explore-theories-%s" "$MD5HASH"
+  }
 
     NAME=$(echo "$HPKGS" | mkName)
   ENVPKG=$(echo "$HPKGS" | mkEnvPkg "$NAME")
