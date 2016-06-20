@@ -42,6 +42,7 @@ processPkg = { clusters, quick }: name: pkg: rec {
              rawAnnotated.failed
              rawClustered.failed
              rawExplored.failed
+             rawReduced.failed
            ];
 
   # Stick to the quick output, so testing is faster
@@ -56,20 +57,14 @@ processPkg = { clusters, quick }: name: pkg: rec {
     "${jq}/bin/jq" -s 'length' < "${f}" > "$out"
   '')) equations;
 
-  sizeCounts = mapAttrs (_: map (f: fromJSON (runScript {} ''
+  sizeCounts = mapAttrs (_: fs: sum (map (f: fromJSON (runScript {} ''
       "${jq}/bin/jq" -s 'length' < "${f}" > "$out"
-    '')))
+    '')) fs))
     formatted;
-
-  argCounts = trace "FIXME: Calculate argCount more appropriately"
-             (mapAttrs (_: map (f: fromJSON (runScript {} ''
-               echo "1" > "$out"
-             '')))
-             formatted);
 
   # Gather all values into a list of points
   sizeDataPoints = import ./getSizeDataPoints.nix {
-                     inherit argCounts check equations lib equationCounts nth
+                     inherit check equations lib equationCounts nth
                              sizeCounts totalTimes;
                      inherit (timeCalc) timeToBucket;
                    };

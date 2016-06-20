@@ -1,6 +1,7 @@
-{ adb-scripts, defaultClusters, jq, lib, ml4hs, ML4HSFE,
-  nixRecurrentClusteringScript, parseJSON, recurrent-clustering, runScript,
-  runTypes, runWeka, storeResult, processPackages}:
+{ adb-scripts, annotateAstsScript, defaultClusters, getDepsScript,
+  getTypesScript, jq, lib, ml4hs, ML4HSFE, nixRecurrentClusteringScript,
+  parseJSON, recurrent-clustering, runScript, runTypes, runWeka, storeResult,
+  processPackages}:
 
 with builtins;
 
@@ -12,9 +13,10 @@ rec {
                                  (trace (if cond then ok else notOk) cond);
 
   testPackages = import ./testPackages.nix {
-                   inherit adb-scripts defaultClusters jq lib
-                           ml4hs ML4HSFE nixRecurrentClusteringScript parseJSON
-                           recurrent-clustering runScript runTypes runWeka storeResult
-                           processPackages;
+                   inherit adb-scripts annotateAstsScript defaultClusters
+                           getDepsScript getTypesScript jq lib ml4hs ML4HSFE
+                           nixRecurrentClusteringScript parseJSON
+                           recurrent-clustering runScript runTypes runWeka
+                           storeResult processPackages;
                  };
 }

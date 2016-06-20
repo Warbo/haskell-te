@@ -16,6 +16,6 @@ let dir = builtins.unsafeDiscardStringContext "${toString pkgDir}";
       chmod +w -R pkgDir
 
       echo "Dumping '$D'" 1>&2
-      HOME="$USER_HOME" DIR="$PWD/pkgDir" \
+      HOME="$PWD" DIR="$PWD/pkgDir" \
         "${benchmark quick dump-package []}" > "$out"
     '')

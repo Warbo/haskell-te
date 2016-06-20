@@ -46,9 +46,6 @@ collectData = field:
         { pkgCount = 0; data = []; }
         (filter (n: !processedPackages."${n}".failed) packageNames)).data;
 
-# Each data point is a particular cluster
-dataBySize         = collectData "sizeDataPoints";
-
 # Each data point is a package split into k clusters
 dataByClusterCount = collectData "clusterDataPoints";
 
@@ -178,15 +175,7 @@ tabulated = listToAttrs
            x    = "eqCount";
            y    = "totalTime";
            z    = "size";
-           data = dataBySize;
-         }
-
-         {
-           name = "eqsVsTimeForArgs";
-           x    = "eqCount";
-           y    = "totalTime";
-           z    = "argCount";
-           data = dataBySize;
+           data = dataByClusterCount;
          }
 
          {
@@ -202,15 +191,7 @@ tabulated = listToAttrs
            x    = "eqCount";
            y    = "size";
            z    = "timeBucket";
-           data = dataBySize;
-         }
-
-         {
-           name = "eqsVsArgsForTimes";
-           x    = "eqCount";
-           y    = "argCount";
-           z    = "timeBucket";
-           data = dataBySize;
+           data = dataByClusterCount;
          }
 
          {
@@ -226,15 +207,7 @@ tabulated = listToAttrs
            x    = "size";
            y    = "totalTime";
            z    = "eqCount";
-           data = dataBySize;
-         }
-
-         {
-           name = "timeVsArgsForEqs";
-           x    = "argCount";
-           y    = "totalTime";
-           z    = "eqCount";
-           data = dataBySize;
+           data = dataByClusterCount;
          }
 
        ]);
@@ -255,18 +228,8 @@ assert check "Checking tabulate inputs" (all id [
 
 assert check "Checking tabulate data" (all id [
 
-  (check "isList dataBySize ${toJSON dataBySize}"
-         (isList dataBySize))
-
-  (check "All dataBySize have required fields"
-         (all (f: check "All dataBySize have ${f}"
-                        (all (p: check "${f} appears in ${toJSON p}"
-                                       (p ? "${f}"))
-                             dataBySize))
-              [ "eqCount" "totalTime" "argCount" "size" ]))
-
   (check "isList dataByClusterCount ${toJSON dataByClusterCount}"
-         (isList dataBySize))
+         (isList dataByClusterCount))
 
   (check "All dataByClusterCount have required fields"
          (all (f: check "All dataByClusterCount have ${f}"

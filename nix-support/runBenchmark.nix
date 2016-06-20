@@ -127,16 +127,8 @@ in rec {
   withTime = cmd: args: let shellArgs = map escapeShellArg args;
                             argStr    = concatStringsSep " " shellArgs;
     in writeScript "with-time" ''
-      "${time}/bin/time" -f '%e' -o time "${cmd}" ${argStr} 1> stdout 2> stderr || {
-        { echo "Failed to time '${cmd}' with '${argStr}'"
-          echo "Contents of stderr:"
-          cat stderr
-          echo "End of stderr"; } 1>&2
-        echo '{"failed": true}'
-        exit 0
-      }
-
-      echo "Benchmarked '${cmd}' at '$(cat time)' seconds" 1>&2
+      "${time}/bin/time" -f '%e' -o time "${cmd}" ${argStr} 1> stdout 2> stderr
+      CODE="$?"
 
       # Cache results in the store, so we make better use of the cache and avoid
       # sending huge strings into Nix
@@ -144,11 +136,19 @@ in rec {
       STDERR=$(nix-store --add stderr)
 
       FAILED=false
-      if ! "${checkStderr}" "$STDERR"
+      if [[ "$CODE" -ne 0 ]]
       then
-        echo "Errors found in '$STDERR'" 1>&2
+        echo "Failed to time '${cmd}' with '${argStr}'" 1>&2
+        echo "Contents of stderr:"                      1>&2
+        cat stderr                                      1>&2
+        echo "End of stderr"                            1>&2
         FAILED=true
-        exit 1
+      elif ! "${checkStderr}" "$STDERR"
+      then
+        echo "Errors found in '$STDERR' for '${cmd}'" 1>&2
+        FAILED=true
+      else
+        echo "Benchmarked '${cmd}' at '$(cat time)' seconds" 1>&2
       fi
 
       "${jq}/bin/jq" -n --arg     time   "$(cat time)"    \

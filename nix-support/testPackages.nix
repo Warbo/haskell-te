@@ -1,6 +1,7 @@
-{ adb-scripts, defaultClusters, jq, lib, ml4hs, ML4HSFE,
-  nixRecurrentClusteringScript, parseJSON, processPackages,
-  recurrent-clustering, runScript, runTypes, runWeka, storeResult }:
+{ adb-scripts, annotateAstsScript, defaultClusters, getDepsScript,
+  getTypesScript, jq, lib, ml4hs, ML4HSFE, nixRecurrentClusteringScript,
+  parseJSON, processPackages, recurrent-clustering, runScript, runTypes,
+  runWeka, storeResult }:
 with builtins;
 with lib;
 
@@ -21,7 +22,7 @@ let clusters         = listToAttrs (map (c: {
 
       preAnnotated = runScript { buildInputs = [ adb-scripts ]; } ''
         set -e
-        annotateAsts < "${ranTypes}" > annotated.json
+        "${annotateAstsScript}" < "${ranTypes}" > annotated.json
         "${storeResult}" annotated.json "$out"
       '';
 
@@ -47,7 +48,7 @@ let clusters         = listToAttrs (map (c: {
 
       deps = runScript { buildInputs = [ adb-scripts ]; } ''
         set -e
-        getDeps < "${annotated}" > deps.json
+        "${getDepsScript}" < "${annotated}" > deps.json
         "${storeResult}" deps.json "$out"
       '';
 
@@ -71,7 +72,6 @@ in
 assert isAttrs processedPackages;
 assert all (n: elem n (attrNames processedPackages)) testPackageNames;
 
-listToAttrs (filter (x: !x.value.failed)
-                    (map (n: { name  = n;
-                               value = extend processedPackages."${n}"; })
-                         testPackageNames))
+listToAttrs (map (n: { name  = n;
+                       value = extend processedPackages."${n}"; })
+                 testPackageNames)

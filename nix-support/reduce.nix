@@ -19,7 +19,7 @@ env = { buildInputs = [ (haskellPackages.ghcWithPackages (h: [ reduce-equations 
 
 reduce = { quick, explored }:
   let results = mapAttrs (doReduce quick) explored;
-      failed  = any (n: any (x: x.failed) results."${n}") (attrNames results);
+      failed  = any (n: results."${n}".failed) (attrNames results);
       result  = { inherit results failed; };
    in result;
 

@@ -164,7 +164,7 @@ rec {
                  };
 
   runTypes = import ./runTypes.nix        {
-               inherit adb-scripts jq storeResult runScript;
+               inherit adb-scripts jq runScript runTypesScript storeResult;
              };
 
   nth = n: lst:
@@ -177,8 +177,9 @@ rec {
        else nth (n - 1) (tail lst);
 
   inherit (import ./test-defs.nix {
-            inherit adb-scripts defaultClusters jq lib
-                    ml4hs ML4HSFE nixRecurrentClusteringScript parseJSON
+            inherit adb-scripts annotateAstsScript defaultClusters
+                    getDepsScript getTypesScript jq lib ml4hs ML4HSFE
+                    nixRecurrentClusteringScript parseJSON
                     recurrent-clustering runScript runTypes runWeka storeResult
                     processPackages;
           })

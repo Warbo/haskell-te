@@ -11,8 +11,8 @@ let mkDeps = hsPkgs: let defDeps = [
                          fromEnv = hsPkgs.callPackage
                                      (import (getEnv "DIR")) {};
                          uncache = fromEnv // { inherit currentTime; };
-                         pkgDeps = if hsPkgs ? ${name}
-                                      then [hsPkgs.name]
+                         pkgDeps = if hsPkgs ? "${name}"
+                                      then [hsPkgs."${name}"]
                                       else [uncache];
                       in defDeps ++ pkgDeps;
  in runCommand "dummy" {

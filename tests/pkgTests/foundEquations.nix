@@ -4,7 +4,7 @@ with lib;
 
 let
 
-counts = fold (n: old: old ++ pkg.equationCounts.${n})
+counts = fold (n: old: old ++ [pkg.equationCounts."${n}"])
               []
               (attrNames pkg.equationCounts);
 
