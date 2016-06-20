@@ -2,27 +2,38 @@ defs: with defs; with builtins;
 
 let
 
+strippedContent = f:
+  let content  = readFile f;
+   in replaceStrings ["\n" " " "\t"]
+                     [""   ""  ""]
+                     content;
+
 output = tipBenchmarks.process { quick = true; };
 
 failed = output.failed;
 
-eqs = output.equations;
+explored = all (n: all (x: strippedContent x != "")
+                       output.explored."${n}")
+               (attrNames output.explored);
 
-eqCounts = output.equationCounts;
+haveEqs = all (n: strippedContent output.equations."${n}" != "")
+              (attrNames output.equations);
 
-haveEqs = all (n: let content  = readFile eqs."${n}";
-                      stripped = replaceStrings ["\n" " " "\t"]
-                                                [""   ""  ""]
-                                                content;
-                   in stripped != "")
-              (attrNames eqs);
-
-nonZeroEqs = all (n: eqCounts."${n}" > 0) (attrNames eqCounts);
+nonZeroEqs = all (n: output.equationCounts."${n}" > 0)
+                 (attrNames output.equationCounts);
 
 withDbg = dbg: msg: x: addErrorContext dbg (testMsg x msg || trace dbg false);
 
 in all (x: x) [
-  (withDbg ""                             "TIP benchmark didn't fail" (!failed))
-  (withDbg "eqs: ${toJSON eqs}"           "Got TIP equations"         haveEqs)
-  (withDbg "eqCounts: ${toJSON eqCounts}" "Non-zero equation counts"  nonZeroEqs)
+
+  (testDbg (!output.failed)  "TIP benchmark didn't fail" "")
+
+  (testDbg explored          "TIP benchmark explored"
+           (toJSON { inherit (output) formatted rawExplored; }))
+
+  (testDbg haveEqs    "Got TIP equations"
+           (toJSON { inherit (output) formatted annotated clustered explored
+                     equations; }))
+  (testDbg nonZeroEqs "Non-zero equation counts"
+           (toJSON { inherit (output) equationCounts; }))
 ]

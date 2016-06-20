@@ -6,34 +6,16 @@ with lib;
 let
 
 explore-theories = writeScript "explore-theories" ''
-  function msg {
-    echo -e "$*" 1>&2
-  }
+  set -e
+  set -o pipefail
 
-  if [[ "$#" -gt 0 ]]
-  then
-    msg "Reading clusters from '$1'"
-    INPUT=$(cat "$1")
-  elif ! [ -t 0 ]
-  then
-    msg "Reading clusters from stdin"
-    INPUT=$(cat)
-  else
-    msg "Error: Please supply a filename or input to stdin"
-    exit 1
-  fi
+  INPUT=$(cat)
 
-  function pkgsFromInput {
-    # Extracts packages as unquoted strings
-    "${jq}/bin/jq" -r '.[] | .package'
-  }
+  # Extracts packages as unquoted strings
+  ENVIRONMENT_PACKAGES=$(echo "$INPUT" | "${jq}/bin/jq" -r '.[] | .package' | sort -u)
+  export ENVIRONMENT_PACKAGES
 
-  function explore {
-    PKGS=$(echo "$INPUT" | pkgsFromInput)
-    echo "$INPUT" | ENVIRONMENT_PACKAGES="$PKGS" "${build-env}" "${path-to-front}" MLSpec "$@"
-  }
-
-  explore "$@"
+  echo "$INPUT" | "${build-env}" "${path-to-front}" MLSpec "$@"
 '';
 
 # Specify these once and only once
@@ -51,6 +33,9 @@ printf mlspec
 '';
 
 path-to-front = writeScript "path-to-front" ''
+  set -e
+  set -o pipefail
+
   FST=$(echo "$PATH" | cut -d : -f1)
   if DIR=$(echo "$PATH" | grep -o -- "[^:]*$EXPLORE_NAME/[^:]*")
   then
@@ -66,8 +51,36 @@ path-to-front = writeScript "path-to-front" ''
   "$@"
 '';
 
+mkGhcPkg = writeScript "mkGhcPkg" ''
+  set -e
+  set -o pipefail
+
+  echo "(haskellPackages.ghcWithPackages (h: ["
+
+  GIVEN=($1)
+  EXTRA=($2)
+  for PKG in "''${GIVEN[@]}" "''${EXTRA[@]}"
+  do
+    UNQUAL=$(echo "$PKG" | sed -e 's/^h\.//g')
+    FOUND=$(nix-instantiate --eval -E \
+            "let pkgs = import <nixpkgs> {}; in pkgs.haskellPackages ? $UNQUAL")
+    if [[ "x$FOUND" = "xtrue" ]]
+    then
+      echo "$PKG"
+    else
+      echo "Couldn't find '$PKG' in haskellPackages; ignoring, in the hope we have a nixFromCabal alternative" 1>&2
+    fi
+  done
+
+  echo "$STANDALONE_PKG" # Possibly empty, but allows non-Hackage packages
+
+  echo "]))"
+'';
+
 build-env = writeScript "build-env" ''
   #!/usr/bin/env bash
+  set -e
+  set -o pipefail
 
   # Run the command given in argv in an environment containing the Haskell
   # packages given on stdin
@@ -87,7 +100,7 @@ build-env = writeScript "build-env" ''
 
   function mkGhcPkg {
     GIVEN=$(cat)
-    printf "(haskellPackages.ghcWithPackages (h: [%s %s]))" "$GIVEN" "$(extraHaskellPackages)"
+    "${mkGhcPkg}" "$GIVEN" "$(extraHaskellPackages)"
   }
 
   function mkName {
@@ -163,23 +176,32 @@ build-env = writeScript "build-env" ''
   fi
 '';
 
+withStandalonePkg = src: ''export STANDALONE_PKG="${standalonePkg src}"'';
+
+standalonePkg = src: ''(haskellPackages.callPackage (import ${src} ) {})'';
+
 explore = writeScript "format-and-explore" ''
             set -e
+            set -o pipefail
+
             function noDepth {
               grep -v "^Depth" || true # Don't abort if nothing found
             }
             "${explore-theories}" | noDepth
           '';
 
-doExplore = quick: clusterCount: f:
+doExplore = standalone: quick: clusterCount: f:
               parseJSON (runScript {} ''
                 set -e
                 export CLUSTERS="${clusterCount}"
+                ${if standalone == null
+                                then ""
+                                else withStandalonePkg standalone}
                 "${benchmark quick (toString explore) []}" < "${f}" > "$out"
               '');
 
-go = quick: clusterCount: clusters:
-       map (doExplore quick clusterCount) clusters;
+go = { quick, standalone }: clusterCount: clusters:
+       map (doExplore standalone quick clusterCount) clusters;
 
 doCheck = formatted: result:
   assert isAttrs formatted;
@@ -209,14 +231,15 @@ doCheck = formatted: result:
                     (attrNames result));
   true;
 
-checkAndExplore = { quick, formatted }:
-  let results = mapAttrs (go quick) formatted;
+checkAndExplore = { quick, formatted, standalone ? null }:
+  let results = mapAttrs (go { inherit quick standalone; }) formatted;
       failed  = any (n: any (x: x.failed) results."${n}") (attrNames results);
       result  = { inherit results failed; };
    in if failed then result
                 else assert doCheck formatted result.results; result;
 
 in {
-  inherit build-env extra-haskell-packages extra-packages explore-theories;
+  inherit build-env extra-haskell-packages extra-packages explore-theories
+          exploration-env;
   explore = checkAndExplore;
 }

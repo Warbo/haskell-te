@@ -183,7 +183,7 @@ rec {
                     recurrent-clustering runScript runTypes runWeka storeResult
                     processPackages;
           })
-          testMsg testPackages;
+          testDbg testMsg testPackages;
 
   uniq =
     let uniq' = list: acc:

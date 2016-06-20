@@ -32,7 +32,10 @@ processPkg = { clusters, quick }: name: pkg: rec {
                           format clusterCount clusters)
                        clustered;
 
-  rawExplored = explore.explore { inherit formatted quick; };
+  rawExplored = explore.explore {
+                  inherit formatted quick;
+                  standalone = src;
+                };
 
   rawReduced = reduce.reduce { inherit explored quick; };
 
