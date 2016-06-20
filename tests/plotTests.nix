@@ -9,13 +9,10 @@ if plots == null
             [
               "plotEqsVsTimeForClusters"
               "plotEqsVsTimeForSizes"
-              "plotEqsVsTimeForArgs"
 
               "plotEqsVsClustersForTimes"
               "plotEqsVsSizeForTimes"
-              "plotEqsVsArgsForTimes"
 
               "plotTimeVsClustersForEqs"
               "plotTimeVsSizeForEqs"
-              "plotTimeVsArgsForEqs"
             ]

@@ -18,7 +18,7 @@ clusters     = map toString defaultClusters;
 tab          = tabulate {
                  inherit count quick;
                  clusters     = defaultClusters;
-                 packageNames = take 10 shuffledList;
+                 packageNames = take 1 shuffledList;
                };
 
 plots        = with tab; trace "plots: tab=${toJSON tab}" {
@@ -32,10 +32,6 @@ plotEqsVsTimeForSizes    = addErrorContext
   "Plotting EqsVsTimeForSizes"
   (scatterPlot eqsVsTimeForSizes);
 
-plotEqsVsTimeForArgs     = addErrorContext
-  "Plotting EqsVsTimeForArgs"
-  (scatterPlot eqsVsTimeForArgs);
-
 # Equations vs "size", in a given amount of time
 plotEqsVsClustersForTimes = addErrorContext
   "Plotting EqsVsClustersForTimes"
@@ -45,10 +41,6 @@ plotEqsVsSizeForTimes     = addErrorContext
   "Plotting EqsVsSizeForTimes"
   (scatterPlot eqsVsSizeForTimes);
 
-plotEqsVsArgsForTimes     = addErrorContext
-  "Plotting EqsVsArgsForTimes"
-  (scatterPlot eqsVsArgsForTimes);
-
 # Time vs "size", for a given number of equations
 plotTimeVsClustersForEqs = addErrorContext
   "Plotting TimeVsClustersForEqs"
@@ -57,10 +49,6 @@ plotTimeVsClustersForEqs = addErrorContext
 plotTimeVsSizeForEqs     = addErrorContext
   "Plotting TimeVsSizeForEqs"
   (scatterPlot timeVsSizeForEqs);
-
-plotTimeVsArgsForEqs     = addErrorContext
-  "Plotting TimeVsArgsForEqs"
-  (scatterPlot timeVsArgsForEqs);
 
 };
 
