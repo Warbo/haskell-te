@@ -23,8 +23,8 @@ let result = runScript {} ''
 
   # build-env adds some 'extra' packages on to those we give it; they must be
   # available too
-  EXTRA=$("${concatStringsSep " " explore.extra-packages}")
-  EXTRAH=$("${explore.extra-haskell-packages}" | grep "^.")
+  EXTRA="${concatStringsSep " " explore.extra-packages}"
+  EXTRAH=$(echo "${concatStringsSep "\n" explore.extra-haskell-packages}" | grep "^.")
   HLINE=$(echo "$EXTRAH" | tr '\n' ' ')
   PREFIXED=$(echo "$EXTRAH"| sed -e 's/^/h./g')
   GHCPKG="haskellPackages.ghcWithPackages (h: [$PREFIXED])"

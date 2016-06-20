@@ -19,14 +19,8 @@ explore-theories = writeScript "explore-theories" ''
 '';
 
 # Specify these once and only once
-extra-haskell-packages = writeScript "extra-haskell-packages" ''
-  cat <<EOF
-  mlspec
-  mlspec-helper
-  runtime-arbitrary
-  quickspec
-  EOF
-'';
+extra-haskell-packages = [ "mlspec" "mlspec-helper" "runtime-arbitrary"
+                           "quickspec" ];
 
 extra-packages = [ "mlspec" ];
 
@@ -66,7 +60,9 @@ build-env = writeScript "build-env" ''
 
   function extraHaskellPackages {
     # Haskell packages required for MLSpec
-    "${extra-haskell-packages}" | grep "^." | sed -e 's/^/h./g'
+    echo "${concatStringsSep "\n" extra-haskell-packages}" |
+      grep "^."                                            |
+      sed -e 's/^/h./g'
   }
 
   function mkEnvPkg {

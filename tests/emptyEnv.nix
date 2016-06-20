@@ -11,7 +11,7 @@ let result = runScript {} ''
       echo "Extra package '$PKG' wasn't found with empty environment" 1>&2
       exit 2
     }
-  done < <("${explore.extra-haskell-packages}")
+  done < <(echo "${concatStringsSep "\n" explore.extra-haskell-packages}")
   echo "true" > "$out"
 '';
 
