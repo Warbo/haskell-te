@@ -11,7 +11,7 @@ forceVal = x: msg: check msg (isString "${toJSON x}");
 areTimes = ts:
   assert check "All attributes are times"
                (all (n: assert check "'${n}' (${toJSON ts.${n}}) is time"
-                                     (checkTime ts.${n});
+                                     (checkTime ts."${n}");
                         true)
                     (attrNames ts));
   true;
@@ -101,14 +101,12 @@ indices = l: range 1 (length l);
 pkgTimes = { annotateTime, clusterTimes, dumpTime, exploreTimes }:
   let staticTime = sumTimes [ dumpTime annotateTime ];
 
-      dynamicTimes = mapAttrs (cCount: arr: map (n: sumTimes [
-                                                  clusterTimes.${cCount}
-                                                  (nth n exploreTimes.${cCount})
-                                                ])
-                                                (indices exploreTimes.${cCount}))
+      dynamicTimes = mapAttrs (cCount: arr: sumTimes (
+                                              [clusterTimes."${cCount}"] ++
+                                              exploreTimes."${cCount}"))
                               exploreTimes; # exploreTimes has the structure we want
 
-      totalTimes = mapAttrs (c: map (t: sumTimes [t staticTime]))
+      totalTimes = mapAttrs (_: t: sumTimes [t staticTime])
                             dynamicTimes;
 
    # Force inputs, to expose any latent errors
@@ -127,8 +125,8 @@ pkgTimes = { annotateTime, clusterTimes, dumpTime, exploreTimes }:
       # ever used
       {
         dynamicTimes = assert forceVal dynamicTimes "Forcing dynamicTimes";
-                       assert check "areTimeLists dynamicTimes"
-                                    (areTimeLists dynamicTimes);
+                       assert check "areTimes dynamicTimes"
+                                    (areTimes dynamicTimes);
                        dynamicTimes;
 
          staticTime  = assert forceVal  staticTime  "Forcing  staticTime ";
@@ -137,8 +135,8 @@ pkgTimes = { annotateTime, clusterTimes, dumpTime, exploreTimes }:
                        staticTime;
 
           totalTimes = assert forceVal   totalTimes "Forcing   totalTimes";
-                       assert check "areTimeLists totalTimes"
-                                    (areTimeLists totalTimes);
+                       assert check "areTimes totalTimes"
+                                    (areTimes totalTimes);
                        totalTimes;
       };
 }

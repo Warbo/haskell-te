@@ -44,16 +44,14 @@ checkIndices =
   assert all (cCount:
                assert check "Checking cCount '${cCount}'"
                             (checkCount cCount);
-               assert all (checkIndex cCount) (clusterIndices cCount);
+               assert checkAttr cCount;
                true)
              clusterCounts;
   true;
 
-checkIndex   = cCount: cIndex:
-  assert isInt cIndex;
-  assert cIndex > 0;
-  assert check "${toJSON equationCounts.${cCount}} has index ${cIndex}"
-               (cIndex <= length equationCounts.${cCount});
+checkAttr   = cCount:
+  assert check "${toJSON equationCounts} has attr ${cCount}"
+               (equationCounts ? "${cCount}");
   true;
 
 checkCount  = cCount:
@@ -61,71 +59,55 @@ checkCount  = cCount:
 
   assert check "All isAttrs '${toJSON sets}'"
                (all (n: assert check "${n} isAttrs '${toJSON sets.${n}}'"
-                                     (isAttrs sets.${n});
+                                     (isAttrs sets."${n}");
                         true)
                     names);
 
   assert all (n: assert check
                           "${n} has '${toJSON cCount}' '${toJSON sets.${n}}'"
-                          (sets.${n} ? ${cCount});
+                          (sets."${n}" ? "${cCount}");
                  true)
              names;
-
-  assert all (n: assert check
-                          "${n}.${cCount} isList '${toJSON sets.${n}.${cCount}}'"
-                          (isList sets.${n}.${cCount});
-                 true)
-             names;
-
-  assert checkLen cCount;
 
   true;
-
-# For all n and m, sets.n.cCount has the same length as sets.m.cCount
-doCheckLen = lengths: c: n: m:
-  let lhs = toString lengths.${n};
-      rhs = toString lengths.${m};
-   in assert check "Have ${n} length"                   (lengths ? ${n});
-      assert check "Have ${m} length"                   (lengths ? ${m});
-      assert check "${n} length ${toJSON lengths.${n}}" (isInt lengths.${n});
-      assert check "${m} length ${toJSON lengths.${m}}" (isInt lengths.${m});
-      assert check "Force lhs"                          (isString lhs);
-      assert check "Force rhs"                          (isString rhs);
-      assert check "${n}.${c} length ${lhs} == ${m}.${c} length ${rhs}"
-                   (lhs == rhs);
-      true;
-
-checkLen = cCount:
-  let lengths = fold (n: old: old // { ${n} = length sets.${n}.${cCount}; })
-                     {}
-                     names;
-   in assert all (n: all (doCheckLen lengths cCount n) names) names;
-      true;
 
 checkSet = s:
   assert check "isAttrs '${toJSON s}'" (isAttrs s);
   assert all (cCount: assert check "Attr ${cCount} in ${toJSON s}"
-                                   (s ? ${cCount});
+                                   (s ? "${cCount}");
                       true)
              clusterCounts;
   true;
 
+checkList = l:
+  assert check "isList '${toJSON l}'" (isList l);
+  true;
+
+checkPoints = all checkPoint allPoints;
+
+checkPoint = p:
+  assert check "Point type ${typeOf p} == set" (isAttrs p);
+  assert all (n: check "Point contains ${n}" (p ? "${n}"))
+                 ["eqCount" "size" "argCount" "totalTime" "timeBucket"
+                  "clusterCount"];
+  assert isInt p.eqCount;
+  true;
+
 # Implementation
 
-mkPoint = cCount: cIndex: rec {
-  eqCount       = nth cIndex equationCounts.${cCount};
-  size          = nth cIndex sizeCounts.${cCount};
-  argCount      = nth cIndex argCounts.${cCount};
-  totalTime     = nth cIndex totalTimes.${cCount};
+mkPoint = cCount: rec {
+  eqCount       = equationCounts."${cCount}";
+  size          = sizeCounts."${cCount}";
+  argCount      = argCounts."${cCount}";
+  totalTime     = totalTimes."${cCount}";
   timeBucket    = timeToBucket totalTime;
   clusterCount  = cCount;
 };
 
-clusterIndices = cCount: range 1 (length equations.${cCount});
+clusterCounts = addErrorContext "clusterCounts from ${toJSON equations}"
+                                (attrNames equations);
 
-clusterCounts = attrNames equations;
-
-pointsForCount = cCount: map (mkPoint cCount) (clusterIndices cCount);
+allPoints = map mkPoint clusterCounts;
 
 in
 
@@ -136,6 +118,8 @@ assert check "Checking sizeCounts"     (checkSet sizeCounts);
 assert check "Checking argCounts"      (checkSet argCounts);
 assert check "Checking totalTimes"     (checkSet totalTimes);
 
+assert check "Checking points"                     (checkList allPoints);
+assert check "Checking each point"                 checkPoints;
 assert check "Checking indices for sizeDataPoints" checkIndices;
 
-concatMap pointsForCount clusterCounts
+allPoints

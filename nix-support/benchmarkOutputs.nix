@@ -49,12 +49,12 @@ processPkg = { clusters, quick }: name: pkg: rec {
   annotated = rawAnnotated.stdout;
   clustered = mapAttrs (_: v:      v.stdout)  rawClustered.results;
   explored  = mapAttrs (_: map (x: x.stdout)) rawExplored.results;
-  equations = mapAttrs (_: map (x: x.stdout)) rawReduced.results;
+  equations = mapAttrs (_:      x: x.stdout)  rawReduced.results;
 
   # Useful for benchmarking
-  equationCounts = mapAttrs (_: map (f: fromJSON (runScript {} ''
+  equationCounts = mapAttrs (_: f: fromJSON (runScript {} ''
     "${jq}/bin/jq" -s 'length' < "${f}" > "$out"
-  ''))) equations;
+  '')) equations;
 
   sizeCounts = mapAttrs (_: map (f: fromJSON (runScript {} ''
       "${jq}/bin/jq" -s 'length' < "${f}" > "$out"
@@ -124,7 +124,7 @@ forceAttr = p: a:
   assert isAttrs p;
   assert isString a;
   assert check "Looking for attribute '${a}'" (p ? "${a}");
-  assert forceVal p."${a}" "Forcing attribute '${a}'";
+  assert forceVal p."${a}" "Forcing attribute '${a}' of type ${typeOf p.${a}}";
   true;
 
 processedOrFailed = p: if p.failed then p
