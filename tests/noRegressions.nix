@@ -1,16 +1,20 @@
 defs: with defs;
 
-parseJSON (runScript {} ''
+let
+
+input = "${toString ./exploreTheoriesExamples}/hastily.formatted.1";
+
+env = {};
+
+cmd = ''
   set -e
 
-  function explore {
-    "${explore.explore-theories}" < "$1" 2>&1
-  }
-
-  explore "${toString ./exploreTheoriesExamples}/hastily.formatted.1" > /dev/null || {
+  OUTPUT=$("${explore.explore-theories}" "${input}" 2>&1) || {
     echo "Failed to explore 'hastily':\n$OUTPUT" 1>&2
     exit 1
   }
 
   echo "true" > "$out"
-'')
+'';
+
+in parseJSON (runScript env cmd)
