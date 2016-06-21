@@ -135,6 +135,7 @@ in rec {
       # sending huge strings into Nix
       STDOUT=$(nix-store --add stdout)
       STDERR=$(nix-store --add stderr)
+        TIME=$(nix-store --add time)
 
       FAILED=false
       if [[ "$CODE" -ne 0 ]]
@@ -152,19 +153,21 @@ in rec {
         echo "Benchmarked '${cmd}' at '$(cat time)' seconds" 1>&2
       fi
 
-      "${jq}/bin/jq" -n --arg     time   "$(cat time)"    \
-                        --arg     cmd    "${cmd}"         \
-                        --argjson args   '${toJSON args}' \
-                        --arg     stdout "$STDOUT"        \
-                        --arg     stderr "$STDERR"        \
-                        --argjson failed "$FAILED"        \
-                        '{"failed" : $failed,
-                          "cmd"    : $cmd,
-                          "args"   : $args,
-                          "stdout" : $stdout,
-                          "stderr" : $stderr,
-                          "time"   : {
-                            "mean" : {"estPoint": $time}}}'
+      "${jq}/bin/jq" -n --arg     time     "$(grep '^[0-9][0-9.]*$' < time)" \
+                        --arg     cmd      "${cmd}"                          \
+                        --argjson args     '${toJSON args}'                  \
+                        --arg     stdout   "$STDOUT"                         \
+                        --arg     stderr   "$STDERR"                         \
+                        --arg     timefile "$TIME"                           \
+                        --argjson failed   "$FAILED"                         \
+                        '{"failed"   : $failed,
+                          "cmd"      : $cmd,
+                          "args"     : $args,
+                          "stdout"   : $stdout,
+                          "stderr"   : $stderr,
+                          "timefile" : $timefile,
+                          "time"     : {
+                            "mean"   : {"estPoint": $time}}}'
     '';
   benchmark = quick: if quick then withTime else withCriterion;
 }
