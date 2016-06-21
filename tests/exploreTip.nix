@@ -26,7 +26,9 @@ withDbg = dbg: msg: x: addErrorContext dbg (testMsg x msg || trace dbg false);
 
 in all (x: x) [
 
-  (testDbg (!output.failed)  "TIP benchmark didn't fail" "")
+  (testDbg (!output.failed)  "TIP benchmark didn't fail"
+           (toJSON { inherit (output) rawDump rawAnnotated rawClustered
+                             formatted rawExplored rawReduced; }))
 
   (testDbg explored          "TIP benchmark explored"
            (toJSON { inherit (output) formatted rawExplored; }))

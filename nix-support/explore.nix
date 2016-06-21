@@ -12,7 +12,7 @@ explore-theories = writeScript "explore-theories" ''
   INPUT=$(cat)
 
   # Extracts packages as unquoted strings
-  ENVIRONMENT_PACKAGES=$(echo "$INPUT" | "${jq}/bin/jq" -r '.[] | .[] | .package' | sort -u)
+  ENVIRONMENT_PACKAGES=$(echo "$INPUT" | "${jq}/bin/jq" -r '.[] | (if type == "array" then .[] else . end) | .package' | sort -u)
   export ENVIRONMENT_PACKAGES
 
   echo "$INPUT" | "${build-env}" MLSpec "$@"
@@ -138,7 +138,9 @@ build-env = writeScript "build-env" ''
 
 withStandalonePkg = src: ''export STANDALONE_PKG="${standalonePkg src}"'';
 
-standalonePkg = src: ''(haskellPackages.callPackage (import ${src} ) {})'';
+standalonePkg = src: ''(if builtins.pathExists ${src}/default.nix
+                           then haskellPackages.callPackage (import ${src} ) {}
+                           else h.mlspec)'';
 
 explore = writeScript "format-and-explore" ''
             set -e

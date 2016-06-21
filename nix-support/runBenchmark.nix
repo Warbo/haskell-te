@@ -9,6 +9,7 @@ let knownErrors = writeScript "known-error" ''
       MLSpec: Failed
       syntax error
       Argument list too long
+      out of memory
     '';
     checkStderr = writeScript "check-stderr" ''
       set -e
