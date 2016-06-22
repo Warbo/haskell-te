@@ -22,7 +22,7 @@ rec {
 
   pkg = haskellPackages.callPackage pkgDef {};
 
-  process = { clusters ? defaultClusters, quick ? true }:
-              processPackage { inherit clusters quick; }
+  process = { clusters ? defaultClusters, quick ? true, sampleSize ? null }:
+              processPackage { inherit clusters quick sampleSize; }
                              pkg.name pkg;
 }

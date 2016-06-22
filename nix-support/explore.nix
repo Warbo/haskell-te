@@ -5,18 +5,76 @@ with lib;
 
 let
 
-explore-theories = writeScript "explore-theories" ''
+explore-theories = f: writeScript "explore-theories" ''
   set -e
   set -o pipefail
 
   INPUT=$(cat)
 
+  function noDepth {
+    grep -v "^Depth" || true # Don't abort if nothing found
+  }
+
   # Extracts packages as unquoted strings
-  ENVIRONMENT_PACKAGES=$(echo "$INPUT" | "${jq}/bin/jq" -r '.[] | (if type == "array" then .[] else . end) | .package' | sort -u)
+  ENVIRONMENT_PACKAGES="${extractEnv f}"
   export ENVIRONMENT_PACKAGES
 
-  echo "$INPUT" | "${build-env}" MLSpec "$@"
+  echo "$INPUT" | MLSpec "$@" | noDepth | jq -s '.'
 '';
+
+extractEnv = f:
+  runScript { buildInputs = [ jq ]; } ''
+    set -e
+    set -o pipefail
+
+    [[ -e "${f}" ]] || {
+      echo "Path '${f}' doesn't exist" 1>&2
+      exit 1
+    }
+
+    jq -r '.[] | (if type == "array" then .[] else . end) | .package' < "${f}" |
+      sort -u > "$out"
+  '';
+
+extractedEnv = standalone: f:
+  let strip  = s: let unpre = removePrefix "\n" (removePrefix " " s);
+                      unsuf = removeSuffix "\n" (removeSuffix " " unpre);
+                   in if unsuf == s
+                         then s
+                         else strip unsuf;
+      extra     = standalone != null;
+      salonePkg = haskellPackages.callPackage (import standalone) {};
+      salone    = if pathExists "${toString standalone}/default.nix"
+                     then trace "Including extra package ${toString standalone}"
+                            [ salonePkg ]
+                     else trace "Ignoring ${toString standalone} with no default.nix"
+                            [];
+      custom = map strip (splitString "\n" (extractEnv f));
+      hsPkgs = custom ++ extra-haskell-packages;
+      areHs  = filter (n: haskellPackages ? "${n}") hsPkgs;
+      hs     = haskellPackages.ghcWithPackages (h:
+                 (map (n: h."${n}") areHs) ++ (if extra
+                                                  then salone
+                                                  else []));
+      ps     = [ hs ] ++ (map (n: defs."${n}") extra-packages);
+      msg    = if extra
+                  then "including '${toString standalone}'"
+                  else "";
+      checkPkg = p: ''
+          if ghc-pkg list "${p}" | grep "(no packages)" > /dev/null
+          then
+            echo "Package '${p}' not in generated environment" 1>&2
+            exit 1
+          fi
+        '';
+      check  = parseJSON (runScript { buildInputs = ps; } ''
+                 ${if extra
+                      then checkPkg salonePkg.name
+                      else ""}
+                 echo "true" > "$out"
+               '');
+   in trace "Extracted env from '${f}' ${msg}"
+            (assert check; ps);
 
 # Haskell packages required for MLSpec
 extra-haskell-packages = [ "mlspec" "mlspec-helper" "runtime-arbitrary"
@@ -25,7 +83,7 @@ extra-haskell-packages = [ "mlspec" "mlspec-helper" "runtime-arbitrary"
 prefixed-haskell-packages = concatStringsSep "\n"
                               (map (x: "h.${x}") extra-haskell-packages);
 
-extra-packages = [ "mlspec" ];
+extra-packages = [ "jq" "mlspec" ];
 
 exploreEnv = [ (haskellPackages.ghcWithPackages (h: map (n: h."${n}")
                                                     extra-haskell-packages)) ] ++
@@ -52,8 +110,6 @@ mkGhcPkg = writeScript "mkGhcPkg" ''
     fi
   done
 
-  echo "$STANDALONE_PKG" # Possibly empty, but allows non-Hackage packages
-
   echo "]))"
 '';
 
@@ -64,25 +120,29 @@ build-env = writeScript "build-env" ''
   set -e
   set -o pipefail
 
-  function mkEnvPkg {
-    GIVEN=$(cat)
-    GHCPKG=$("${mkGhcPkg}" "$GIVEN"  "${prefixed-haskell-packages}")
-    printf 'buildEnv { name = "%s"; paths = [%s %s];}' \
-                              "$1"          "$GHCPKG"  \
-                                            "${concatStringsSep " " extra-packages}"
+  function ensurePkg {
+    if ghc-pkg list "$1" | grep "$1" > /dev/null
+    then
+      return 0
+    fi
+
+    GHC_PKG=$(command -v ghc-pkg)
+    PKGS=$(ghc-pkg list)
+    echo    "Didn't find Haskell package '$1' with '$GHC_PKG'." 1>&2
+    echo -e "Available packages are:\n$PKGS\n\nAborting" 1>&2
+    exit 1
   }
 
-  function havePkg {
-    ghc-pkg list "$1" | grep "$1" > /dev/null
-  }
-
-  function needEnv {
+  function ensureEnv {
     # TODO: Doesn't take extraPackages into account yet
-    hash "ghc-pkg" > /dev/null 2>&1 || return 0
+    hash "ghc-pkg" > /dev/null 2>&1 || {
+      echo "Need environment to get the ghc-pkg command" 1>&2
+      exit 1
+    }
 
     while read -r PKG
     do
-        havePkg "$PKG" || return 0
+        ensurePkg "$PKG"
     done < <(echo "${concatStringsSep "\n" extra-haskell-packages}")
 
     NEEDED=$(cat)
@@ -90,11 +150,11 @@ build-env = writeScript "build-env" ''
     then
         while read -r PKG
         do
-            havePkg "$PKG" || return 0
+            ensurePkg "$PKG"
         done < <(echo "$NEEDED")
     fi
 
-    return 1
+    return 0
   }
 
   if [[ -z "$ENVIRONMENT_PACKAGES" ]]
@@ -108,59 +168,25 @@ build-env = writeScript "build-env" ''
 
     echo "No extra packages given" 1>&2
     INPUT=""
-    HPKGS=""
   else
     echo "Extra packages given: $ENVIRONMENT_PACKAGES" 1>&2
     INPUT=$(echo "$ENVIRONMENT_PACKAGES" | sort -u | grep "^.")
-    HPKGS=$(echo "$INPUT" | sed -e 's/^/h./')
   fi
 
-  function mkName {
-    GOT=$(cat)
-    EXTRA=$(printf "%s %s" "${concatStringsSep "\n" extra-haskell-packages}" \
-                           "${concatStringsSep " "  extra-packages}")
-    MD5HASH=$(echo "$GOT $EXTRA" | tr ' ' '\n' | sort -u | tr -d '[:space:]' | md5sum | cut -d ' ' -f1)
-    printf "explore-theories-%s" "$MD5HASH"
-  }
+  echo "$INPUT" | ensureEnv
 
-    NAME=$(echo "$HPKGS" | mkName)
-  ENVPKG=$(echo "$HPKGS" | mkEnvPkg "$NAME")
-
-  if echo "$INPUT" | needEnv
-  then
-    echo "build-env: Running '$*' in Nix environment '$ENVPKG'" 1>&2
-    nix-shell --show-trace --run "$*" -p "$ENVPKG"
-  else
-    echo "build-env: Running '$*' in existing environment" 1>&2
-    "$@"
-  fi
+  "$@"
 '';
 
-withStandalonePkg = src: ''export STANDALONE_PKG="${standalonePkg src}"'';
-
-standalonePkg = src: ''(if builtins.pathExists ${src}/default.nix
-                           then haskellPackages.callPackage (import ${src} ) {}
-                           else h.mlspec)'';
-
-explore = writeScript "format-and-explore" ''
-            set -e
-            set -o pipefail
-
-            function noDepth {
-              grep -v "^Depth" || true # Don't abort if nothing found
-            }
-            "${explore-theories}" | noDepth
-          '';
-
 doExplore = standalone: quick: clusterCount: f:
-              parseJSON (runScript {} ''
-                set -e
-                export CLUSTERS="${clusterCount}"
-                ${if standalone == null
-                                then ""
-                                else withStandalonePkg standalone}
-                "${benchmark quick (toString explore) []}" < "${f}" > "$out"
-              '');
+  let cmd    = toString (explore-theories f);
+      script = ''
+        set -e
+        export CLUSTERS="${clusterCount}"
+        "${benchmark quick cmd []}" < "${f}" > "$out"
+      '';
+      env    = { buildInputs = extractedEnv standalone f; };
+   in parseJSON (runScript env script);
 
 go = { quick, standalone }: clusterCount: clusters:
        map (doExplore standalone quick clusterCount) clusters;
@@ -202,6 +228,6 @@ checkAndExplore = { quick, formatted, standalone ? null }:
 
 in {
   inherit build-env extra-haskell-packages extra-packages explore-theories
-          exploreEnv;
+          exploreEnv extractedEnv;
   explore = checkAndExplore;
 }

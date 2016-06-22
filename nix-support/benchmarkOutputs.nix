@@ -9,7 +9,7 @@ let
 
 sum = fold (x: y: x + y) 0;
 
-processPkg = { clusters, quick }: name: pkg: rec {
+processPkg = { clusters, quick, sampleSize ? null }: name: pkg: rec {
   # Original Haskell fields
   inherit name pkg;
   src = if typeOf pkg.src == "path"
@@ -49,7 +49,16 @@ processPkg = { clusters, quick }: name: pkg: rec {
            ];
 
   # Stick to the quick output, so testing is faster
-  dump      = addErrorContext "rawDump: ${toJSON rawDump}" rawDump.stdout;
+  dump      = addErrorContext "rawDump: ${toJSON rawDump}"
+                (if sampleSize == null
+                    then rawDump.stdout
+                    else runScript { buildInputs = [ jq ]; } ''
+                           jq -c '.[]' < "${rawDump.stdout}" |
+                           shuf                              |
+                           head -n${toString sampleSize}     |
+                           jq -s '.' > out
+                           "${storeResult}" out
+                         '');
   annotated = rawAnnotated.stdout;
   clustered = mapAttrs (_: v:      v.stdout)  rawClustered.results;
   explored  = mapAttrs (_: map (x: x.stdout)) rawExplored.results;
@@ -152,10 +161,10 @@ checkProcessed = p:
 
 processCheck = args: name: pkg: processedOrFailed (processPkg args name pkg);
 
-basic = clusters: quick: mapAttrs (processCheck { inherit clusters quick; })
+basic = clusters: quick: sampleSize: mapAttrs (processCheck { inherit clusters quick sampleSize; })
                                   haskellPackages;
 
-bootstraps = clusters: quick: mapAttrs (processCheck { inherit clusters quick; })
+bootstraps = clusters: quick: sampleSize: mapAttrs (processCheck { inherit clusters quick sampleSize; })
                                        bootstrapped;
 
 bootstrapped =
@@ -187,8 +196,8 @@ bootstrapped =
   };
 
 in {
-  processPackage  = { clusters ? defaultClusters, quick }:
-                        processCheck { inherit clusters quick; };
-  processPackages = { clusters ? defaultClusters, quick }:
-                      basic clusters quick // bootstraps clusters quick;
+  processPackage  = { clusters ? defaultClusters, quick, sampleSize ? null }:
+                        processCheck { inherit clusters quick sampleSize; };
+  processPackages = { clusters ? defaultClusters, quick, sampleSize ? null }:
+                      basic clusters quick sampleSize // bootstraps clusters quick sampleSize;
 }

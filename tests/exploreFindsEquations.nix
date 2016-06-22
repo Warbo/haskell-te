@@ -1,46 +1,40 @@
-defs: with defs;
+defs: with defs; with builtins;
 
-let path   = toString ./exploreTheoriesExamples;
-    result = runScript {} ''
-  set -e
+let
 
-  function explore {
-    "${explore.explore-theories}" < "$1" 2>&1
-  }
+path   = toString ./exploreTheoriesExamples;
 
-  echo "Making sure exploration actually works" 1>&2
-  FOUND=0
-  for F in "${path}/"*
-  do
-    echo "Exploring '$F'" 1>&2
-    OUTPUT=$(explore "$F") || {
-      echo "Failed to explore '$F': $OUTPUT" 1>&2
-      exit 2
-    }
+files  = map (f: "${path}/${f}") (attrNames (readDir path));
 
-    if echo "$OUTPUT" | grep "No clusters found"
-    then
-      echo "No clusters found by MLSpec (did it receive any input?)" 1>&2
-      exit 3
-    fi
+foundEquations = f:
+  let env = { buildInputs = explore.extractedEnv null f; };
+      cmd = ''
+        set -e
+        set -o pipefail
 
-    if echo "$OUTPUT" | grep "^{" > /dev/null
-    then
-      echo "Found equations for '$F'" 1>&2
-      FOUND=1
-    else
-      echo -e "Couldn't find any equations in output of '$F':\n$OUTPUT" 1>&2
-    fi
-  done
+        echo "Exploring '${f}'" 1>&2
+        OUTPUT=$("${explore.explore-theories f}" < "${f}" 2>&1) || {
+          echo -e "Failed to explore '${f}', output follows:\n$OUTPUT\nEND" 1>&2
+          exit 2
+        }
 
-  if [[ "$FOUND" -eq 0 ]]
-  then
-    echo "No equations found from files in ${path}/" 1>&2
-    exit 4
-  fi
+        if echo "$OUTPUT" | grep "No clusters found"
+        then
+          echo "No clusters found by MLSpec (did it receive any input?)" 1>&2
+          exit 3
+        fi
 
-  echo "Exploration worked, found some equations from data/" 1>&2
-  echo "true" > "$out"
-'';
+        if echo "$OUTPUT" | grep "^{" > /dev/null
+        then
+          echo "Found equations for '${f}'" 1>&2
+          echo "true" > "$out"
+        else
+          echo -e "Couldn't find any equations in output of '${f}':\n$OUTPUT" 1>&2
+          echo "false" > "$out"
+        fi
+      '';
+   in parseJSON (runScript env cmd);
 
-in testMsg (parseJSON result) "Equations found"
+foundAny = any foundEquations files;
+
+in testMsg foundAny "Equations found"

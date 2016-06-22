@@ -1,11 +1,14 @@
-defs: with defs;
+defs: with defs; with builtins;
 
-parseJSON (runScript {} ''
+let
+
+path   = toString ./exploreTheoriesExamples;
+
+files  = map (f: "${path}/f") (attrNames (readDir path));
+
+noDupesFor = f: parseJSON (runScript {} ''
   set -e
-
-  function explore {
-    "${explore.explore-theories}" < "$1" 2>&1
-  }
+  set -o pipefail
 
   function noDupes {
     DUPES=$(grep "^building path.*repo-head" |
@@ -18,16 +21,17 @@ parseJSON (runScript {} ''
     }
   }
 
-  echo "Making sure packages aren't checked over and over" 1>&2
-  for F in "${toString ./exploreTheoriesExamples}/"*
-  do
-    echo "Exploring '$F'" 1>&2
-    OUTPUT=$(explore "$F") || {
-      echo "Failed to explore '$F'" 1>&2
-      exit 2
-    }
-    echo "$OUTPUT" | noDupes
-  done
-  echo "No duplicate checks were spotted" 1>&2
+  echo "Exploring '${f}'" 1>&2
+  OUTPUT=$("${explore.explore-theories f}" < "${f}" 2>&1) || {
+    echo "Failed to explore '${f}'" 1>&2
+    exit 2
+  }
+
+  echo "$OUTPUT" | noDupes
+
   echo "true" > "$out"
-'')
+'');
+
+noDupes = all noDupesFor files;
+
+in testMsg noDupes "No duplicate environments"
