@@ -153,7 +153,7 @@ in rec {
         echo "Benchmarked '${cmd}' at '$(cat time)' seconds" 1>&2
       fi
 
-      "${jq}/bin/jq" -n --arg     time     "$(grep '^[0-9][0-9.]*$' < time)" \
+      "${jq}/bin/jq" -n --arg     time     "$(grep "^[0-9][0-9.]*$" < time)" \
                         --arg     cmd      "${cmd}"                          \
                         --argjson args     '${toJSON args}'                  \
                         --arg     stdout   "$STDOUT"                         \
