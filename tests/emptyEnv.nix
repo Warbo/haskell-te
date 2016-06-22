@@ -2,7 +2,11 @@ defs: with defs; with lib;
 
 # The contents of extra-haskell-packages should be available, even with no
 # ENVIRONMENT_PACKAGES given
-let result = runScript {} ''
+let
+
+f = writeScript "dummy-json" "[]";
+
+result = runScript { buildInputs = explore.extractedEnv null f; } ''
   set -e
   while read -r PKG
   do
