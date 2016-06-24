@@ -19,7 +19,7 @@ haveDump = testMsg (!dump.failed)           "Tip module dump succeeded" &&
 # our scripts can handle packages taken straight from Cabal directories
 asts      = dump.stdout;
 pkgName   = pkg.name;
-env       = { buildInputs = [ adb-scripts ]; };
+env       = { buildInputs = [ jq getDeps utillinux ]; };
 
 ranTypes = parseJSON (runScript env ''
              set -e

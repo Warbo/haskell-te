@@ -1,4 +1,4 @@
-{ adb-scripts, annotateAstsScript, defaultClusters, getDepsScript,
+{ annotateAstsScript, defaultClusters, getDepsScript,
   getTypesScript, jq, lib, ml4hs, ML4HSFE, nixRecurrentClusteringScript,
   parseJSON, recurrent-clustering, runScript, runTypes, runWeka, storeResult,
   processPackages}:
@@ -16,7 +16,7 @@ rec {
               (testMsg cond msg || trace dbg false);
 
   testPackages = import ./testPackages.nix {
-                   inherit adb-scripts annotateAstsScript defaultClusters
+                   inherit annotateAstsScript defaultClusters
                            getDepsScript getTypesScript jq lib ml4hs ML4HSFE
                            nixRecurrentClusteringScript parseJSON
                            recurrent-clustering runScript runTypes runWeka

@@ -1,4 +1,4 @@
-{ adb-scripts, annotateAstsScript, benchmark, getDepsScript, jq, parseJSON,
+{ annotateAstsScript, benchmark, getDeps, getDepsScript, jq, parseJSON,
   runScript, runTypesScript, writeScript }:
 { asts, pkg, pkgSrc ? null, quick }:
 
@@ -12,7 +12,7 @@ let annotateDb = writeScript "annotateDb" ''
         "${getDepsScript}"
     '';
 
- in parseJSON (runScript { buildInputs = [ adb-scripts ]; } ''
+ in parseJSON (runScript { buildInputs = [ jq getDeps utillinux ]; } ''
       set -e
       "${benchmark quick annotateDb []}" < "${asts}" > "$out"
     '')

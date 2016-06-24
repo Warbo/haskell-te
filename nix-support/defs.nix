@@ -13,7 +13,7 @@ let defs = rec {
   inherit (import ../annotatedb {
              inherit downloadAndDump getDeps jq lib nix runScript stdenv
                      utillinux;
-          }) adb-scripts annotateAsts dumpAndAnnotate;
+          }) annotateAsts dumpAndAnnotate;
 
   inherit (import ./runBenchmark.nix {
              inherit bash check coreutils jq lib
@@ -38,7 +38,7 @@ let defs = rec {
            };
 
   annotate        = import ./annotate.nix        {
-                      inherit adb-scripts annotateAstsScript benchmark
+                      inherit annotateAstsScript benchmark
                               getDepsScript jq parseJSON runScript
                               runTypesScript writeScript;
                     };
@@ -124,7 +124,7 @@ let defs = rec {
                          };
 
   recurrent-clustering = import ../recurrent-clustering {
-                           inherit adb-scripts jq ML4HSFE nix order-deps stdenv;
+                           inherit jq ML4HSFE nix order-deps stdenv;
                          };
 
   downloadAndDump      = import ./downloadAndDump.nix {
@@ -165,7 +165,7 @@ let defs = rec {
                  };
 
   runTypes = import ./runTypes.nix        {
-               inherit adb-scripts jq runScript runTypesScript storeResult;
+               inherit jq runScript runTypesScript storeResult;
              };
 
   nth = n: lst:
@@ -178,7 +178,7 @@ let defs = rec {
        else nth (n - 1) (tail lst);
 
   inherit (import ./test-defs.nix {
-            inherit adb-scripts annotateAstsScript defaultClusters
+            inherit annotateAstsScript defaultClusters
                     getDepsScript getTypesScript jq lib ml4hs ML4HSFE
                     nixRecurrentClusteringScript parseJSON
                     recurrent-clustering runScript runTypes runWeka storeResult

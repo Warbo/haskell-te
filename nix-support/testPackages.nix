@@ -1,4 +1,4 @@
-{ adb-scripts, annotateAstsScript, defaultClusters, getDepsScript,
+{ annotateAstsScript, defaultClusters, getDepsScript,
   getTypesScript, jq, lib, ml4hs, ML4HSFE, nixRecurrentClusteringScript,
   parseJSON, processPackages, recurrent-clustering, runScript, runTypes,
   runWeka, storeResult }:
@@ -20,7 +20,7 @@ let clusters         = listToAttrs (map (c: {
     extend            = pkg: with pkg; pkg // rec {
       ranTypes  = runTypes dump pkg {};
 
-      preAnnotated = runScript { buildInputs = [ adb-scripts ]; } ''
+      preAnnotated = runScript { buildInputs = [ jq getDeps utillinux ]; } ''
         set -e
         "${annotateAstsScript}" < "${ranTypes}" > annotated.json
         "${storeResult}" annotated.json "$out"
@@ -33,7 +33,7 @@ let clusters         = listToAttrs (map (c: {
         "${storeResult}" scopeResults.json "$out"
       '';
 
-      gotTypes = runScript { buildInputs = [ adb-scripts ]; } ''
+      gotTypes = runScript { buildInputs = [ jq getDeps utillinux ]; } ''
         set -e
         "${getTypesScript}" < "${scopeResults}" > types.json
         "${storeResult}" types.json "$out"
@@ -46,7 +46,7 @@ let clusters         = listToAttrs (map (c: {
         "${storeResult}" typeResults.json "$out"
       '';
 
-      deps = runScript { buildInputs = [ adb-scripts ]; } ''
+      deps = runScript { buildInputs = [ jq getDeps utillinux ]; } ''
         set -e
         "${getDepsScript}" < "${annotated}" > deps.json
         "${storeResult}" deps.json "$out"

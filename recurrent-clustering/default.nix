@@ -1,6 +1,6 @@
-{ stdenv, jq, order-deps, ML4HSFE, nix, adb-scripts }:
+{ stdenv, jq, order-deps, ML4HSFE, nix }:
 
-stdenv.mkDerivation {
+builtins.trace "FIXME: is recurrent-clustering/default.nix needed?" stdenv.mkDerivation {
   name = "recurrent-clustering";
 
   # Exclude .git and test-data from being imported into the Nix store

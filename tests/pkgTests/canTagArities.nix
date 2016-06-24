@@ -1,13 +1,13 @@
 defs: with defs; pkg:
 with builtins;
 
-let arities = runScript { buildInputs = [ adb-scripts ]; } ''
+let arities = runScript { buildInputs = [ jq getDeps utillinux ]; } ''
       set -e
       "${getAritiesScript}" < "${pkg.typeResults}" > arities.json
       "${storeResult}" arities.json "$out"
     '';
 
-    arityTagged = runScript { buildInputs = [ adb-scripts ]; } ''
+    arityTagged = runScript { buildInputs = [ jq getDeps utillinux ]; } ''
       set -e
       "${tagAstsScript}" "${arities}" "{}" < "${pkg.dump}" > tagged.json
       "${storeResult}" tagged.json "$out"
