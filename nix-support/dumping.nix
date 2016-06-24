@@ -33,7 +33,8 @@ rec {
                                USER_HOME   = builtins.getEnv "HOME";
                              };
 
-  dump-package-env = writeScript "dump-package-env" ''
+  dump-package-env = trace "FIXME: dump-package-env should be used by the outer Nix"
+  writeScript "dump-package-env" ''
     #!/usr/bin/env bash
     set -e
 
