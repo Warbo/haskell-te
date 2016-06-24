@@ -1,5 +1,5 @@
 { annotateAstsScript, benchmark, getDeps, getDepsScript, jq, parseJSON,
-  runScript, runTypesScript, writeScript }:
+  runScript, runTypesScript, utillinux, writeScript }:
 { asts, pkg, pkgSrc ? null, quick }:
 
 let annotateDb = writeScript "annotateDb" ''

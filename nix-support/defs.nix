@@ -38,9 +38,9 @@ let defs = rec {
            };
 
   annotate        = import ./annotate.nix        {
-                      inherit annotateAstsScript benchmark
+                      inherit annotateAstsScript benchmark getDeps
                               getDepsScript jq parseJSON runScript
-                              runTypesScript writeScript;
+                              runTypesScript utillinux writeScript;
                     };
 
   getTypesScript = import ./getTypesScript.nix {
