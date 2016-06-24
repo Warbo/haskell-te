@@ -49,16 +49,23 @@ processPkg = { clusters, quick, sampleSize ? null }: name: pkg: rec {
            ];
 
   # Stick to the quick output, so testing is faster
-  dump      = addErrorContext "rawDump: ${toJSON rawDump}"
-                (if sampleSize == null
-                    then rawDump.stdout
-                    else runScript { buildInputs = [ jq ]; } ''
-                           jq -c '.[]' < "${rawDump.stdout}" |
-                           shuf                              |
-                           head -n${toString sampleSize}     |
-                           jq -s '.' > out
-                           "${storeResult}" out
-                         '');
+  dump = if sampleSize == null
+            then rawDump.stdout
+            else runScript { buildInputs = [ jq ]; } ''
+                   # Sample from quickspecable definitions
+                   cat "${rawDump.stdout}"                   |
+                   jq -c 'map(select(.quickspecable)) | .[]' |
+                   shuf                                      |
+                   head -n${toString sampleSize}             > fg
+
+                   # Include the un-quickspecable "background"
+                   cat "${rawDump.stdout}"                         |
+                   jq -c 'map(select(.quickspecable | not)) | .[]' > bg
+
+                   cat fg bg | jq -s '.' > out
+
+                   "${storeResult}" out
+                 '';
   annotated = rawAnnotated.stdout;
   clustered = mapAttrs (_: v:      v.stdout)  rawClustered.results;
   explored  = mapAttrs (_: map (x: x.stdout)) rawExplored.results;
