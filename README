@@ -1,83 +1,12 @@
 # Haskell Theory Exploration #
 
 This repository is designed to allow reproducible experiments in theory
-exploration, in the Haskell language. The actual functionality is implemented in
-a collection of separate tools, this repository is mostly focused on
-benchmarking those tools.
+exploration, in the Haskell language. Many separate tools are used in this
+implementation, tied together using the Nix expression language.
 
 ## Quick Summary ##
 
  - You'll need the Nix package manager and a UNIX-like OS (tested on Linux). Nix
    will take care of gathering any other dependencies.
- - Invoke `run-tests.sh` to run all tests.
- - Invoke `run-benchmarks.sh` to run all benchmarks.
- - Results are cached to `cache` if possible (i.e. if it's writable); otherwise
-   fallbacks such as `~/.cache` are used.
- - If there is a list of packages in the cache, we use that. Otherwise we fetch
-   one from hackage.haskell.org. Since the list changes, this needs to be kept
-   in order to ensure reproducibility.
- - Since hackage is large, we may not want to process the whole thing. To ensure
-   we process a representative sample, we shuffle the package list. This avoids,
-   for example, runs of similarly-named packages (like acme-*, aeson-*, etc.)
-   being over-represented.
- - The shuffled package list is also cached. This is needed for reproducibility,
-   and also makes caching more useful.
-
-The repository is laid out as follows:
-
- - `benchmarks` contains scripts to benchmark each stage of the theory
-   exploration process.
- - `cache` will be created to store intermediate output, unless the directory is
-   not writable (in which case a variety of XDG cache directories are tried as
-   fallbacks).
- - `nix-support` instructs the Nix package manager on where to find each tool.
- - `packages` contains git submodules for each tool, to ensure we're using
-   particular versions.
- - `scripts` contains a variety of helper scripts used by the benchmarks.
- - `tests` contains test scripts to ensure the repository is working.
- - `README` is this file.
- - `run-benchmarks.sh` is the recommended way to invoke the benchmark scripts.
- - `run-tests.sh` is the recommended way to invoke the tests.
- - `shell.nix` tells Nix which packages to make available. This is meant to be
-   used in combination with `nix-support/nixPath.sh`.
-
-## `benchmarks` ##
-
- - `benchmark.sh` is the top-level script for invoking the others, looping
-   through a variety of Haskell packages, downloading their source, extracting
-   their ASTs, etc.
- - `benchmark-ghc.sh` builds a Haskell package with the GHC compiler. It gives
-   us a baseline which we can compare our feature extraction tool against. It
-   also lets us skip packages which won't build under normal circumstances.
- - `benchmark-features.sh` measures the one-time-cost associated with extracting
-   features from a Haskell library. It simply calls `benchmark-dump-asts.sh` and
-   `benchmark-annotate.sh`.
- - `benchmark-dump-asts.sh` builds a Haskell package using the GHC compiler,
-   augmented with a plugin for extracting Core ASTs as s-expressions.
- - `benchmark-annotate.sh` appends additional information to the ASTs extracted
-   by `benchmark-dump-asts.sh`.
- - `benchmark-cluster.sh` measures the cost of clustering the features extracted
-   from a Haskell package. Clustering may be performed many times with a variety
-   of different parameters or input combinations, hence we measure it separately
-   to the one-time-cost of `benchmark-features.sh`.
- - `benchmark-explore.sh` measures the cost of exploring a collection of
-   theories, derived from the clusters produced by `benchmark-cluster.sh`. As a
-   baseline, we treat exploring a single cluster as equivalent to exploring
-   without having performed feature extraction or clustering.
- - `benchmark-simplify.sh` combines the results of each theory in a collection
-   together, simplifying to remove redundancies.
- - `bench-run.sh` invokes our benchmarking tool (based on Criterion); it is used
-   by the scripts above.
- - `last-stdout.sh` obtains the stdout of a benchmarked tool. Since benchmarking
-   runs each tool over and over, we only select the output of the final run.
-
-## `nix-support` ##
-
- - `default.nix` specifies to location and name of each package we use.
- - `nixFromCabal.nix` allows a directory containing a Cabal package (Cabal is
-   the build system used by Haskell) to be used as a Nix package.
- - `nixPath.sh` produces a value suitable for use as `NIX_PATH` which overrides
-   the default package set with ours.
- - `README` explains our use of Nix in more detail.
- - `refresh.sh` updates the utilities in `nix-support` to their latest versions
-   (currently this is just for `nixFromCabal.nix`).
+ - Invoke `test.sh` to run all tests.
+ - Results are cached by Nix.
