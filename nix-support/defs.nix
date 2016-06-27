@@ -1,13 +1,13 @@
 # Custom definitions
 { fetchurl, bash, bc, buildEnv, coreutils, file, gnuplot, gnutar,
-  haskellPackages, jq, jre, lib, nix, pv, runCommand, stdenv, time,
-  utillinux, weka, wget, writeScript }:
+  haskellPackages, jq, jre, lib, nix, perl, procps, pv, runCommand, stdenv,
+  time, utillinux, weka, wget, writeScript }:
 
 with builtins; with lib;
 let defs = rec {
   inherit (import ./dumping.nix {
-             inherit stdenv haskellPackages nix gnutar jq lib runCommand
-                     writeScript;
+             inherit haskellPackages gnutar jq lib nix perl procps runCommand
+                     stdenv writeScript;
           }) dump-package runScript importDir;
 
   inherit (import ../annotatedb {

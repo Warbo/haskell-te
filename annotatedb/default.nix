@@ -2,8 +2,10 @@
 
 rec {
   annotateAsts    = import ./annotateAsts.nix    {
-                      inherit stdenv adb-scripts;                      };
+                      inherit stdenv;
+                    };
 
   dumpAndAnnotate = import ./dumpAndAnnotate.nix {
-                      inherit downloadAndDump;                         };
+                      inherit downloadAndDump;
+                    };
 }

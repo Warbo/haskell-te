@@ -3,24 +3,29 @@
 
 with builtins; with lib;
 
-# A quick and dirty sanity check
-let knownErrors = writeScript "known-error" ''
-      jq: error
-      MLSpec: Failed
-      syntax error
-      Argument list too long
-      out of memory
-    '';
-    checkStderr = writeScript "check-stderr" ''
-      set -e
-      if grep -Ff "${knownErrors}" < "$1" 1>&2
-      then
-        echo "Errors found in '$1'" 1>&2
-        exit 2
-      fi
-      exit
-    '';
-in rec {
+rec {
+
+  # A quick and dirty sanity check
+  knownErrors = writeScript "known-errors" ''
+    jq: error
+    MLSpec: Failed
+    syntax error
+    Argument list too long
+    out of memory
+  '';
+
+  checkStderr = writeScript "check-stderr" ''
+    set -e
+    if grep -Ff "${knownErrors}" < "$1" 1>&2
+    then
+      echo "Errors found in '$1'" 1>&2
+      exit 2
+    fi
+    exit
+  '';
+
+  # When running commands over and over to get more reliable statistics, we end
+  # up with duplicate output. This script will get just the last run.
   lastEntry = writeScript "last-entry" ''
     #!${bash}/bin/bash
 
@@ -40,12 +45,14 @@ in rec {
     "${coreutils}/bin/tac" "$1" | upToDashes | "${coreutils}/bin/tac"
   '';
 
+  timeout = import ./timeout.nix { inherit writeScript; };
+
+  # A thorough benchmark, which performs multiple runs using Criterion
   withCriterion = cmd: args: trace
     "FIXME: Temporarily make withCriterion an alias for withTime, for speed"
     (writeScript "fixme" ''
       "${withTime cmd args}" | "${jq}/bin/jq" '. + {"time":{"mean":{"estPoint":1},"stddev":{"estPoint":1}}}'
     '');
-  # A thorough benchmark, which performs multiple runs using Criterion
   withCriterion2 = cmd: args: writeScript "with-criterion" ''
     #!${bash}/bin/bash
     set -e
@@ -124,11 +131,13 @@ in rec {
                           "stddev" : ($report[0][0].reportAnalysis.anStdDev)}}'
   '';
 
-  # A fast benchmark, which performs one run using the 'time' command
+  # A fast benchmark, which only performs one run
   withTime = cmd: args: let shellArgs = map escapeShellArg args;
                             argStr    = concatStringsSep " " shellArgs;
     in writeScript "with-time" ''
-      "${time}/bin/time" -f '%e' -o time "${cmd}" ${argStr} 1> stdout 2> stderr
+      # Measure time with 'time', limit time/memory using 'timeout'
+      "${time}/bin/time" -f '%e' -o time \
+        "${timeout}" "${cmd}" ${argStr} 1> stdout 2> stderr
       CODE="$?"
 
       # Cache results in the store, so we make better use of the cache and avoid
@@ -169,5 +178,6 @@ in rec {
                           "time"     : {
                             "mean"   : {"estPoint": $time}}}'
     '';
+
   benchmark = quick: if quick then withTime else withCriterion;
 }

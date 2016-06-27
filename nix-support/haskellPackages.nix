@@ -13,7 +13,8 @@ haskellPackages.override {
           mlspec            = cabalPath ../packages/mlspec;
           mlspec-bench      = cabalPath ../packages/mlspec-bench;
           mlspec-helper     = cabalPath ../packages/mlspec-helper;
-          nix-eval          = cabalPath ../packages/nix-eval;
+          nix-eval          = builtins.trace "FIXME: Don't run hindent unless debug enabled"
+                                cabalPath ../packages/nix-eval;
           order-deps        = cabalPath ../packages/order-deps;
           reduce-equations  = cabalPath ../packages/reduce-equations;
           runtime-arbitrary = cabalPath ../packages/runtime-arbitrary;

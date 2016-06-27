@@ -43,3 +43,6 @@
 [submodule "packages/reduce-equations"]
 	path = packages/reduce-equations
 	url = http://chriswarbo.net/git/reduce-equations.git
+[submodule "packages/timeout"]
+	path = packages/timeout
+	url = https://github.com/pshved/timeout.git

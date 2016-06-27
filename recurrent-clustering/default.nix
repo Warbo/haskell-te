@@ -8,8 +8,6 @@ builtins.trace "FIXME: is recurrent-clustering/default.nix needed?" stdenv.mkDer
     baseNameOf path != ".git" &&
     baseNameOf path != "test-data") ./.;
 
-  buildInputs = [ adb-scripts ];
-
   propagatedBuildInputs = [
     (import ./weka-cli.nix)
     order-deps
