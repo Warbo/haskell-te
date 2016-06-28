@@ -4,7 +4,7 @@ let
 
 path   = toString ./exploreTheoriesExamples;
 
-files  = map (f: "${path}/f") (attrNames (readDir path));
+files  = map (f: "${path}/${f}") (attrNames (readDir path));
 
 noDupesFor = f: parseJSON (runScript {} ''
   set -e
