@@ -1,4 +1,4 @@
-{ haskellPackages, gnutar, jq, lib, nix, perl, procps, runCommand, stdenv,
+{ bash, haskellPackages, gnutar, jq, lib, nix, perl, procps, runCommand, stdenv,
   writeScript }:
 with builtins;
 
@@ -12,7 +12,7 @@ rec {
                     };
 
   #Required for running 'timeout'
-  timeoutDeps     = [ perl procps ];
+  timeoutDeps     = [ perl procps bash ];
 
   withNix         = env: let existing = if env ? buildInputs
                                            then env.buildInputs
@@ -29,7 +29,9 @@ rec {
                                           "${builtins.getEnv "NIX_PATH"}" ];
                           in env // {
                                # Required for calling nix recursively
-                               buildInputs = existing ++ [ nix ] ++ timeoutDeps;
+                               buildInputs = existing    ++
+                                             timeoutDeps ++
+                                             [ nix ];
                                NIX_REMOTE  = builtins.getEnv "NIX_REMOTE"; # e.g. "daemon"
                                NIX_PATH    = lib.concatStringsSep ":" parts;
                                # Allows ~/.nixpkgs/config.nix to help debugging

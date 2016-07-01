@@ -6,8 +6,8 @@
 with builtins; with lib;
 let defs = rec {
   inherit (import ./dumping.nix {
-             inherit haskellPackages gnutar jq lib nix perl procps runCommand
-                     stdenv writeScript;
+             inherit bash haskellPackages gnutar jq lib nix perl procps
+                     runCommand stdenv writeScript;
           }) dump-package runScript importDir;
 
   inherit (import ../annotatedb {
