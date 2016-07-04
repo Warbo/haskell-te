@@ -1,10 +1,12 @@
-{ defaultClusters, haskellPackages, nixFromCabal, processPackage, runScript,
-  storeResult, writeScript }:
+{ callPackage, defaultClusters, haskellPackages, nixFromCabal, processPackage,
+  runScript, storeResult, writeScript }:
 
 rec {
+  te-benchmark = callPackage ../packages/te-benchmark {};
+
   path  = ../packages/te-benchmark;
 
-  module = runScript {} ''
+  module = runScript { buildInputs = [ te-benchmark ]; } ''
     set -e
 
     OUT_DIR="$PWD/tip-benchmark-sig"
@@ -12,7 +14,11 @@ rec {
 
     mkdir -p "$OUT_DIR"
 
-    cd "${path}"
+    cp -ra "${path}" ./te-benchmark
+    chmod +w te-benchmark -R
+    patchShebangs te-benchmark
+
+    cd te-benchmark
     ./full_haskell_package.sh
 
     "${storeResult}" "$OUT_DIR"

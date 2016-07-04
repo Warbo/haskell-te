@@ -1,7 +1,7 @@
 # Custom definitions
 { fetchurl, bash, bc, buildEnv, coreutils, file, gnuplot, gnutar,
-  haskellPackages, jq, jre, lib, nix, perl, procps, pv, runCommand, stdenv,
-  time, utillinux, weka, wget, writeScript }:
+  haskellPackages, jq, jre, lib, newScope, nix, perl, procps, pv, runCommand,
+  stdenv, time, utillinux, weka, wget, writeScript }:
 
 with builtins; with lib;
 let defs = rec {
@@ -20,6 +20,8 @@ let defs = rec {
                      mlspec-bench time writeScript;
              inherit (explore) build-env;
            }) benchmark lastEntry withCriterion withTime;
+
+  callPackage = newScope defs;
 
   runTypesScript = import ./runTypesScript.nix {
                      inherit haskellPackages jq writeScript;
@@ -209,8 +211,9 @@ let defs = rec {
                  };
 
   tipBenchmarks = import ./tipBenchmarks.nix {
-                    inherit defaultClusters haskellPackages nixFromCabal
-                            processPackage runScript storeResult writeScript;
+                    inherit callPackage defaultClusters haskellPackages
+                            nixFromCabal processPackage runScript storeResult
+                            writeScript;
                   };
 
   plotResults = import ./plotResults.nix {

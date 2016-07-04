@@ -3,7 +3,7 @@
 let pkgs = import <nixpkgs> {};
     defs = import ./nix-support pkgs;
  in pkgs.buildEnv {
-      name  = "haskell-te-deps";
+      name  = "haskell-te";
       paths = with defs; [
         jq
         gnutar
