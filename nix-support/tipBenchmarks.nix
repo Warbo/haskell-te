@@ -1,9 +1,9 @@
-{ bash, defaultClusters, haskellPackages, mysql, nix, nixFromCabal,
+{ bash, defaultClusters, haskellPackages, nixFromCabal,
   processPackage, racket, runScript, stdenv, storeResult, writeScript }:
 
 rec {
   te-benchmark = import ../packages/te-benchmark {
-                   inherit bash haskellPackages mysql nix racket stdenv
+                   inherit bash haskellPackages racket stdenv
                            writeScript;
                  };
 
@@ -17,12 +17,7 @@ rec {
 
     mkdir -p "$OUT_DIR"
 
-    cp -ra "${path}" ./te-benchmark
-    chmod +w te-benchmark -R
-    patchShebangs te-benchmark
-
-    cd te-benchmark
-    ./full_haskell_package.sh
+    fullTePkg
 
     "${storeResult}" "$OUT_DIR"
   '';
