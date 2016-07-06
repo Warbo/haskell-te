@@ -1,9 +1,10 @@
-{ bash, defaultClusters, haskellPackages, nix, nixFromCabal, processPackage,
-  racket, runScript, stdenv, storeResult, writeScript }:
+{ bash, defaultClusters, haskellPackages, mysql, nix, nixFromCabal,
+  processPackage, racket, runScript, stdenv, storeResult, writeScript }:
 
 rec {
   te-benchmark = import ../packages/te-benchmark {
-                   inherit bash haskellPackages nix racket stdenv writeScript;
+                   inherit bash haskellPackages mysql nix racket stdenv
+                           writeScript;
                  };
 
   path  = ../packages/te-benchmark;

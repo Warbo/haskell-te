@@ -1,5 +1,10 @@
 { superHaskellPackages, nixFromCabal }:
 
+assert let got    = superHaskellPackages.ghc.version;
+           should = "7.10.3";
+        in builtins.addErrorContext "Using GHC ${got} (should be ${should})"
+                                    (got == should);
+
 superHaskellPackages.override {
   overrides = self: super:
     # Use nixFromCabal on paths in ../packages

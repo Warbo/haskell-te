@@ -217,8 +217,8 @@ rec {
                  };
 
   tipBenchmarks = import ./tipBenchmarks.nix {
-                    inherit (self) bash defaultClusters haskellPackages nix
-                            nixFromCabal processPackage racket runScript
+                    inherit (self) bash defaultClusters haskellPackages mysql
+                            nix nixFromCabal processPackage racket runScript
                             stdenv storeResult writeScript;
                   };
 
