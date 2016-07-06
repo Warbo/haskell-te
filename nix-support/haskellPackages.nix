@@ -1,6 +1,6 @@
-{ haskellPackages, nixFromCabal }:
+{ superHaskellPackages, nixFromCabal }:
 
-haskellPackages.override {
+superHaskellPackages.override {
   overrides = self: super:
     # Use nixFromCabal on paths in ../packages
     let cabalPath = p: self.callPackage (nixFromCabal (toString p) null) {};
@@ -16,7 +16,8 @@ haskellPackages.override {
           nix-eval          = builtins.trace "FIXME: Don't run hindent unless debug enabled"
                                 cabalPath ../packages/nix-eval;
           order-deps        = cabalPath ../packages/order-deps;
-          reduce-equations  = cabalPath ../packages/reduce-equations;
+          reduce-equations  = builtins.trace "FIXME: Allow reducing custom types"
+                                cabalPath ../packages/reduce-equations;
           runtime-arbitrary = cabalPath ../packages/runtime-arbitrary;
         };
   }

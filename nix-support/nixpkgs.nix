@@ -11,7 +11,7 @@ with builtins;
 # we'll get an error (e.g. if the GitHub repo's been deleted).
 
 # However, if <nixpkgs> has already been replaced with our git clone (e.g. if
-# Nix has being called by one of our build scripts) then we can't use its
+# Nix has been called by one of our build scripts) then we can't use its
 # version of fetchFromGitHub, since that would create a circular dependency.
 # Instead, when calling Nix recursively (via 'withNix'), we store the original
 # <nixpkgs> path as the path <real>, and use that to get fetchFromGitHub.

@@ -1,4 +1,4 @@
-{ check, checkTime, lib, processPackages }:
+{ doCheck, checkTime, lib, processPackages }:
 with builtins;
 with lib;
 
@@ -22,8 +22,8 @@ compareAsInts = a: b:
                            (fromJSON (toString a));
       bI = addErrorContext "Turning ${toJSON b} into int"
                            (fromJSON (toString b));
-   in assert check "Argument ${toJSON a} became int ${toJSON aI}" (isInt aI);
-      assert check "Argument ${toJSON b} became int ${toJSON bI}" (isInt bI);
+   in assert doCheck "Argument ${toJSON a} became int ${toJSON aI}" (isInt aI);
+      assert doCheck "Argument ${toJSON b} became int ${toJSON bI}" (isInt bI);
       aI < bI;
 
 processedPackages = processPackages { inherit clusters quick; };
@@ -40,8 +40,8 @@ appendData = field: name: { pkgCount, data }:
    in output;
 
 collectData = field:
-  assert check "Field is string ${toJSON field}" (isString field);
-  assert check "Package names are strings" (all isString packageNames);
+  assert doCheck "Field is string ${toJSON field}" (isString field);
+  assert doCheck "Package names are strings" (all isString packageNames);
   (fold (appendData field)
         { pkgCount = 0; data = []; }
         (filter (n: !processedPackages."${n}".failed) packageNames)).data;
@@ -51,38 +51,38 @@ dataByClusterCount = collectData "clusterDataPoints";
 
 preConditions = x: y: z: data: all id [
 
-  (check "Field names are strings" (all isString [x y z]))
+  (doCheck "Field names are strings" (all isString [x y z]))
 
-  (check "Forcing data" (isString "${toJSON data}"))
+  (doCheck "Forcing data" (isString "${toJSON data}"))
 
-  (check "isList data (${typeOf data})" (isList data))
+  (doCheck "isList data (${typeOf data})" (isList data))
 
-  (check "Data contains sets"
-         (all (p: check "isAttrs ${toJSON p}"
+  (doCheck "Data contains sets"
+         (all (p: doCheck "isAttrs ${toJSON p}"
                         (isAttrs p))
               data))
 
-  (check "Points have ${x}" (all (p: check "Has ${x} ${toJSON p}"
+  (doCheck "Points have ${x}" (all (p: doCheck "Has ${x} ${toJSON p}"
                                            (p ? "${x}"))
                                  data))
 
-  (check "Points have ${y}" (all (p: check "Has ${y} ${toJSON p}"
+  (doCheck "Points have ${y}" (all (p: doCheck "Has ${y} ${toJSON p}"
                                            (p ? "${y}"))
                                  data))
 
-  (check "Points have ${z}" (all (p: check "Has ${z} ${toJSON p}"
+  (doCheck "Points have ${z}" (all (p: doCheck "Has ${z} ${toJSON p}"
                                            (p ? "${z}"))
                             data))
 
-  (check "Can sort ${x}" (all (p: check "checkNumeric ${toJSON p.${x}}"
+  (doCheck "Can sort ${x}" (all (p: doCheck "checkNumeric ${toJSON p.${x}}"
                                         (checkNumeric p."${x}"))
                               data))
 
-  (check "${y} looks numeric" (all (p: check "Looks numeric ${toJSON p.${y}}"
+  (doCheck "${y} looks numeric" (all (p: doCheck "Looks numeric ${toJSON p.${y}}"
                                              (looksNumeric p."${y}"))
                                    data))
 
-  (check "${z} looks numeric" (all (p: check "Looks numeric ${toJSON p.${z}}"
+  (doCheck "${z} looks numeric" (all (p: doCheck "Looks numeric ${toJSON p.${z}}"
                                              (looksNumeric p."${z}"))
                                    data))
 
@@ -90,24 +90,24 @@ preConditions = x: y: z: data: all id [
 
 postConditions = result: all id [
 
-  (check "isAttrs result.series ${toJSON result.series}" (isAttrs result.series))
+  (doCheck "isAttrs result.series ${toJSON result.series}" (isAttrs result.series))
 
-  (check "Each series is a list ${toJSON result.series}"
+  (doCheck "Each series is a list ${toJSON result.series}"
          (all (n: isList result.series."${n}") (attrNames result.series)))
 
-  (check "Series are (x,y) or (x,y,stddev) ${toJSON result.series}"
+  (doCheck "Series are (x,y) or (x,y,stddev) ${toJSON result.series}"
          (all (n: any id [
                     (all (row: length row == 2) result.series."${n}")
                     (all (row: length row == 3) result.series."${n}")
                   ])
               (attrNames result.series)))
 
-  (check "Forcing components of result"
-         (all (x: check "Forcing field ${x}"
+  (doCheck "Forcing components of result"
+         (all (x: doCheck "Forcing field ${x}"
                         (isString "${toJSON result.${x}}"))
               (attrNames result)))
 
-  (check "Force result" (isString "${toJSON result}"))
+  (doCheck "Force result" (isString "${toJSON result}"))
 
 ];
 
@@ -117,9 +117,9 @@ postConditions = result: all id [
 xVsYForZ = x: y: z: data:
   let result = addErrorContext "Tabulating ${x} vs ${y} for values of ${z}"
                                (xVsYForZReal x y z data);
-   in assert check "Pre-conditions for ${x} vs ${y} per ${z}"
+   in assert doCheck "Pre-conditions for ${x} vs ${y} per ${z}"
                    (preConditions x y z data);
-      assert check "Post-conditions for ${x} vs ${y} per ${z}"
+      assert doCheck "Post-conditions for ${x} vs ${y} per ${z}"
                    (postConditions result);
       result;
 
@@ -214,43 +214,43 @@ tabulated = listToAttrs
 
 in
 
-assert check "Checking tabulate inputs" (all id [
+assert doCheck "Checking tabulate inputs" (all id [
 
-  (check "packageNames is list ${toJSON packageNames}"
+  (doCheck "packageNames is list ${toJSON packageNames}"
          (isList packageNames))
 
-  (check "Package names are strings ${toJSON packageNames}"
+  (doCheck "Package names are strings ${toJSON packageNames}"
          (all isString packageNames))
 
-  (check "'quick' is a boolean ${toJSON quick}" (isBool quick))
+  (doCheck "'quick' is a boolean ${toJSON quick}" (isBool quick))
 
 ]);
 
-assert check "Checking tabulate data" (all id [
+assert doCheck "Checking tabulate data" (all id [
 
-  (check "isList dataByClusterCount ${toJSON dataByClusterCount}"
+  (doCheck "isList dataByClusterCount ${toJSON dataByClusterCount}"
          (isList dataByClusterCount))
 
-  (check "All dataByClusterCount have required fields"
-         (all (f: check "All dataByClusterCount have ${f}"
-                        (all (p: check "${f} appears in ${toJSON p}"
+  (doCheck "All dataByClusterCount have required fields"
+         (all (f: doCheck "All dataByClusterCount have ${f}"
+                        (all (p: doCheck "${f} appears in ${toJSON p}"
                                        (p ? "${f}"))
                              dataByClusterCount))
               ["eqCount" "totalTime" "clusterCount"]))
 
 ]);
 
-assert check "Checking tabulate output" (all id [
+assert doCheck "Checking tabulate output" (all id [
 
-  (check "isAttrs tabulated (${typeOf tabulated})" (isAttrs tabulated))
+  (doCheck "isAttrs tabulated (${typeOf tabulated})" (isAttrs tabulated))
 
-  (check "tabulated contains sets"
-         (all (t: check "isAttrs ${typeOf tabulated.${t}}"
+  (doCheck "tabulated contains sets"
+         (all (t: doCheck "isAttrs ${typeOf tabulated.${t}}"
                         (isAttrs tabulated."${t}"))
               (attrNames tabulated)))
 
-  (check "Forcing tabulated results"
-         (all (n: check "Forcing ${n}"
+  (doCheck "Forcing tabulated results"
+         (all (n: doCheck "Forcing ${n}"
                         (isString "${toJSON tabulated.${n}}"))
               (attrNames tabulated)))
 

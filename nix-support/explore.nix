@@ -1,4 +1,4 @@
-{ benchmark, check, defs, format, haskellPackages, jq, lib, ml4hs, parseJSON,
+{ benchmark, doCheck, self, format, haskellPackages, jq, lib, ml4hs, parseJSON,
   runScript, writeScript }:
 with builtins;
 with lib;
@@ -56,7 +56,7 @@ extractedEnv = standalone: f:
                  (map (n: h."${n}") areHs) ++ (if extra
                                                   then salone
                                                   else []));
-      ps     = [ hs ] ++ (map (n: defs."${n}") extra-packages);
+      ps     = [ hs ] ++ (map (n: self."${n}") extra-packages);
       msg    = if extra
                   then "including '${toString standalone}'"
                   else "";
@@ -67,14 +67,14 @@ extractedEnv = standalone: f:
             exit 1
           fi
         '';
-      check  = parseJSON (runScript { buildInputs = ps; } ''
+      doCheck  = parseJSON (runScript { buildInputs = ps; } ''
                  ${if extra
                       then checkPkg salonePkg.name
                       else ""}
                  echo "true" > "$out"
                '');
    in trace "Extracted env from '${f}' ${msg}"
-            (assert check; ps);
+            (assert doCheck; ps);
 
 # Haskell packages required for MLSpec
 extra-haskell-packages = [ "mlspec" "mlspec-helper" "runtime-arbitrary"
@@ -87,7 +87,7 @@ extra-packages = [ "jq" "mlspec" ];
 
 exploreEnv = [ (haskellPackages.ghcWithPackages (h: map (n: h."${n}")
                                                     extra-haskell-packages)) ] ++
-             (map (n: defs."${n}") extra-packages);
+             (map (n: self."${n}") extra-packages);
 
 mkGhcPkg = writeScript "mkGhcPkg" ''
   set -e
@@ -191,30 +191,30 @@ doExplore = standalone: quick: clusterCount: f:
 go = { quick, standalone }: clusterCount: clusters:
        map (doExplore standalone quick clusterCount) clusters;
 
-doCheck = formatted: result:
+aCheck = formatted: result:
   assert isAttrs formatted;
   assert all (n: isString n)                  (attrNames formatted);
   assert all (n: isInt (fromJSON n))          (attrNames formatted);
   assert all (n: isList formatted."${n}")       (attrNames formatted);
   assert all (n: all isString formatted."${n}") (attrNames formatted);
 
-  assert check "explored is set ${toJSON result}"
+  assert doCheck "explored is set ${toJSON result}"
                (isAttrs result);
 
-  assert check "explored keys are numeric ${toJSON result}"
+  assert doCheck "explored keys are numeric ${toJSON result}"
                (all (n: isInt  (fromJSON n))  (attrNames result));
 
-  assert check "explored values are lists ${toJSON result}"
+  assert doCheck "explored values are lists ${toJSON result}"
                (all (n: isList result."${n}") (attrNames result));
 
-  assert check "explored values contain sets ${toJSON result}"
+  assert doCheck "explored values contain sets ${toJSON result}"
                (all (n: all isAttrs result."${n}") (attrNames result));
 
-  assert check "explored values have stdout ${toJSON result}"
+  assert doCheck "explored values have stdout ${toJSON result}"
                (all (n: all (x: x ? stdout) result."${n}")
                     (attrNames result));
 
-  assert check "explored values have time ${toJSON result}"
+  assert doCheck "explored values have time ${toJSON result}"
                (all (n: all (x: x ? time) result."${n}")
                     (attrNames result));
   true;
@@ -224,7 +224,7 @@ checkAndExplore = { quick, formatted, standalone ? null }:
       failed  = any (n: any (x: x.failed) results."${n}") (attrNames results);
       result  = { inherit results failed; };
    in if failed then result
-                else assert doCheck formatted result.results; result;
+                else assert aCheck formatted result.results; result;
 
 in {
   inherit build-env extra-haskell-packages extra-packages explore-theories

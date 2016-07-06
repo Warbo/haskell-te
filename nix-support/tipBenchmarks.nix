@@ -1,8 +1,10 @@
-{ callPackage, defaultClusters, haskellPackages, nixFromCabal, processPackage,
-  runScript, storeResult, writeScript }:
+{ bash, defaultClusters, haskellPackages, nix, nixFromCabal, processPackage,
+  racket, runScript, stdenv, storeResult, writeScript }:
 
 rec {
-  te-benchmark = callPackage ../packages/te-benchmark {};
+  te-benchmark = import ../packages/te-benchmark {
+                   inherit bash haskellPackages nix racket stdenv writeScript;
+                 };
 
   path  = ../packages/te-benchmark;
 
