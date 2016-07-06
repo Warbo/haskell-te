@@ -3,21 +3,16 @@ args:
 
 let
 
+# We provide our own packages using the "packageOverrides" config option. This
+# lets us do "deep" replacements, i.e. if we replace "foo", then anything
+# depending on "foo" will use our version.
+
+nixArgs = { config = { packageOverrides = import ./defs.nix self; }; } // args;
+
 # Some of our scripts invoke Nix, using the usual '<nixpkgs>' path to access
 # definitions. We override that path (see 'withNix') to point at this file, so
 # that the same versions are used everywhere.
 
-pkgs = import ./nixpkgs.nix args;
+self = import ./nixpkgs.nix nixArgs;
 
-# haskellPackages.override ensures dependencies are overridden too
-haskellPackages = import ./haskellPackages.nix {
-                    inherit (pkgs) haskellPackages;
-                    nixFromCabal = import ./nixFromCabal.nix {
-                                     inherit haskellPackages;
-                                     inherit (pkgs) lib stdenv;
-                                   };
-                  };
-
-in pkgs // pkgs.callPackage ./defs.nix {
-             inherit haskellPackages;
-           }
+in self

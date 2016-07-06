@@ -1,82 +1,88 @@
 # Custom definitions
-{ fetchurl, bash, bc, buildEnv, coreutils, file, gnuplot, gnutar,
-  haskellPackages, jq, jre, lib, newScope, nix, perl, procps, pv, runCommand,
-  stdenv, time, utillinux, weka, wget, writeScript }:
+self: super:
 
-with builtins; with lib;
-let defs = rec {
+with builtins; with super.lib;
+
+rec {
+
+  # haskellPackages.override ensures dependencies are overridden too
+  haskellPackages = import ./haskellPackages.nix {
+                      superHaskellPackages = super.haskellPackages;
+                      inherit (self) nixFromCabal;
+                    };
+
   inherit (import ./dumping.nix {
-             inherit bash haskellPackages gnutar jq lib nix perl procps
+             inherit (self) bash haskellPackages gnutar jq lib nix perl procps
                      runCommand stdenv writeScript;
           }) dump-package runScript importDir;
 
   inherit (import ../annotatedb {
-             inherit downloadAndDump getDeps jq lib nix runScript stdenv
+             inherit (self) downloadAndDump getDeps jq lib nix runScript stdenv
                      utillinux;
           }) annotateAsts dumpAndAnnotate;
 
   inherit (import ./runBenchmark.nix {
-             inherit bash check coreutils jq lib
+             inherit (self) bash doCheck coreutils jq lib
                      mlspec-bench time writeScript;
              inherit (explore) build-env;
            }) benchmark lastEntry withCriterion withTime;
 
-  callPackage = newScope defs;
+  callPackage = super.newScope self;
 
   runTypesScript = import ./runTypesScript.nix {
-                     inherit haskellPackages jq writeScript;
+                     inherit (self) haskellPackages jq writeScript;
                    };
 
   tagAstsScript = import ./tagAstsScript.nix {
-                    inherit jq writeScript;
+                    inherit (self) jq writeScript;
                   };
 
   extractTarball = import ./extractTarball.nix {
-                     inherit gnutar runScript storeResult;
+                     inherit (self) gnutar runScript storeResult;
                    };
 
   reduce = import ./reduce.nix {
-             inherit benchmark haskellPackages lib parseJSON reduce-equations runScript writeScript;
+             inherit (self) benchmark haskellPackages lib parseJSON reduce-equations runScript writeScript;
            };
 
   annotate        = import ./annotate.nix        {
-                      inherit annotateAstsScript benchmark getDeps
+                      inherit (self) annotateAstsScript benchmark getDeps
                               getDepsScript jq parseJSON runScript
                               runTypesScript utillinux writeScript;
                     };
 
   getTypesScript = import ./getTypesScript.nix {
-                     inherit writeScript;
+                     inherit (self) writeScript;
                    };
 
   getAritiesScript = import ./getAritiesScript.nix {
-                       inherit writeScript;
+                       inherit (self) writeScript;
                      };
 
   annotateAstsScript = import ./annotateAstsScript.nix {
-                         inherit getAritiesScript getTypesScript jq tagAstsScript
+                         inherit (self) getAritiesScript getTypesScript jq tagAstsScript
                                  writeScript;
                        };
 
   getDepsScript = import ./getDepsScript.nix {
-                    inherit jq utillinux writeScript;
+                    inherit (self) jq utillinux writeScript;
                     inherit (haskellPackages) getDeps;
                   };
 
   format = import ./format.nix {
-             inherit jq parseJSON runScript storeResult;
+             inherit (self) jq parseJSON runScript storeResult;
            };
 
   random = import ./random.nix {
-             inherit jq lib nth parseJSON runScript writeScript;
+             inherit (self) jq lib nth parseJSON runScript writeScript;
            };
 
   hte-scripts = import ./scripts.nix {
-                  inherit coreutils stdenv wget;
+                  inherit (self) coreutils stdenv wget;
                 };
 
   inherit (import ./benchmarkOutputs.nix {
-            inherit annotate bc buildPackage check cluster
+            inherit (self) annotate bc buildPackage doCheck cluster
                     defaultClusters dumpPackage explore
                     extractTarball format haskellPackages jq lib nixFromCabal
                     nth parseJSON reduce runScript stdenv storeResult timeCalc
@@ -84,53 +90,53 @@ let defs = rec {
           }) processPackage processPackages;
 
   nixFromCabal = import ./nixFromCabal.nix {
-                   inherit haskellPackages lib stdenv;
+                   inherit (self) haskellPackages lib stdenv;
                  };
 
   explore = import ./explore.nix {
-              inherit benchmark check format haskellPackages jq lib ml4hs
+              inherit (self) benchmark doCheck format haskellPackages jq lib ml4hs
                       parseJSON runScript writeScript;
-              defs = import <nixpkgs> {} // defs;
+              inherit self;
             };
 
   defaultClusters = [ 1 2 4 ];
 
   inherit (import ./cluster.nix {
-             inherit benchmark ML4HSFE parseJSON recurrent-clustering runScript
+             inherit (self) benchmark ML4HSFE parseJSON recurrent-clustering runScript
                      runWeka writeScript;
           }) cluster nixRecurrentClusteringScript recurrentClusteringScript;
 
   downloadToNix   = import ./downloadToNix.nix   {
-                      inherit runScript storeResult;
+                      inherit (self) runScript storeResult;
                       inherit (haskellPackages) cabal-install;
                     };
 
   runWeka = import ../packages/runWeka {
-              inherit jq jre runCommand stdenv weka;
+              inherit (self) jq jre runCommand stdenv weka;
             };
 
   dumpPackage = import ./dumpPackage.nix {
-                  inherit dumpToNix gnutar lib runScript;
+                  inherit (self) dumpToNix gnutar lib runScript;
                 };
 
   dumpToNix = import ./dumpToNix.nix {
-                inherit benchmark dump-package parseJSON runScript;
+                inherit (self) benchmark dump-package parseJSON runScript;
               };
 
   parseJSON            = import ./parseJSON.nix {
-                           inherit jq runScript writeScript;
+                           inherit (self) jq runScript writeScript;
                          };
 
   ml4hs                = import ../ml4hs            {
-                           inherit haskellPackages jq mlspec stdenv;
+                           inherit (self) haskellPackages jq mlspec stdenv;
                          };
 
   recurrent-clustering = import ../recurrent-clustering {
-                           inherit jq ML4HSFE nix order-deps stdenv;
+                           inherit (self) jq ML4HSFE nix order-deps stdenv;
                          };
 
   downloadAndDump      = import ./downloadAndDump.nix {
-                           inherit dumpToNix downloadToNix;
+                           inherit (self) dumpToNix downloadToNix;
                          };
 
   assertMsg            = cond: msg:
@@ -138,49 +144,49 @@ let defs = rec {
                              "not ok - ${msg}"
                              (assert cond; trace "ok - ${msg}" cond);
 
-  check = msg: cond: builtins.addErrorContext msg (assert cond; cond);
+  doCheck = msg: cond: builtins.addErrorContext msg (assert cond; cond);
 
   checkStdDev = sd:
-    assert check "isAttrs stddev '${toJSON sd}'"
+    assert doCheck "isAttrs stddev '${toJSON sd}'"
                  (isAttrs sd);
-    assert check "Stddev '${toJSON sd}' has estPoint"
+    assert doCheck "Stddev '${toJSON sd}' has estPoint"
                  (sd ? estPoint);
-    assert check "Stddev estPoint '${toJSON sd.estPoint}'"
+    assert doCheck "Stddev estPoint '${toJSON sd.estPoint}'"
                  (isString sd.estPoint);
     true;
 
   checkTime = t:
-    assert check "isAttrs '${toJSON t}'"           (isAttrs t);
-    assert check "${toJSON t} has mean"            (t ? mean);
-    assert check "isAttrs '${toJSON t.mean}'"      (isAttrs t.mean);
-    assert check "'${toJSON t.mean}' has estPoint" (t.mean ? estPoint);
-    t ? stddev -> check "Checking stddev" (checkStdDev t.stddev);
+    assert doCheck "isAttrs '${toJSON t}'"           (isAttrs t);
+    assert doCheck "${toJSON t} has mean"            (t ? mean);
+    assert doCheck "isAttrs '${toJSON t.mean}'"      (isAttrs t.mean);
+    assert doCheck "'${toJSON t.mean}' has estPoint" (t.mean ? estPoint);
+    t ? stddev -> doCheck "Checking stddev" (checkStdDev t.stddev);
 
   timeCalc = import ./timeCalc.nix {
-              inherit bc check checkStdDev checkTime lib nth parseJSON
+              inherit (self) bc doCheck checkStdDev checkTime lib nth parseJSON
                       runScript;
              };
 
   shuffledList = import ./shufflePackages.nix {
-                   inherit coreutils jq parseJSON pv runScript storeResult wget
+                   inherit (self) coreutils jq parseJSON pv runScript storeResult wget
                            writeScript;
                  };
 
   runTypes = import ./runTypes.nix        {
-               inherit jq runScript runTypesScript storeResult;
+               inherit (self) jq runScript runTypesScript storeResult;
              };
 
   nth = n: lst:
-    assert check "Given integer '${toJSON n}'" (isInt  n);
-    assert check "Expecting list, given '${typeOf lst}'" (isList lst);
-    assert check "Index '${toJSON n}' in bounds '${toJSON (length lst)}'"
+    assert doCheck "Given integer '${toJSON n}'" (isInt  n);
+    assert doCheck "Expecting list, given '${typeOf lst}'" (isList lst);
+    assert doCheck "Index '${toJSON n}' in bounds '${toJSON (length lst)}'"
                  (n <= length lst);
     if n == 1
        then head lst
        else nth (n - 1) (tail lst);
 
   inherit (import ./test-defs.nix {
-            inherit annotateAstsScript defaultClusters
+            inherit (self) annotateAstsScript defaultClusters
                     getDepsScript getTypesScript jq lib ml4hs ML4HSFE
                     nixRecurrentClusteringScript parseJSON
                     recurrent-clustering runScript runTypes runWeka storeResult
@@ -199,38 +205,38 @@ let defs = rec {
                                                     else [x])));
      in l: uniq' l [];
 
-  storeResult = writeScript "store-result" ''
+  storeResult = self.writeScript "store-result" ''
       set -e
       RESULT=$(nix-store --add "$1")
       printf '%s' "$RESULT" > "$out"
     '';
 
   buildPackage = import ./buildPackage.nix {
-                   inherit benchmark parseJSON runScript writeScript;
+                   inherit (self) benchmark parseJSON runScript writeScript;
                    inherit (haskellPackages) cabal2nix cabal-install;
                  };
 
   tipBenchmarks = import ./tipBenchmarks.nix {
-                    inherit callPackage defaultClusters haskellPackages
-                            nixFromCabal processPackage runScript storeResult
-                            writeScript;
+                    inherit (self) bash defaultClusters haskellPackages nix
+                            nixFromCabal processPackage racket runScript
+                            stdenv storeResult writeScript;
                   };
 
   plotResults = import ./plotResults.nix {
-                  inherit check gnuplot lib runScript storeResult writeScript;
+                  inherit (self) doCheck gnuplot lib runScript storeResult writeScript;
                 };
   inherit (plotResults) mkTbl;
 
   # Nix doesn't handle floats, so use bc
-  floatDiv = x: y: runScript { buildInputs = [ bc ]; }
+  floatDiv = x: y: runScript { buildInputs = [ self.bc ]; }
                              ''echo "scale=16; ${x}/${y}" | bc > "$out"'';
 
   tabulate = import ./tabulate.nix {
-               inherit check checkTime lib processPackages;
+               inherit (self) doCheck checkTime lib processPackages;
              };
 
   plots = import ./plots.nix {
-            inherit check defaultClusters lib parseJSON plotResults runScript
+            inherit (self) doCheck defaultClusters lib parseJSON plotResults runScript
                     shuffledList tabulate;
           };
 
@@ -238,7 +244,7 @@ let defs = rec {
     let w      = "640";
         h      = "480";
         exists = testMsg (pathExists plot) "Checking if plot '${plot}' exists";
-        dims   = testMsg (parseJSON (runScript { buildInputs = [ file jq ]; } ''
+        dims   = testMsg (parseJSON (runScript { buildInputs = [ self.file jq ]; } ''
           set -e
           echo "Checking '${plot}' bigger than ${w}x${h}" 1>&2
           GEOM=$(file "${plot}" | # filename: foo, W x H, baz
@@ -254,10 +260,7 @@ let defs = rec {
         '')) "Plot has sufficient dimensions (indicates GNUPlot succeeded)";
      in plot != null && (exists && dims);
 
-  # Include our overridden Haskell packages
-  inherit haskellPackages;
-
   # Pull out Haskell packages (e.g. because they provide executables)
-  inherit (haskellPackages) AstPlugin getDeps ML4HSFE mlspec mlspec-bench
-                            order-deps reduce-equations;
-}; in defs
+  inherit (self.haskellPackages) AstPlugin getDeps ML4HSFE mlspec mlspec-bench
+                                 order-deps reduce-equations;
+}
