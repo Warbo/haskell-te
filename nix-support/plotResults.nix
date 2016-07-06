@@ -1,4 +1,4 @@
-{ doCheck, gnuplot, lib, runScript, storeResult, writeScript }:
+{ ourCheck, gnuplot, lib, runScript, storeResult, writeScript }:
 with builtins;
 with lib;
 
@@ -13,16 +13,16 @@ renderTable = x: y: rows:
       headRow     = [([x y] ++ sdHead)];
       result      = renderRows (map renderCells
                                     rows);
-   in assert doCheck "isList rows ${toJSON rows}"
+   in assert ourCheck "isList rows ${toJSON rows}"
                    (isList rows);
 
-      assert doCheck "all isList rows ${toJSON rows}"
+      assert ourCheck "all isList rows ${toJSON rows}"
                    (all isList rows);
 
-      assert doCheck "all (all isString) rows ${toJSON rows}"
+      assert ourCheck "all (all isString) rows ${toJSON rows}"
                    (all (all isString) rows);
 
-      assert doCheck "Forcing renderTable result" (isString "${toJSON result}");
+      assert ourCheck "Forcing renderTable result" (isString "${toJSON result}");
       result;
 
 scatterPlot = tbl:
@@ -55,9 +55,9 @@ scatterPlot = tbl:
         '');
    in if tbl.series == {}
          then null
-         else assert doCheck "Forcing scatterGnus"   (isString "${toJSON scatterGnus}");
-              assert doCheck "Forcing data"          (isString "${toJSON data}");
-              assert doCheck "Forcing scatterResult" (isString "${toJSON scatterResult}");
+         else assert ourCheck "Forcing scatterGnus"   (isString "${toJSON scatterGnus}");
+              assert ourCheck "Forcing data"          (isString "${toJSON data}");
+              assert ourCheck "Forcing scatterResult" (isString "${toJSON scatterResult}");
               addErrorContext "Plotting scatter chart" scatterResult;
 
 # Mostly for tests

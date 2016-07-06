@@ -1,4 +1,4 @@
-{ annotate, bc, buildPackage, doCheck, cluster, defaultClusters, dumpPackage,
+{ annotate, bc, buildPackage, ourCheck, cluster, defaultClusters, dumpPackage,
   explore, extractTarball, format, haskellPackages, jq, lib, nixFromCabal,
   nth, parseJSON, reduce, runScript, stdenv, storeResult, timeCalc, writeScript
 }:
@@ -83,15 +83,15 @@ processPkg = { clusters, quick, sampleSize ? null }: name: pkg: rec {
 
   # Gather all values into a list of points
   sizeDataPoints = import ./getSizeDataPoints.nix {
-                     inherit doCheck equations lib equationCounts nth
+                     inherit ourCheck equations lib equationCounts nth
                              sizeCounts totalTimes;
                      inherit (timeCalc) timeToBucket;
                    };
 
   # Make another list of points, with clustering runs aggregated together
   clusterDataPoints =
-  assert doCheck "isList sizeDataPoints"      (isList sizeDataPoints);
-  assert doCheck "all isAttrs sizeDataPoints" (all isAttrs sizeDataPoints);
+  assert ourCheck "isList sizeDataPoints"      (isList sizeDataPoints);
+  assert ourCheck "all isAttrs sizeDataPoints" (all isAttrs sizeDataPoints);
   let
     # Combine one cluster with the others from the same run
     addTo = x: y:
@@ -109,11 +109,11 @@ processPkg = { clusters, quick, sampleSize ? null }: name: pkg: rec {
     # same run ("right") and those from other runs ("wrong"). If there's a
     # "right" point add the new one to it; otherwise use the new point as-is
     accum = newP: old:
-      assert doCheck "isList  ${toJSON old}"     (isList  old);
-      assert doCheck "isAttrs ${toJSON newP}"    (isAttrs newP);
-      assert doCheck "all isAttrs ${toJSON old}" (all isAttrs old);
-      assert doCheck "newP has clusterCount ${toJSON newP}" (newP ? clusterCount);
-      assert doCheck "Old points have clusterCount ${toJSON old}"
+      assert ourCheck "isList  ${toJSON old}"     (isList  old);
+      assert ourCheck "isAttrs ${toJSON newP}"    (isAttrs newP);
+      assert ourCheck "all isAttrs ${toJSON old}" (all isAttrs old);
+      assert ourCheck "newP has clusterCount ${toJSON newP}" (newP ? clusterCount);
+      assert ourCheck "Old points have clusterCount ${toJSON old}"
                    (all (p: p ? clusterCount) old);
       with partition (oldP: oldP.clusterCount == newP.clusterCount) old;
       assert (length right < 2);
@@ -132,12 +132,12 @@ processPkg = { clusters, quick, sampleSize ? null }: name: pkg: rec {
           dynamicTimes staticTime totalTimes;
 };
 
-forceVal = x: msg: doCheck msg (isString "${toJSON x}");
+forceVal = x: msg: ourCheck msg (isString "${toJSON x}");
 
 forceAttr = p: a:
   assert isAttrs p;
   assert isString a;
-  assert doCheck "Looking for attribute '${a}'" (p ? "${a}");
+  assert ourCheck "Looking for attribute '${a}'" (p ? "${a}");
   assert forceVal p."${a}" "Forcing attribute '${a}' of type ${typeOf p.${a}}";
   true;
 

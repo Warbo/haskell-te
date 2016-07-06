@@ -1,4 +1,4 @@
-{ bc, doCheck, checkStdDev, checkTime, lib, nth, parseJSON, runScript }:
+{ bc, ourCheck, checkStdDev, checkTime, lib, nth, parseJSON, runScript }:
 with builtins;
 with lib;
 
@@ -6,20 +6,20 @@ rec {
 
 # Assertions
 
-forceVal = x: msg: doCheck msg (isString "${toJSON x}");
+forceVal = x: msg: ourCheck msg (isString "${toJSON x}");
 
 areTimes = ts:
-  assert doCheck "All attributes are times"
-               (all (n: assert doCheck "'${n}' (${toJSON ts.${n}}) is time"
+  assert ourCheck "All attributes are times"
+               (all (n: assert ourCheck "'${n}' (${toJSON ts.${n}}) is time"
                                      (checkTime ts."${n}");
                         true)
                     (attrNames ts));
   true;
 
 areTimeLists = ts:
-  assert doCheck "All attributes are time lists"
-               (all (n: assert doCheck "'${n}' (${toJSON ts.${n}}) contains times"
-                                     (all (x: assert doCheck "checkTime ${toJSON x}"
+  assert ourCheck "All attributes are time lists"
+               (all (n: assert ourCheck "'${n}' (${toJSON ts.${n}}) contains times"
+                                     (all (x: assert ourCheck "checkTime ${toJSON x}"
                                                            (checkTime x);
                                               true)
                                           ts.${n});
@@ -50,34 +50,34 @@ addMeans = x: y:
   { mean = { estPoint = floatAdd x.mean.estPoint y.mean.estPoint; }; };
 
 addStdDevs = x: y:
-  assert doCheck "stddev is string ${toJSON x}" (isString x);
-  assert doCheck "stddev is string ${toJSON y}" (isString y);
+  assert ourCheck "stddev is string ${toJSON x}" (isString x);
+  assert ourCheck "stddev is string ${toJSON y}" (isString y);
   parseJSON (runScript { buildInputs = [ bc ]; } ''
     echo 'scale=16; sqrt( (${x} * ${x}) + (${y} * ${y}))' | bc > "$out"
   '');
 
 addTimes = x: y:
-  assert doCheck "Given time ${toJSON x}" (x == null || checkTime x);
-  assert doCheck "Given time ${toJSON y}" (y == null || checkTime y);
+  assert ourCheck "Given time ${toJSON x}" (x == null || checkTime x);
+  assert ourCheck "Given time ${toJSON y}" (y == null || checkTime y);
   let result = if x == null
                   then y
                   else if y == null
                           then x
-                          else assert doCheck "doSum is a time ${toJSON doSum}"
+                          else assert ourCheck "doSum is a time ${toJSON doSum}"
                                             (checkTime doSum);
-                               assert doCheck "doSum stddev OK"
+                               assert ourCheck "doSum stddev OK"
                                             (haveStdDev -> checkStdDev doSum.stddev);
                                doSum;
       doSum = addMeans x y // (if haveStdDev
                                   then { stddev = { estPoint = sumStdDev; }; }
                                   else {});
-      haveStdDev = assert doCheck "Both have stddev ${toJSON [x y]}"
+      haveStdDev = assert ourCheck "Both have stddev ${toJSON [x y]}"
                                 (   x ? stddev  ->    y ? stddev);
-                   assert doCheck "Neither have stddev ${toJSON [x y]}"
+                   assert ourCheck "Neither have stddev ${toJSON [x y]}"
                                 ((! x ? stddev) -> (! y ? stddev));
                    x ? stddev;
       sumStdDev = addStdDevs x.stddev.estPoint y.stddev.estPoint;
-   in assert doCheck "Result is a time ${toJSON result}" (checkTime result);
+   in assert ourCheck "Result is a time ${toJSON result}" (checkTime result);
       result;
 
 sumTimes = fold addTimes null;
@@ -89,7 +89,7 @@ timeToBucket = t:
         if floatLessThan t.mean.estPoint (toString n)
            then n
            else findBucket (n * 10);
-   in assert doCheck "Bucketing a time ${toJSON t}" (checkTime t);
+   in assert ourCheck "Bucketing a time ${toJSON t}" (checkTime t);
       findBucket 1;
 
 # Utilities
@@ -116,26 +116,26 @@ pkgTimes = { annotateTime, clusterTimes, dumpTime, exploreTimes }:
       assert forceVal  exploreTimes "Forcing  exploreTimes";
 
       # Check that inputs appear correct
-      assert doCheck " checkTime          dumpTime " ( checkTime          dumpTime );
-      assert doCheck " checkTime      annotateTime " ( checkTime      annotateTime );
-      assert doCheck "areTimes      clusterTimes" (areTimes      clusterTimes);
-      assert doCheck "areTimeLists  exploreTimes" (areTimeLists  exploreTimes);
+      assert ourCheck " checkTime          dumpTime " ( checkTime          dumpTime );
+      assert ourCheck " checkTime      annotateTime " ( checkTime      annotateTime );
+      assert ourCheck "areTimes      clusterTimes" (areTimes      clusterTimes);
+      assert ourCheck "areTimeLists  exploreTimes" (areTimeLists  exploreTimes);
 
       # Wrap each output attribute in assertions, so they'll be checked if they're
       # ever used
       {
         dynamicTimes = assert forceVal dynamicTimes "Forcing dynamicTimes";
-                       assert doCheck "areTimes dynamicTimes"
+                       assert ourCheck "areTimes dynamicTimes"
                                     (areTimes dynamicTimes);
                        dynamicTimes;
 
          staticTime  = assert forceVal  staticTime  "Forcing  staticTime ";
-                       assert doCheck "checkTime staticTime"
+                       assert ourCheck "checkTime staticTime"
                                     (checkTime staticTime);
                        staticTime;
 
           totalTimes = assert forceVal   totalTimes "Forcing   totalTimes";
-                       assert doCheck "areTimes totalTimes"
+                       assert ourCheck "areTimes totalTimes"
                                     (areTimes totalTimes);
                        totalTimes;
       };

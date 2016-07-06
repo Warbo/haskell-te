@@ -22,7 +22,7 @@ rec {
           }) annotateAsts dumpAndAnnotate;
 
   inherit (import ./runBenchmark.nix {
-             inherit (self) bash doCheck coreutils jq lib
+             inherit (self) bash ourCheck coreutils jq lib
                      mlspec-bench time writeScript;
              inherit (explore) build-env;
            }) benchmark lastEntry withCriterion withTime;
@@ -82,7 +82,7 @@ rec {
                 };
 
   inherit (import ./benchmarkOutputs.nix {
-            inherit (self) annotate bc buildPackage doCheck cluster
+            inherit (self) annotate bc buildPackage ourCheck cluster
                     defaultClusters dumpPackage explore
                     extractTarball format haskellPackages jq lib nixFromCabal
                     nth parseJSON reduce runScript stdenv storeResult timeCalc
@@ -94,7 +94,7 @@ rec {
                  };
 
   explore = import ./explore.nix {
-              inherit (self) benchmark doCheck format haskellPackages jq lib ml4hs
+              inherit (self) benchmark ourCheck format haskellPackages jq lib ml4hs
                       parseJSON runScript writeScript;
               inherit self;
             };
@@ -144,26 +144,26 @@ rec {
                              "not ok - ${msg}"
                              (assert cond; trace "ok - ${msg}" cond);
 
-  doCheck = msg: cond: builtins.addErrorContext msg (assert cond; cond);
+  ourCheck = msg: cond: builtins.addErrorContext msg (assert cond; cond);
 
   checkStdDev = sd:
-    assert doCheck "isAttrs stddev '${toJSON sd}'"
+    assert ourCheck "isAttrs stddev '${toJSON sd}'"
                  (isAttrs sd);
-    assert doCheck "Stddev '${toJSON sd}' has estPoint"
+    assert ourCheck "Stddev '${toJSON sd}' has estPoint"
                  (sd ? estPoint);
-    assert doCheck "Stddev estPoint '${toJSON sd.estPoint}'"
+    assert ourCheck "Stddev estPoint '${toJSON sd.estPoint}'"
                  (isString sd.estPoint);
     true;
 
   checkTime = t:
-    assert doCheck "isAttrs '${toJSON t}'"           (isAttrs t);
-    assert doCheck "${toJSON t} has mean"            (t ? mean);
-    assert doCheck "isAttrs '${toJSON t.mean}'"      (isAttrs t.mean);
-    assert doCheck "'${toJSON t.mean}' has estPoint" (t.mean ? estPoint);
-    t ? stddev -> doCheck "Checking stddev" (checkStdDev t.stddev);
+    assert ourCheck "isAttrs '${toJSON t}'"           (isAttrs t);
+    assert ourCheck "${toJSON t} has mean"            (t ? mean);
+    assert ourCheck "isAttrs '${toJSON t.mean}'"      (isAttrs t.mean);
+    assert ourCheck "'${toJSON t.mean}' has estPoint" (t.mean ? estPoint);
+    t ? stddev -> ourCheck "Checking stddev" (checkStdDev t.stddev);
 
   timeCalc = import ./timeCalc.nix {
-              inherit (self) bc doCheck checkStdDev checkTime lib nth parseJSON
+              inherit (self) bc ourCheck checkStdDev checkTime lib nth parseJSON
                       runScript;
              };
 
@@ -177,9 +177,9 @@ rec {
              };
 
   nth = n: lst:
-    assert doCheck "Given integer '${toJSON n}'" (isInt  n);
-    assert doCheck "Expecting list, given '${typeOf lst}'" (isList lst);
-    assert doCheck "Index '${toJSON n}' in bounds '${toJSON (length lst)}'"
+    assert ourCheck "Given integer '${toJSON n}'" (isInt  n);
+    assert ourCheck "Expecting list, given '${typeOf lst}'" (isList lst);
+    assert ourCheck "Index '${toJSON n}' in bounds '${toJSON (length lst)}'"
                  (n <= length lst);
     if n == 1
        then head lst
@@ -223,7 +223,7 @@ rec {
                   };
 
   plotResults = import ./plotResults.nix {
-                  inherit (self) doCheck gnuplot lib runScript storeResult writeScript;
+                  inherit (self) ourCheck gnuplot lib runScript storeResult writeScript;
                 };
   inherit (plotResults) mkTbl;
 
@@ -232,11 +232,11 @@ rec {
                              ''echo "scale=16; ${x}/${y}" | bc > "$out"'';
 
   tabulate = import ./tabulate.nix {
-               inherit (self) doCheck checkTime lib processPackages;
+               inherit (self) ourCheck checkTime lib processPackages;
              };
 
   plots = import ./plots.nix {
-            inherit (self) doCheck defaultClusters lib parseJSON plotResults runScript
+            inherit (self) ourCheck defaultClusters lib parseJSON plotResults runScript
                     shuffledList tabulate;
           };
 

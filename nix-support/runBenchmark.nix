@@ -1,4 +1,4 @@
-{ bash, build-env, doCheck, coreutils, jq, lib, mlspec-bench,
+{ bash, build-env, ourCheck, coreutils, jq, lib, mlspec-bench,
   time, writeScript }:
 
 with builtins; with lib;

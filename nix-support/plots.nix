@@ -1,4 +1,4 @@
-{ doCheck, defaultClusters, lib, parseJSON, plotResults, runScript, shuffledList,
+{ ourCheck, defaultClusters, lib, parseJSON, plotResults, runScript, shuffledList,
   tabulate }:
 with builtins;
 with lib;
@@ -68,13 +68,13 @@ haveData = !(any (n: tab."${n}".series == {})
 in
 
 if haveData
-   then assert doCheck "Forcing plots" (all (x: assert doCheck "Forcing ${x}"
+   then assert ourCheck "Forcing plots" (all (x: assert ourCheck "Forcing ${x}"
                                                            (isString "${plots.${x}}");
                                               true)
                                           (attrNames plots));
 
-        assert doCheck "Ensuring plots are files"
-                     (all (x: assert doCheck "Checking ${x} is a file"
+        assert ourCheck "Ensuring plots are files"
+                     (all (x: assert ourCheck "Checking ${x} is a file"
                                            (isFile plots."${x}");
                               true)
                           (attrNames plots));

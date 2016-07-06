@@ -1,4 +1,4 @@
-{ benchmark, doCheck, self, format, haskellPackages, jq, lib, ml4hs, parseJSON,
+{ benchmark, ourCheck, self, format, haskellPackages, jq, lib, ml4hs, parseJSON,
   runScript, writeScript }:
 with builtins;
 with lib;
@@ -67,14 +67,14 @@ extractedEnv = standalone: f:
             exit 1
           fi
         '';
-      doCheck  = parseJSON (runScript { buildInputs = ps; } ''
+      ourCheck  = parseJSON (runScript { buildInputs = ps; } ''
                  ${if extra
                       then checkPkg salonePkg.name
                       else ""}
                  echo "true" > "$out"
                '');
    in trace "Extracted env from '${f}' ${msg}"
-            (assert doCheck; ps);
+            (assert ourCheck; ps);
 
 # Haskell packages required for MLSpec
 extra-haskell-packages = [ "mlspec" "mlspec-helper" "runtime-arbitrary"
@@ -198,23 +198,23 @@ aCheck = formatted: result:
   assert all (n: isList formatted."${n}")       (attrNames formatted);
   assert all (n: all isString formatted."${n}") (attrNames formatted);
 
-  assert doCheck "explored is set ${toJSON result}"
+  assert ourCheck "explored is set ${toJSON result}"
                (isAttrs result);
 
-  assert doCheck "explored keys are numeric ${toJSON result}"
+  assert ourCheck "explored keys are numeric ${toJSON result}"
                (all (n: isInt  (fromJSON n))  (attrNames result));
 
-  assert doCheck "explored values are lists ${toJSON result}"
+  assert ourCheck "explored values are lists ${toJSON result}"
                (all (n: isList result."${n}") (attrNames result));
 
-  assert doCheck "explored values contain sets ${toJSON result}"
+  assert ourCheck "explored values contain sets ${toJSON result}"
                (all (n: all isAttrs result."${n}") (attrNames result));
 
-  assert doCheck "explored values have stdout ${toJSON result}"
+  assert ourCheck "explored values have stdout ${toJSON result}"
                (all (n: all (x: x ? stdout) result."${n}")
                     (attrNames result));
 
-  assert doCheck "explored values have time ${toJSON result}"
+  assert ourCheck "explored values have time ${toJSON result}"
                (all (n: all (x: x ? time) result."${n}")
                     (attrNames result));
   true;

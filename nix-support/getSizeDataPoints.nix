@@ -1,4 +1,4 @@
-{ doCheck, equations, lib, equationCounts, nth, sizeCounts,
+{ ourCheck, equations, lib, equationCounts, nth, sizeCounts,
   timeToBucket, totalTimes }:
 with builtins;
 with lib;
@@ -8,7 +8,7 @@ let
 # The sets we'll be extracting cluster-specific data from; force their
 # evaluation now, to catch any lazy errors
 sets = let result = { inherit equationCounts sizeCounts totalTimes; };
-           f      = n: assert doCheck "Forcing '${n}'"
+           f      = n: assert ourCheck "Forcing '${n}'"
                                     (isString "${toJSON result.${n}}");
                        true;
         in assert all f (attrNames result);
@@ -27,7 +27,7 @@ names = attrNames sets;
 #    in our error messages. Since such error messages may trigger errors, we
 #    should wrap them in an outer message, e.g.
 #
-#      doCheck "Trying foo" (doCheck "Attr 'bar' in ${toJSON baz}" (baz ? bar))
+#      ourCheck "Trying foo" (ourCheck "Attr 'bar' in ${toJSON baz}" (baz ? bar))
 #
 #    If the 'baz ? bar' check fails, we get "Attr 'bar' in ..." in the trace.
 #    If 'toJSON' triggers an error in 'baz', we get "Trying foo" in the trace.
@@ -42,7 +42,7 @@ names = attrNames sets;
 
 checkIndices =
   assert all (cCount:
-               assert doCheck "Checking cCount '${cCount}'"
+               assert ourCheck "Checking cCount '${cCount}'"
                             (checkCount cCount);
                assert checkAttr cCount;
                true)
@@ -50,20 +50,20 @@ checkIndices =
   true;
 
 checkAttr   = cCount:
-  assert doCheck "${toJSON equationCounts} has attr ${cCount}"
+  assert ourCheck "${toJSON equationCounts} has attr ${cCount}"
                (equationCounts ? "${cCount}");
   true;
 
 checkCount  = cCount:
-  assert doCheck "isString '${toJSON cCount}'" (isString cCount);
+  assert ourCheck "isString '${toJSON cCount}'" (isString cCount);
 
-  assert doCheck "All isAttrs '${toJSON sets}'"
-               (all (n: assert doCheck "${n} isAttrs '${toJSON sets.${n}}'"
+  assert ourCheck "All isAttrs '${toJSON sets}'"
+               (all (n: assert ourCheck "${n} isAttrs '${toJSON sets.${n}}'"
                                      (isAttrs sets."${n}");
                         true)
                     names);
 
-  assert all (n: assert doCheck
+  assert all (n: assert ourCheck
                           "${n} has '${toJSON cCount}' '${toJSON sets.${n}}'"
                           (sets."${n}" ? "${cCount}");
                  true)
@@ -72,22 +72,22 @@ checkCount  = cCount:
   true;
 
 checkSet = s:
-  assert doCheck "isAttrs '${toJSON s}'" (isAttrs s);
-  assert all (cCount: assert doCheck "Attr ${cCount} in ${toJSON s}"
+  assert ourCheck "isAttrs '${toJSON s}'" (isAttrs s);
+  assert all (cCount: assert ourCheck "Attr ${cCount} in ${toJSON s}"
                                    (s ? "${cCount}");
                       true)
              clusterCounts;
   true;
 
 checkList = l:
-  assert doCheck "isList '${toJSON l}'" (isList l);
+  assert ourCheck "isList '${toJSON l}'" (isList l);
   true;
 
 checkPoints = all checkPoint allPoints;
 
 checkPoint = p:
-  assert doCheck "Point type ${typeOf p} == set" (isAttrs p);
-  assert all (n: doCheck "Point contains ${n}" (p ? "${n}"))
+  assert ourCheck "Point type ${typeOf p} == set" (isAttrs p);
+  assert all (n: ourCheck "Point contains ${n}" (p ? "${n}"))
                  ["eqCount" "size" "totalTime" "timeBucket"
                   "clusterCount"];
   assert isInt p.eqCount;
@@ -111,13 +111,13 @@ allPoints = map mkPoint clusterCounts;
 in
 
 # Check inputs
-assert doCheck "Checking equations"      (checkSet equations);
-assert doCheck "Checking equationCounts" (checkSet equationCounts);
-assert doCheck "Checking sizeCounts"     (checkSet sizeCounts);
-assert doCheck "Checking totalTimes"     (checkSet totalTimes);
+assert ourCheck "Checking equations"      (checkSet equations);
+assert ourCheck "Checking equationCounts" (checkSet equationCounts);
+assert ourCheck "Checking sizeCounts"     (checkSet sizeCounts);
+assert ourCheck "Checking totalTimes"     (checkSet totalTimes);
 
-assert doCheck "Checking points"                     (checkList allPoints);
-assert doCheck "Checking each point"                 checkPoints;
-assert doCheck "Checking indices for sizeDataPoints" checkIndices;
+assert ourCheck "Checking points"                     (checkList allPoints);
+assert ourCheck "Checking each point"                 checkPoints;
+assert ourCheck "Checking indices for sizeDataPoints" checkIndices;
 
 allPoints
