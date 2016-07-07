@@ -1,7 +1,7 @@
 { writeScript }:
 
 let timeLimSecs = "3600";
-    memLimKb    = "1000000";
+    memLimKb    = "2000000";
     timeout     = writeScript "timeout"
                     (builtins.readFile "${../packages/timeout/timeout}");
  in writeScript "with-timeout" ''
