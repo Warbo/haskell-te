@@ -45,7 +45,8 @@ rec {
     "${coreutils}/bin/tac" "$1" | upToDashes | "${coreutils}/bin/tac"
   '';
 
-  timeout = import ./timeout.nix { inherit writeScript; };
+  inherit (import ./timeout.nix { inherit writeScript; })
+          timeout;
 
   # A thorough benchmark, which performs multiple runs using Criterion
   withCriterion = cmd: args: trace
