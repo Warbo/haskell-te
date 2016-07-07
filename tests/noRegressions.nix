@@ -4,7 +4,7 @@ let
 
 input = "${toString ./exploreTheoriesExamples}/hastily.formatted.1";
 
-env = {};
+env = { buildInputs = explore.extractedEnv null input; };
 
 cmd = ''
   set -e

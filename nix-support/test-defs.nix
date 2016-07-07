@@ -1,7 +1,7 @@
-{ annotateAstsScript, defaultClusters, getDepsScript,
+{ annotateAstsScript, defaultClusters, getDeps, getDepsScript,
   getTypesScript, jq, lib, ml4hs, ML4HSFE, nixRecurrentClusteringScript,
   parseJSON, recurrent-clustering, runScript, runTypes, runWeka, storeResult,
-  processPackages}:
+  processPackages, utillinux}:
 
 with builtins;
 
@@ -16,10 +16,10 @@ rec {
               (testMsg cond msg || trace dbg false);
 
   testPackages = import ./testPackages.nix {
-                   inherit annotateAstsScript defaultClusters
+                   inherit annotateAstsScript defaultClusters getDeps
                            getDepsScript getTypesScript jq lib ml4hs ML4HSFE
                            nixRecurrentClusteringScript parseJSON
                            recurrent-clustering runScript runTypes runWeka
-                           storeResult processPackages;
+                           storeResult processPackages utillinux;
                  };
 }

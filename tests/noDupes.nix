@@ -5,15 +5,16 @@ let
 path  = toString ./exploreTheoriesExamples;
 files = map (f: "${path}/${f}") (attrNames (readDir path));
 
-noDupesFor = f: parseJSON (runScript {} ''
+noDupesFor = f: parseJSON (runScript { buildInputs = explore.extractedEnv null f; } ''
   set -e
   set -o pipefail
 
   function noDupes {
+    echo "Removing dupes" 1>&2
     DUPES=$(grep "^building path.*repo-head" |
             sed -e 's/.*head-//g'            |
             sort                             |
-            uniq -D)
+            uniq -D) || DUPES=""
     [[ -z "$DUPES" ]] || {
       echo "Made redundant package lookups: $DUPES" 1>&2
       exit 1
@@ -23,6 +24,7 @@ noDupesFor = f: parseJSON (runScript {} ''
   echo "Exploring '${f}'" 1>&2
   OUTPUT=$("${explore.explore-theories f}" < "${f}" 2>&1) || {
     echo "Failed to explore '${f}'" 1>&2
+    echo -e "OUTPUT:\n\n$OUTPUT\n\n" 1>&2
     exit 2
   }
 

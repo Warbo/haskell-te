@@ -1,6 +1,7 @@
 { annotate, bc, buildPackage, ourCheck, cluster, defaultClusters, dumpPackage,
-  explore, extractTarball, format, haskellPackages, jq, lib, nixFromCabal,
-  nth, parseJSON, reduce, runScript, stdenv, storeResult, timeCalc, writeScript
+  explore, extractTarball, format, haskellPackages, jq, lib, nixedHsPkg,
+  nixFromCabal, nth, parseJSON, reduce, runScript, stdenv, storeResult,
+  timeCalc, writeScript
 }:
 with builtins;
 with lib;
@@ -12,9 +13,16 @@ sum = fold (x: y: x + y) 0;
 processPkg = { clusters, quick, sampleSize ? null }: name: pkg: rec {
   # Original Haskell fields
   inherit name pkg;
+
+  # Extract tarballs if necessary
   src = if typeOf pkg.src == "path"
            then                pkg.src
            else extractTarball pkg.src;
+
+  # Run cabal2nix if necessary
+  srcNixed = if pathExists (unsafeDiscardStringContext "${src}/default.nix")
+                then src
+                else nixedHsPkg "${src}" null;
 
   # Building with regular GHC
   build = buildPackage { inherit src quick; hsEnv = pkg.env; };
@@ -34,7 +42,7 @@ processPkg = { clusters, quick, sampleSize ? null }: name: pkg: rec {
 
   rawExplored = explore.explore {
                   inherit formatted quick;
-                  standalone = src;
+                  standalone = srcNixed;
                 };
 
   rawReduced = reduce.reduce { inherit explored quick; };

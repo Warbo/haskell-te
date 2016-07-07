@@ -1,4 +1,4 @@
-{ jq, runScript, runTypesScript, storeResult }:
+{ jq, runScript, runTypesScript, storeResult, getDeps, utillinux }:
 asts: pkg: { pkgSrc ? null }:
 
 runScript { buildInputs = [ jq getDeps utillinux ]; } ''

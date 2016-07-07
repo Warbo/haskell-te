@@ -20,13 +20,20 @@ assert typeOf dir == "path" || isString dir;
 assert f == null || isFunction f;
 
 let hsVer   = haskellPackages.ghc.version;
+
+    # Find the .cabal file and read properties from it
     cabalF  = head (filter (x: hasSuffix ".cabal" x) (attrNames (readDir dir)));
     cabalC  = map (replaceStrings [" " "\t"] ["" ""])
                   (splitString "\n" (readFile (dir + "/${cabalF}")));
-    pkgName = replaceStrings ["name:"] [""]
-                             (head (filter (hasPrefix "name:") cabalC));
-    pkgV    = replaceStrings ["version:"] [""]
-                             (head (filter (hasPrefix "version:") cabalC));
+
+    getField = f: replaceStrings [f (toLower f)] ["" ""]
+                                 (head (filter (l: hasPrefix          f  l ||
+                                                   hasPrefix (toLower f) l)
+                                               cabalC));
+
+    pkgName = unsafeDiscardStringContext (getField "Name:");
+    pkgV    = unsafeDiscardStringContext (getField "Version:");
+
     nixed   = stdenv.mkDerivation {
       inherit dir;
       name         = "nixFromCabal-${hsVer}-${pkgName}-${pkgV}";

@@ -1,7 +1,7 @@
-{ annotateAstsScript, defaultClusters, getDepsScript,
+{ annotateAstsScript, defaultClusters, getDeps, getDepsScript,
   getTypesScript, jq, lib, ml4hs, ML4HSFE, nixRecurrentClusteringScript,
   parseJSON, processPackages, recurrent-clustering, runScript, runTypes,
-  runWeka, storeResult }:
+  runWeka, storeResult, utillinux }:
 with builtins;
 with lib;
 

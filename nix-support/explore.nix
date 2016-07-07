@@ -67,14 +67,14 @@ extractedEnv = standalone: f:
             exit 1
           fi
         '';
-      ourCheck  = parseJSON (runScript { buildInputs = ps; } ''
+      doCheck  = parseJSON (runScript { buildInputs = ps; } ''
                  ${if extra
                       then checkPkg salonePkg.name
                       else ""}
                  echo "true" > "$out"
                '');
    in trace "Extracted env from '${f}' ${msg}"
-            (assert ourCheck; ps);
+            (assert doCheck; ps);
 
 # Haskell packages required for MLSpec
 extra-haskell-packages = [ "mlspec" "mlspec-helper" "runtime-arbitrary"

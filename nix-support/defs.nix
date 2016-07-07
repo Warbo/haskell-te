@@ -89,9 +89,9 @@ rec {
                     writeScript;
           }) processPackage processPackages;
 
-  nixFromCabal = import ./nixFromCabal.nix {
-                   inherit (self) haskellPackages lib stdenv;
-                 };
+  inherit (import ./nixFromCabal.nix {
+             inherit (self) haskellPackages lib stdenv;
+           }) nixFromCabal nixedHsPkg;
 
   explore = import ./explore.nix {
               inherit (self) benchmark ourCheck format haskellPackages jq lib ml4hs
@@ -173,7 +173,7 @@ rec {
                  };
 
   runTypes = import ./runTypes.nix        {
-               inherit (self) jq runScript runTypesScript storeResult;
+               inherit (self) jq runScript runTypesScript storeResult getDeps utillinux;
              };
 
   nth = n: lst:
@@ -186,11 +186,11 @@ rec {
        else nth (n - 1) (tail lst);
 
   inherit (import ./test-defs.nix {
-            inherit (self) annotateAstsScript defaultClusters
+            inherit (self) annotateAstsScript defaultClusters getDeps
                     getDepsScript getTypesScript jq lib ml4hs ML4HSFE
                     nixRecurrentClusteringScript parseJSON
                     recurrent-clustering runScript runTypes runWeka storeResult
-                    processPackages;
+                    processPackages utillinux;
           })
           testDbg testMsg testPackages;
 
