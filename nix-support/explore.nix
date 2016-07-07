@@ -44,7 +44,7 @@ extractedEnv = standalone: f:
                          else strip unsuf;
       extra     = standalone != null;
       salonePkg = haskellPackages.callPackage (import standalone) {};
-      salone    = if pathExists "${toString standalone}/default.nix"
+      salone    = if pathExists (unsafeDiscardStringContext "${toString standalone}/default.nix")
                      then trace "Including extra package ${toString standalone}"
                             [ salonePkg ]
                      else trace "Ignoring ${toString standalone} with no default.nix"

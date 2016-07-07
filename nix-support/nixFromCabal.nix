@@ -14,7 +14,10 @@ with builtins; with lib;
 # we perform a tricky piece of indirection which essentially composes "f" with
 # the package definition, but also preserves all of the named arguments required
 # for "haskellPackages.callPackage" to work.
-dir: f:
+
+rec {
+
+nixedHsPkg = dir: f:
 
 assert typeOf dir == "path" || isString dir;
 assert f == null || isFunction f;
@@ -60,6 +63,11 @@ let hsVer   = haskellPackages.ghc.version;
         echo "Finished generating"
       '';
     };
+ in nixed;
+
+nixFromCabal = dir: f:
+let nixed = nixedHsPkg dir f;
+
     result = import "${nixed}";
 
     # Support an "inner-composition" of "f" and "result", which behaves like
@@ -86,4 +94,6 @@ in
 # If we've been given a function "f", compose it with "result" using our
 # special-purpose function
 if f == null then result
-             else import compose f result
+             else import compose f result;
+
+}

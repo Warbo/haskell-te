@@ -84,9 +84,9 @@ rec {
   inherit (import ./benchmarkOutputs.nix {
             inherit (self) annotate bc buildPackage ourCheck cluster
                     defaultClusters dumpPackage explore
-                    extractTarball format haskellPackages jq lib nixFromCabal
-                    nth parseJSON reduce runScript stdenv storeResult timeCalc
-                    writeScript;
+                    extractTarball format haskellPackages jq lib nixedHsPkg
+                    nixFromCabal nth parseJSON reduce runScript stdenv
+                    storeResult timeCalc writeScript;
           }) processPackage processPackages;
 
   inherit (import ./nixFromCabal.nix {
@@ -244,7 +244,7 @@ rec {
     let w      = "640";
         h      = "480";
         exists = testMsg (pathExists plot) "Checking if plot '${plot}' exists";
-        dims   = testMsg (parseJSON (runScript { buildInputs = [ self.file jq ]; } ''
+        dims   = testMsg (parseJSON (runScript { buildInputs = [ self.file self.jq ]; } ''
           set -e
           echo "Checking '${plot}' bigger than ${w}x${h}" 1>&2
           GEOM=$(file "${plot}" | # filename: foo, W x H, baz
