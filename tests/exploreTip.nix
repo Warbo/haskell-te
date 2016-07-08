@@ -39,34 +39,33 @@ singleClusterFails =
         (check outOfMem "Exploring TIP ran out of memory on 1 cluster")
       ];
 
-output = tipBenchmarks.process { quick = true; };
+multipleClustersPass =
+  let num      = 40;
 
-explored = all (n: all (x: strippedContent x != "")
-                       output.explored."${n}")
-               (attrNames output.explored);
+      output   = tipBenchmarks.process { quick = true; clusters = [ num ]; };
 
-haveEqs = all (n: strippedContent output.equations."${n}" != "")
-              (attrNames output.equations);
+      explored = all (n: all (x: strippedContent x != "")
+                             output.explored."${n}")
+                     (attrNames output.explored);
 
-nonZeroEqs = all (n: output.equationCounts."${n}" > 0)
-                 (attrNames output.equationCounts);
+      haveEqs  = all (n: strippedContent output.equations."${n}" != "")
+                     (attrNames output.equations);
+
+      nonZeroEqs = all (n: output.equationCounts."${n}" > 0)
+                       (attrNames output.equationCounts);
+
+      check    = c: m: testDbg c m (toJSON { inherit num output; });
+
+   in all (x: x) [
+        (check (!output.failed) "Explored TIP with ${toString num} clusters")
+
+        (check explored "Exploring TIP gave output")
+
+        (check haveEqs  "Got TIP equations")
+
+        (check nonZeroEqs "Non-zero equation counts")
+      ];
 
 withDbg = dbg: msg: x: addErrorContext dbg (testMsg x msg || trace dbg false);
 
-in all (x: x) [
-
-  singleClusterFails
-
-  (testDbg (!output.failed)  "TIP benchmark didn't fail"
-           (toJSON { inherit (output) rawDump rawAnnotated rawClustered
-                             formatted rawExplored rawReduced; }))
-
-  (testDbg explored          "TIP benchmark explored"
-           (toJSON { inherit (output) formatted rawExplored; }))
-
-  (testDbg haveEqs    "Got TIP equations"
-           (toJSON { inherit (output) formatted annotated clustered explored
-                     equations; }))
-  (testDbg nonZeroEqs "Non-zero equation counts"
-           (toJSON { inherit (output) equationCounts; }))
-]
+in singleClusterFails && multipleClustersPass
