@@ -186,7 +186,7 @@ rec {
                     recurrent-clustering runScript runTypes runWeka stdenv
                     storeResult utillinux;
           })
-          testAll testDbg testMsg testPackages;
+          testAll testDbg testMsg testPackages testRun;
 
   uniq =
     let uniq' = list: acc:

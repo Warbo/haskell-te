@@ -128,9 +128,15 @@ rec {
   '';
 
   # A fast benchmark, which only performs one run
-  withTime = cmd: args:
+  withTime = cmd: args: stdin:
     let shellArgs = map escapeShellArg args;
         argStr    = concatStringsSep " " shellArgs;
+        stdinCmd  = if stdin == null
+                       then ''STDIN="/dev/null"''
+                       else ''
+                         IN_BASE=$(benchmarkResult)
+                         STDIN="$IN_BASE/stdout"
+                       '';
         getResult = writeScript "benchmarkResult" ''
                       #!/usr/bin/env bash
                       set -e
@@ -140,13 +146,16 @@ rec {
                     '';
      in stdenv.mkDerivation {
           name         = "with-time";
-          buildInputs  = [ time jq timeout ];
+          buildInputs  = [ time jq timeout ] ++ (if stdin == null
+                                                    then []
+                                                    else [ stdin ]);
           buildCommand = ''
             source $stdenv/setup
 
             # Measure time with 'time', limit time/memory using 'timeout'
             time -f '%e' -o time \
-              timeout "${cmd}" ${argStr} 1> stdout 2> stderr
+              timeout "${cmd}" ${argStr} \
+                < "$STDIN" 1> stdout 2> stderr
             CODE="$?"
 
             mkdir "$out"

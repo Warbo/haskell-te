@@ -13,48 +13,83 @@ quick = true;
 dump = dumpPackage { inherit quick; inherit (pkg) src; };
 
 haveDump = testAll [
-             (testMsg (!dump.failed)           "Tip module dump succeeded")
-             (testMsg (pathExists dump.stdout) "Dumped Tip module")
+             (testRun "Tip module dump succeeded"
+                      (toJSON dump)
+                      { buildInputs = [ dump jq ]; }
+                      ''
+                        set -e
+                        D=$(benchmarkResult)
+                        FAILED=$(jq -r '.failed' "$D/result.json")
+                        [[ "x$FAILED" = "xfalse" ]] || exit 1
+                      '')
+             (testRun "Dumped Tip module"
+                      (toJSON dump)
+                      { buildInputs = [ dump jq ]; }
+                      ''
+                        set -e
+                        D=$(benchmarkResult)
+                        STDOUT=$(jq -r '.stdout' < "$D/result.json"
+                        [[ -f "$STDOUT" ]] || exit 1
+                      '')
            ];
 
 # Annotation is trickier, so these are mainly regressions tests to ensure that
 # our scripts can handle packages taken straight from Cabal directories
-asts      = dump.stdout;
 pkgName   = pkg.name;
 env       = { buildInputs = [ jq getDeps utillinux ]; };
 
-ranTypes = parseJSON (runScript env ''
-             set -e
-             "${runTypesScript {
-                  inherit pkg;
-                  pkgSrc = pkg.src;
-              }}" < "${asts}" > stdout 2> stderr
-             CODE="$?"
+ranTypes = stdenv.mkDerivation {
+             name         = "ranTypes";
+             buildInputs  = [ jq getDeps utillinux dump ];
+             buildCommand = ''
+               source $stdenv/setup
+               set -e
 
-             STDOUT=$(nix-store --add stdout)
-             STDERR=$(nix-store --add stderr)
+               D=$(benchmarkResult)
+               ASTS="$D/stdout"
+               "${runTypesScript {
+                    inherit pkg;
+                    pkgSrc = pkg.src;
+                }}" < "$ASTS" > stdout 2> stderr
+               CODE="$?"
 
-             printf '{"stdout": "%s", "stderr": "%s", "code": %s}' \
-                     "$STDOUT"       "$STDERR"       "$CODE" > "$out"
-           '');
+               mkdir -p "$out"
+               cp stdout "$out/"
+               cp stderr "$out/"
 
-checkStderr = parseJSON (runScript {} ''
-                if grep -v '<interactive>.*parse error on input' < "${ranTypes.stderr}" |
-                   grep "error" 1>&2
-                then
-                  echo "false" > "$out"
-                else
-                  echo "true" > "$out"
-                fi
-              '');
+               printf '{"stdout": "%s", "stderr": "%s", "code": %s}' \
+                       "$STDOUT"       "$STDERR"       "$CODE" > "$out/result.json"
+             '';
+           };
+
+checkStderr = stdenv.mkDerivation {
+                name = "checkStderr";
+                buildInputs = [ ranTypes ];
+                buildCommand = ''
+                  if grep -v '<interactive>.*parse error on input' < "${ranTypes}/stderr" |
+                     grep "error" 1>&2
+                  then
+                    echo "false" > "$out"
+                  else
+                    echo "true" > "$out"
+                  fi
+                '';
+              };
 
 canRunTypes = let err = readFile ranTypes.stderr;
                   val = if checkStderr
                            then true
                            else trace (toJSON ranTypes) false;
                in testAll [
-                    (testMsg (ranTypes.code == "0")
-                             "Ran runTypesScript on tip module")
+                    (testRun "Ran runTypesScript on tip module"
+                             (toJSON ranTypes)
+                             { buildInputs = [ ranTypes jq ]; }
+                             ''
+                               set -e
+                               CODE=$(jq -r '.code' < "${ranTypes}/result.json")
+                               [[ "$CODE" -eq 0 ]] || exit 1
+                             '')
+
                     (testMsg val "No runTypeScript errors for tip module")
                   ];
 
@@ -76,8 +111,9 @@ canGetDeps = testMsg ("${gotDeps}" != "")
                      "Can run getDepsScript on tip module";
 
 # Try the 'annotate' function, which combines the above pieces
-annotated = annotate { inherit quick asts pkg;
-                       pkgSrc = pkg.src; };
+annotated = annotate { inherit quick pkg;
+                       pkgSrc = pkg.src;
+                       asts   = dump; };
 
 rawAnnotated = testRun "Tip module annotation succeeded"
                        null
