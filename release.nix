@@ -12,7 +12,7 @@
                 buildCommand = ''
                   source $stdenv/setup
                   mkdir -p "$out"
-                  echo "success" > "$out"
+                  echo "success" > "$out/non-rec"
                 '';
               };
            in foo;
