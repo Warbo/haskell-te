@@ -23,7 +23,7 @@ singleClusterFails =
                     (fromJSON memUsageS);
       outOfMem  = memUsage > memLimKb;
       check     = c: m: testDbg c m (toJSON { inherit output memLimKb; });
-   in all (x: x) [
+   in testAll [
         (check output.failed "TIP fails for 1 cluster")
 
         (check (!output.rawAnnotated.failed) "TIP annotated for 1 cluster")
@@ -56,7 +56,7 @@ multipleClustersPass =
 
       check    = c: m: testDbg c m (toJSON { inherit num output; });
 
-   in all (x: x) [
+   in testAll [
         (check (!output.failed) "Explored TIP with ${toString num} clusters")
 
         (check explored "Exploring TIP gave output")
@@ -68,4 +68,4 @@ multipleClustersPass =
 
 withDbg = dbg: msg: x: addErrorContext dbg (testMsg x msg || trace dbg false);
 
-in singleClusterFails && multipleClustersPass
+in testAll [singleClusterFails multipleClustersPass]

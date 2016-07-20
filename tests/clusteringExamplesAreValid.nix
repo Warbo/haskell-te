@@ -8,4 +8,4 @@ let examples = map (f: ./clusteringExamples + "/${f}")
                  "${jq}/bin/jq" '.' < "${f}" > /dev/null
                  echo "true" > "$out"
                '')) "Example '${f}' is valid";
- in all valid examples
+ in testAll (map valid examples)

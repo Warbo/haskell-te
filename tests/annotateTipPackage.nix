@@ -12,8 +12,10 @@ quick = true;
 
 dump = dumpPackage { inherit quick; inherit (pkg) src; };
 
-haveDump = testMsg (!dump.failed)           "Tip module dump succeeded" &&
-           testMsg (pathExists dump.stdout) "Dumped Tip module";
+haveDump = testAll [
+             (testMsg (!dump.failed)           "Tip module dump succeeded")
+             (testMsg (pathExists dump.stdout) "Dumped Tip module")
+           ];
 
 # Annotation is trickier, so these are mainly regressions tests to ensure that
 # our scripts can handle packages taken straight from Cabal directories
@@ -50,9 +52,11 @@ canRunTypes = let err = readFile ranTypes.stderr;
                   val = if checkStderr
                            then true
                            else trace (toJSON ranTypes) false;
-               in testMsg (ranTypes.code == "0")
-                          "Ran runTypesScript on tip module" &&
-                  testMsg val "No runTypeScript errors for tip module";
+               in testAll [
+                    (testMsg (ranTypes.code == "0")
+                             "Ran runTypesScript on tip module")
+                    (testMsg val "No runTypeScript errors for tip module")
+                  ];
 
 annotatedAsts = runScript env ''
                   set -e
@@ -84,7 +88,7 @@ tipAnnotated = testMsg (!processed.rawAnnotated.failed)
                        "Tip benchmarks annotated";
 
 # Run tests in dependency order
-in all (x: x) [
+in testAll [
      haveSrc
      haveDump
      canRunTypes

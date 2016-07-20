@@ -32,4 +32,4 @@ let examples = map (f: ./clusteringExamples + "/${f}")
 
                  echo "true" > "$out"
                '')) "Checking for versioned package names in '${f}'";
- in all valid examples
+ in testAll (map valid examples)

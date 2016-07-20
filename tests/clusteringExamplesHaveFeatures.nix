@@ -10,4 +10,4 @@ let examples = map (f: ./clusteringExamples + "/${f}")
                            '');
     valid    = f: testMsg (fromJSON (count f) > 0)
                           "Checking for features in '${f}'";
- in all valid examples
+ in testAll (map valid examples)

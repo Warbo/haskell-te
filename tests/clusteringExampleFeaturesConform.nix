@@ -24,4 +24,4 @@ let examples = map (f: ./clusteringExamples + "/${f}")
 
                    echo "true" > "$out"
                '')) "Example '${f}' is valid";
- in all valid examples
+ in testAll (map valid examples)
