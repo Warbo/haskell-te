@@ -1,5 +1,5 @@
 { annotateAstsScript, benchmark, getDeps, getDepsScript, jq, parseJSON,
-  runScript, runTypesScript, utillinux, writeScript }:
+  runScript, runTypesScript, stdenv, utillinux, writeScript }:
 { asts, pkg, pkgSrc ? null, quick }:
 
 let annotateDb = writeScript "annotateDb" ''
@@ -12,7 +12,31 @@ let annotateDb = writeScript "annotateDb" ''
         "${getDepsScript}"
     '';
 
- in parseJSON (runScript { buildInputs = [ jq getDeps utillinux ]; } ''
-      set -e
-      "${benchmark quick annotateDb []}" < "${asts}" > "$out"
-    '')
+    getResult = writeScript "get-annotatedb-result" ''
+                  #!/usr/bin/env bash
+                  set -e
+                  BASE=$(dirname "$(dirname "$(readlink -f "$0")")")
+                  cat "$BASE/result.json"
+                '';
+
+    getStdout = writeScript "get-annotatedb-stdout" ''
+                  #!/usr/bin/env bash
+                  set -e
+                  STDOUT=$(getBenchmarkResult | "${jq}/bin/jq" -r '.stdout')
+                  cat "$STDOUT"
+                '';
+
+ in stdenv.mkDerivation {
+      name         = "annotatedb";
+      buildInputs  = [ asts jq getDeps utillinux ];
+      buildCommand = ''
+        source $stdenv/setup
+
+        set -e
+        mkdir "$out"
+        getBenchmarkStdout | "${benchmark quick annotateDb []}" > "$out/result.json"
+
+        cp "${getResult}" "$out/bin/getBenchmarkResult"
+        cp "${getStdout}" "$out/bin/getBenchmarkStdout"
+      '';
+    }

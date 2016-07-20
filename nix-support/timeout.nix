@@ -1,4 +1,4 @@
-{ writeScript }:
+{ perl, stdenv, writeScript }:
 
 with builtins;
 
@@ -8,13 +8,25 @@ timeLimSecs   = 3600;
 
 memLimKb      = 2000000;
 
-timeoutScript = writeScript "timeout"
+timeoutSrc    = writeScript "timeout"
                             (builtins.readFile
                                "${../packages/timeout/timeout}");
 
-timeout       = writeScript "with-timeout" ''
-  perl "${timeoutScript}" -c --no-info-on-success \
+timeoutScript = writeScript "with-timeout" ''
+  perl "${timeoutSrc}" -c --no-info-on-success \
        -t ${toString timeLimSecs} -m ${toString memLimKb} "$@"
 '';
+
+timeout = stdenv.mkDerivation {
+  name = "timeout";
+  progagatedBuildInputs = [ perl ];
+  buildCommand = ''
+    source $stdenv/setup
+    set -e
+
+    mkdir -p "$out/bin"
+    cp "${timeoutScript}" "$out/bin/timeout"
+  '';
+};
 
 }

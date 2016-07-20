@@ -19,34 +19,39 @@ rec {
   testMsg = cond: msg: testDbg cond msg null;
 
   testDbg = cond: msg: dbg:
+              assert isBool cond;
+              testRun msg dbg {} ''
+                exit ${if cond then "0" else "1"}
+              '';
+
+  testRun = msg: dbg: env: script:
             let err = x:
                   (if dbg == null
                       then (y: y)
                       else addErrorContext dbg)
                     (addErrorContext "Testing '${msg}'" x);
-             in err (assert isBool   cond;
-                     assert isString msg;
-                     let code = if cond then "0" else "1";
-                      in stdenv.mkDerivation {
-                           inherit code msg dbg;
-                           name = "test-${unsafeDiscardStringContext (hashString "sha256" msg)}";
-                           buildCommand = ''
-                             source $stdenv/setup
+                scriptFile = writeScript "test-script" script;
+             in err (assert isString msg;
+                     stdenv.mkDerivation ({
+                       inherit dbg msg scriptFile;
+                       name = "test-${unsafeDiscardStringContext (hashString "sha256" msg)}";
+                       buildCommand = ''
+                         source $stdenv/setup
 
-                             echo "$msg" > "$out"
+                         echo "$msg" > "$out"
 
-                             if [[ "$code" -eq 0 ]]
-                             then
-                               echo     "ok - $msg"
-                             else
-                               echo "not ok - $msg"
-                               ${if dbg == null then ''echo "$dbg" 1>&2''
-                                                else ""}
-                             fi
-
-                             exit "$code"
-                           '';
-                         });
+                         if "${scriptFile}"
+                         then
+                           echo     "ok - $msg"
+                           exit 0
+                         else
+                           echo "not ok - $msg"
+                           ${if dbg == null then ''echo "$dbg" 1>&2''
+                                            else ""}
+                           exit 1
+                         fi
+                       '';
+                     } // env));
 
   testPackages = import ./testPackages.nix {
                    inherit annotateAstsScript defaultClusters getDeps

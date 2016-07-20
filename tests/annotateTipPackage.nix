@@ -79,7 +79,13 @@ canGetDeps = testMsg ("${gotDeps}" != "")
 annotated = annotate { inherit quick asts pkg;
                        pkgSrc = pkg.src; };
 
-rawAnnotated = testMsg (!annotated.failed) "Tip module annotation succeeded";
+rawAnnotated = testRun "Tip module annotation succeeded"
+                       null
+                       { buildInputs = [ annotated jq ]; }
+                       ''
+                         #!/usr/bin/env bash
+                         jq < (!annotated.failed)
+                       '';
 
 # Just to make sure, also check the encapsulated version we actually use
 processed = tipBenchmarks.process { inherit quick; };

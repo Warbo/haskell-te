@@ -21,9 +21,7 @@ rec {
                      utillinux;
           }) annotateAsts dumpAndAnnotate;
 
-  inherit (import ./runBenchmark.nix {
-             inherit (self) bash ourCheck coreutils jq lib
-                     mlspec-bench time writeScript;
+  inherit (self.callPackage ./runBenchmark.nix {
              inherit (explore) build-env;
            }) benchmark lastEntry withCriterion withTime;
 
@@ -45,11 +43,7 @@ rec {
              inherit (self) benchmark haskellPackages lib parseJSON reduce-equations runScript writeScript;
            };
 
-  annotate        = import ./annotate.nix        {
-                      inherit (self) annotateAstsScript benchmark getDeps
-                              getDepsScript jq parseJSON runScript
-                              runTypesScript utillinux writeScript;
-                    };
+  annotate        = self.callPackage ./annotate.nix {};
 
   getTypesScript = import ./getTypesScript.nix {
                      inherit (self) writeScript;

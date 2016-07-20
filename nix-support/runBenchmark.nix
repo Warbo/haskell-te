@@ -1,5 +1,5 @@
-{ bash, build-env, ourCheck, coreutils, jq, lib, mlspec-bench,
-  time, writeScript }:
+{ bash, build-env, callPackage, coreutils, jq, lib, mlspec-bench, ourCheck,
+  stdenv, time, writeScript }:
 
 with builtins; with lib;
 
@@ -45,15 +45,10 @@ rec {
     "${coreutils}/bin/tac" "$1" | upToDashes | "${coreutils}/bin/tac"
   '';
 
-  inherit (import ./timeout.nix { inherit writeScript; })
-          timeout;
+  inherit (callPackage ./timeout.nix {}) timeout;
 
   # A thorough benchmark, which performs multiple runs using Criterion
-  withCriterion = cmd: args: trace
-    "FIXME: Temporarily make withCriterion an alias for withTime, for speed"
-    (writeScript "fixme" ''
-      "${withTime cmd args}" | "${jq}/bin/jq" '. + {"time":{"mean":{"estPoint":1},"stddev":{"estPoint":1}}}'
-    '');
+  withCriterion = trace "FIXME: Temporarily make withCriterion an alias for withTime, for speed" withTime;
   withCriterion2 = cmd: args: writeScript "with-criterion" ''
     #!${bash}/bin/bash
     set -e
@@ -133,52 +128,73 @@ rec {
   '';
 
   # A fast benchmark, which only performs one run
-  withTime = cmd: args: let shellArgs = map escapeShellArg args;
-                            argStr    = concatStringsSep " " shellArgs;
-    in writeScript "with-time" ''
-      # Measure time with 'time', limit time/memory using 'timeout'
-      "${time}/bin/time" -f '%e' -o time \
-        "${timeout}" "${cmd}" ${argStr} 1> stdout 2> stderr
-      CODE="$?"
+  withTime = cmd: args:
+    let shellArgs = map escapeShellArg args;
+        argStr    = concatStringsSep " " shellArgs;
+        getResult = writeScript "benchmarkResult" ''
+                      #!/usr/bin/env bash
+                      set -e
 
-      # Cache results in the store, so we make better use of the cache and avoid
-      # sending huge strings into Nix
-      STDOUT=$(nix-store --add stdout)
-      STDERR=$(nix-store --add stderr)
-        TIME=$(nix-store --add time)
+                      # Install to /nix/store/foo/bin to get back /nix/store/foo
+                      dirname "$(dirname "$(readlink -f "$0")")"
+                    '';
+     in stdenv.mkDerivation {
+          name         = "with-time";
+          buildInputs  = [ time jq timeout ];
+          buildCommand = ''
+            source $stdenv/setup
 
-      FAILED=false
-      if [[ "$CODE" -ne 0 ]]
-      then
-        echo "Failed to time '${cmd}' with '${argStr}'" 1>&2
-        echo "Contents of stderr:"                      1>&2
-        cat stderr                                      1>&2
-        echo "End of stderr"                            1>&2
-        FAILED=true
-      elif ! "${checkStderr}" "$STDERR"
-      then
-        echo "Errors found in '$STDERR' for '${cmd}'" 1>&2
-        FAILED=true
-      else
-        echo "Benchmarked '${cmd}' at '$(cat time)' seconds" 1>&2
-      fi
+            # Measure time with 'time', limit time/memory using 'timeout'
+            time -f '%e' -o time \
+              timeout "${cmd}" ${argStr} 1> stdout 2> stderr
+            CODE="$?"
 
-      "${jq}/bin/jq" -n --arg     time     "$(grep "^[0-9][0-9.]*$" < time)" \
-                        --arg     cmd      "${cmd}"                          \
-                        --argjson args     '${toJSON args}'                  \
-                        --arg     stdout   "$STDOUT"                         \
-                        --arg     stderr   "$STDERR"                         \
-                        --arg     timefile "$TIME"                           \
-                        --argjson failed   "$FAILED"                         \
-                        '{"failed"   : $failed,
-                          "cmd"      : $cmd,
-                          "args"     : $args,
-                          "stdout"   : $stdout,
-                          "stderr"   : $stderr,
-                          "timefile" : $timefile,
-                          "time"     : {
-                            "mean"   : {"estPoint": $time}}}'
-    '';
+            mkdir "$out"
+
+            # Cache results in the store, so we make better use of the cache and
+            # avoid sending huge strings into Nix.
+            cp stdout "$out/stdout"
+            cp stderr "$out/stderr"
+            cp time "$out/time"
+
+            FAILED=false
+            if [[ "$CODE" -ne 0 ]]
+            then
+              echo "Failed to time '${cmd}' with '${argStr}'" 1>&2
+              echo "Contents of stderr:"                      1>&2
+              cat stderr                                      1>&2
+              echo "End of stderr"                            1>&2
+              FAILED=true
+            elif ! "${checkStderr}" stderr
+            then
+              echo "Errors found in stderr for '${cmd}'" 1>&2
+              FAILED=true
+            else
+              echo "Benchmarked '${cmd}' at '$(cat time)' seconds" 1>&2
+            fi
+
+            jq -n --arg     time     "$(grep "^[0-9][0-9.]*$" < time)" \
+                  --arg     cmd      "${cmd}"                          \
+                  --argjson args     '${toJSON args}'                  \
+                  --arg     stdout   "$out/stdout"                     \
+                  --arg     stderr   "$out/stderr"                     \
+                  --arg     timefile "$out/time"                       \
+                  --argjson failed   "$FAILED"                         \
+                  '{"failed"   : $failed,
+                    "cmd"      : $cmd,
+                    "args"     : $args,
+                    "stdout"   : $stdout,
+                    "stderr"   : $stderr,
+                    "timefile" : $timefile,
+                    "time"     : {
+                      "mean"   : {"estPoint": $time}}}' > "$out/result.json"
+
+            # Install the 'benchmarkResult' script so we can find the file paths
+            # from inside other scripts
+            mkdir "$out/bin"
+            cp "${getResult}" "$out/bin/benchmarkResult"
+          '';
+        };
 
   benchmark = quick: if quick then withTime else withCriterion;
 }
