@@ -186,13 +186,13 @@ rec {
        else nth (n - 1) (tail lst);
 
   inherit (import ./test-defs.nix {
-            inherit (self) annotateAstsScript defaultClusters getDeps
+            inherit (self) annotateAstsScript buildEnv defaultClusters getDeps
                     getDepsScript getTypesScript jq lib ml4hs ML4HSFE
-                    nixRecurrentClusteringScript parseJSON
-                    recurrent-clustering runScript runTypes runWeka storeResult
-                    processPackages utillinux;
+                    nixRecurrentClusteringScript parseJSON processPackages
+                    recurrent-clustering runScript runTypes runWeka stdenv
+                    storeResult utillinux;
           })
-          testDbg testMsg testPackages;
+          testAll testDbg testMsg testPackages;
 
   uniq =
     let uniq' = list: acc:

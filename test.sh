@@ -3,8 +3,9 @@ set -e
 
 # Calls Nix to evaluate tests, but output is messy and it might die silently
 function runIgnoreFailure {
-    nix-instantiate --read-write-mode --show-trace --eval \
-                    -E 'import ./nix-support/test.nix'
+    nix-build --show-trace "./nix-support/test.nix"
+    #nix-instantiate --read-write-mode --show-trace --eval \
+    #                -E 'import ./nix-support/test.nix'
 }
 
 # Runs tests, with an additional pass/fail for whether the test command died
@@ -37,9 +38,9 @@ function report {
 function stderrToTap {
     while read -r ERRLINE
     do
-        if echo "$ERRLINE" | grep "^trace: \(not \)\?ok" > /dev/null
+        if echo "$ERRLINE" | grep "^\(not \)\?ok" > /dev/null
         then
-            echo "$ERRLINE" | sed -e 's/^trace: //g'
+            echo "$ERRLINE"
         else
             echo "$ERRLINE" 1>&2
         fi
