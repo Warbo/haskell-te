@@ -32,8 +32,21 @@ rec {
                                buildInputs = existing    ++
                                              timeoutDeps ++
                                              [ nix ];
-                               NIX_REMOTE  = builtins.getEnv "NIX_REMOTE"; # e.g. "daemon"
+                               NIX_REMOTE  =
+                                 let given = builtins.getEnv "NIX_REMOTE";
+                                     force = runScript { buildInputs = [ nix ]; } ''
+                                               if nix-instantiate --eval -E null 2> /dev/null
+                                               then
+                                                 printf "$NIX_REMOTE" > "$out"
+                                               else
+                                                 printf "daemon"      > "$out"
+                                               fi
+                                             '';
+                                  in if given == ""  # Nix is writable, or we
+                                        then force   # need to force 'daemon'.
+                                        else given;  # Propagate the given value
                                NIX_PATH    = lib.concatStringsSep ":" parts;
+
                                # Allows ~/.nixpkgs/config.nix to help debugging
                                USER_HOME   = builtins.getEnv "HOME";
                              };
