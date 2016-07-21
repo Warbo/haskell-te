@@ -8,5 +8,5 @@ let
     printf '%s' "$RESULT" > "$out"
   '';
 in
-assertMsg (hasSuffix "nix-support" nixPath)
-          "<nixpkgs> is '${toJSON nixPath}'"
+testMsg (hasSuffix "nix-support" nixPath)
+        "<nixpkgs> is '${toJSON nixPath}'"
