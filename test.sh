@@ -12,9 +12,9 @@ function runIgnoreFailure {
 function run {
     if runIgnoreFailure
     then
-        echo "ok Test suite exited gracefully"
+        echo "ok - Test suite exited gracefully"
     else
-        echo "not ok Test suite exited gracefully"
+        echo "not ok - Test suite exited gracefully"
         return 1
     fi
 }
