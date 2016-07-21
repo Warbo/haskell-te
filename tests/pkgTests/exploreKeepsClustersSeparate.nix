@@ -3,7 +3,7 @@ with builtins;
 with lib;
 
 let isNum = s: addErrorContext "Parsing '${s}' as raw JSON" (isInt (fromJSON s));
- in all id [
+ in testAll [
 
 (testMsg (isAttrs pkg.explored) "'explored' is a set ${toJSON pkg.explored}")
 

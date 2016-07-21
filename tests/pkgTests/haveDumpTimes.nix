@@ -10,7 +10,7 @@ let haveMean   = result: testMsg
       "Checking '${pkg.name}' result '${toJSON result}' has 'stddev.estPoint'";
     slow    = processPackages { quick = false; };
     slowPkg = slow."${pkg.name}";
-in  all id [
+ in testAll [
       (haveMean   pkg.rawDump.time)
       (haveMean   slowPkg.rawDump.time)
       (haveStdDev slowPkg.rawDump.time)

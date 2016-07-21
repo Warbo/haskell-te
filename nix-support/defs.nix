@@ -179,14 +179,14 @@ rec {
        then head lst
        else nth (n - 1) (tail lst);
 
-  inherit (import ./test-defs.nix {
-            inherit (self) annotateAstsScript buildEnv defaultClusters getDeps
-                    getDepsScript getTypesScript jq lib ml4hs ML4HSFE
-                    nixRecurrentClusteringScript parseJSON processPackages
-                    recurrent-clustering runScript runTypes runWeka stdenv
-                    storeResult utillinux;
-          })
-          testAll testDbg testMsg testPackages testRun;
+  inherit (self.callPackage ./test-defs.nix {})
+          #  inherit (self) annotateAstsScript buildEnv defaultClusters getDeps
+          #          getDepsScript getTypesScript jq lib ml4hs ML4HSFE
+          #          nixRecurrentClusteringScript parseJSON processPackages
+          #          recurrent-clustering runScript runTypes runWeka stdenv
+          #          storeResult utillinux;
+          #})
+          checkPlot testAll testDbg testMsg testPackages testRun testWrap;
 
   uniq =
     let uniq' = list: acc:
@@ -233,26 +233,6 @@ rec {
             inherit (self) ourCheck defaultClusters lib parseJSON plotResults runScript
                     shuffledList tabulate;
           };
-
-  checkPlot = plot:
-    let w      = "640";
-        h      = "480";
-        exists = testMsg (pathExists plot) "Checking if plot '${plot}' exists";
-        dims   = testMsg (parseJSON (runScript { buildInputs = [ self.file self.jq ]; } ''
-          set -e
-          echo "Checking '${plot}' bigger than ${w}x${h}" 1>&2
-          GEOM=$(file "${plot}" | # filename: foo, W x H, baz
-                 cut -d : -f 2  | # bar, W x H,baz
-                 cut -d , -f 2  ) # W x H
-          W=$(echo "$GEOM" | cut -d x -f 1)
-          H=$(echo "$GEOM" | cut -d x -f 2)
-
-          echo "Checking '$W'x'$H' against '${w}'x'${h}'" 1>&2
-          jq -n --argjson width  "$W" \
-                --argjson height "$H" \
-                '$width >= ${w} and $height >= ${h}' > "$out"
-        '')) "Plot has sufficient dimensions (indicates GNUPlot succeeded)";
-     in plot != null && (exists && dims);
 
   # Pull out Haskell packages (e.g. because they provide executables)
   inherit (self.haskellPackages) AstPlugin getDeps ML4HSFE mlspec mlspec-bench

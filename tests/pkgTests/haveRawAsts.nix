@@ -1,13 +1,15 @@
 defs: with defs; pkg:
 with builtins;
 
-let doCheck = asts:
-  let astsNonempty   = testMsg (readFile "${asts}" != "")
-                               "Checking '${asts}' is non-empty";
-      count          = runScript { buildInputs = [ jq ]; } ''
-                         jq -r 'length' < "${asts}" > "$out"
-                       '';
-      jCount         = addErrorContext "Parsing: '${count}'" (fromJSON count);
-      jCountNonempty = testMsg (jCount > 0) "Found no ASTs in '${asts}'";
-   in astsNonempty && jCountNonempty;
- in doCheck pkg.rawDump.stdout
+let asts    = pkg.rawDump.stdout;
+    astsNonempty   = testMsg (readFile "${asts}" != "")
+                             "Checking '${asts}' is non-empty";
+    count          = runScript { buildInputs = [ jq ]; } ''
+                       jq -r 'length' < "${asts}" > "$out"
+                     '';
+    jCount         = addErrorContext "Parsing: '${count}'" (fromJSON count);
+    result         = if count == ""
+                        then trace "Got empty count" false
+                        else jCount > 0;
+    jCountNonempty = testMsg result "Found no ASTs in '${asts}'";
+ in testWrap [ astsNonempty jCountNonempty ] "Have raw ASTs for ${pkg.name}"

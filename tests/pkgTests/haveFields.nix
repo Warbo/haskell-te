@@ -10,11 +10,15 @@ let asts      = pkg.annotated;
                     jq -c 'map(has("${field}")) | all' < "${asts}" > "$out"
                   '';
     checkField = field:
-                   let result  = haveField field;
-                       jResult = addErrorContext "Parsing '${result}' as JSON"
-                                                 (fromJSON result);
-                    in testMsg jResult "Checking JSON has field '${field}'";
- in all checkField [
+                   let result     = haveField field;
+                       jResult    = addErrorContext "Parsing JSON '${result}'"
+                                                    (fromJSON result);
+                       safeResult = if result == ""
+                                       then trace "Empty result for '${field}'"
+                                                  false
+                                       else jResult;
+                    in testMsg safeResult "Checking JSON has field '${field}'";
+ in testWrap (map checkField [
       "package"
       "module"
       "name"
@@ -23,4 +27,4 @@ let asts      = pkg.annotated;
       "arity"
       "quickspecable"
       "dependencies"
-    ]
+    ]) "Have fields for package '${pkg.name}'"

@@ -11,25 +11,28 @@ with tabulate {
 # Checking the value types forces them to be evaluated
 let
 
-hasValues = x: testMsg (isList x && all isValue x) "${toJSON x} hasValues";
+hasValues = x: addErrorContext "hasValues ${toJSON x}"
+                 (testAll [(testMsg (isList x) "Got list")
+                           (testAll (map isValue x))]);
 
-isValue = x: testMsg (isInt x || isString x)
-                     "isValue ${toJSON x}";
+isValue = x: addErrorContext "isValue ${toJSON x}"
+               (testMsg (isInt x || isString x)
+                        "isValue ${toJSON x}");
 
 checkTable = tbl: addErrorContext "Checking table '${toJSON tbl}'"
-  (all id [
+  (testAll [
     (testMsg (isAttrs tbl.series)
              "Table has a set of series ${toJSON tbl.series}")
 
-    (testMsg (all (n: isList tbl.series.${n}) (attrNames tbl.series))
+    (testMsg (all (n: isList tbl.series."${n}") (attrNames tbl.series))
              "Table rows are lists ${toJSON tbl.series}")
 
-    (testMsg (all (n: all hasValues tbl.series.${n}) (attrNames tbl.series))
-             "Table cells contain values ${toJSON tbl.series}")
+    (testAll (map (n: testAll (map hasValues tbl.series."${n}"))
+                              (attrNames tbl.series)))
   ]);
 
 in
 
-all checkTable [
+testAll (map checkTable [
   eqsVsTimeForClusters
-]
+])

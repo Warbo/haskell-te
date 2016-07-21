@@ -1,6 +1,6 @@
 defs: with defs; pkg:
 
-parseJSON (runScript {} ''
+parseJSON (runScript { buildInputs = [ jq ]; } ''
   set -e
 
   function assertNoVersions {

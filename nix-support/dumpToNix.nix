@@ -1,8 +1,10 @@
 { benchmark, dump-package, parseJSON, runScript }:
 { quick, pkgDir }:
 
-let dir    = builtins.unsafeDiscardStringContext "${toString pkgDir}";
-    script = ''
+let dir = builtins.unsafeDiscardStringContext "${toString pkgDir}";
+ in parseJSON (runScript { buildInputs = [ ]; } ''
+      set -e
+
       D="${toString pkgDir}"
 
       [[ -d "$D" ]] || {
@@ -14,6 +16,6 @@ let dir    = builtins.unsafeDiscardStringContext "${toString pkgDir}";
       chmod +w -R pkgDir
 
       echo "Dumping '$D'" 1>&2
-      HOME="$PWD" DIR="$PWD/pkgDir" "${dump-package}"
-    '';
- in benchmark quick script [] null
+      HOME="$PWD" DIR="$PWD/pkgDir" \
+        "${benchmark quick dump-package []}" > "$out"
+    '')

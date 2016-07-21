@@ -6,6 +6,7 @@ let slowPkgs    = processPackages { quick = false; };
                              (attrNames times);
     checksQuick = testMsg (check pkg.totalTimes)
                           "Check ${pkg.name} has total quick time";
-    checksSlow  = testMsg (check slowPkgs.${pkg.name}.totalTimes)
+    checksSlow  = testMsg (check slowPkgs."${pkg.name}".totalTimes)
                           "Check ${pkg.name} has total slow time";
- in checksQuick && checksSlow
+ in testWrap [ checksQuick checksSlow ]
+             "Have fast and slow times for ${pkg.name}"

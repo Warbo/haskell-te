@@ -10,7 +10,7 @@ four = timeCalc.sumTimes [ two two ];
 
 in
 
-all id [
+testWrap [
   (testMsg (two.mean.estPoint  == "2")
            "sum [2] should equal 2, got ${toJSON two}")
 
@@ -22,4 +22,4 @@ all id [
   (testMsg (! timeCalc.floatLessThan "1.2345678" "0.1234567") "0.x < 1.x")
 
   (testMsg (! timeCalc.floatLessThan "1.2345678" "1.2345678") "! (x < x)")
-]
+] "Time tests"

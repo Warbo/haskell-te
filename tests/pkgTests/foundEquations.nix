@@ -10,11 +10,9 @@ counts = fold (n: old: old ++ [pkg.equationCounts."${n}"])
 
 info = pkg // { pkg = "Elided"; };
 
-debug = x: if x then x
-                else trace "Debug: ${toJSON info}" x;
-
-test = testMsg
+test = testDbg
          (any (x: x > 0) counts)
-         "${pkg.name} has non-zero equation count ${toJSON pkg.equationCounts}";
+         "${pkg.name} has non-zero equation count ${toJSON pkg.equationCounts}"
+         "Debug: ${toJSON info}";
 
-in debug test
+in test

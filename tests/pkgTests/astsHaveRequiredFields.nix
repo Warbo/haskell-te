@@ -24,8 +24,8 @@ let result = asts:
           assert isString str;
           assert isAttrs  json;
           json;
-    check = asts: all id (mapAttrsToList (f: b: testMsg b "Checking for ${f}")
-                                         (result asts));
+    check = asts: testAll (mapAttrsToList (f: b: testMsg b "Checking for ${f}")
+                                          (result asts));
     slow    = processPackages { quick = false; };
     slowPkg = slow."${pkg.name}";
- in all check [ pkg.dump pkg.rawDump.stdout slowPkg.dump slowPkg.rawDump.stdout ]
+ in testAll (map check [ pkg.dump pkg.rawDump.stdout slowPkg.dump slowPkg.rawDump.stdout ])

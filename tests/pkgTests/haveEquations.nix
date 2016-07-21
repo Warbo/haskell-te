@@ -4,9 +4,9 @@ with lib;
 
 let
 
-checkEqs = label: c: all (checkEqsFile label c);
+checkEqs = label: c: data: testAll (map (checkEqsFile label c) data);
 
-checkEqsFile = label: c: data: all id [
+checkEqsFile = label: c: data: testAll [
   (testMsg (isString data) "Data is a string ${toJSON data}")
 
   (testMsg (parseJSON (runScript { buildInputs = [ jq ]; } ''
@@ -23,18 +23,21 @@ checkEqsFile = label: c: data: all id [
 ];
 
 result = src: label: c:
-  testMsg (mapAttrs (checkEqs label) src)."${toString c}"
-          "Equations for '${pkg.name}.${label}' in '${toString c}' clusters";
+  assert isAttrs src;
+  assert isString label;
+  assert isInt c;
+  let results = mapAttrs (checkEqs label) src;
+      key     = toString c;
+   in addErrorContext "result '${toJSON src}' '${label}' '${key}'"
+        (testWrap [ results."${key}" ]
+                 "Equations for '${pkg.name}.${label}' in '${key}' clusters");
 
-checkAll = label: src: all id [
-  (testMsg (isAttrs src)
-           "${label} isAttrs ${toJSON src}")
+in testAll [
+     (testMsg (isAttrs pkg.explored)
+              "explored isAttrs ${toJSON pkg.explored}")
 
-  (testMsg (all (n: isList src."${n}") (attrNames src))
-           "${label} contains lists ${toJSON src}")
+     (testMsg (all (n: isList pkg.explored."${n}") (attrNames pkg.explored))
+              "explored contains lists ${toJSON pkg.explored}")
 
-  (testMsg (all (result src label) defaultClusters)
-           "All clusters of ${label} have equations")
-];
-
-in checkAll "explored" pkg.explored
+     (testAll (map (result pkg.explored "explored") defaultClusters))
+   ]

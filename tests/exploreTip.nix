@@ -2,9 +2,7 @@ defs: with defs; with builtins;
 
 let
 
-memLimKb = (import ../nix-support/timeout.nix {
-             inherit writeScript;
-           }).memLimKb;
+memLimKb = (defs.callPackage ../nix-support/timeout.nix {}).memLimKb;
 
 strippedContent = f:
   let content  = readFile f;
@@ -16,12 +14,21 @@ singleClusterFails =
   let output    = tipBenchmarks.process { quick = true; clusters = [ 1 ]; };
       explored  = head output.rawExplored.results."1";
       memUsageS = runScript { buildInputs = [ jq ]; } ''
-                    grep -o "MAXMEM [0-9]*" < "${explored.stderr}" |
-                    grep -o "[0-9]*" > "$out"
+                    MEM=$(grep -o "MAXMEM [0-9]*" < "${explored.stderr}" |
+                          grep -o "[0-9]*")
+
+                    if [[ -n "$MEM" ]]
+                    then
+                      echo "$MEM" > "$out"
+                    else
+                      echo "null" > "$out"
+                    fi
                   '';
       memUsage  = addErrorContext "Parsing number from '${memUsageS}'"
                     (fromJSON memUsageS);
-      outOfMem  = memUsage > memLimKb;
+      outOfMem  = if isInt memUsage
+                     then memUsage > memLimKb
+                     else trace "Couldn't get memory usage" false;
       check     = c: m: testDbg c m (toJSON { inherit output memLimKb; });
    in testAll [
         (check output.failed "TIP fails for 1 cluster")

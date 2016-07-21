@@ -13,8 +13,18 @@ let arities = runScript { buildInputs = [ jq getDeps utillinux ]; } ''
       "${storeResult}" tagged.json "$out"
     '';
 
-    count = fromJSON (parseJSON (runScript {} ''
-              "${jq}/bin/jq" -r 'length' < "${arityTagged}" > "$out"
+    count = fromJSON (parseJSON (runScript { buildInputs = [ jq ]; } ''
+              COUNT=$(jq -r 'length' < "${arityTagged}")
+              if [[ -n "$COUNT" ]]
+              then
+                echo "$COUNT" > "$out"
+              else
+                echo "Didn't receive JSON array" 1>&2
+                cat "${arityTagged}"             1>&2
+                echo '"null"' > "$out"
+              fi
             ''));
- in testMsg (count > 0)
+ in testMsg (if count == null
+                then trace "Got null count" false
+                else count > 0)
             "Found '${toString count}' tagged arities for '${pkg.name}'"

@@ -5,7 +5,8 @@ with lib;
 let
 
 # `unique` in Nix's standard library overflows the stack, since it's not
-# tail-recursive: after recursing on the tail, duplicates of the head are removedeach call . after recursing on the tail of the list, it removes
+# tail-recursive: after recursing on the tail, duplicates of the head are
+# removedeach call . after recursing on the tail of the list, it removes
 # occurrences of the head and prepends one, then prepends the head.
 # Our version takes the head of `list` This version doesn't,
 # as it's tail-recursive.
@@ -32,7 +33,7 @@ selection = random.randStrings shuffledList (length shuffledList);
 
 in
 
-all id [
+testAll [
   (testMsg (isList shuffledList) "isList ${typeOf shuffledList}")
 
   uniquePkgs

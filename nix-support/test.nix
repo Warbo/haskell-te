@@ -8,8 +8,5 @@ let tests       = import ./tests.nix { inherit pkgs; };
     testResults = mapAttrs (n: t: addErrorContext "Running test '${n}'" t)
                            tests;
 
-    # Force testResults, so one failing test doesn't short-circuit the stop the
-    # others from being run.
-    result      = assert isString "Forcing ${toJSON testResults}";
-                  testAll testResults;
- in testMsg result "All tests passed"
+    result      = attrValues testResults;
+ in testWrap result "All tests passed"
