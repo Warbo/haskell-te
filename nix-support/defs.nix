@@ -5,16 +5,24 @@ with builtins; with super.lib;
 
 rec {
 
+  # Use 'dbug foo bar' in place of 'bar' when 'bar' is fragile, tricky, etc. The
+  # value of 'foo' will be included in the stack trace in case of an error, and
+  # if the environment variable "TRACE" is non-empty it will also be printed out
+  # when there's no error
+  dbug = info: val:
+    let msg = toJSON { inherit info; };
+        v   = if getEnv "TRACE" == ""
+                 then val
+                 else trace dbg val;
+     in addErrorContext msg v;
+
   # haskellPackages.override ensures dependencies are overridden too
   haskellPackages = import ./haskellPackages.nix {
                       superHaskellPackages = super.haskellPackages;
                       inherit (self) nixFromCabal;
                     };
 
-  inherit (import ./dumping.nix {
-             inherit (self) bash haskellPackages gnutar jq lib nix perl procps
-                     runCommand stdenv writeScript;
-          }) dump-package runScript importDir;
+  inherit (callPackage ./dumping.nix {}) dump-package runScript importDir;
 
   inherit (import ../annotatedb {
              inherit (self) downloadAndDump getDeps jq lib nix runScript stdenv
