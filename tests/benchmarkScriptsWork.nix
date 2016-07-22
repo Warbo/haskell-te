@@ -2,14 +2,19 @@ defs: with defs;
 with builtins;
 with lib;
 
-let result = script: parseJSON (runScript {} ''
-                        "${script}" > "$out"
-                     '');
+let result = script: parseJSON (runScript {
+                                  inherit script;
+                                  passAsFile = [ "script" ];
+                                }
+                                ''
+                                  chmod +x "$scriptPath"
+                                  "$scriptPath" > "$out"
+                                '');
 
     timeResult      = result (withTime      "echo" ["hello" "world"]);
     criterionResult = result (withCriterion "echo" ["hello" "world"]);
 
-    testField     = found: field: expect:
+    testField = found: field: expect:
       let val = found."${field}";
        in testMsg (val == expect)
                   "${field} '${toJSON val}' should be '${toJSON expect}'";
