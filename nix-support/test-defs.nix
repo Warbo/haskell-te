@@ -1,23 +1,24 @@
-{ annotateAstsScript, buildEnv, defaultClusters, file, getDeps, getDepsScript,
-  getTypesScript, jq, lib, ml4hs, ML4HSFE, nixRecurrentClusteringScript,
-  parseJSON, recurrent-clustering, runScript, runTypes, runWeka, stdenv,
-  storeResult, processPackages, utillinux, writeScript}:
+{ annotateAstsScript, buildEnv, dbug, defaultClusters, file, getDeps,
+  getDepsScript, getTypesScript, jq, lib, ml4hs, ML4HSFE,
+  nixRecurrentClusteringScript, parseJSON, recurrent-clustering, runScript,
+  runTypes, runWeka, stdenv, storeResult, processPackages, utillinux,
+  writeScript}:
 
 with builtins;
 
 # Each test is a derivation, which we collect up and present for evaluation
 
 rec {
-  assertList = l: addErrorContext "assertList ${toJSON l}"
+  assertList = l: dbug "assertList ${toJSON l}"
                     (assert isList l; true);
 
-  assertTest = t: addErrorContext "assertTest ${toJSON t}"
+  assertTest = t: dbug "assertTest ${toJSON t}"
                     (assert isBool t || isAttrs t; true);
 
-  areTests   = ts: addErrorContext "areTests ${toJSON ts}"
+  areTests   = ts: dbug "areTests ${toJSON ts}"
                      (assertList ts && all assertTest ts);
 
-  testAll = tests: addErrorContext "testAll ${toJSON tests}"
+  testAll = tests: dbug "testAll ${toJSON tests}"
                      (assert areTests tests;
                       testWrap tests "Collected tests");
 
@@ -26,7 +27,7 @@ rec {
   # 'foo contains y', 'foo contains z', whilst 'msg' might be
   # 'foo has all required fields'
   testWrap = tests: msg:
-               addErrorContext "testWrap ${toJSON { inherit tests msg; }}"
+               dbug "testWrap ${toJSON { inherit tests msg; }}"
                  (assert areTests tests;
                   # If there are any raw booleans in 'tests', turn them into
                   # trivial derivations

@@ -6,4 +6,5 @@ let result = runScript {} ''
                "${lastEntry}" input > "$out"
              '';
     expected = "baz\n";
- in testMsg (result == expected) "Checking if '${toJSON result}' == '${toJSON expected}'"
+ in testMsg (result == expected)
+            "Checking equality ${toJSON { inherit result expected; }}"
