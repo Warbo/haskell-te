@@ -1,10 +1,10 @@
-{ bash, haskellPackages, gnutar, jq, lib, nix, perl, procps, runCommand, stdenv,
-  writeScript }:
+{ bash, callPackage, haskellPackages, gnutar, jq, lib, nix, perl, procps,
+  runCommand, stdenv, writeScript }:
 with builtins;
 
 rec {
-  runScript       = import ./runScript.nix       {
-                      inherit lib runCommand withNix writeScript;
+  runScript       = callPackage ./runScript.nix {
+                      inherit withNix;
                     };
 
   importDir       = import ./importDir.nix       {
@@ -34,14 +34,18 @@ rec {
                                              [ nix ];
                                NIX_REMOTE  =
                                  let given = builtins.getEnv "NIX_REMOTE";
-                                     force = runScript { buildInputs = [ nix ]; } ''
-                                               if nix-instantiate --eval -E null 2> /dev/null
-                                               then
-                                                 printf "$NIX_REMOTE" > "$out"
-                                               else
-                                                 printf "daemon"      > "$out"
-                                               fi
-                                             '';
+                                     force = runCommand "get-nix-remote"
+                                               { buildInputs = [ nix ]; }
+                                               ''
+                                                 if nix-instantiate \
+                                                      --eval \
+                                                      -E null 2> /dev/null
+                                                 then
+                                                   printf "$NIX_REMOTE" > "$out"
+                                                 else
+                                                   printf "daemon"      > "$out"
+                                                 fi
+                                               '';
                                   in if given == ""  # Nix is writable, or we
                                         then force   # need to force 'daemon'.
                                         else given;  # Propagate the given value
