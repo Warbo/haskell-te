@@ -27,7 +27,7 @@ rec {
   # When running commands over and over to get more reliable statistics, we end
   # up with duplicate output. This script will get just the last run.
   lastEntry = writeScript "last-entry" ''
-    #!${bash}/bin/bash
+    #!/usr/bin/env bash
 
     # Get everything following last occurrence of -----
     function upToDashes {
