@@ -3,12 +3,7 @@
 
 PKG_PATH=$(nix-instantiate --eval -E "<nixpkgs>")
 
-if [[ -n "$NIX_USER_PROFILE_DIR" ]]
-then
-    GC="$NIX_USER_PROFILE_DIR/hydra-roots"
-else
-    GC="/nix/var/nix/gcroots/per-user/$USER/hydra-roots"
-fi
+GC="/nix/var/nix/gcroots/per-user/$USER"
 
 hydra-eval-jobs              \
     "$PWD/release.nix"       \
