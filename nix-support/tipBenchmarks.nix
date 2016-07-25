@@ -1,9 +1,10 @@
-{ bash, defaultClusters, haskellPackages, nixFromCabal,
-  processPackage, racket, runScript, stdenv, storeResult, writeScript }:
+{ bash, defaultClusters, fetchurl, haskellPackages, nixFromCabal,
+  processPackage, python, racket, runScript, stdenv, storeResult, writeScript }:
 
 rec {
   inherit (import ../packages/te-benchmark {
-             inherit bash haskellPackages racket stdenv writeScript;
+             inherit bash fetchurl haskellPackages python racket stdenv
+                     writeScript;
            })
     te-benchmark tip-benchmarks;
 
