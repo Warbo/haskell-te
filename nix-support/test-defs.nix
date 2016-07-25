@@ -66,7 +66,8 @@ rec {
                        buildCommand = ''
                          source $stdenv/setup
 
-                         echo "$msg" > "$out"
+                         echo "# $msg" >> "$out"
+                         echo "true"   >> "$out"
 
                          if "${scriptFile}"
                          then
