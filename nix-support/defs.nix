@@ -13,7 +13,7 @@ rec {
     let msg = toJSON { inherit info; };
         v   = if getEnv "TRACE" == ""
                  then val
-                 else trace dbg val;
+                 else trace info val;
      in addErrorContext msg v;
 
   # haskellPackages.override ensures dependencies are overridden too
@@ -125,9 +125,7 @@ rec {
                 inherit (self) benchmark dump-package parseJSON runScript;
               };
 
-  parseJSON            = import ./parseJSON.nix {
-                           inherit (self) jq runScript writeScript;
-                         };
+  parseJSON = callPackage ./parseJSON.nix {};
 
   ml4hs                = import ../ml4hs            {
                            inherit (self) haskellPackages jq mlspec stdenv;
@@ -218,11 +216,7 @@ rec {
                    inherit (haskellPackages) cabal2nix cabal-install;
                  };
 
-  tipBenchmarks = import ./tipBenchmarks.nix {
-                    inherit (self) bash defaultClusters haskellPackages
-                            nixFromCabal processPackage racket runScript
-                            stdenv storeResult writeScript;
-                  };
+  tipBenchmarks = callPackage ./tipBenchmarks.nix {};
 
   plotResults = import ./plotResults.nix {
                   inherit (self) ourCheck gnuplot lib runScript storeResult writeScript;
