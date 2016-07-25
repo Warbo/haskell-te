@@ -23,9 +23,14 @@ let allNumsToStrings = writeScript "nums-to-strings" ''
     '';
     parseString = txt: addErrorContext
       "Given JSON is '${txt}'; stringifying numbers too"
-      (fromJSON (runScript {} ''
-         "${allNumsToStrings}" < "${toFile "json-string" txt}" > "$out"
-      ''));
+      (fromJSON (runScript
+                  {
+                    inherit txt;
+                    passAsFile = [ "txt" ];
+                  }
+                  ''
+                    "${allNumsToStrings}" < "$txtPath" > "$out"
+                  ''));
 in txt:
    addErrorContext "Parsing JSON value"
      (if isString txt

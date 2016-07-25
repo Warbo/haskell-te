@@ -54,11 +54,10 @@ rec {
                '');
 
   testRun = msg: dbg: env: script:
-            let err = x:
-                  (if dbg == null
-                      then (y: y)
-                      else addErrorContext dbg)
-                    (addErrorContext "Testing '${msg}'" x);
+            let info = { inherit msg; } // (if dbg == null
+                                               then {}
+                                               else { inherit dbg; });
+                err  = x: trace "Testing ${toJSON info}" (dbug "Testing ${toJSON info}" x);
                 scriptFile = writeScript "test-script" script;
              in err (assert isString msg;
                      stdenv.mkDerivation ({

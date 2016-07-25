@@ -5,7 +5,7 @@ let pkgs = import ./. {};
 # Import all *.nix files from ./tests, pass pkgs to each and assert that they
 # return true
 let tests       = import ./tests.nix { inherit pkgs; };
-    testResults = mapAttrs (n: t: addErrorContext "Running test '${n}'" t)
+    testResults = mapAttrs (n: t: dbug "Running test '${n}'" t)
                            tests;
 
     result      = attrValues testResults;
