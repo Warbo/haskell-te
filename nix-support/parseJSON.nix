@@ -1,7 +1,7 @@
 # Give more context to fromJSON, in case of errors, and avoid floating point
 # issues by first converting them to strings
 
-{ jq, runScript, writeScript }:
+{ dbug, jq, runScript, writeScript }:
 
 with builtins;
 
@@ -21,18 +21,14 @@ let allNumsToStrings = writeScript "nums-to-strings" ''
 
       do_walk(if type == "number" then tostring else . end)
     '';
-    parseString = txt: addErrorContext
-      "Given JSON is '${txt}'; stringifying numbers too"
-      (fromJSON (runScript
-                  {
-                    inherit txt;
-                    passAsFile = [ "txt" ];
-                  }
-                  ''
-                    "${allNumsToStrings}" < "$txtPath" > "$out"
-                  ''));
+    parseString = txt:
+      let result = runScript { inherit txt; passAsFile = [ "txt" ]; } ''
+                     "${allNumsToStrings}" < "$txtPath" > "$out"
+                   '';
+       in dbug "Given JSON is '${txt}'; stringifying numbers too"
+               (fromJSON result);
 in txt:
-   addErrorContext "Parsing JSON value"
+   dbug "Parsing JSON value"
      (if isString txt
          then parseString txt
          else abort "Asked to parse a ${typeOf txt} as JSON")
