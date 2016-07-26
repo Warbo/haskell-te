@@ -8,9 +8,11 @@ let tests       = import ./tests.nix { inherit pkgs; };
     testResults = mapAttrs (n: t: dbug "Running test '${n}'" t)
                            tests;
 
-    flatten     = t: if t ? type && t.type == "derivation"
-                        then [ t ]
-                        else concatMap flatten (attrValues t);
+    flatten     = t: if isBool t
+                        then [ (testMsg t "Unknown") ]
+                        else if t ? type && t.type == "derivation"
+                                then [ t ]
+                                else concatMap flatten (attrValues t);
 
     result      = flatten testResults;
  in testWrap result "All tests passed"

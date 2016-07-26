@@ -23,7 +23,4 @@ resultsPerTestPerPkg = mapAttrs testOnPkgs tests;
 resultsPerTest = mapAttrs (_: results: testAll (attrValues results))
                           resultsPerTestPerPkg;
 
-# Strip test names, since they're in our assertion messages anyway
-resultList = attrValues resultsPerTest;
-
-in testAll resultList
+in resultsPerTest

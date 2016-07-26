@@ -3,7 +3,7 @@ set -e
 
 # Calls Nix to evaluate tests, but output is messy and it might die silently
 function runIgnoreFailure {
-    nix-build --show-trace "./nix-support/test.nix"
+    nix-build -k --show-trace "./nix-support/test.nix"
     #nix-instantiate --read-write-mode --show-trace --eval \
     #                -E 'import ./nix-support/test.nix'
 }
