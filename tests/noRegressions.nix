@@ -17,4 +17,4 @@ cmd = ''
   echo "true" > "$out"
 '';
 
-in parseJSON (runScript env cmd)
+in testMsg (parseJSON (runScript env cmd)) "No regressions"

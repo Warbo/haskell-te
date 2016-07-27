@@ -47,5 +47,7 @@ test = runScript env ''
   echo "true" > "$out"
 '';
 
-in trace "FIXME: Skipping expensive ml4hsfeOuterLoop test" true
-#testMsg (parseJSON test) "ml4hsfe-outer-loop behaves"
+in testMsg (if true
+               then trace "FIXME: Skipping expensive ml4hsfeOuterLoop test" true
+               else parseJSON test)
+           "ml4hsfe-outer-loop behaves"
