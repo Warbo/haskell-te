@@ -1,7 +1,7 @@
 defs: with defs;
 with builtins;
 
-let doTest = n: testMsg (isAttrs defs."${name}") "${name} is a set";
+let doTest = n: testMsg (isAttrs defs."${n}") "${n} is a set";
  in testWrap "All packages available" (map doTest [
       "mlspec"
       "mlspec-bench"
