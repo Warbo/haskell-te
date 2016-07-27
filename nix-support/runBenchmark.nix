@@ -137,7 +137,7 @@ rec {
     in writeScript "with-time" ''
       # Measure time with 'time', limit time/memory using 'timeout'
       "${time}/bin/time" -f '%e' -o time \
-        "${timeout}" ${if trace "FIXME: re-enable benchmarking" true then "cat" else ''"${cmd}" ${argStr}''} 1> stdout 2> stderr
+        "${timeout}" "${cmd}" ${argStr} 1> stdout 2> stderr
       CODE="$?"
 
       # Cache results in the store, so we make better use of the cache and avoid
