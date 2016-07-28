@@ -8,16 +8,6 @@ dump-package-env = trace "FIXME: dump-package-env should be used by the outer Ni
     #!/usr/bin/env bash
     set -e
 
-    [[ "$#" -gt 0 ]] || {
-      echo "dump-package-env needs a Cabal project directory" 1>&2
-      exit 1
-    }
-
-    [[ -d "$1" ]] || {
-      echo "Directory '$1' not found" 1>&2
-      exit 1
-    }
-
     DIR="$1"
     PKG=$("${dump-package-name}" "$DIR")
 
@@ -33,6 +23,11 @@ dump-package = writeScript "dump-package" ''
   [[ -n "$DIR" ]] || {
     echo "Please provide a package directory, either as argument or DIR" 1>&2
     exit 3
+  }
+
+  [[ -d "$DIR" ]] || {
+    echo "Directory '$DIR' not found" 1>&2
+    exit 1
   }
 
   ENV=$("${dump-package-env}" "$DIR") || {
