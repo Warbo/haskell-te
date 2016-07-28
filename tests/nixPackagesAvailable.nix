@@ -1,14 +1,24 @@
 defs: with defs;
 with builtins;
 
-let doTest = n: testMsg (isAttrs defs."${n}") "${n} is a set";
- in testWrap "All packages available" (map doTest [
-      "mlspec"
-      "mlspec-bench"
-      "haskellPackages.ArbitraryHaskell"
-      "haskellPackages.mlspec"
-      "haskellPackages.mlspec-bench"
-      "haskellPackages.mlspec-helper"
-      "haskellPackages.nix-eval"
-      "haskellPackages.runtime-arbitrary"
-    ])
+let hasAttr = set: name: testWrap [(testMsg (set ? "${name}")
+                                            "Have '${name}'")
+
+                                   (testMsg (isAttrs set."${name}")
+                                            "'${name}' is a set")]
+
+                                   "Have set '${name}'";
+
+    tests = map (hasAttr defs) [
+              "mlspec"
+              "mlspec-bench"
+            ] ++
+            map (hasAttr haskellPackages) [
+              "ArbitraryHaskell"
+              "mlspec"
+              "mlspec-bench"
+              "mlspec-helper"
+              "nix-eval"
+              "runtime-arbitrary"
+            ];
+ in testWrap tests "All packages available"
