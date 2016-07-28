@@ -5,17 +5,20 @@ let
 # Check the package itself
 pkg = tipBenchmarks.pkg;
 
-haveSrc = testMsg (pathExists pkg.src) "Tip module source exists";
+haveSrc = testRun "Tip module source exists" null { buildInputs = [ pkg ]; }
+            ''
+              [[ -e "${pkg.src}" ]] || exit 1
+            '';
 
 # Make sure we can dump the ASTs
 quick = true;
 
 dump = dumpPackage { inherit quick; inherit (pkg) src; };
 
-haveDump = testAll [
-             (testMsg (!dump.failed)           "Tip module dump succeeded")
-             (testMsg (pathExists dump.stdout) "Dumped Tip module")
-           ];
+haveDump = {
+  dumpSuccess = testMsg (!dump.failed)           "Tip module dump succeeded";
+  haveStdout  = testMsg (pathExists dump.stdout) "Dumped Tip module";
+};
 
 # Annotation is trickier, so these are mainly regressions tests to ensure that
 # our scripts can handle packages taken straight from Cabal directories
@@ -87,13 +90,7 @@ processed = tipBenchmarks.process { inherit quick; };
 tipAnnotated = testMsg (!processed.rawAnnotated.failed)
                        "Tip benchmarks annotated";
 
-# Run tests in dependency order
-in testAll [
-     haveSrc
-     haveDump
-     canRunTypes
-     canAnnotateAsts
-     canGetDeps
-     rawAnnotated
-     tipAnnotated
-   ]
+in {
+  inherit haveSrc haveDump; # canRunTypes canAnnotateAsts canGetDeps rawAnnotated
+          #tipAnnotated;
+}

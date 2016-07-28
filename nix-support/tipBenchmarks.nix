@@ -6,9 +6,7 @@ rec {
              inherit bash fetchurl haskellPackages python racket stdenv
                      writeScript;
            })
-    te-benchmark tip-benchmarks;
-
-  path  = ../packages/te-benchmark;
+    tip-benchmarks;
 
   module = tip-benchmarks;
 

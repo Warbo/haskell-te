@@ -83,13 +83,8 @@ rec {
                   inherit (self) coreutils stdenv wget;
                 };
 
-  inherit (import ./benchmarkOutputs.nix {
-            inherit (self) annotate bc buildPackage ourCheck cluster
-                    defaultClusters dumpPackage explore
-                    extractTarball format haskellPackages jq lib nixedHsPkg
-                    nixFromCabal nth parseJSON reduce runScript stdenv
-                    storeResult timeCalc writeScript;
-          }) processPackage processPackages;
+  inherit (callPackage ./benchmarkOutputs.nix {})
+          processPackage processPackages;
 
   inherit (import ./nixFromCabal.nix {
              inherit (self) haskellPackages lib stdenv;
@@ -117,13 +112,9 @@ rec {
               inherit (self) jq jre runCommand stdenv weka;
             };
 
-  dumpPackage = import ./dumpPackage.nix {
-                  inherit (self) dumpToNix gnutar lib runScript;
-                };
+  dumpPackage = callPackage ./dumpPackage.nix {};
 
-  dumpToNix = import ./dumpToNix.nix {
-                inherit (self) benchmark dump-package parseJSON runScript;
-              };
+  dumpToNix = callPackage ./dumpToNix.nix {};
 
   parseJSON = callPackage ./parseJSON.nix {};
 

@@ -1,4 +1,4 @@
 { dumpToNix, downloadToNix }:
 { quick, pkgName}:
 
-dumpToNix { inherit quick; pkgDir = downloadToNix pkgName; }
+parseJSON (dumpToNix { inherit quick; pkgDir = downloadToNix pkgName; })

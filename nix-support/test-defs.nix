@@ -57,7 +57,8 @@ rec {
             let info = { inherit msg; } // (if dbg == null
                                                then {}
                                                else { inherit dbg; });
-                err  = x: trace "Testing ${toJSON info}" (dbug "Testing ${toJSON info}" x);
+                err  = x: trace "Testing ${toJSON info}"
+                            (dbug "Testing ${toJSON info}" x);
                 scriptFile = writeScript "test-script" script;
              in err (assert isString msg;
                      stdenv.mkDerivation ({

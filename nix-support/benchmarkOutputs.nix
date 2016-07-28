@@ -149,32 +149,12 @@ forceAttr = p: a:
   assert forceVal p."${a}" "Forcing attribute '${a}' of type ${typeOf p.${a}}";
   true;
 
-processedOrFailed = p: if p.failed then p
-                                   else checkProcessed p;
-
 checkProcessed = p:
   assert isAttrs p;
   assert p ? pkg;
-
-  # Force particular parts of our output, to expose any latent errors
-  assert forceAttr p "name";
-  assert forceAttr p "build";
-  assert forceAttr p "dump";
-  assert forceAttr p "annotated";
-  assert forceAttr p "formatted";
-  assert forceAttr p "clustered";
-  assert forceAttr p "explored";
-  assert forceAttr p "equations";
-  assert forceAttr p "equationCounts";
-  assert forceAttr p "sizeCounts";
-  assert forceAttr p "dynamicTimes";
-  assert forceAttr p "staticTime";
-  assert forceAttr p "totalTimes";
-  assert forceAttr p "sizeDataPoints";
-
   p;
 
-processCheck = args: name: pkg: processedOrFailed (processPkg args name pkg);
+processCheck = args: name: pkg: checkProcessed (processPkg args name pkg);
 
 basic = clusters: quick: sampleSize: mapAttrs (processCheck { inherit clusters quick sampleSize; })
                                   haskellPackages;
