@@ -1,61 +1,8 @@
-{ bash, callPackage, haskellPackages, gnutar, jq, lib, nix, perl, procps,
-  runCommand, stdenv, writeScript }:
+{ bash, callPackage, gnutar, haskellPackages, jq, lib, nix, perl, procps,
+  runCommand, runScript, stdenv, writeScript }:
 with builtins;
 
 rec {
-  runScript       = callPackage ./runScript.nix {
-                      inherit withNix;
-                    };
-
-  importDir       = import ./importDir.nix       {
-                      inherit lib;
-                    };
-
-  # Required for running 'timeout'
-  timeoutDeps     = [ perl procps bash ];
-
-  withNix         = env: let existing = if env ? buildInputs
-                                           then env.buildInputs
-                                           else [];
-                             # If we don't have <real> yet, use <nixpkgs>
-                             real     = toString
-                                          (if any (p: p.prefix == "real")
-                                                  nixPath
-                                              then <real>
-                                              else <nixpkgs>);
-                             # Override <nixpkgs>, with <real> as a fallback
-                             parts    = [ "nixpkgs=${toString ./.}"
-                                          "real=${real}"
-                                          "${builtins.getEnv "NIX_PATH"}" ];
-                          in env // {
-                               # Required for calling nix recursively
-                               buildInputs = existing    ++
-                                             timeoutDeps ++
-                                             [ nix ];
-                               NIX_REMOTE  =
-                                 let given  = builtins.getEnv "NIX_REMOTE";
-                                     force  = readFile result;
-                                     result = runCommand "get-nix-remote"
-                                       { buildInputs = [ nix ]; }
-                                       ''
-                                         if nix-instantiate \
-                                              --eval \
-                                              -E null 2> /dev/null
-                                         then
-                                           printf "$NIX_REMOTE" > "$out"
-                                         else
-                                           printf "daemon"      > "$out"
-                                         fi
-                                       '';
-                                  in if given == ""  # Nix is writable, or we
-                                        then force   # need to force 'daemon'.
-                                        else given;  # Propagate the given value
-                               NIX_PATH    = lib.concatStringsSep ":" parts;
-
-                               # Allows ~/.nixpkgs/config.nix to help debugging
-                               USER_HOME   = builtins.getEnv "HOME";
-                             };
-
   ghcWithPlugin = ./ghcWithPlugin.nix;
 
   # Extracts ASTs from a Cabal package

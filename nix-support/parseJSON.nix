@@ -30,5 +30,5 @@ let allNumsToStrings = writeScript "nums-to-strings" ''
 in txt:
    dbug "Parsing JSON value"
      (if isString txt
-         then parseString txt
+         then dbug "Parsing ${txt}" (parseString txt)
          else abort "Asked to parse a ${typeOf txt} as JSON")

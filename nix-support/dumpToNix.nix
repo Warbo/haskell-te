@@ -1,7 +1,8 @@
-{ benchmark, dump-package, parseJSON, perl, runScript, stdenv, writeScript }:
+{ benchmark, drvFromScript, dump-package, parseJSON, perl, runScript, stdenv,
+  writeScript }:
 { quick, pkgDir }:
 
-runScript {} ''
+drvFromScript {} ''
   set -e
 
   D="${toString pkgDir}"

@@ -22,7 +22,10 @@ rec {
                       inherit (self) nixFromCabal;
                     };
 
-  inherit (callPackage ./dumping.nix {}) dump-package runScript importDir;
+  importDir = callPackage ./importDir.nix {};
+  runScript = callPackage ./runScript.nix {};
+
+  inherit (callPackage ./dumping.nix {}) dump-package;
 
   inherit (callPackage ../annotatedb {}) annotateAsts dumpAndAnnotate;
 
