@@ -3,17 +3,6 @@
 
 let
 
-dump-package-env = trace "FIXME: dump-package-env should be used by the outer Nix"
-  writeScript "dump-package-env" ''
-    #!/usr/bin/env bash
-    set -e
-
-    DIR="$1"
-    PKG=$("${dump-package-name}" "$DIR")
-
-    echo "with import <nixpkgs> {}; import \"${ghcWithPlugin}\" \"$PKG\""
-  '';
-
 # Extracts ASTs from a Cabal package
 dump-package = writeScript "dump-package" ''
   #!/usr/bin/env bash
@@ -30,7 +19,9 @@ dump-package = writeScript "dump-package" ''
     exit 1
   }
 
-  ENV=$("${dump-package-env}" "$DIR") || {
+  PKG=$("${dump-package-name}" "$DIR")
+
+  ENV=$(echo "with import <nixpkgs> {}; import \"${ghcWithPlugin}\" \"$PKG\"") || {
     echo "Unable to get package environment; aborting" 1>&2
     exit 2
   }
