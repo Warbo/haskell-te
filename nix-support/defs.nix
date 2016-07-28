@@ -24,10 +24,7 @@ rec {
 
   inherit (callPackage ./dumping.nix {}) dump-package runScript importDir;
 
-  inherit (import ../annotatedb {
-             inherit (self) downloadAndDump getDeps jq lib nix runScript stdenv
-                     utillinux;
-          }) annotateAsts dumpAndAnnotate;
+  inherit (callPackage ../annotatedb {}) annotateAsts dumpAndAnnotate;
 
   inherit (self.callPackage ./runBenchmark.nix {
              inherit (explore) build-env;
@@ -43,13 +40,9 @@ rec {
                     inherit (self) jq writeScript;
                   };
 
-  extractTarball = import ./extractTarball.nix {
-                     inherit (self) gnutar runScript storeResult;
-                   };
+  extractTarball = callPackage ./extractTarball.nix {};
 
-  reduce = import ./reduce.nix {
-             inherit (self) benchmark haskellPackages lib parseJSON reduce-equations runScript writeScript;
-           };
+  reduce = callPackage ./reduce.nix {};
 
   annotate        = self.callPackage ./annotate.nix {};
 
@@ -71,13 +64,9 @@ rec {
                     inherit (haskellPackages) getDeps;
                   };
 
-  format = import ./format.nix {
-             inherit (self) jq parseJSON runScript storeResult;
-           };
+  format = callPackage ./format.nix {};
 
-  random = import ./random.nix {
-             inherit (self) jq lib nth parseJSON runScript writeScript;
-           };
+  random = callPackage ./random.nix {};
 
   hte-scripts = import ./scripts.nix {
                   inherit (self) coreutils stdenv wget;
@@ -90,21 +79,14 @@ rec {
              inherit (self) haskellPackages lib stdenv;
            }) nixFromCabal nixedHsPkg;
 
-  explore = import ./explore.nix {
-              inherit (self) benchmark ourCheck format haskellPackages jq lib ml4hs
-                      parseJSON runScript writeScript;
-              inherit self;
-            };
+  explore = callPackage ./explore.nix { inherit self; };
 
   defaultClusters = [ 1 2 4 ];
 
-  inherit (import ./cluster.nix {
-             inherit (self) benchmark ML4HSFE parseJSON recurrent-clustering runScript
-                     runWeka writeScript;
-          }) cluster nixRecurrentClusteringScript recurrentClusteringScript;
+  inherit (callPackage ./cluster.nix {})
+    cluster nixRecurrentClusteringScript recurrentClusteringScript;
 
-  downloadToNix   = import ./downloadToNix.nix   {
-                      inherit (self) runScript storeResult;
+  downloadToNix   = callPackage ./downloadToNix.nix {
                       inherit (haskellPackages) cabal-install;
                     };
 
@@ -112,11 +94,10 @@ rec {
               inherit (self) jq jre runCommand stdenv weka;
             };
 
-  dumpPackage = callPackage ./dumpPackage.nix {};
-
-  dumpToNix = callPackage ./dumpToNix.nix {};
-
-  parseJSON = callPackage ./parseJSON.nix {};
+  dumpPackage   = callPackage ./dumpPackage.nix   {};
+  dumpToNix     = callPackage ./dumpToNix.nix     {};
+  drvFromScript = callPackage ./drvFromScript.nix {};
+  parseJSON     = callPackage ./parseJSON.nix     {};
 
   ml4hs                = import ../ml4hs            {
                            inherit (self) haskellPackages jq mlspec stdenv;
@@ -153,19 +134,9 @@ rec {
     assert ourCheck "'${toJSON t.mean}' has estPoint" (t.mean ? estPoint);
     t ? stddev -> ourCheck "Checking stddev" (checkStdDev t.stddev);
 
-  timeCalc = import ./timeCalc.nix {
-              inherit (self) bc ourCheck checkStdDev checkTime lib nth parseJSON
-                      runScript;
-             };
-
-  shuffledList = import ./shufflePackages.nix {
-                   inherit (self) coreutils jq parseJSON pv runScript storeResult wget
-                           writeScript;
-                 };
-
-  runTypes = import ./runTypes.nix        {
-               inherit (self) jq runScript runTypesScript storeResult getDeps utillinux;
-             };
+  timeCalc     = callPackage ./timeCalc.nix        {};
+  shuffledList = callPackage ./shufflePackages.nix {};
+  runTypes     = callPackage ./runTypes.nix        {};
 
   nth = n: lst:
     assert ourCheck "Given integer '${toJSON n}'" (isInt  n);
@@ -202,16 +173,13 @@ rec {
       printf '%s' "$RESULT" > "$out"
     '';
 
-  buildPackage = import ./buildPackage.nix {
-                   inherit (self) benchmark parseJSON runScript writeScript;
+  buildPackage = callPackage ./buildPackage.nix {
                    inherit (haskellPackages) cabal2nix cabal-install;
                  };
 
   tipBenchmarks = callPackage ./tipBenchmarks.nix {};
+  plotResults   = callPackage ./plotResults.nix   {};
 
-  plotResults = import ./plotResults.nix {
-                  inherit (self) ourCheck gnuplot lib runScript storeResult writeScript;
-                };
   inherit (plotResults) mkTbl;
 
   # Nix doesn't handle floats, so use bc
@@ -222,10 +190,7 @@ rec {
                inherit (self) ourCheck checkTime lib processPackages;
              };
 
-  plots = import ./plots.nix {
-            inherit (self) ourCheck defaultClusters lib parseJSON plotResults runScript
-                    shuffledList tabulate;
-          };
+  plots = callPackage ./plots.nix {};
 
   # Pull out Haskell packages (e.g. because they provide executables)
   inherit (self.haskellPackages) AstPlugin getDeps ML4HSFE mlspec mlspec-bench
