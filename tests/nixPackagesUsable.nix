@@ -32,7 +32,8 @@ let deps = [
         echo "false" > "$out"
       fi
     '');
-in testWrap "Nix package usable" [
+in testWrap [
      (testMsg (    usable pkg ) "Usable package"     )
      (testMsg (all usable deps) "Usable dependencies")
    ]
+   "Nix package usable"
