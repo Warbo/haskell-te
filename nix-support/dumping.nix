@@ -11,7 +11,7 @@ rec {
                       inherit lib;
                     };
 
-  #Required for running 'timeout'
+  # Required for running 'timeout'
   timeoutDeps     = [ perl procps bash ];
 
   withNix         = env: let existing = if env ? buildInputs
@@ -58,11 +58,32 @@ rec {
 
   ghcWithPlugin = ./ghcWithPlugin.nix;
 
-  dump-format = writeScript "dump-format" ''
+  # Extracts ASTs from a Cabal package
+  dump-package = writeScript "dump-package" ''
     #!/usr/bin/env bash
     set -e
-    PKG=$("${dump-package-name}" "$1")
-    jq -c ". + {package: \"$PKG\"}" | jq -s '.'
+
+    [[ -n "$DIR" ]] || DIR="$1"
+    [[ -n "$DIR" ]] || {
+      echo "Please provide a package directory, either as argument or DIR" 1>&2
+      exit 3
+    }
+
+    [[ -d "$DIR" ]] || {
+      echo "Directory '$DIR' not found" 1>&2
+      exit 1
+    }
+
+    PKG=$("${dump-package-name}" "$DIR")
+
+    ENV=$(echo "with import <nixpkgs> {}; import \"${ghcWithPlugin}\" \"$PKG\"") || {
+      echo "Unable to get package environment; aborting" 1>&2
+      exit 2
+    }
+
+    nix-shell --show-trace \
+              -E "$ENV" \
+              --run "'${runAstPlugin}' '$DIR'"
   '';
 
   dump-package-name = writeScript "dump-package-name" ''
@@ -161,6 +182,6 @@ rec {
     [[ -n "$SKIP_CABAL_CONFIG" ]] ||
         cabal configure --package-db="$GHC_PKG" 1>&2
 
-    getAsts | "${dump-format}" "$1"
+    getAsts | jq -c ". + {package: \"$PKG_NAME\"}" | jq -s '.'
   '';
 }

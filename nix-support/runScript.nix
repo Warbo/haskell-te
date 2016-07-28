@@ -1,9 +1,8 @@
-{ dbug, lib, runCommand, withNix, writeScript }:
+{ dbug, drvFromScript, lib }:
 with builtins; with lib;
 
 env: text:
 
-let script = writeScript "script" text;
-    runner = runCommand  "runner" (withNix env) script;
+let drv = drvFromScript env text;
  in dbug "Running script:\n\n${text}\n\nEND SCRIPT"
-         (unsafeDiscardStringContext (readFile "${runner}"))
+         (unsafeDiscardStringContext (readFile "${drv}"))
