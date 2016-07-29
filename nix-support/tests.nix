@@ -12,6 +12,7 @@ let tests   = pkgs.importDir ../tests;
     runTest = name: value: pkgs.drvFromScript {} ''
       cd "${./..}"
       nix-build --no-out-link -E \
-        'import ./tests/${name}.nix (import ./nix-support {})'
+        'import ./tests/${name}.nix (import ./nix-support {})' || exit 1
+      touch "$out"
     '';
  in mapAttrs runTest tests
