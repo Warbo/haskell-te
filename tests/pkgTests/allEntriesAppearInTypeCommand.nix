@@ -1,6 +1,6 @@
 defs: with defs; pkg: with pkg;
 
-parseJSON (runScript { buildInputs = [ jq ]; } ''
+drvFromScript { buildInputs = [ jq ]; } ''
   set -e
   jq -c -r '.[] | .module + "." + .name' < "${preAnnotated}" |
   while read -r LINE
@@ -11,5 +11,5 @@ parseJSON (runScript { buildInputs = [ jq ]; } ''
         exit 1
       }
   done
-  echo "true" > "$out"
-'')
+  touch "$out"
+''
