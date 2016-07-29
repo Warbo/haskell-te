@@ -4,4 +4,5 @@ with lib;
 
 let source = downloadToNix pkg.name;
     files  = attrNames (builtins.readDir "${source}");
- in any (hasSuffix ".cabal") files
+ in testMsg (any (hasSuffix ".cabal") files)
+            "Downloading ${pkg.name} gets cabal file"

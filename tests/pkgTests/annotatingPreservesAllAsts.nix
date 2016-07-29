@@ -1,6 +1,6 @@
 defs: with defs; pkg:
 
-parseJSON (runScript { buildInputs = [ jq ]; } ''
+drvFromScript { buildInputs = [ jq ]; } ''
   set -e
   jq -c '.asts | .[]' < "${pkg.ranTypes}" | while read -r LINE
   do
@@ -14,5 +14,5 @@ parseJSON (runScript { buildInputs = [ jq ]; } ''
       exit 1
     }
   done
-  echo "true" > "$out"
-'')
+  touch "$out"
+''

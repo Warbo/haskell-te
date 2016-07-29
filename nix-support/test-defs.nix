@@ -124,7 +124,8 @@ rec {
         argStr  = concatStringsSep " " allArgs;
      in drvFromScript { inherit testPath argStr; } ''
           cd "${./..}"
-          nix-build --no-out-link -E "import ./$testPath $argStr" || exit 1
+          nix-build --show-trace --no-out-link \
+                    -E "import ./$testPath $argStr" || exit 1
           touch "$out"
         '';
 }

@@ -1,6 +1,6 @@
 defs: with defs; pkg:
 
-parseJSON (runScript { buildInputs = [ jq ]; }
+drvFromScript { buildInputs = [ jq ]; }
   ''
     set -e
     DEPS=$(jq -cr '.[] | .dependencies | .[] | .package' < "${pkg.deps}" |
@@ -12,5 +12,5 @@ parseJSON (runScript { buildInputs = [ jq ]; }
       echo "Deps of '${pkg.name}' have versions in package IDs:\n$DEPS" 1>&2
       exit 1
     }
-    echo "true" > "$out"
-  '')
+    touch "$out"
+  ''

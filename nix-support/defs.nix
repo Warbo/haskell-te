@@ -78,9 +78,8 @@ rec {
   inherit (callPackage ./benchmarkOutputs.nix {})
           processPackage processPackages;
 
-  inherit (import ./nixFromCabal.nix {
-             inherit (self) haskellPackages lib stdenv;
-           }) nixFromCabal nixedHsPkg;
+  inherit (callPackage ./nixFromCabal.nix {})
+          nixFromCabal nixedHsPkg;
 
   explore = callPackage ./explore.nix { inherit self; };
 
@@ -93,10 +92,7 @@ rec {
                       inherit (haskellPackages) cabal-install;
                     };
 
-  runWeka = import ../packages/runWeka {
-              inherit (self) jq jre runCommand stdenv weka;
-            };
-
+  runWeka       = callPackage ../packages/runWeka {};
   dumpPackage   = callPackage ./dumpPackage.nix   {};
   dumpToNix     = callPackage ./dumpToNix.nix     {};
   drvFromScript = callPackage ./drvFromScript.nix {};
@@ -106,13 +102,8 @@ rec {
                            inherit (self) haskellPackages jq mlspec stdenv;
                          };
 
-  recurrent-clustering = import ../recurrent-clustering {
-                           inherit (self) jq ML4HSFE nix order-deps stdenv;
-                         };
-
-  downloadAndDump      = import ./downloadAndDump.nix {
-                           inherit (self) dumpToNix downloadToNix;
-                         };
+  recurrent-clustering = callPackage ../recurrent-clustering {};
+  downloadAndDump      = callPackage ./downloadAndDump.nix {};
 
   assertMsg            = cond: msg:
                            builtins.addErrorContext

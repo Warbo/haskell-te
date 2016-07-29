@@ -1,6 +1,6 @@
 defs: with defs; pkg:
 
-parseJSON (runScript { buildInputs = [ jq getDeps utillinux ]; } ''
+drvFromScript { buildInputs = [ jq getDeps utillinux ]; } ''
   set -e
   jq -c '.[] | .package'  < "${pkg.preAnnotated}" | while read -r LINE
   do
@@ -9,5 +9,5 @@ parseJSON (runScript { buildInputs = [ jq getDeps utillinux ]; } ''
       exit 1
     }
   done
-  echo "true" > "$out"
-'')
+  touch "$out"
+''
