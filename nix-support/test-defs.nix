@@ -76,8 +76,8 @@ rec {
                            exit 0
                          else
                            echo "not ok - $msg"
-                           ${if dbg == null then ''echo "$dbg" 1>&2''
-                                            else ""}
+                           ${if dbg == null then ""
+                                            else ''echo "$dbg" 1>&2''}
                            exit 1
                          fi
                        '';
