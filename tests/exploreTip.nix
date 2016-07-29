@@ -31,19 +31,13 @@ singleClusterFails =
                      else trace "Couldn't get memory usage" false;
       check     = c: m: testDbg c m (toJSON { inherit output memLimKb; });
    in testAll [
-        (check output.failed "TIP fails for 1 cluster")
-
+        (check   output.failed               "TIP fails for 1 cluster")
         (check (!output.rawAnnotated.failed) "TIP annotated for 1 cluster")
-
-        (check (!output.rawDump.failed) "TIP dumped for 1 cluster")
-
+        (check (!output.rawDump.failed)      "TIP dumped for 1 cluster")
         (check (!output.rawClustered.failed) "TIP clustered for 1 cluster")
-
-        (check output.rawExplored.failed "Can't explore 1 TIP cluster")
-
-        (check explored.failed "Can't explore single TIP cluster")
-
-        (check outOfMem "Exploring TIP ran out of memory on 1 cluster")
+        (check   output.rawExplored.failed   "Can't explore 1 TIP cluster")
+        (check  explored.failed              "Can't explore single TIP cluster")
+        (check  outOfMem                     "Exploring TIP ran out of memory on 1 cluster")
       ];
 
 multipleClustersPass =
