@@ -2,11 +2,11 @@ defs: with defs;
 with builtins;
 with lib;
 
-testWrap
+listToAttrs (map (n: testWrap [ (checkPlot plots."${n}") ]
+                              "Checking plot ${n}")
   (if plots == null
       then trace "Skipping plot tests, as there are no plots" []
-      else map (n: testWrap [ (checkPlot plots."${n}") ]
-                           "Checking plot ${n}")
+      else map
                [ "plotEqsVsTimeForClusters"
                  "plotEqsVsTimeForSizes"
 
@@ -16,4 +16,4 @@ testWrap
                  "plotTimeVsClustersForEqs"
                  "plotTimeVsSizeForEqs"
                ])
-  "All plot tests"
+}
