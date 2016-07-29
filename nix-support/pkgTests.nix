@@ -13,7 +13,7 @@ testOnPkgs = testName: _:
   mapAttrs (pkgName: _:
              runTestInDrv
                "tests/pkgTests/${testName}.nix"
-               ''((import ./nix-support {}).testPackages."${pkgName}")'')
+               [ ''((import ./nix-support {}).testPackages."${pkgName}")'' ])
            testPackages;
 
 in mapAttrs testOnPkgs tests
