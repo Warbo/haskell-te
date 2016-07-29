@@ -22,6 +22,6 @@ in drvFromScript {
        }
      done < <(echo "${concatStringsSep "\n" explore.extra-haskell-packages}")
      echo "ok - $msg"
-     echo "# $msg" >> "$out
+     echo "# $msg" >> "$out"
      echo "# true" >> "$out"
    ''
