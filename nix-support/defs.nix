@@ -150,14 +150,9 @@ rec {
        then head lst
        else nth (n - 1) (tail lst);
 
-  inherit (self.callPackage ./test-defs.nix {})
-          #  inherit (self) annotateAstsScript buildEnv defaultClusters getDeps
-          #          getDepsScript getTypesScript jq lib ml4hs ML4HSFE
-          #          nixRecurrentClusteringScript parseJSON processPackages
-          #          recurrent-clustering runScript runTypes runWeka stdenv
-          #          storeResult utillinux;
-          #})
-          checkPlot testAll testDbg testMsg testPackages testRun testWrap;
+  inherit (callPackage ./test-defs.nix {})
+          checkPlot runTestInDrv testAll testDbg testMsg testPackages testRun
+          testWrap;
 
   uniq =
     let uniq' = list: acc:
