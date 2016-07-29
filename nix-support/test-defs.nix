@@ -1,10 +1,7 @@
-{ annotateAstsScript, buildEnv, dbug, defaultClusters, file, getDeps,
-  getDepsScript, getTypesScript, jq, lib, ml4hs, ML4HSFE,
-  nixRecurrentClusteringScript, parseJSON, recurrent-clustering, runScript,
-  runTypes, runWeka, stdenv, storeResult, processPackages, utillinux,
-  writeScript}:
+{ buildEnv, dbug, file, jq, lib, parseJSON, runScript, stdenv, writeScript}:
 
 with builtins;
+with lib;
 
 # Each test is a derivation, which we collect up and present for evaluation
 
@@ -17,6 +14,10 @@ rec {
 
   areTests   = ts: dbug "areTests ${toJSON ts}"
                      (assertList ts && all assertTest ts);
+
+  stripStr   = stringAsChars (c: if elem c (upperChars ++ lowerChars)
+                                    then c
+                                    else "");
 
   testAll = tests: dbug "testAll ${toJSON tests}"
                      (assert areTests tests;
@@ -53,35 +54,38 @@ rec {
                  exit ${if cond then "0" else "1"}
                '');
 
-  testRun = msg: dbg: env: script:
-            let info = { inherit msg; } // (if dbg == null
-                                               then {}
-                                               else { inherit dbg; });
-                err  = x: trace "Testing ${toJSON info}"
-                            (dbug "Testing ${toJSON info}" x);
+  testRun = msg: dbg: envOverride: script:
+            let info       = toJSON
+                               ({ inherit msg; } // (if dbg == null
+                                                        then {}
+                                                        else { inherit dbg; }));
+                err        = x: trace "Testing ${info}"
+                                  (dbug "Testing ${info}" x);
                 scriptFile = writeScript "test-script" script;
+                hash       = unsafeDiscardStringContext (stripStr msg);
+                env        = {
+                  inherit info msg scriptFile;
+                  name         = "test-${hash}";
+                  passAsFile   = [ "info" ];
+                  buildCommand = ''
+                    source $stdenv/setup
+
+                    echo "# $msg" >> "$out"
+                    echo "true"   >> "$out"
+
+                    if "${scriptFile}"
+                    then
+                      echo     "ok - $msg"
+                      exit 0
+                    else
+                      echo "not ok - $msg"
+                      cat "$infoPath" 1>&2
+                      exit 1
+                    fi
+                  '';
+                };
              in err (assert isString msg;
-                     stdenv.mkDerivation ({
-                       inherit dbg msg scriptFile;
-                       name = "test-${unsafeDiscardStringContext (hashString "sha256" msg)}";
-                       buildCommand = ''
-                         source $stdenv/setup
-
-                         echo "# $msg" >> "$out"
-                         echo "true"   >> "$out"
-
-                         if "${scriptFile}"
-                         then
-                           echo     "ok - $msg"
-                           exit 0
-                         else
-                           echo "not ok - $msg"
-                           ${if dbg == null then ""
-                                            else ''echo "$dbg" 1>&2''}
-                           exit 1
-                         fi
-                       '';
-                     } // env));
+                     stdenv.mkDerivation (env // envOverride));
 
   checkPlot = plot:
     let w      = "640";
@@ -110,11 +114,5 @@ rec {
           dims
         ] "Checking plot ${toJSON plot}";
 
-  testPackages = import ./testPackages.nix {
-                   inherit annotateAstsScript defaultClusters getDeps
-                           getDepsScript getTypesScript jq lib ml4hs ML4HSFE
-                           nixRecurrentClusteringScript parseJSON
-                           recurrent-clustering runScript runTypes runWeka
-                           storeResult processPackages utillinux;
-                 };
+  testPackages = callPackage ./testPackages.nix {};
 }
