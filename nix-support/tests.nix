@@ -9,8 +9,21 @@ let
 # but that would cause all of the tests to run at eval time, which is
 # frustrating (e.g. getting a list of the tests would cause all of them to
 # run!)
-runTest = name: value: pkgs.runTestInDrv "tests/${name}.nix" [];
+runTest  = name: value: pkgs.runTestInDrv "tests/${name}.nix" [];
 
-tests   = mapAttrs runTest (pkgs.importDir ../tests);
+topLevel = mapAttrs runTest (pkgs.importDir ../tests);
 
-in tests // { pkgTests = import ./pkgTests.nix pkgs; }
+pkgTests = import ./pkgTests.nix pkgs;
+
+allTests = { inherit pkgTests topLevel; };
+
+# Remove cruft, like "override" and "overrideDerivation"
+strip = as: if isAttrs as
+               then mapAttrs (n: strip)
+                             (filterAttrs (n: v:
+                                            !(elem n ["override"
+                                                      "overrideDerivation"]))
+                                          as)
+               else as;
+
+in strip allTests
