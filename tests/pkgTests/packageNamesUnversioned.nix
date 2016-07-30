@@ -1,6 +1,6 @@
 defs: with defs; pkg:
 
-parseJSON (runScript { buildInputs = [ jq ]; } ''
+drvFromScript { buildInputs = [ jq ]; } ''
   set -e
 
   function assertNoVersions {
@@ -22,5 +22,5 @@ parseJSON (runScript { buildInputs = [ jq ]; } ''
   jq -rc '.[] | .dependencies | .[] | .package' < "$F" |
     assertNoVersions "dependencies of '$1'"
 
-  echo "true" > "$out"
-'')
+  touch "$out"
+''
