@@ -1,4 +1,5 @@
 defs: with defs; pkg:
 with builtins;
 
-parseJSON (readFile pkg.ranTypes) ? result
+testMsg (parseJSON (readFile pkg.ranTypes) ? result)
+        "${pkg.name} has ranTypes.result"

@@ -1,5 +1,7 @@
 defs: with defs; pkg:
 
-parseJSON (runScript {} ''
-  "${jq}/bin/jq" 'map(has("dependencies")) | all' < "${pkg.deps}" > "$out"
-'')
+testMsg (parseJSON (runScript { buildInputs = [ jq ]; } ''
+                      jq 'map(has("dependencies")) | all' < "${pkg.deps}" \
+                                                          > "$out"
+                    ''))
+        "${pkg.name} has dependencies"
