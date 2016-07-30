@@ -1,4 +1,5 @@
 defs: with defs; pkg:
 with builtins;
 
-parseJSON (readFile pkg.ranTypes) ? cmd
+testMsg (parseJSON (readFile pkg.ranTypes) ? cmd)
+        "'${pkg.name}' has type command"
