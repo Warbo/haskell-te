@@ -5,6 +5,7 @@ let deps = [
       mlspec
       mlspec-bench
       haskellPackages.ArbitraryHaskell
+      haskellPackages.bench
       haskellPackages.ifcxt
       haskellPackages.mlspec
       haskellPackages.mlspec-bench

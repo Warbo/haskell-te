@@ -17,9 +17,8 @@ rec {
      in addErrorContext msg v;
 
   # haskellPackages.override ensures dependencies are overridden too
-  haskellPackages = import ./haskellPackages.nix {
+  haskellPackages = callPackage ./haskellPackages.nix {
                       superHaskellPackages = super.haskellPackages;
-                      inherit (self) nixFromCabal;
                     };
 
   importDir = callPackage ./importDir.nix {};

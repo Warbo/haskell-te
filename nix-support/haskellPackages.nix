@@ -1,4 +1,4 @@
-{ superHaskellPackages, nixFromCabal }:
+{ extractTarball, fetchurl, nixFromCabal, superHaskellPackages }:
 
 assert let got    = superHaskellPackages.ghc.version;
            should = "7.10.3";
@@ -11,6 +11,10 @@ superHaskellPackages.override {
     let cabalPath = p: self.callPackage (nixFromCabal (toString p) null) {};
      in { ArbitraryHaskell  = cabalPath ../packages/arbitrary-haskell;
           AstPlugin         = cabalPath ../packages/ast-plugin;
+          bench             = cabalPath (extractTarball (fetchurl {
+                                url    = https://github.com/Gabriel439/bench/archive/1.0.1.tar.gz;
+                                sha256 = "1amfq2jhwxzy34gyqyvanc46admwlfqs9dk3d7c10aivbl7v1kyb";
+                              }));
           getDeps           = cabalPath ../packages/get-deps;
           HS2AST            = cabalPath ../packages/hs2ast;
           ifcxt             = cabalPath ../packages/ifcxt;

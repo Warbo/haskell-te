@@ -48,7 +48,14 @@ rec {
   inherit (callPackage ./timeout.nix {}) timeout;
 
   # A thorough benchmark, which performs multiple runs using Criterion
-  withCriterion = cmd: args: writeScript "with-criterion" ''
+  withCriterion = cmd: args:
+    let benchSrc = fetchurl {
+          url    = https://github.com/Gabriel439/bench/archive/1.0.1.tar.gz;
+          sha256 = "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b";
+        };
+        bench = nixFromCabal "${benchSrc}" null;
+     in
+  withCriterion2 = cmd: args: writeScript "with-criterion" ''
     #!${bash}/bin/bash
     set -e
 
