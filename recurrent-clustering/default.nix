@@ -19,8 +19,5 @@ builtins.trace "FIXME: is recurrent-clustering/default.nix needed?" stdenv.mkDer
   installPhase = ''
     mkdir -p "$out/lib"
     cp weka-cli.nix "$out/lib/"
-    cp extractFeatures "$out/lib"
-
-    chmod +x "$out/lib/extractFeatures"
   '';
 }
