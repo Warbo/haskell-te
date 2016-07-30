@@ -1,6 +1,6 @@
 defs: with defs; pkg:
 
-parseJSON (runScript { buildInputs = [ jq ML4HSFE ]; } ''
+drvFromScript { buildInputs = [ jq ML4HSFE ]; } ''
   set -e
 
   function featuresConform {
@@ -18,5 +18,5 @@ parseJSON (runScript { buildInputs = [ jq ML4HSFE ]; } ''
 
   featuresConform  < "${pkg.features}"
 
-  echo "true" > "$out"
-'')
+  touch "$out"
+''
