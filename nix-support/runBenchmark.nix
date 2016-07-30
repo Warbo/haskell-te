@@ -48,12 +48,7 @@ rec {
   inherit (callPackage ./timeout.nix {}) timeout;
 
   # A thorough benchmark, which performs multiple runs using Criterion
-  withCriterion = cmd: args: trace
-    "FIXME: Temporarily make withCriterion an alias for withTime, for speed"
-    (writeScript "fixme" ''
-      "${withTime cmd args}" | "${jq}/bin/jq" '. + {"time":{"mean":{"estPoint":1},"stddev":{"estPoint":1}}}'
-    '');
-  withCriterion2 = cmd: args: writeScript "with-criterion" ''
+  withCriterion = cmd: args: writeScript "with-criterion" ''
     #!${bash}/bin/bash
     set -e
 
