@@ -31,7 +31,7 @@ progOutput = runScript env ''
   "${storeResult}" prog_output "$out"
 '';
 
-test = runScript env ''
+in drvFromScript env ''
   set -e
   for EXPR in type length 'map(type)' 'map(has("cluster"))'
   do
@@ -44,10 +44,5 @@ test = runScript env ''
     }
   done
 
-  echo "true" > "$out"
-'';
-
-in testMsg (if true
-               then trace "FIXME: Skipping expensive ml4hsfeOuterLoop test" true
-               else parseJSON test)
-           "ml4hsfe-outer-loop behaves"
+  touch "$out"
+''
