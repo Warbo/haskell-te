@@ -1,7 +1,7 @@
 { annotateAstsScript, defaultClusters, getDeps, getDepsScript,
   getTypesScript, jq, lib, ml4hs, ML4HSFE, nixRecurrentClusteringScript,
-  parseJSON, processPackages, runScript, runTypes, runWeka, storeResult,
-  utillinux }:
+  order-deps, parseJSON, processPackages, runScript, runTypes, runWeka,
+  storeResult, utillinux }:
 with builtins;
 with lib;
 
@@ -60,7 +60,7 @@ let clusters         = listToAttrs (map (c: {
       # Like 'clustered', but comes from 'features', rather than using 'cluster'
       # which acts on 'annotated'
       preClustered = mapAttrs (c: _:
-        runScript { buildInputs = [ order-deps ML4HSFE nix jq runWeka ]; } ''
+        runScript { buildInputs = [ order-deps ML4HSFE jq runWeka ]; } ''
           export CLUSTERS="${c}"
           "${nixRecurrentClusteringScript}" < "${features}" > pre-clustered.json
           "${storeResult}" pre-clustered.json "$out"
