@@ -34,45 +34,21 @@ rec {
 
   callPackage = super.newScope self;
 
-  runTypesScript = import ./runTypesScript.nix {
-                     inherit (self) haskellPackages jq writeScript;
-                   };
-
-  tagAstsScript = import ./tagAstsScript.nix {
-                    inherit (self) jq writeScript;
-                  };
-
-  extractTarball = callPackage ./extractTarball.nix {};
-
-  reduce = callPackage ./reduce.nix {};
-
-  annotate        = self.callPackage ./annotate.nix {};
-
-  getTypesScript = import ./getTypesScript.nix {
-                     inherit (self) writeScript;
-                   };
-
-  getAritiesScript = import ./getAritiesScript.nix {
-                       inherit (self) writeScript;
-                     };
-
-  annotateAstsScript = import ./annotateAstsScript.nix {
-                         inherit (self) getAritiesScript getTypesScript jq tagAstsScript
-                                 writeScript;
+  runTypesScript     = callPackage ./runTypesScript.nix     {};
+  tagAstsScript      = callPackage ./tagAstsScript.nix      {};
+  extractTarball     = callPackage ./extractTarball.nix     {};
+  reduce             = callPackage ./reduce.nix             {};
+  annotate           = callPackage ./annotate.nix           {};
+  getTypesScript     = callPackage ./getTypesScript.nix     {};
+  getAritiesScript   = callPackage ./getAritiesScript.nix   {};
+  annotateAstsScript = callPackage ./annotateAstsScript.nix {};
+  getDepsScript      = callPackage ./getDepsScript.nix {
+                         inherit (haskellPackages) getDeps;
                        };
 
-  getDepsScript = import ./getDepsScript.nix {
-                    inherit (self) jq utillinux writeScript;
-                    inherit (haskellPackages) getDeps;
-                  };
-
-  format = callPackage ./format.nix {};
-
-  random = callPackage ./random.nix {};
-
-  hte-scripts = import ./scripts.nix {
-                  inherit (self) coreutils stdenv wget;
-                };
+  format      = callPackage ./format.nix {};
+  random      = callPackage ./random.nix {};
+  hte-scripts = callPackage ./scripts.nix {};
 
   inherit (callPackage ./benchmarkOutputs.nix {})
           processPackage processPackages;
@@ -87,22 +63,17 @@ rec {
   inherit (callPackage ./cluster.nix {})
     cluster nixRecurrentClusteringScript recurrentClusteringScript;
 
-  downloadToNix   = callPackage ./downloadToNix.nix {
-                      inherit (haskellPackages) cabal-install;
-                    };
-
-  runWeka       = callPackage ../packages/runWeka {};
-  dumpPackage   = callPackage ./dumpPackage.nix   {};
-  dumpToNix     = callPackage ./dumpToNix.nix     {};
-  drvFromScript = callPackage ./drvFromScript.nix {};
-  parseJSON     = callPackage ./parseJSON.nix     {};
-
-  ml4hs                = import ../ml4hs            {
-                           inherit (self) haskellPackages jq mlspec stdenv;
+  downloadToNix        = callPackage ./downloadToNix.nix {
+                           inherit (haskellPackages) cabal-install;
                          };
-
+  runWeka              = callPackage ../packages/runWeka     {};
+  dumpPackage          = callPackage ./dumpPackage.nix       {};
+  dumpToNix            = callPackage ./dumpToNix.nix         {};
+  drvFromScript        = callPackage ./drvFromScript.nix     {};
+  parseJSON            = callPackage ./parseJSON.nix         {};
+  ml4hs                = callPackage ../ml4hs                {};
   recurrent-clustering = callPackage ../recurrent-clustering {};
-  downloadAndDump      = callPackage ./downloadAndDump.nix {};
+  downloadAndDump      = callPackage ./downloadAndDump.nix   {};
 
   assertMsg            = cond: msg:
                            builtins.addErrorContext
@@ -174,13 +145,10 @@ rec {
   floatDiv = x: y: runScript { buildInputs = [ self.bc ]; }
                              ''echo "scale=16; ${x}/${y}" | bc > "$out"'';
 
-  tabulate = import ./tabulate.nix {
-               inherit (self) ourCheck checkTime lib processPackages;
-             };
-
-  plots = callPackage ./plots.nix {};
+  tabulate = callPackage ./tabulate.nix {};
+  plots    = callPackage ./plots.nix    {};
 
   # Pull out Haskell packages (e.g. because they provide executables)
-  inherit (self.haskellPackages) AstPlugin getDeps ML4HSFE mlspec mlspec-bench
-                                 order-deps reduce-equations;
+  inherit (haskellPackages) AstPlugin getDeps ML4HSFE mlspec mlspec-bench
+                            order-deps reduce-equations;
 }
