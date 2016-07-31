@@ -31,8 +31,7 @@ rec {
 
   # These provide executables
   inherit (haskellPackages)
-          AstPlugin getDeps ML4HSFE mlspec mlspec-bench order-deps
-          reduce-equations;
+          AstPlugin getDeps ML4HSFE mlspec mlspec-bench reduce-equations;
 
   annotate             = callPackage ./annotate.nix           {};
   annotateAstsScript   = callPackage ./annotateAstsScript.nix {};

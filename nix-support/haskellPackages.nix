@@ -27,7 +27,6 @@ superHaskellPackages.override {
           mlspec-helper     = cabalPath ../packages/mlspec-helper;
           nix-eval          = trace "FIXME: Don't run hindent unless debug enabled"
                                 cabalPath ../packages/nix-eval;
-          order-deps        = cabalPath ../packages/order-deps;
           reduce-equations  = trace "FIXME: Allow reducing custom types"
                                 cabalPath ../packages/reduce-equations;
           runtime-arbitrary = cabalPath ../packages/runtime-arbitrary;

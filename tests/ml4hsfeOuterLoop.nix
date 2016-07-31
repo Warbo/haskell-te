@@ -9,7 +9,7 @@ clusterScript = writeScript "cluster-script" ''
 
 ex = ./ml4hsfeExamples/ml4hsfe-outer-loop-example-input.json;
 
-env = { buildInputs = [ jq order-deps haskellPackages.ML4HSFE ]; };
+env = { buildInputs = [ jq haskellPackages.ML4HSFE ]; };
 
 vars = ''
   export WIDTH=30

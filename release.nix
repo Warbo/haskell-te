@@ -8,7 +8,7 @@ let pkgs = import ./nix-support {};
     getDeps HS2AST ML4HSFE;
 
   inherit (pkgs)
-    mlspec mlspec-bench order-deps reduce-equations runWeka;
+    mlspec mlspec-bench reduce-equations runWeka;
 
   #tip-eqs = import ./nix-support/exploreTip.nix;
 }
