@@ -48,14 +48,7 @@ rec {
   inherit (callPackage ./timeout.nix {}) timeout;
 
   # A thorough benchmark, which performs multiple runs using Criterion
-  withCriterion = cmd: args:
-    let benchSrc = fetchurl {
-          url    = https://github.com/Gabriel439/bench/archive/1.0.1.tar.gz;
-          sha256 = "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b";
-        };
-        bench = nixFromCabal "${benchSrc}" null;
-     in
-  withCriterion2 = cmd: args: writeScript "with-criterion" ''
+  withCriterion = cmd: args: writeScript "with-criterion" ''
     #!${bash}/bin/bash
     set -e
 
@@ -80,15 +73,22 @@ rec {
     export BENCHMARK_ARGS='${toJSON args}'
 
     echo "Benchmarking '${cmd}'" 1>&2
+    echo "'${build-env}' '${mlspec-bench}/bin/mlspec-bench'      \
+                            --template json                      \
+                            --output report.json 1> bench.stdout" 1>&2
+
+    echo -e "INPUT:\n$INPUT\nEND INPUT" 1>&2
+    env | grep "BENCH" 1>&2
 
     START_TIME="$SECONDS" # Not part of the benchmark, just info for user
 
-    echo "$INPUT" | "${build-env}"   \
-                      "${mlspec-bench}/bin/mlspec-bench"   \
-                        --template json                     \
+    echo "$INPUT" | "${build-env}"                           \
+                      "${mlspec-bench}/bin/mlspec-bench"     \
+                        --template json                      \
                         --output report.json 1> bench.stdout \
                                              2> bench.stderr ||
-    { echo "Benchmark exited with error" 1>&2; exit 1; }
+    CODE="$?"
+    FAILED=false
 
     DURATION=$(( SECONDS - START_TIME ))
     echo "Benchmarking took '$DURATION' seconds" 1>&2
@@ -105,7 +105,7 @@ rec {
       done < <(find ./outputs -name "*.$F")
       [[ "$FOUND" -eq 1 ]] || {
         echo "Got no $F from mlspec-bench" 1>&2
-        exit 1
+        FAILED=true
       }
     done
 
@@ -113,11 +113,30 @@ rec {
     # sending huge strings into Nix
     STDOUT=$(nix-store --add stdout)
     STDERR=$(nix-store --add stderr)
+      TIME=$(nix-store --add report.json)
 
-    "${checkStderr}" "$STDERR" || {
-      echo "Errors found, aborting" 1>&2
-      exit 3
-    }
+
+    if [[ "$CODE" -ne 0 ]]
+    then
+      echo "Failed to time '${cmd}' with '${toJSON args}'" 1>&2
+
+      echo "Contents of stderr:"                           1>&2
+      cat         bench.stderr                             1>&2 || true
+      echo      "End of stderr"                            1>&2
+
+      echo "Contents of stdout:"                           1>&2
+      cat         bench.stdout                             1>&2 || true
+      echo      "End of stdout"                            1>&2
+
+      FAILED=true
+    elif ! "${checkStderr}" "$STDERR"
+    then
+      echo "Errors found in '$STDERR' for '${cmd}'" 1>&2
+      FAILED=true
+    else
+      echo "Benchmarked '${cmd}'" 1>&2
+      cat "$TIME" 1>&2
+    fi
 
     "${jq}/bin/jq" -n --arg       cmd    '${cmd}'         \
                       --argjson   args   '${toJSON args}' \
@@ -135,7 +154,7 @@ rec {
 
   # A fast benchmark, which only performs one run
   withTime = cmd: args: let shellArgs = map escapeShellArg args;
-                           argStr    = concatStringsSep " " shellArgs;
+                            argStr    = concatStringsSep " " shellArgs;
     in writeScript "with-time" ''
       # Measure time with 'time', limit time/memory using 'timeout'
       "${time}/bin/time" -f '%e' -o time \

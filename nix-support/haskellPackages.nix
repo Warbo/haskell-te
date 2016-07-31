@@ -1,9 +1,11 @@
 { extractTarball, fetchurl, nixFromCabal, superHaskellPackages }:
 
+with builtins;
+
 assert let got    = superHaskellPackages.ghc.version;
            should = "7.10.3";
-        in builtins.addErrorContext "Using GHC ${got} (should be ${should})"
-                                    (got == should);
+        in addErrorContext "Using GHC ${got} (should be ${should})"
+                           (got == should);
 
 superHaskellPackages.override {
   overrides = self: super:
@@ -20,12 +22,13 @@ superHaskellPackages.override {
           ifcxt             = cabalPath ../packages/ifcxt;
           ML4HSFE           = cabalPath ../packages/ml4hsfe;
           mlspec            = cabalPath ../packages/mlspec;
-          mlspec-bench      = cabalPath ../packages/mlspec-bench;
+          mlspec-bench      = trace "FIXME: Use bench"
+                                cabalPath ../packages/mlspec-bench;
           mlspec-helper     = cabalPath ../packages/mlspec-helper;
-          nix-eval          = builtins.trace "FIXME: Don't run hindent unless debug enabled"
+          nix-eval          = trace "FIXME: Don't run hindent unless debug enabled"
                                 cabalPath ../packages/nix-eval;
           order-deps        = cabalPath ../packages/order-deps;
-          reduce-equations  = builtins.trace "FIXME: Allow reducing custom types"
+          reduce-equations  = trace "FIXME: Allow reducing custom types"
                                 cabalPath ../packages/reduce-equations;
           runtime-arbitrary = cabalPath ../packages/runtime-arbitrary;
         };
