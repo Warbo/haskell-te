@@ -64,7 +64,6 @@ rec {
   plotResults          = callPackage ./plotResults.nix        {};
   plots                = callPackage ./plots.nix              {};
   random               = callPackage ./random.nix             {};
-  recurrent-clustering = callPackage ../recurrent-clustering  {};
   reduce               = callPackage ./reduce.nix             {};
   runScript            = callPackage ./runScript.nix          {};
   runTypes             = callPackage ./runTypes.nix           {};

@@ -9,11 +9,7 @@ builtins.trace "FIXME: is recurrent-clustering/default.nix needed?" stdenv.mkDer
     baseNameOf path != "test-data") ./.;
 
   propagatedBuildInputs = [
-    (import ./weka-cli.nix)
-    order-deps
-    ML4HSFE
-    nix
-    jq
+    order-deps ML4HSFE nix jq
   ];
 
   installPhase = ''

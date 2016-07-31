@@ -7,11 +7,9 @@ clusterScript = writeScript "cluster-script" ''
   ml4hsfe-loop | "${recurrentClusteringScript}"
 '';
 
-wekaCli = import ../recurrent-clustering/weka-cli.nix;
-
 ex = ./ml4hsfeExamples/ml4hsfe-outer-loop-example-input.json;
 
-env = { buildInputs = [ wekaCli jq order-deps haskellPackages.ML4HSFE ]; };
+env = { buildInputs = [ jq order-deps haskellPackages.ML4HSFE ]; };
 
 vars = ''
   export WIDTH=30

@@ -1,10 +1,7 @@
-{ benchmark, ML4HSFE, parseJSON, recurrent-clustering, runScript, runWeka,
-  writeScript }:
+{ benchmark, ML4HSFE, parseJSON, runScript, runWeka, writeScript }:
 with builtins;
 
 let
-
-wekaCli = toString ../packages/runWeka/weka-cli.nix;
 
 recurrentClusteringScript = writeScript "recurrent-clustering" ''
   #!/usr/bin/env bash
@@ -62,11 +59,6 @@ recurrentClusteringScript = writeScript "recurrent-clustering" ''
 nixRecurrentClusteringScript = writeScript "nix-recurrent-clustering" ''
   set -e
 
-  [[ -e "${wekaCli}" ]] || {
-    echo "Cannot find '${wekaCli}'" 1>&2
-    exit 1
-  }
-
   if command -v weka-cli > /dev/null
   then
     "${recurrentClusteringScript}"
@@ -86,7 +78,7 @@ clusterScript = writeScript "cluster" ''
 cluster = { quick, annotated, clusters }: let
 
   go = c: parseJSON
-            (runScript { buildInputs = [ recurrent-clustering runWeka ML4HSFE ]; } ''
+            (runScript { buildInputs = [ order-deps ML4HSFE jq runWeka ML4HSFE ]; } ''
               set -e
               export CLUSTERS="${toString c}"
               "${benchmark quick "${clusterScript}" []}" < "${annotated}" > "$out"
@@ -97,12 +89,12 @@ cluster = { quick, annotated, clusters }: let
                         clusters);
 
   result = { inherit results;
-             failed = any (n: results.${n}.failed) (attrNames results); };
+             failed = any (n: results."${n}".failed) (attrNames results); };
 
   checkedResult = assert isAttrs results;
                   assert all (n: isInt (fromJSON n))    (attrNames results);
-                  assert all (n: results.${n} ? stdout) (attrNames results);
-                  assert all (n: results.${n} ? time)   (attrNames results);
+                  assert all (n: results."${n}" ? stdout) (attrNames results);
+                  assert all (n: results."${n}" ? time)   (attrNames results);
                   result;
 
   in if result.failed then result
