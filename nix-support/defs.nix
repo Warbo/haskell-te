@@ -24,13 +24,35 @@ rec {
   importDir = callPackage ./importDir.nix {};
   runScript = callPackage ./runScript.nix {};
 
-  inherit (callPackage ./dumping.nix {}) dump-package;
+  inherit (callPackage ./dumping.nix {})
+          dump-package;
 
-  inherit (callPackage ../annotatedb {}) annotateAsts dumpAndAnnotate;
+  inherit (callPackage ../annotatedb {})
+          annotateAsts dumpAndAnnotate;
 
-  inherit (self.callPackage ./runBenchmark.nix {
-             inherit (explore) build-env;
-           }) benchmark lastEntry withCriterion withTime;
+  inherit (callPackage ./runBenchmark.nix { inherit (explore) build-env; })
+          benchmark lastEntry withCriterion withTime;
+
+  inherit (callPackage ./benchmarkOutputs.nix {})
+          processPackage processPackages;
+
+  inherit (callPackage ./nixFromCabal.nix {})
+          nixFromCabal nixedHsPkg;
+
+  inherit (callPackage ./cluster.nix {})
+          cluster nixRecurrentClusteringScript recurrentClusteringScript;
+
+  inherit (callPackage ./test-defs.nix {})
+          checkPlot runTestInDrv testAll testDbg testMsg testPackages testRun
+          testWrap;
+
+  inherit (plotResults)
+          mkTbl;
+
+  # Pull out Haskell packages (e.g. because they provide executables)
+  inherit (haskellPackages)
+          AstPlugin getDeps ML4HSFE mlspec mlspec-bench order-deps
+          reduce-equations;
 
   callPackage = super.newScope self;
 
@@ -45,23 +67,12 @@ rec {
   getDepsScript      = callPackage ./getDepsScript.nix {
                          inherit (haskellPackages) getDeps;
                        };
-
-  format      = callPackage ./format.nix {};
-  random      = callPackage ./random.nix {};
-  hte-scripts = callPackage ./scripts.nix {};
-
-  inherit (callPackage ./benchmarkOutputs.nix {})
-          processPackage processPackages;
-
-  inherit (callPackage ./nixFromCabal.nix {})
-          nixFromCabal nixedHsPkg;
-
-  explore = callPackage ./explore.nix { inherit self; };
+  format             = callPackage ./format.nix  {};
+  random             = callPackage ./random.nix  {};
+  hte-scripts        = callPackage ./scripts.nix {};
+  explore            = callPackage ./explore.nix { inherit self; };
 
   defaultClusters = [ 1 2 4 ];
-
-  inherit (callPackage ./cluster.nix {})
-    cluster nixRecurrentClusteringScript recurrentClusteringScript;
 
   downloadToNix        = callPackage ./downloadToNix.nix {
                            inherit (haskellPackages) cabal-install;
@@ -111,10 +122,6 @@ rec {
        then head lst
        else nth (n - 1) (tail lst);
 
-  inherit (callPackage ./test-defs.nix {})
-          checkPlot runTestInDrv testAll testDbg testMsg testPackages testRun
-          testWrap;
-
   uniq =
     let uniq' = list: acc:
           seq acc (if list == []
@@ -139,16 +146,10 @@ rec {
   tipBenchmarks = callPackage ./tipBenchmarks.nix {};
   plotResults   = callPackage ./plotResults.nix   {};
 
-  inherit (plotResults) mkTbl;
-
   # Nix doesn't handle floats, so use bc
   floatDiv = x: y: runScript { buildInputs = [ self.bc ]; }
                              ''echo "scale=16; ${x}/${y}" | bc > "$out"'';
 
   tabulate = callPackage ./tabulate.nix {};
   plots    = callPackage ./plots.nix    {};
-
-  # Pull out Haskell packages (e.g. because they provide executables)
-  inherit (haskellPackages) AstPlugin getDeps ML4HSFE mlspec mlspec-bench
-                            order-deps reduce-equations;
 }
