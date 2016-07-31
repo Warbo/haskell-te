@@ -1,4 +1,4 @@
-{ extractTarball, fetchurl, nixFromCabal, superHaskellPackages }:
+{ extractTarball, fetchgit, fetchurl, nixFromCabal, superHaskellPackages }:
 
 with builtins;
 
@@ -31,9 +31,10 @@ superHaskellPackages.override {
           reduce-equations  = trace "FIXME: Allow reducing custom types"
                                 cabalPath ../packages/reduce-equations;
           runtime-arbitrary = cabalPath ../packages/runtime-arbitrary;
-          weigh             = cabalPath (extractTarball (fetchurl {
-                                url    = https://github.com/Gabriel439/bench/archive/1.0.1.tar.gz;
-                                sha256 = "1amfq2jhwxzy34gyqyvanc46admwlfqs9dk3d7c10aivbl7v1kyb";
-                              }));
+          weigh             = cabalPath (fetchgit {
+                                url    = https://github.com/fpco/weigh.git;
+                                rev    = "26f8e3e";
+                                sha256 = "0pmkzlcjfqi41qmrgjyw1y7naclq86kb6mp0i4ni3d1lkiylb9gc";
+                              });
         };
   }
