@@ -1,4 +1,4 @@
-{ benchmark, ML4HSFE, parseJSON, runScript, runWeka, writeScript }:
+{ benchmark, jq, ML4HSFE, order-deps, parseJSON, runScript, runWeka, writeScript }:
 with builtins;
 
 let
@@ -78,10 +78,10 @@ clusterScript = writeScript "cluster" ''
 cluster = { quick, annotated, clusters }: let
 
   go = c: parseJSON
-            (runScript { buildInputs = [ order-deps ML4HSFE jq runWeka ML4HSFE ]; } ''
+            (runScript { buildInputs = [ order-deps jq runWeka ML4HSFE ]; } ''
               set -e
               export CLUSTERS="${toString c}"
-              "${benchmark quick "${clusterScript}" []}" < "${annotated}" > "$out"
+              "${benchmark quick clusterScript []}" < "${annotated}" > "$out"
             '');
 
   results = listToAttrs (map (c: { name  = toString c;
