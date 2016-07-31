@@ -4,26 +4,6 @@ self: super:
 with builtins; with super.lib;
 
 rec {
-
-  # Use 'dbug foo bar' in place of 'bar' when 'bar' is fragile, tricky, etc. The
-  # value of 'foo' will be included in the stack trace in case of an error, and
-  # if the environment variable "TRACE" is non-empty it will also be printed out
-  # when there's no error
-  dbug = info: val:
-    let msg = toJSON { inherit info; };
-        v   = if getEnv "TRACE" == ""
-                 then val
-                 else trace info val;
-     in addErrorContext msg v;
-
-  # haskellPackages.override ensures dependencies are overridden too
-  haskellPackages = callPackage ./haskellPackages.nix {
-                      superHaskellPackages = super.haskellPackages;
-                    };
-
-  importDir = callPackage ./importDir.nix {};
-  runScript = callPackage ./runScript.nix {};
-
   inherit (callPackage ./dumping.nix {})
           dump-package;
 
@@ -49,57 +29,66 @@ rec {
   inherit (plotResults)
           mkTbl;
 
-  # Pull out Haskell packages (e.g. because they provide executables)
+  # These provide executables
   inherit (haskellPackages)
           AstPlugin getDeps ML4HSFE mlspec mlspec-bench order-deps
           reduce-equations;
 
-  callPackage = super.newScope self;
-
-  runTypesScript     = callPackage ./runTypesScript.nix     {};
-  tagAstsScript      = callPackage ./tagAstsScript.nix      {};
-  extractTarball     = callPackage ./extractTarball.nix     {};
-  reduce             = callPackage ./reduce.nix             {};
-  annotate           = callPackage ./annotate.nix           {};
-  getTypesScript     = callPackage ./getTypesScript.nix     {};
-  getAritiesScript   = callPackage ./getAritiesScript.nix   {};
-  annotateAstsScript = callPackage ./annotateAstsScript.nix {};
-  getDepsScript      = callPackage ./getDepsScript.nix {
-                         inherit (haskellPackages) getDeps;
-                       };
-  format             = callPackage ./format.nix  {};
-  random             = callPackage ./random.nix  {};
-  hte-scripts        = callPackage ./scripts.nix {};
-  explore            = callPackage ./explore.nix { inherit self; };
-
-  defaultClusters = [ 1 2 4 ];
-
-  downloadToNix        = callPackage ./downloadToNix.nix {
+  annotate             = callPackage ./annotate.nix           {};
+  annotateAstsScript   = callPackage ./annotateAstsScript.nix {};
+  buildPackage         = callPackage ./buildPackage.nix       {
+                           inherit (haskellPackages) cabal2nix cabal-install;
+                         };
+  downloadAndDump      = callPackage ./downloadAndDump.nix    {};
+  downloadToNix        = callPackage ./downloadToNix.nix      {
                            inherit (haskellPackages) cabal-install;
                          };
-  runWeka              = callPackage ../packages/runWeka     {};
-  dumpPackage          = callPackage ./dumpPackage.nix       {};
-  dumpToNix            = callPackage ./dumpToNix.nix         {};
-  drvFromScript        = callPackage ./drvFromScript.nix     {};
-  parseJSON            = callPackage ./parseJSON.nix         {};
-  ml4hs                = callPackage ../ml4hs                {};
-  recurrent-clustering = callPackage ../recurrent-clustering {};
-  downloadAndDump      = callPackage ./downloadAndDump.nix   {};
+  drvFromScript        = callPackage ./drvFromScript.nix      {};
+  dumpPackage          = callPackage ./dumpPackage.nix        {};
+  dumpToNix            = callPackage ./dumpToNix.nix          {};
+  explore              = callPackage ./explore.nix            { inherit self; };
+  extractTarball       = callPackage ./extractTarball.nix     {};
+  format               = callPackage ./format.nix             {};
+  getAritiesScript     = callPackage ./getAritiesScript.nix   {};
+  getDepsScript        = callPackage ./getDepsScript.nix      {
+                           inherit (haskellPackages) getDeps;
+                         };
+  getTypesScript       = callPackage ./getTypesScript.nix     {};
+  haskellPackages      = callPackage ./haskellPackages.nix    {
+                           superHaskellPackages = super.haskellPackages;
+                         };
+  hte-scripts          = callPackage ./scripts.nix            {};
+  importDir            = callPackage ./importDir.nix          {};
+  ml4hs                = callPackage ../ml4hs                 {};
+  parseJSON            = callPackage ./parseJSON.nix          {};
+  plotResults          = callPackage ./plotResults.nix        {};
+  plots                = callPackage ./plots.nix              {};
+  random               = callPackage ./random.nix             {};
+  recurrent-clustering = callPackage ../recurrent-clustering  {};
+  reduce               = callPackage ./reduce.nix             {};
+  runScript            = callPackage ./runScript.nix          {};
+  runTypes             = callPackage ./runTypes.nix           {};
+  runTypesScript       = callPackage ./runTypesScript.nix     {};
+  runWeka              = callPackage ../packages/runWeka      {};
+  shuffledList         = callPackage ./shufflePackages.nix    {};
+  tabulate             = callPackage ./tabulate.nix           {};
+  tagAstsScript        = callPackage ./tagAstsScript.nix      {};
+  timeCalc             = callPackage ./timeCalc.nix           {};
+  tipBenchmarks        = callPackage ./tipBenchmarks.nix      {};
 
-  assertMsg            = cond: msg:
-                           builtins.addErrorContext
-                             "not ok - ${msg}"
+  assertMsg = cond: msg:
+    builtins.addErrorContext "not ok - ${msg}"
                              (assert cond; trace "ok - ${msg}" cond);
 
-  ourCheck = msg: cond: builtins.addErrorContext msg (assert cond; cond);
+  callPackage = super.newScope self;
 
   checkStdDev = sd:
     assert ourCheck "isAttrs stddev '${toJSON sd}'"
-                 (isAttrs sd);
+                    (isAttrs sd);
     assert ourCheck "Stddev '${toJSON sd}' has estPoint"
-                 (sd ? estPoint);
+                    (sd ? estPoint);
     assert ourCheck "Stddev estPoint '${toJSON sd.estPoint}'"
-                 (isString sd.estPoint);
+                    (isString sd.estPoint);
     true;
 
   checkTime = t:
@@ -109,10 +98,22 @@ rec {
     assert ourCheck "'${toJSON t.mean}' has estPoint" (t.mean ? estPoint);
     t ? stddev -> ourCheck "Checking stddev" (checkStdDev t.stddev);
 
-  timeCalc     = callPackage ./timeCalc.nix        {};
-  shuffledList = callPackage ./shufflePackages.nix {};
-  runTypes     = callPackage ./runTypes.nix        {};
+  # Use 'dbug foo bar' in place of 'bar' when 'bar' is fragile, tricky, etc. The
+  # value of 'foo' will be included in the stack trace in case of an error, and
+  # if the environment variable "TRACE" is non-empty it will also be printed out
+  # when there's no error
+  dbug = info: val:
+    let msg = toJSON { inherit info; };
+        v   = if getEnv "TRACE" == ""
+                 then val
+                 else trace info val;
+     in addErrorContext msg v;
 
+  defaultClusters = [ 1 2 4 ];
+
+  # Nix doesn't handle floats, so use bc
+  floatDiv = x: y: runScript { buildInputs = [ self.bc ]; }
+                     ''echo "scale=16; ${x}/${y}" | bc > "$out"'';
   nth = n: lst:
     assert ourCheck "Given integer '${toJSON n}'" (isInt  n);
     assert ourCheck "Expecting list, given '${typeOf lst}'" (isList lst);
@@ -121,6 +122,14 @@ rec {
     if n == 1
        then head lst
        else nth (n - 1) (tail lst);
+
+  ourCheck = msg: cond: builtins.addErrorContext msg (assert cond; cond);
+
+  storeResult = self.writeScript "store-result" ''
+    set -e
+    RESULT=$(nix-store --add "$1")
+    printf '%s' "$RESULT" > "$out"
+  '';
 
   uniq =
     let uniq' = list: acc:
@@ -132,24 +141,4 @@ rec {
                                                     then []
                                                     else [x])));
      in l: uniq' l [];
-
-  storeResult = self.writeScript "store-result" ''
-      set -e
-      RESULT=$(nix-store --add "$1")
-      printf '%s' "$RESULT" > "$out"
-    '';
-
-  buildPackage = callPackage ./buildPackage.nix {
-                   inherit (haskellPackages) cabal2nix cabal-install;
-                 };
-
-  tipBenchmarks = callPackage ./tipBenchmarks.nix {};
-  plotResults   = callPackage ./plotResults.nix   {};
-
-  # Nix doesn't handle floats, so use bc
-  floatDiv = x: y: runScript { buildInputs = [ self.bc ]; }
-                             ''echo "scale=16; ${x}/${y}" | bc > "$out"'';
-
-  tabulate = callPackage ./tabulate.nix {};
-  plots    = callPackage ./plots.nix    {};
 }
