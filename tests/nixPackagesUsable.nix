@@ -12,6 +12,7 @@ let deps = [
       haskellPackages.mlspec-helper
       haskellPackages.nix-eval
       haskellPackages.runtime-arbitrary
+      haskellPackages.weigh
     ];
     pkg = buildEnv {
             name  = "testing-dependencies";

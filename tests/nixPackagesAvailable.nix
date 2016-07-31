@@ -21,5 +21,6 @@ let hasAttr = set: name: testWrap [(testMsg (set ? "${name}")
               "mlspec-helper"
               "nix-eval"
               "runtime-arbitrary"
+              "weigh"
             ];
  in testWrap tests "All packages available"
