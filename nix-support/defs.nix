@@ -135,6 +135,12 @@ rec {
     printf '%s' "$RESULT" > "$out"
   '';
 
+  strip = s: let unpre = removePrefix "\n" (removePrefix " " s);
+                 unsuf = removeSuffix "\n" (removeSuffix " " unpre);
+              in if unsuf == s
+                    then s
+                    else strip unsuf;
+
   uniq =
     let uniq' = list: acc:
           seq acc (if list == []

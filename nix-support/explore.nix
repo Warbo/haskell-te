@@ -1,5 +1,5 @@
 { benchmark, ourCheck, self, format, haskellPackages, jq, lib, ml4hs, parseJSON,
-  runScript, writeScript }:
+  runScript, strip, writeScript }:
 with builtins;
 with lib;
 
@@ -37,43 +37,38 @@ extractEnv = f:
   '';
 
 extractedEnv = standalone: f:
-  let strip  = s: let unpre = removePrefix "\n" (removePrefix " " s);
-                      unsuf = removeSuffix "\n" (removeSuffix " " unpre);
-                   in if unsuf == s
-                         then s
-                         else strip unsuf;
-      extra     = standalone != null;
+  let attrs     = if standalone != null &&
+                     pathExists (unsafeDiscardStringContext
+                                   "${toString standalone}/default.nix")
+                     then {
+                       hs      = [ salonePkg ];
+                       msg     = "including '${toString standalone}'";
+                       doCheck = ''
+                         if ghc-pkg list "${salonePkg.name}" | grep "(no packages)" > /dev/null
+                         then
+                           echo "Package '${salonePkg.name}' not in generated environment" 1>&2
+                           exit 1
+                         fi
+                       '';
+                     }
+                     else {
+                       hs      = [];
+                       msg     = "";
+                       doCheck = "";
+                     };
       salonePkg = haskellPackages.callPackage (import standalone) {};
-      salone    = if pathExists (unsafeDiscardStringContext "${toString standalone}/default.nix")
-                     then trace "Including extra package ${toString standalone}"
-                            [ salonePkg ]
-                     else trace "Ignoring ${toString standalone} with no default.nix"
-                            [];
-      custom = map strip (splitString "\n" (extractEnv f));
-      hsPkgs = custom ++ extra-haskell-packages;
-      areHs  = filter (n: haskellPackages ? "${n}") hsPkgs;
-      hs     = haskellPackages.ghcWithPackages (h:
-                 (map (n: h."${n}") areHs) ++ (if extra
-                                                  then salone
-                                                  else []));
-      ps     = [ hs ] ++ (map (n: self."${n}") extra-packages);
-      msg    = if extra
-                  then "including '${toString standalone}'"
-                  else "";
-      checkPkg = p: ''
-          if ghc-pkg list "${p}" | grep "(no packages)" > /dev/null
-          then
-            echo "Package '${p}' not in generated environment" 1>&2
-            exit 1
-          fi
-        '';
+      hsPkgs    = map strip (splitString "\n" (extractEnv f)) ++
+                  extra-haskell-packages;
+      hs        = h: map (n: h."${n}")
+                         (filter (n: haskellPackages ? "${n}")
+                                 hsPkgs);
+      ps        = [ (haskellPackages.ghcWithPackages (hs ++ attrs.hs)) ] ++
+                  (map (n: self."${n}") extra-packages);
       doCheck  = parseJSON (runScript { buildInputs = ps; } ''
-                 ${if extra
-                      then checkPkg salonePkg.name
-                      else ""}
-                 echo "true" > "$out"
-               '');
-   in trace "Extracted env from '${f}' ${msg}"
+                   ${attrs.doCheck}
+                   echo "true" > "$out"
+                 '');
+   in trace "Extracted env from '${f}' ${attrs.msg}"
             (assert doCheck; ps);
 
 # Haskell packages required for MLSpec
