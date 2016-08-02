@@ -1,4 +1,4 @@
-{ benchmark, jq, ML4HSFE, parseJSON, runScript, runWeka, writeScript }:
+{ benchmark, explore, jq, ML4HSFE, parseJSON, runScript, runWeka, writeScript }:
 with builtins;
 
 let
