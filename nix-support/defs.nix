@@ -67,7 +67,6 @@ rec {
   runScript            = callPackage ./runScript.nix          {};
   runTypes             = callPackage ./runTypes.nix           {};
   runTypesScript       = callPackage ./runTypesScript.nix     {};
-  runWeka              = callPackage ../packages/runWeka      {};
   shuffledList         = callPackage ./shufflePackages.nix    {};
   tabulate             = callPackage ./tabulate.nix           {};
   tagAstsScript        = callPackage ./tagAstsScript.nix      {};
@@ -112,6 +111,9 @@ rec {
   # Nix doesn't handle floats, so use bc
   floatDiv = x: y: runScript { buildInputs = [ self.bc ]; }
                      ''echo "scale=16; ${x}/${y}" | bc > "$out"'';
+
+  havePath = n: any (x: x.prefix == n) nixPath;
+
   nth = n: lst:
     assert ourCheck "Given integer '${toJSON n}'" (isInt  n);
     assert ourCheck "Expecting list, given '${typeOf lst}'" (isList lst);
@@ -122,6 +124,10 @@ rec {
        else nth (n - 1) (tail lst);
 
   ourCheck = msg: cond: builtins.addErrorContext msg (assert cond; cond);
+
+  runWeka = callPackage (if havePath "runWeka"
+                            then <runWeka>;
+                            else ../packages/runWeka) {};
 
   storeResult = self.writeScript "store-result" ''
     set -e

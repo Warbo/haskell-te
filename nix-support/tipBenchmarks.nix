@@ -1,8 +1,11 @@
 { bash, defaultClusters, fetchurl, haskellPackages, nixFromCabal,
   processPackage, python, racket, runScript, stdenv, storeResult, writeScript }:
 
-rec {
-  inherit (import ../packages/te-benchmark {
+let path = if any (x: x.prefix == "te-benchmark") nixPath
+              then <te-benchmark>;
+              else ../packages/te-benchmark;
+ in rec {
+  inherit (import path {
              inherit bash fetchurl haskellPackages python racket stdenv
                      writeScript;
            })
