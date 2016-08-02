@@ -126,7 +126,7 @@ rec {
   ourCheck = msg: cond: builtins.addErrorContext msg (assert cond; cond);
 
   runWeka = callPackage (if havePath "runWeka"
-                            then <runWeka>;
+                            then <runWeka>
                             else ../packages/runWeka) {};
 
   storeResult = self.writeScript "store-result" ''
