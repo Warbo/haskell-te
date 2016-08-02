@@ -1,4 +1,4 @@
-{ extractTarball, fetchgit, fetchurl, nixFromCabal, superHaskellPackages }:
+{ extractTarball, fetchgit, fetchurl, havePath, nixFromCabal, superHaskellPackages }:
 
 with builtins;
 
