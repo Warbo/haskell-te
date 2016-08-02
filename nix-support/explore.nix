@@ -56,17 +56,18 @@ extractedEnv = standalone: f:
       hs        = h: map (n: h."${n}")
                          (filter (n: haskellPackages ? "${n}")
                                  hsPkgs);
-      ps        = trace "FIXME: Check each Haskell package is in env" ([ (haskellPackages.ghcWithPackages (hs ++ attrs.hs)) ] ++
-                  (map (n: self."${n}") extra-packages));
+      ps        = [ (haskellPackages.ghcWithPackages (hs ++ attrs.hs)) ] ++
+                  (map (n: self."${n}") extra-packages);
       check     = p: ''
                        if ghc-pkg list "${salonePkg.name}" | grep "(no packages)" > /dev/null
                        then
                          echo "Package '${salonePkg.name}' not in generated environment" 1>&2
                          exit 1
                        fi
-                     ''
+                     '';
       doCheck   = parseJSON (runScript { buildInputs = ps; } ''
                     ${attrs.doCheck}
+                    ${concatStringsSep "\n" (map check hsPkgs)}
                     echo "true" > "$out"
                   '');
    in trace "Extracted env from '${f}' ${attrs.msg}"
