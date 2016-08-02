@@ -73,20 +73,23 @@ rec {
     export BENCHMARK_ARGS='${toJSON args}'
 
     echo "Benchmarking '${cmd}'" 1>&2
-    echo "'${build-env}' '${mlspec-bench}/bin/mlspec-bench'      \
-                            --template json                      \
-                            --output report.json 1> bench.stdout" 1>&2
+    echo "'${mlspec-bench}/bin/mlspec-bench' \
+                            --template json  \
+                            --output report.json" 1>&2
 
     echo -e "INPUT:\n$INPUT\nEND INPUT" 1>&2
     env | grep "BENCH" 1>&2
 
     START_TIME="$SECONDS" # Not part of the benchmark, just info for user
 
-    echo "$INPUT" | "${build-env}"                           \
-                      "${mlspec-bench}/bin/mlspec-bench"     \
-                        --template json                      \
-                        --output report.json 1> bench.stdout \
-                                             2> bench.stderr ||
+    echo "$INPUT" | "${build-env}" || {
+      echo "build-env failed" 1>&2
+      exit 1
+    }
+    echo "$INPUT" | "${mlspec-bench}/bin/mlspec-bench"     \
+                      --template json                      \
+                      --output report.json 1> bench.stdout \
+                                           2> >(tee bench.stderr) ||
     CODE="$?"
     FAILED=false
 

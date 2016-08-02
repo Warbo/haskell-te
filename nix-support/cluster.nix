@@ -78,7 +78,8 @@ clusterScript = writeScript "cluster" ''
 cluster = { quick, annotated, clusters }: let
 
   go = c: parseJSON
-            (runScript { buildInputs = [ jq runWeka ML4HSFE ]; } ''
+            (runScript { buildInputs = [ jq runWeka ML4HSFE ] ++
+                                       (explore.extractedEnv null annotated); } ''
               set -e
               export CLUSTERS="${toString c}"
               "${benchmark quick clusterScript []}" < "${annotated}" > "$out"

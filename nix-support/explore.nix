@@ -175,7 +175,7 @@ build-env = writeScript "build-env" ''
 
   echo "$INPUT" | ensureEnv
 
-  "$@"
+  exit 0
 '';
 
 doExplore = standalone: quick: clusterCount: f:
