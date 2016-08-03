@@ -100,6 +100,7 @@ rec {
     writeScript "with-criterion" ''
       #!${bash}/bin/bash
       set -e
+      set -x
 
       # Stop Perl (i.e. Nix) complaining about unset locale variables
       export LOCALE_ARCHIVE=/run/current-system/sw/lib/locale/locale-archive
@@ -107,27 +108,15 @@ rec {
       # Force Haskell to use UTF-8, or else we get I/O errors
       export LANG="en_US.UTF-8"
 
-      # Check if we need to provide any input; to prevent waiting for user input
-      if [ -t 0 ]
-      then
-          INPUT=""
-      else
-          INPUT=$(cat)
-      fi
+      # Check if we need to provide any input; to prevent prompting the user
+      INPUT=""
+      [ -t 0 ] || INPUT=$(cat)
 
       # Set up environment for mlspec-bench
       mkdir -p outputs
       export BENCH_DIR="$PWD"
       export BENCHMARK_COMMAND="${cmd}"
       export BENCHMARK_ARGS='${toJSON args}'
-
-      echo "Benchmarking '${cmd}'" 1>&2
-      echo "'${mlspec-bench}/bin/mlspec-bench' \
-                              --template json  \
-                              --output report.json" 1>&2
-
-      echo -e "INPUT:\n$INPUT\nEND INPUT" 1>&2
-      env | grep "BENCH" 1>&2
 
       START_TIME="$SECONDS" # Not part of the benchmark, just info for user
 
