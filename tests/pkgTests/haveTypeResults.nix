@@ -1,5 +1,10 @@
 defs: with defs; pkg:
 with builtins;
 
-testMsg (parseJSON (readFile pkg.ranTypes) ? result)
-        "${pkg.name} has ranTypes.result"
+let result = parseJSON (readFile pkg.ranTypes);
+ in {
+ haveResult = testMsg (result ? result)
+                      "${pkg.name} has ranTypes.result"
+ nonEmpty   = testMsg (strip result.result != "")
+                      "${pkg.name} ranTypes.result isn't empty";
+}
