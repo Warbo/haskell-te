@@ -45,7 +45,7 @@ rec {
   drvFromScript        = callPackage ./drvFromScript.nix      {};
   dumpPackage          = callPackage ./dumpPackage.nix        {};
   dumpToNix            = callPackage ./dumpToNix.nix          {};
-  explore              = callPackage ./explore.nix            { self = self; }; // Avoid the Self language
+  explore              = callPackage ./explore.nix            { self = self; }; # Avoid the Self language
   extractTarball       = callPackage ./extractTarball.nix     {};
   format               = callPackage ./format.nix             {};
   getAritiesScript     = callPackage ./getAritiesScript.nix   {};
