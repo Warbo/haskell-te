@@ -146,7 +146,9 @@ rec {
                       --arg       stdout "$STDOUT"        \
                       --arg       stderr "$STDERR"        \
                       --slurpfile report report.json      \
-                      '{"cmd"    : $cmd,
+                      --argjson   failed "$FAILED"        \
+                      '{"failed" : $failed,
+                        "cmd"    : $cmd,
                         "args"   : $args,
                         "stdout" : $stdout,
                         "stderr" : $stderr,
