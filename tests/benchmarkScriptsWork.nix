@@ -11,8 +11,12 @@ let result = script: parseJSON (runScript {
                                   "$scriptPath" > "$out"
                                 '');
 
-    timeResult      = result (withTime      "echo" ["hello" "world"]);
-    criterionResult = result (withCriterion "echo" ["hello" "world"]);
+    timeResult      = result (withTime      { quick = true;
+                                              cmd   = "echo";
+                                              args  = ["hello" "world"]; });
+    criterionResult = result (withCriterion { quick = false;
+                                              cmd   = "echo";
+                                              args  = ["hello" "world"]; });
 
     testField = found: field: expect:
       let val = found."${field}";
