@@ -1,18 +1,13 @@
 defs: with defs;
 
-# Append more and more Haskell packages to ENVIRONMENT_PACKAGES
 drvFromScript { buildInputs = explore.exploreEnv; } ''
   set -e
-  PKGS=""
-  for NEWPKG in text containers parsec aeson
-  do
-    PKGS=$(echo -e "$PKGS\n$NEWPKG")
 
-    ENVIRONMENT_PACKAGES="$PKGS" "${checkHsEnv []}" || {
-      echo "checkHsEnv passed for '$PKGS'" 1>&2
-      exit 2
-    }
-  done
+  "${checkHsEnv [                            ]}" || exit 1
+  "${checkHsEnv [text                        ]}" || exit 2
+  "${checkHsEnv [text containers             ]}" || exit 3
+  "${checkHsEnv [text containers parsec      ]}" || exit 4
+  "${checkHsEnv [text containers parsec aeson]}" || exit 5
 
   touch "$out"
 ''

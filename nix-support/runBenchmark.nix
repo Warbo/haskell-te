@@ -54,60 +54,41 @@ rec {
           set -e
           set -o pipefail
 
+          # TODO: Doesn't take extraPackages into account yet
+
           function ensurePkg {
             if ghc-pkg list "$1" | grep "$1" > /dev/null
             then
               return 0
             fi
 
-            GHC_PKG=$(command -v ghc-pkg)
-            PKGS=$(ghc-pkg list)
-            echo    "Didn't find Haskell package '$1' with '$GHC_PKG'." 1>&2
-            echo -e "Available packages are:\n$PKGS\n\nAborting" 1>&2
+            echo "Aborting. Didn't find Haskell package '$1' in" 1>&2
+            ghc-pkg list 1>&2
             exit 1
           }
 
-          function ensureEnv {
-            # TODO: Doesn't take extraPackages into account yet
-            hash "ghc-pkg" > /dev/null 2>&1 || {
-              echo "No ghc-pkg command in environment" 1>&2
-              exit 1
-            }
-
-            while read -r PKG
-            do
-                ensurePkg "$PKG"
-            done < <(echo "${concatStringsSep "\n" allGiven}")
-
-            NEEDED=$(cat)
-            if [[ -n "$NEEDED" ]]
-            then
-                while read -r PKG
-                do
-                    ensurePkg "$PKG"
-                done < <(echo "$NEEDED")
-            fi
-
-            return 0
+          # We must have ghc-pkg, or else we can't even check the others
+          command -v "ghc-pkg" > /dev/null 2>&1 || {
+            echo "No ghc-pkg command in environment" 1>&2
+            exit 1
           }
 
-          if [[ -z "$ENVIRONMENT_PACKAGES" ]]
-          then
-            # Sanity check
-            if [[ -n "$ENVIRONMENT_PKGS" ]]
-            then
-              echo "WARNING: 'ENVIRONMENT_PKGS' was found; did you mean 'ENVIRONMENT_PACKAGES'?" 1>&2
-              exit 1
-            fi
+          INPUT=""
+          [ -t 0 ] || INPUT=$(sort -u | grep "^.")
 
-            echo "No extra packages given" 1>&2
-            INPUT=""
-          else
-            echo "Extra packages given: $ENVIRONMENT_PACKAGES" 1>&2
-            INPUT=$(echo "$ENVIRONMENT_PACKAGES" | sort -u | grep "^.")
+          if [[ -n "$INPUT" ]]
+          then
+            echo "Checking for extra packages: $INPUT" 1>&2
+            while read -r PKG
+            do
+              ensurePkg "$PKG"
+            done < <(echo "$INPUT")
           fi
 
-          echo "$INPUT" | ensureEnv
+          while read -r PKG
+          do
+            ensurePkg "$PKG"
+          done < <(echo "${concatStringsSep "\n" allGiven}")
 
           exit 0
         '';

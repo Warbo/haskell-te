@@ -15,10 +15,6 @@ explore-theories = f: writeScript "explore-theories" ''
     grep -v "^Depth" || true # Don't abort if nothing found
   }
 
-  # Extracts packages as unquoted strings
-  ENVIRONMENT_PACKAGES="${extractEnv f}"
-  export ENVIRONMENT_PACKAGES
-
   echo "$INPUT" | MLSpec "$@" | noDepth | jq -s '.'
 '';
 
