@@ -8,8 +8,8 @@ drvFromScript { buildInputs = explore.exploreEnv; } ''
   do
     PKGS=$(echo -e "$PKGS\n$NEWPKG")
 
-    ENVIRONMENT_PACKAGES="$PKGS" "${explore.build-env}" || {
-      echo "build-env passed for '$PKGS'" 1>&2
+    ENVIRONMENT_PACKAGES="$PKGS" "${explore.checkHsEnv []}" || {
+      echo "checkHsEnv passed for '$PKGS'" 1>&2
       exit 2
     }
   done

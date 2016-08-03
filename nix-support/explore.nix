@@ -118,7 +118,7 @@ mkGhcPkg = writeScript "mkGhcPkg" ''
 
 # Run the command given in argv in an environment containing the Haskell
 # packages given on stdin
-build-env = writeScript "build-env" ''
+checkHsEnv = extra: writeScript "checkHsEnv" ''
   #!/usr/bin/env bash
   set -e
   set -o pipefail
@@ -230,7 +230,7 @@ checkAndExplore = { quick, formatted, standalone ? null }:
                 else assert aCheck formatted result.results; result;
 
 in {
-  inherit build-env extra-haskell-packages extra-packages explore-theories
+  inherit checkHsEnv extra-haskell-packages extra-packages explore-theories
           exploreEnv extractedEnv;
   explore = checkAndExplore;
 }

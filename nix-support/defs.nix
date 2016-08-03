@@ -10,7 +10,7 @@ rec {
   inherit (callPackage ../annotatedb {})
           annotateAsts dumpAndAnnotate;
 
-  inherit (callPackage ./runBenchmark.nix { inherit (explore) build-env; })
+  inherit (callPackage ./runBenchmark.nix { inherit (explore) checkHsEnv; })
           benchmark lastEntry withCriterion withTime;
 
   inherit (callPackage ./benchmarkOutputs.nix {})

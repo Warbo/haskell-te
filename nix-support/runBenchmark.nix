@@ -1,4 +1,4 @@
-{ bash, build-env, callPackage, coreutils, jq, lib, mlspec-bench, ourCheck,
+{ bash, checkHsEnv, callPackage, coreutils, jq, lib, mlspec-bench, ourCheck,
   stdenv, time, writeScript }:
 
 with builtins; with lib;
@@ -82,8 +82,8 @@ rec {
 
     START_TIME="$SECONDS" # Not part of the benchmark, just info for user
 
-    echo "$INPUT" | "${build-env}" || {
-      echo "build-env failed" 1>&2
+    echo "$INPUT" | "${checkHsEnv []}" || {
+      echo "checkHsEnv failed" 1>&2
       exit 1
     }
     echo "$INPUT" | "${mlspec-bench}/bin/mlspec-bench"     \
