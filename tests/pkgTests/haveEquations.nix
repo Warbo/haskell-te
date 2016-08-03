@@ -40,7 +40,7 @@ in {
 
   haveLists    = testDbg (all (n: isList pkg.explored."${n}")
                               (attrNames pkg.explored))
-                         "explored contains lists ${toJSON pkg.explored}"
+                         "explored contains lists"
                          { inherit (pkg) explored; };
 
   gotEquations = listToAttrs (map (c: {
