@@ -113,7 +113,8 @@ rec {
   inherit (callPackage ./timeout.nix {}) timeout;
 
   # A thorough benchmark, which performs multiple runs using Criterion
-  withCriterion = cmd: args: inputs: writeScript "with-criterion" ''
+  withCriterion = { quick, cmd, args ? [], inputs ? []}:
+  writeScript "with-criterion" ''
     #!${bash}/bin/bash
     set -e
 
@@ -223,7 +224,7 @@ rec {
   '';
 
   # A fast benchmark, which only performs one run
-  withTime = cmd: args: inputs:
+  withTime = { quick, cmd, args ? [], inputs ? []}:
    let shellArgs = map escapeShellArg args;
        argStr    = concatStringsSep " " shellArgs;
     in writeScript "with-time" ''
@@ -271,5 +272,5 @@ rec {
                             "mean"   : {"estPoint": $time}}}'
     '';
 
-  benchmark = quick: if quick then withTime else withCriterion;
+  benchmark = args: (if args.quick then withTime else withCriterion) args;
 }

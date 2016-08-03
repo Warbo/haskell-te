@@ -14,5 +14,9 @@ let annotateDb = writeScript "annotateDb" ''
 
     in parseJSON (runScript { buildInputs = [ jq getDeps utillinux ]; } ''
          set -e
-         "${benchmark quick annotateDb [] [asts]}" < "${asts}" > "$out"
+         "${benchmark {
+              inherit quick;
+              cmd    = annotateDb;
+              inputs = [asts];
+          }}" < "${asts}" > "$out"
        '')

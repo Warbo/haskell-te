@@ -17,5 +17,8 @@ drvFromScript {} ''
 
   echo "Dumping '$D'" 1>&2
   HOME="$PWD" DIR="$PWD/pkgDir" \
-    "${benchmark quick dump-package [] []}" > "$out"
+    "${benchmark {
+         inherit quick;
+         cmd = dump-package;
+     }}" > "$out"
 ''

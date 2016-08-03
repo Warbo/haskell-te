@@ -13,10 +13,10 @@ doReduce = quick: clusterCount: inputs:
              in parseJSON (runScript env ''
                   set -e
                   export CLUSTERS="${clusterCount}"
-                  ${allInputs} | "${benchmark quick
-                                              (toString script)
-                                              []
-                                              inputs}" > "$out"
+                  ${allInputs} | "${benchmark {
+                                      inherit quick inputs;
+                                      cmd = toString script;
+                                  }}" > "$out"
                 '');
 
 env = { buildInputs = [ (haskellPackages.ghcWithPackages (h: [ reduce-equations ])) ]; };

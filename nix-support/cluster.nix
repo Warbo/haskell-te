@@ -82,7 +82,11 @@ cluster = { quick, annotated, clusters }: let
                                        (explore.extractedEnv null annotated); } ''
               set -e
               export CLUSTERS="${toString c}"
-              "${benchmark quick clusterScript [] [annotated]}" < "${annotated}" > "$out"
+              "${benchmark {
+                   inherit quick;
+                   cmd    = clusterScript;
+                   inputs = [annotated];
+               }}" < "${annotated}" > "$out"
             '');
 
   results = listToAttrs (map (c: { name  = toString c;
