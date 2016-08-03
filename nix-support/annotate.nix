@@ -14,5 +14,5 @@ let annotateDb = writeScript "annotateDb" ''
 
     in parseJSON (runScript { buildInputs = [ jq getDeps utillinux ]; } ''
          set -e
-         "${benchmark quick annotateDb []}" < "${asts}" > "$out"
+         "${benchmark quick annotateDb [] [asts]}" < "${asts}" > "$out"
        '')

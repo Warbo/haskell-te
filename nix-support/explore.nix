@@ -121,7 +121,7 @@ doExplore = standalone: quick: clusterCount: f:
       script = ''
         set -e
         export CLUSTERS="${clusterCount}"
-        "${benchmark quick cmd []}" < "${f}" > "$out"
+        "${benchmark quick cmd [] [f]}" < "${f}" > "$out"
       '';
       env    = { buildInputs = extractedEnv standalone f; };
    in parseJSON (runScript env script);

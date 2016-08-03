@@ -113,7 +113,7 @@ rec {
   inherit (callPackage ./timeout.nix {}) timeout;
 
   # A thorough benchmark, which performs multiple runs using Criterion
-  withCriterion = cmd: args: writeScript "with-criterion" ''
+  withCriterion = cmd: args: inputs: writeScript "with-criterion" ''
     #!${bash}/bin/bash
     set -e
 
@@ -223,8 +223,9 @@ rec {
   '';
 
   # A fast benchmark, which only performs one run
-  withTime = cmd: args: let shellArgs = map escapeShellArg args;
-                            argStr    = concatStringsSep " " shellArgs;
+  withTime = cmd: args: inputs:
+   let shellArgs = map escapeShellArg args;
+       argStr    = concatStringsSep " " shellArgs;
     in writeScript "with-time" ''
       # Measure time with 'time', limit time/memory using 'timeout'
       "${time}/bin/time" -f '%e' -o time \

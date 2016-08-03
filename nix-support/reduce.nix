@@ -9,11 +9,15 @@ script = writeScript "reduce-equations" "reduce-equations";
 mkCat = inputs: "cat " + concatStringsSep " " (map (x: ''"${x}"'') inputs);
 
 doReduce = quick: clusterCount: inputs:
-             parseJSON (runScript env ''
-               set -e
-               export CLUSTERS="${clusterCount}"
-               ${mkCat inputs} | "${benchmark quick (toString script) []}" > "$out"
-             '');
+             let allInputs = mkCat inputs;
+             in parseJSON (runScript env ''
+                  set -e
+                  export CLUSTERS="${clusterCount}"
+                  ${allInputs} | "${benchmark quick
+                                              (toString script)
+                                              []
+                                              inputs}" > "$out"
+                '');
 
 env = { buildInputs = [ (haskellPackages.ghcWithPackages (h: [ reduce-equations ])) ]; };
 

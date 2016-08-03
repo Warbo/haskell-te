@@ -15,5 +15,5 @@ parseJSON (runScript { buildInputs = [ cabal2nix cabal-install ]; } ''
     exit 0
   }
 
-  "${benchmark quick "cabal" ["build"]}" > "$out"
+  "${benchmark quick "cabal" ["build"] []}" > "$out"
 '')
