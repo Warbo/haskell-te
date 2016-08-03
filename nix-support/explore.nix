@@ -116,71 +116,6 @@ mkGhcPkg = writeScript "mkGhcPkg" ''
   echo "]))"
 '';
 
-# Run the command given in argv in an environment containing the Haskell
-# packages given on stdin
-checkHsEnv = extra: writeScript "checkHsEnv" ''
-  #!/usr/bin/env bash
-  set -e
-  set -o pipefail
-
-  function ensurePkg {
-    if ghc-pkg list "$1" | grep "$1" > /dev/null
-    then
-      return 0
-    fi
-
-    GHC_PKG=$(command -v ghc-pkg)
-    PKGS=$(ghc-pkg list)
-    echo    "Didn't find Haskell package '$1' with '$GHC_PKG'." 1>&2
-    echo -e "Available packages are:\n$PKGS\n\nAborting" 1>&2
-    exit 1
-  }
-
-  function ensureEnv {
-    # TODO: Doesn't take extraPackages into account yet
-    hash "ghc-pkg" > /dev/null 2>&1 || {
-      echo "Need environment to get the ghc-pkg command" 1>&2
-      exit 1
-    }
-
-    while read -r PKG
-    do
-        ensurePkg "$PKG"
-    done < <(echo "${concatStringsSep "\n" extra-haskell-packages}")
-
-    NEEDED=$(cat)
-    if [[ -n "$NEEDED" ]]
-    then
-        while read -r PKG
-        do
-            ensurePkg "$PKG"
-        done < <(echo "$NEEDED")
-    fi
-
-    return 0
-  }
-
-  if [[ -z "$ENVIRONMENT_PACKAGES" ]]
-  then
-    # Sanity check
-    if [[ -n "$ENVIRONMENT_PKGS" ]]
-    then
-      echo "WARNING: 'ENVIRONMENT_PKGS' was found; did you mean 'ENVIRONMENT_PACKAGES'?" 1>&2
-      exit 1
-    fi
-
-    echo "No extra packages given" 1>&2
-    INPUT=""
-  else
-    echo "Extra packages given: $ENVIRONMENT_PACKAGES" 1>&2
-    INPUT=$(echo "$ENVIRONMENT_PACKAGES" | sort -u | grep "^.")
-  fi
-
-  echo "$INPUT" | ensureEnv
-
-  exit 0
-'';
-
 doExplore = standalone: quick: clusterCount: f:
   let cmd    = toString (explore-theories f);
       script = ''
@@ -230,7 +165,7 @@ checkAndExplore = { quick, formatted, standalone ? null }:
                 else assert aCheck formatted result.results; result;
 
 in {
-  inherit checkHsEnv extra-haskell-packages extra-packages explore-theories
-          exploreEnv extractedEnv;
+  inherit extra-haskell-packages extra-packages explore-theories exploreEnv
+          extractedEnv;
   explore = checkAndExplore;
 }

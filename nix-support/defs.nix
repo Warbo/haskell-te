@@ -10,8 +10,8 @@ rec {
   inherit (callPackage ../annotatedb {})
           annotateAsts dumpAndAnnotate;
 
-  inherit (callPackage ./runBenchmark.nix { inherit (explore) checkHsEnv; })
-          benchmark lastEntry withCriterion withTime;
+  inherit (callPackage ./runBenchmark.nix {})
+          benchmark checkHsEnv lastEntry withCriterion withTime;
 
   inherit (callPackage ./benchmarkOutputs.nix {})
           processPackage processPackages;
@@ -45,7 +45,7 @@ rec {
   drvFromScript        = callPackage ./drvFromScript.nix      {};
   dumpPackage          = callPackage ./dumpPackage.nix        {};
   dumpToNix            = callPackage ./dumpToNix.nix          {};
-  explore              = callPackage ./explore.nix            { inherit self; };
+  explore              = callPackage ./explore.nix            {};
   extractTarball       = callPackage ./extractTarball.nix     {};
   format               = callPackage ./format.nix             {};
   getAritiesScript     = callPackage ./getAritiesScript.nix   {};
