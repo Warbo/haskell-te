@@ -60,11 +60,11 @@ let result = script: parseJSON (runScript {
                                   '';
           allArgs = args // {
             cmd    = "true";
-            inputs = writeScript "inputs" ''
-                       text
-                       aeson
-                       parsec
-                     '';
+            inputs = [ (writeScript "inputs" ''
+                         text
+                         aeson
+                         parsec
+                       '') ];
           };
        in { inherit shouldFail shouldSucceed; };
 
