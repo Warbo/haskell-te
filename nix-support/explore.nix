@@ -43,12 +43,12 @@ extractedEnv = standalone: f:
                      then {
                        hs      = [ salonePkg ];
                        msg     = "including '${toString standalone}'";
-                       doCheck = check salonePkg.name;
+                       doCheck = [ salonePkg.name ];
                      }
                      else {
                        hs      = [];
                        msg     = "";
-                       doCheck = "";
+                       doCheck = [];
                      };
       salonePkg = haskellPackages.callPackage (import standalone) {};
       hsPkgs    = map strip (splitString "\n" (extractEnv f)) ++
@@ -59,15 +59,16 @@ extractedEnv = standalone: f:
       ps        = [ (haskellPackages.ghcWithPackages (hs ++ attrs.hs)) ] ++
                   (map (n: self."${n}") extra-packages);
       check     = p: ''
-                       if ghc-pkg list "${salonePkg.name}" | grep "(no packages)" > /dev/null
+                       if ghc-pkg list "${p}" | grep "(no packages)" > /dev/null
                        then
-                         echo "Package '${salonePkg.name}' not in generated environment" 1>&2
+                         echo "Package '${p}' not in generated environment" 1>&2
                          exit 1
                        fi
                      '';
       doCheck   = parseJSON (runScript { buildInputs = ps; } ''
-                    ${attrs.doCheck}
-                    ${concatStringsSep "\n" (map check hsPkgs)}
+                    ${concatStringsSep "\n"
+                                       (map check
+                                            (hsPkgs ++ attrs.doCheck))}
                     echo "true" > "$out"
                   '');
    in trace "Extracted env from '${f}' ${attrs.msg}"
