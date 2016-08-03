@@ -36,43 +36,48 @@ extractEnv = f:
       sort -u > "$out"
   '';
 
+hsPkgsInEnv = env: names:
+  let check = p: ''
+        if ghc-pkg list "${p}" | grep "(no packages)" > /dev/null
+        then
+          echo "Package '${p}' not in generated environment" 1>&2
+          exit 1
+        fi
+      '';
+   in parseJSON (runScript env ''
+        ${concatStringsSep "\n" (map check names)}
+        echo "true" > "$out"
+      '');
+
+# Work out which packages we need, by reading JSON from 'f'. If 'standalone' is
+# not null, use it as the path to a directory containing a Haskell package which
+# we'll also include.
 extractedEnv = standalone: f:
-  let attrs     = if standalone != null &&
-                     pathExists (unsafeDiscardStringContext
-                                   "${toString standalone}/default.nix")
-                     then {
-                       hs      = [ salonePkg ];
-                       msg     = "including '${toString standalone}'";
-                       doCheck = [ salonePkg.name ];
-                     }
-                     else {
-                       hs      = [];
-                       msg     = "";
-                       doCheck = [];
-                     };
-      salonePkg = haskellPackages.callPackage (import standalone) {};
-      hsPkgs    = map strip (splitString "\n" (extractEnv f)) ++
+      # Use a variety of extra settings when 'standalone' is given
+  let attrs   = if standalone != null &&
+                   pathExists (unsafeDiscardStringContext
+                                 "${toString standalone}/default.nix")
+                   then trace "Including '${toString standalone}'" rec {
+                     pkg     = haskellPackages.callPackage
+                                 (import standalone) {};
+                     pkgs    = [ pkg ];
+                     doCheck = [ pkg.name ];
+                   }
+                   else {
+                     pkgs    = [];
+                     doCheck = [];
+                   };
+      hsNames = map strip (splitString "\n" (extractEnv f)) ++
                   extra-haskell-packages;
-      hs        = h: map (n: h."${n}")
-                         (filter (n: haskellPackages ? "${n}")
-                                 hsPkgs);
-      ps        = [ (haskellPackages.ghcWithPackages (hs ++ attrs.hs)) ] ++
-                  (map (n: self."${n}") extra-packages);
-      check     = p: ''
-                       if ghc-pkg list "${p}" | grep "(no packages)" > /dev/null
-                       then
-                         echo "Package '${p}' not in generated environment" 1>&2
-                         exit 1
-                       fi
-                     '';
-      doCheck   = parseJSON (runScript { buildInputs = ps; } ''
-                    ${concatStringsSep "\n"
-                                       (map check
-                                            (hsPkgs ++ attrs.doCheck))}
-                    echo "true" > "$out"
-                  '');
-   in trace "Extracted env from '${f}' ${attrs.msg}"
-            (assert doCheck; ps);
+      hsPkgs  = h: concatMap (n: if haskellPackages ? "${n}"
+                                    then [ h."${n}" ]
+                                    else [])
+                             hsNames;
+      extra   = map (n: self."${n}") extra-packages;
+      ps      = [ (haskellPackages.ghcWithPackages (hsPkgs ++ attrs.pkgs)) ] ++
+                  extra;
+   in assert hsPkgsInEnv { buildInputs = ps; } (hsNames ++ attrs.doCheck);
+      trace "Extracted env from '${f}'" ps;
 
 # Haskell packages required for MLSpec
 extra-haskell-packages = [ "mlspec" "mlspec-helper" "runtime-arbitrary"
