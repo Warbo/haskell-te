@@ -64,7 +64,7 @@ let result = script: parseJSON (runScript {
                        text
                        aeson
                        parsec
-                     ''
+                     '';
           };
        in { inherit shouldFail shouldSucceed; };
 
