@@ -2,8 +2,8 @@
   processPackage, python, racket, runScript, stdenv, storeResult, writeScript }:
 
 with builtins;
-let path = if any (x: x.prefix == "te-benchmark") nixPath
-              then <te-benchmark>
+let path = if any (x: x.prefix == "te-benchmarks") nixPath
+              then <te-benchmarks>
               else ../packages/te-benchmark;
  in rec {
   inherit (import path {
