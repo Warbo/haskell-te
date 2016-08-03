@@ -23,7 +23,7 @@ let # Required for running 'timeout'
             buildInputs = existing    ++
                           timeoutDeps ++
                           [ nix ]     ++
-                          (if any (e: e.name == trace "FIXME: Don't hardcode" "ghc-7.10.3") existing
+                          (if any (e: lib.hasPrefix "ghc-" e.name) existing
                               then []
                               else [ (haskellPackages.ghcWithPackages
                                        (h: map (n: h."${n}")
