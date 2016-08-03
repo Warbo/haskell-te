@@ -4,10 +4,11 @@ with lib;
 
 let
 
-checkEqs = label: c: data: testAll (map (checkEqsFile label c) data);
+checkEqs = label: c: data: testWrap (map (checkEqsFile label c) data)
+                                    "Check eqs for ${label} ${toString c}";
 
-checkEqsFile = label: c: data: testAll [
-  (testMsg (isString data) "Data is a string ${toJSON data}")
+checkEqsFile = label: c: data: testWrap [
+  (testDbg (isString data) "Data is a string" { inherit data; })
 
   (testMsg (parseJSON (runScript { buildInputs = [ jq ]; } ''
     set -e
@@ -20,7 +21,7 @@ checkEqsFile = label: c: data: testAll [
 
     jq -s 'type == "array"' < "${data}" > "$out"
   '')) "Equations form an array")
-];
+] "Check eqs file for ${label} ${toString c}";
 
 result = src: label: c:
   assert isAttrs src;
@@ -32,12 +33,19 @@ result = src: label: c:
         (testWrap [ results."${key}" ]
                  "Equations for '${pkg.name}.${label}' in '${key}' clusters");
 
-in testAll [
-     (testMsg (isAttrs pkg.explored)
-              "explored isAttrs ${toJSON pkg.explored}")
+in {
+  isAttrs      = testDbg (isAttrs pkg.explored)
+                         "explored isAttrs"
+                         { inherit (pkg) explored; };
 
-     (testMsg (all (n: isList pkg.explored."${n}") (attrNames pkg.explored))
-              "explored contains lists ${toJSON pkg.explored}")
+  haveLists    = testDbg (all (n: isList pkg.explored."${n}")
+                              (attrNames pkg.explored))
+                         "explored contains lists ${toJSON pkg.explored}"
+                         { inherit (pkg) explored; };
 
-     (testAll (map (result pkg.explored "explored") defaultClusters))
-   ]
+  gotEquations = listToAttrs (map (c: {
+                                    name  = toString c;
+                                    value = result pkg.explored "explored" c;
+                                  })
+                                  defaultClusters);
+}
