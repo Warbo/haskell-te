@@ -14,7 +14,7 @@ cmd = ''
     exit 1
   }
 
-  echo "true" > "$out"
+  touch "$out"
 '';
 
-in testMsg (parseJSON (runScript env cmd)) "No regressions"
+in drvFromScript env cmd
