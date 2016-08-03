@@ -47,68 +47,70 @@ rec {
 
   # Run the command given in argv in an environment containing the Haskell
   # packages given on stdin
-  checkHsEnv = extra: writeScript "checkHsEnv" ''
-    #!/usr/bin/env bash
-    set -e
-    set -o pipefail
+  checkHsEnv = extra:
+    let allGiven = extra ++ explore.extra-haskell-packages;
+     in writeScript "checkHsEnv" ''
+          #!/usr/bin/env bash
+          set -e
+          set -o pipefail
 
-    function ensurePkg {
-      if ghc-pkg list "$1" | grep "$1" > /dev/null
-      then
-        return 0
-      fi
+          function ensurePkg {
+            if ghc-pkg list "$1" | grep "$1" > /dev/null
+            then
+              return 0
+            fi
 
-      GHC_PKG=$(command -v ghc-pkg)
-      PKGS=$(ghc-pkg list)
-      echo    "Didn't find Haskell package '$1' with '$GHC_PKG'." 1>&2
-      echo -e "Available packages are:\n$PKGS\n\nAborting" 1>&2
-      exit 1
-    }
+            GHC_PKG=$(command -v ghc-pkg)
+            PKGS=$(ghc-pkg list)
+            echo    "Didn't find Haskell package '$1' with '$GHC_PKG'." 1>&2
+            echo -e "Available packages are:\n$PKGS\n\nAborting" 1>&2
+            exit 1
+          }
 
-    function ensureEnv {
-      # TODO: Doesn't take extraPackages into account yet
-      hash "ghc-pkg" > /dev/null 2>&1 || {
-        echo "Need environment to get the ghc-pkg command" 1>&2
-        exit 1
-      }
+          function ensureEnv {
+            # TODO: Doesn't take extraPackages into account yet
+            hash "ghc-pkg" > /dev/null 2>&1 || {
+              echo "No ghc-pkg command in environment" 1>&2
+              exit 1
+            }
 
-      while read -r PKG
-      do
-          ensurePkg "$PKG"
-      done < <(echo "${concatStringsSep "\n" explore.extra-haskell-packages}")
+            while read -r PKG
+            do
+                ensurePkg "$PKG"
+            done < <(echo "${concatStringsSep "\n" allGiven}")
 
-      NEEDED=$(cat)
-      if [[ -n "$NEEDED" ]]
-      then
-          while read -r PKG
-          do
-              ensurePkg "$PKG"
-          done < <(echo "$NEEDED")
-      fi
+            NEEDED=$(cat)
+            if [[ -n "$NEEDED" ]]
+            then
+                while read -r PKG
+                do
+                    ensurePkg "$PKG"
+                done < <(echo "$NEEDED")
+            fi
 
-      return 0
-    }
+            return 0
+          }
 
-    if [[ -z "$ENVIRONMENT_PACKAGES" ]]
-    then
-      # Sanity check
-      if [[ -n "$ENVIRONMENT_PKGS" ]]
-      then
-        echo "WARNING: 'ENVIRONMENT_PKGS' was found; did you mean 'ENVIRONMENT_PACKAGES'?" 1>&2
-        exit 1
-      fi
+          if [[ -z "$ENVIRONMENT_PACKAGES" ]]
+          then
+            # Sanity check
+            if [[ -n "$ENVIRONMENT_PKGS" ]]
+            then
+              echo "WARNING: 'ENVIRONMENT_PKGS' was found; did you mean 'ENVIRONMENT_PACKAGES'?" 1>&2
+              exit 1
+            fi
 
-      echo "No extra packages given" 1>&2
-      INPUT=""
-    else
-      echo "Extra packages given: $ENVIRONMENT_PACKAGES" 1>&2
-      INPUT=$(echo "$ENVIRONMENT_PACKAGES" | sort -u | grep "^.")
-    fi
+            echo "No extra packages given" 1>&2
+            INPUT=""
+          else
+            echo "Extra packages given: $ENVIRONMENT_PACKAGES" 1>&2
+            INPUT=$(echo "$ENVIRONMENT_PACKAGES" | sort -u | grep "^.")
+          fi
 
-    echo "$INPUT" | ensureEnv
+          echo "$INPUT" | ensureEnv
 
-    exit 0
-  '';
+          exit 0
+        '';
 
   inherit (callPackage ./timeout.nix {}) timeout;
 
