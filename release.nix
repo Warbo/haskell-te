@@ -1,3 +1,4 @@
+# Entry point for evaluating/building
 let pkgs = import ./nix-support {};
  in {
 
