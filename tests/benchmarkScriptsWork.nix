@@ -42,7 +42,7 @@ let result = script: parseJSON (runScript {
                                null
                                {}
                                ''
-                                 if "${benchmark allArgs}"
+                                 if "${benchmark allArgs}" < "${inputPkgs}"
                                  then
                                    echo "'benchmark' didn't spot error" 1>&2
                                    exit 1
@@ -58,13 +58,14 @@ let result = script: parseJSON (runScript {
                                       exit 1
                                     }
                                   '';
+          inputPkgs = writeScript "inputs" ''
+                        text
+                        aeson
+                        parsec
+                      '';
           allArgs = args // {
             cmd    = "true";
-            inputs = [ (writeScript "inputs" ''
-                         text
-                         aeson
-                         parsec
-                       '') ];
+            inputs = [ inputPkgs ];
           };
        in { inherit shouldFail shouldSucceed; };
 
