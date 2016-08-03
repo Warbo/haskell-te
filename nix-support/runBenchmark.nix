@@ -1,5 +1,5 @@
-{ bash, callPackage, coreutils, jq, lib, mlspec-bench, ourCheck, stdenv, time,
-  writeScript }:
+{ bash, callPackage, coreutils, explore, jq, lib, mlspec-bench, ourCheck,
+  stdenv, time, writeScript }:
 
 with builtins; with lib;
 
@@ -75,7 +75,7 @@ rec {
       while read -r PKG
       do
           ensurePkg "$PKG"
-      done < <(echo "${concatStringsSep "\n" extra-haskell-packages}")
+      done < <(echo "${concatStringsSep "\n" explore.extra-haskell-packages}")
 
       NEEDED=$(cat)
       if [[ -n "$NEEDED" ]]
