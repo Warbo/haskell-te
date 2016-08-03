@@ -17,4 +17,8 @@ let typeResults = runScript {} ''
     count = fromJSON (parseJSON (runScript {} ''
               "${jq}/bin/jq" -r 'length' < "${arities}" > "$out"
             ''));
- in testMsg (count > 0) "Found '${toString count}' arities for '${pkg.name}'"
+ in testDbg (count > 0) "Found arities for '${pkg.name}'"
+            {
+              inherit count arities typeResults getAritiesScript;
+              inherit (pkg) ranTypes;
+            }
