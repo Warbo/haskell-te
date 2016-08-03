@@ -102,17 +102,23 @@ rec {
       set -e
       set -x
 
+      # Check if we need to provide any input; to prevent prompting the user
+      INPUT=""
+      [ -t 0 ] || INPUT=$(cat)
+
+      echo "$INPUT" | "${checkHsEnv []}" || {
+        echo "checkHsEnv failed" 1>&2
+        exit 1
+      }
+
+      echo "Setting up environment for mlspec-bench" 1>&2
+
       # Stop Perl (i.e. Nix) complaining about unset locale variables
       export LOCALE_ARCHIVE=/run/current-system/sw/lib/locale/locale-archive
 
       # Force Haskell to use UTF-8, or else we get I/O errors
       export LANG="en_US.UTF-8"
 
-      # Check if we need to provide any input; to prevent prompting the user
-      INPUT=""
-      [ -t 0 ] || INPUT=$(cat)
-
-      # Set up environment for mlspec-bench
       mkdir -p outputs
       export BENCH_DIR="$PWD"
       export BENCHMARK_COMMAND="${cmd}"
@@ -120,10 +126,6 @@ rec {
 
       START_TIME="$SECONDS" # Not part of the benchmark, just info for user
 
-      echo "$INPUT" | "${checkHsEnv []}" || {
-        echo "checkHsEnv failed" 1>&2
-        exit 1
-      }
       echo "$INPUT" | "${mlspec-bench}/bin/mlspec-bench"     \
                         --template json                      \
                         --output report.json 1> bench.stdout \
