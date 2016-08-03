@@ -58,25 +58,25 @@ extractedEnv = standalone: f:
                    pathExists (unsafeDiscardStringContext
                                  "${toString standalone}/default.nix")
                    then trace "Including '${toString standalone}'" rec {
-                     pkg     = haskellPackages.callPackage
-                                 (import standalone) {};
-                     pkgs    = [ pkg ];
-                     doCheck = [ pkg.name ];
+                     pkg   = haskellPackages.callPackage
+                               (import standalone) {};
+                     pkgs  = [ pkg      ];
+                     names = [ pkg.name ];
                    }
                    else {
-                     pkgs    = [];
-                     doCheck = [];
+                     pkgs  = [];
+                     names = [];
                    };
       hsNames = map strip (splitString "\n" (extractEnv f)) ++
                   extra-haskell-packages;
-      hsPkgs  = h: concatMap (n: if haskellPackages ? "${n}"
-                                    then [ h."${n}" ]
-                                    else [])
-                             hsNames;
+      hsPkgs  = h: (concatMap (n: if haskellPackages ? "${n}"
+                                     then [ h."${n}" ]
+                                     else [          ])
+                              hsNames) ++ attrs.pkgs;
       extra   = map (n: self."${n}") extra-packages;
-      ps      = [ (haskellPackages.ghcWithPackages (hsPkgs ++ attrs.pkgs)) ] ++
+      ps      = [ (haskellPackages.ghcWithPackages hsPkgs) ] ++
                   extra;
-   in assert hsPkgsInEnv { buildInputs = ps; } (hsNames ++ attrs.doCheck);
+   in assert hsPkgsInEnv { buildInputs = ps; } (hsNames ++ attrs.names);
       trace "Extracted env from '${f}'" ps;
 
 # Haskell packages required for MLSpec
