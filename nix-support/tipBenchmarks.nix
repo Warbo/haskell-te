@@ -1,6 +1,7 @@
 { bash, defaultClusters, fetchurl, haskellPackages, nixFromCabal,
   processPackage, python, racket, runScript, stdenv, storeResult, writeScript }:
 
+with builtins;
 let path = if any (x: x.prefix == "te-benchmark") nixPath
               then <te-benchmark>
               else ../packages/te-benchmark;
