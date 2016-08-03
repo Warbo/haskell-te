@@ -2,6 +2,7 @@ defs: with defs;
 
 drvFromScript { buildInputs = explore.exploreEnv; } ''
   set -e
+  set -x
 
   "${checkHsEnv [                                    ]}" || exit 1
   "${checkHsEnv ["text"                              ]}" || exit 2
