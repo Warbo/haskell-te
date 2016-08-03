@@ -15,4 +15,4 @@ let check = data: drvFromScript { buildInputs = [ jq ]; } ''
                                 value = check data; })
                        lst);
 
- in mapAttrs (_: checkInner) pkg.formatted;
+ in mapAttrs (_: checkInner) pkg.formatted
