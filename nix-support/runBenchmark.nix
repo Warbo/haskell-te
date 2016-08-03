@@ -59,6 +59,7 @@ rec {
           function ensurePkg {
             if ghc-pkg list "$1" | grep "$1" > /dev/null
             then
+              echo "Have package '$1'" 1>&2
               return 0
             fi
 
@@ -68,13 +69,17 @@ rec {
           }
 
           # We must have ghc-pkg, or else we can't even check the others
-          command -v "ghc-pkg" > /dev/null 2>&1 || {
+          if command -v "ghc-pkg" > /dev/null 2>&1
+          then
+            echo "Have ghc-pkg" 1>&2
+          else
             echo "No ghc-pkg command in environment" 1>&2
             exit 1
-          }
+          fi
 
+          # || true to appease set -e
           INPUT=""
-          [ -t 0 ] || INPUT=$(sort -u | grep "^.")
+          [ -t 0 ] || INPUT=$(sort -u | grep "^.") || true
 
           if [[ -n "$INPUT" ]]
           then
