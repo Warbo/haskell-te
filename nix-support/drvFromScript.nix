@@ -25,7 +25,7 @@ let # Required for running 'timeout'
                           [ nix ]     ++
                           (if any (e: lib.hasPrefix "ghc-" e.name) existing
                               then []
-                              else abort "No GHC in environment");
+                              else trace "Warning: No GHC in environment" []);
 
             NIX_PATH    = lib.concatStringsSep ":" parts;
 
