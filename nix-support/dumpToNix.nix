@@ -2,7 +2,7 @@
   runScript, stdenv, writeScript }:
 { quick, pkgDir }:
 
-drvFromScript { buildInputs = explore.extractedEnv { standalone = pkgDir; }; } ''
+drvFromScript { buildInputs = explore.extractedEnv { /*standalone = pkgDir;*/ }; } ''
   set -e
 
   D="${toString pkgDir}"

@@ -31,7 +31,7 @@ rec {
 
   # These provide executables
   inherit (haskellPackages)
-          AstPlugin getDeps ML4HSFE mlspec mlspec-bench reduce-equations;
+          AstPlugin GetDeps ML4HSFE mlspec mlspec-bench reduce-equations;
 
   annotate             = callPackage ./annotate.nix           {};
   annotateAstsScript   = callPackage ./annotateAstsScript.nix {};
@@ -50,7 +50,7 @@ rec {
   format               = callPackage ./format.nix             {};
   getAritiesScript     = callPackage ./getAritiesScript.nix   {};
   getDepsScript        = callPackage ./getDepsScript.nix      {
-                           inherit (haskellPackages) getDeps;
+                           inherit (haskellPackages) GetDeps;
                          };
   getTypesScript       = callPackage ./getTypesScript.nix     {};
   haskellPackages      = callPackage ./haskellPackages.nix    {
@@ -111,6 +111,10 @@ rec {
   # Nix doesn't handle floats, so use bc
   floatDiv = x: y: runScript { buildInputs = [ self.bc ]; }
                      ''echo "scale=16; ${x}/${y}" | bc > "$out"'';
+
+  haskellPackageNames = self.writeScript
+                          "haskell-names"
+                          (self.lib.concatStringsSep "\n" (attrNames haskellPackages));
 
   havePath = n: any (x: x.prefix == n) nixPath;
 

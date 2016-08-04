@@ -1,8 +1,24 @@
-{ bash, explore, haskellPackages, lib, nix, perl, procps, runCommand, writeScript }:
+{ bash, explore, haskellPackages, jq, lib, nix, perl, procps, runCommand,
+  utillinux, writeScript }:
 with builtins;
 
-let # Required for running 'timeout'
-    timeoutDeps = [ perl procps bash ];
+let commonDeps = [ bash jq nix perl procps utillinux ];
+
+    # Ensure we can write to the Nix store (or ask a builders to do so for us)
+    nixRemote  =
+      let given  = getEnv "NIX_REMOTE";
+          force  = readFile result;
+          result = runCommand "get-nix-remote" { buildInputs = [ nix ]; } ''
+            if nix-instantiate --eval -E null 2> /dev/null
+            then
+              printf "$NIX_REMOTE" > "$out"
+            else
+              printf "daemon"      > "$out"
+            fi
+          '';
+       in if given == ""
+             then force   # Nix is writable, or we need to force 'daemon'
+             else given;  # Propagate the existing value
 
     withNix = env:
       let existing = if env ? buildInputs
@@ -19,37 +35,17 @@ let # Required for running 'timeout'
                        "real=${real}"
                        (getEnv "NIX_PATH") ];
        in env // {
+            # Haskell packages are tricky, as they must be accumulated in the
+            # return value of the callback given to 'ghcWithPackages'. Getting
+            # this wrong is common enough to make a "No GHC" warning helpful!
+            buildInputs =  (if any (e: lib.hasPrefix "ghc-" e.name) existing
+                               then (x: x)
+                               else trace "Warning: No GHC in environment")
+                             (existing ++ commonDeps);
+
             # Required for calling nix recursively
-            buildInputs = existing    ++
-                          timeoutDeps ++
-                          [ nix ]     ++
-                          (if any (e: lib.hasPrefix "ghc-" e.name) existing
-                              then []
-                              else trace "Warning: No GHC in environment" []);
-
-            NIX_PATH    = lib.concatStringsSep ":" parts;
-
-            # Allows ~/.nixpkgs/config.nix to help debugging
-            USER_HOME   = getEnv "HOME";
-
-            NIX_REMOTE  =
-              let given  = getEnv "NIX_REMOTE";
-                  force  = readFile result;
-                  result = runCommand "get-nix-remote"
-                             { buildInputs = [ nix ]; }
-                             ''
-                               if nix-instantiate \
-                                    --eval \
-                                    -E null 2> /dev/null
-                               then
-                                 printf "$NIX_REMOTE" > "$out"
-                               else
-                                 printf "daemon"      > "$out"
-                               fi
-                             '';
-               in if given == ""  # Nix is writable, or we
-                     then force   # need to force 'daemon'.
-                     else given;  # Propagate the given value
+            NIX_PATH   = lib.concatStringsSep ":" parts;
+            NIX_REMOTE = nixRemote;
           };
 
 in env: text:

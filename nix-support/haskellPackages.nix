@@ -27,7 +27,7 @@ superHaskellPackages.override {
                                 sha256 = "1amfq2jhwxzy34gyqyvanc46admwlfqs9dk3d7c10aivbl7v1kyb";
                               }));
 
-          getDeps           = cabalCheck "get-deps"
+          GetDeps           = cabalCheck "get-deps"
                                          <get-deps>
                                          ../packages/get-deps;
 

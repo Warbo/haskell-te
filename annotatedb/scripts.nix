@@ -1,6 +1,6 @@
-{ stdenv, jq, getDeps, utillinux }:
+{ stdenv, jq, GetDeps, utillinux }:
 
 builtins.trace "FIXME: Get rid of annotatedb/scripts.nix" stdenv.mkDerivation {
   name = "annotatedb";
-  propagatedBuildInputs = [ jq getDeps utillinux ];
+  propagatedBuildInputs = [ jq GetDeps utillinux ];
 }

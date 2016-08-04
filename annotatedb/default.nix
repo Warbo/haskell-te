@@ -1,4 +1,4 @@
-{ downloadAndDump, getDeps, jq, lib, nix, runScript, stdenv, utillinux }:
+{ downloadAndDump, GetDeps, jq, lib, nix, runScript, stdenv, utillinux }:
 
 rec {
   annotateAsts    = import ./annotateAsts.nix    {

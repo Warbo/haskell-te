@@ -45,16 +45,13 @@ rec {
     "${coreutils}/bin/tac" "$1" | upToDashes | "${coreutils}/bin/tac"
   '';
 
-  # Run the command given in argv in an environment containing the Haskell
-  # packages given on stdin
+  # Check that the required Haskell packages are found in the environment
   checkHsEnv = extra:
     let allGiven = extra ++ explore.extra-haskell-packages;
      in writeScript "checkHsEnv" ''
           #!/usr/bin/env bash
           set -e
           set -o pipefail
-
-          # TODO: Doesn't take extraPackages into account yet
 
           function ensurePkg {
             if ghc-pkg list "$1" | grep "$1" > /dev/null
@@ -83,7 +80,7 @@ rec {
             while read -r PKG
             do
               ensurePkg "$PKG"
-            done < <(echo "$INPUT")
+            done < <(echo "$INPUT" | "${explore.findHsPkgReferences}")
           fi
 
           while read -r PKG
@@ -94,6 +91,8 @@ rec {
           exit 0
         '';
 
+  # Snippets of code which are common to both withTime and withCriterion
+
   getInput = ''
     # Check if we need to provide any input; to prevent prompting the user
     INPUT=""
@@ -101,7 +100,10 @@ rec {
   '';
 
   checkEnv = inputs: ''
-    echo "$INPUT" | "${checkHsEnv (concatMap (i: map strip (splitString "\n" (readFile i))) inputs)}" || {
+    echo "$INPUT" | "${checkHsEnv (concatMap (i: map strip
+                                                     (splitString "\n"
+                                                                  (readFile i)))
+                                             inputs)}" || {
       echo "checkHsEnv failed" 1>&2
       exit 1
     }
@@ -177,20 +179,13 @@ rec {
       export BENCHMARK_COMMAND="${cmd}"
       export BENCHMARK_ARGS='${toJSON args}'
 
-      START_TIME="$SECONDS" # Not part of the benchmark, just info for user
-
-      echo "$INPUT" | "${mlspec-bench}/bin/mlspec-bench"     \
-                        --template json                      \
-                        --output report.json 1> bench.stdout \
+      echo "$INPUT" | "${mlspec-bench}/bin/mlspec-bench"            \
+                        --template json                             \
+                        --output report.json 1> >(tee bench.stdout) \
                                              2> >(tee bench.stderr) ||
       CODE="$?"
+
       FAILED=false
-
-      DURATION=$(( SECONDS - START_TIME ))
-      echo "Benchmarking took '$DURATION' seconds" 1>&2
-
-      cat bench.stdout 1>&2
-
       for F in stdout stderr
       do
         FOUND=0

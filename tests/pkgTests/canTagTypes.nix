@@ -8,13 +8,13 @@ let scopeResults = runScript {} ''
       "${storeResult}" scopeResults.json "$out"
     '';
 
-    types = runScript { buildInputs = [ jq getDeps utillinux ]; } ''
+    types = runScript { buildInputs = [ jq GetDeps utillinux ]; } ''
       set -e
       "${getTypesScript}" < "${scopeResults}" > types.json
       "${storeResult}" types.json "$out"
     '';
 
-    typeTagged = runScript { buildInputs = [ jq getDeps utillinux ]; } ''
+    typeTagged = runScript { buildInputs = [ jq GetDeps utillinux ]; } ''
       set -e
       "${tagAstsScript}" "${types}" "{}" < "${pkg.dump}" > tagged.json
       "${storeResult}" tagged.json "$out"

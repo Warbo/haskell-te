@@ -6,7 +6,7 @@ let pkgs = import ./nix-support {};
 
   inherit (pkgs.haskellPackages)
     ArbitraryHaskell runtime-arbitrary nix-eval mlspec-helper ifcxt AstPlugin
-    getDeps HS2AST ML4HSFE;
+    GetDeps HS2AST ML4HSFE;
 
   inherit (pkgs)
     mlspec mlspec-bench reduce-equations runWeka;

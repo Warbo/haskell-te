@@ -1,4 +1,4 @@
-{ getDeps, jq, utillinux, writeScript }:
+{ GetDeps, jq, utillinux, writeScript }:
 
 writeScript "getDeps" ''
   #!/usr/bin/env bash
@@ -9,7 +9,7 @@ writeScript "getDeps" ''
 
   "${jq}/bin/jq" -c '.[]' | while read -r LINE
   do
-    DEPENDENCIES=$(echo "$LINE" | "${jq}/bin/jq" -r '.ast' | "${getDeps}/bin/GetDeps")
+    DEPENDENCIES=$(echo "$LINE" | "${jq}/bin/jq" -r '.ast' | "${GetDeps}/bin/GetDeps")
     [[ -z "$DEPENDENCIES" ]] && msg "Unexpected line: $LINE"
 
     # Split versions from the package names

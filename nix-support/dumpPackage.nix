@@ -4,4 +4,4 @@ with builtins; with lib;
 { quick, src }:
   parseJSON
     (readFile
-      (dumpToNix { inherit quick; pkgDir = "${src}"; }).outPath)
+      (toString (dumpToNix { inherit quick; pkgDir = "${src}"; })))

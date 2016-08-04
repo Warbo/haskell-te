@@ -1,6 +1,6 @@
 defs: with defs; pkg:
 
-drvFromScript { buildInputs = [ jq getDeps utillinux ]; } ''
+drvFromScript { buildInputs = [ jq GetDeps utillinux ]; } ''
   set -e
   jq -c '.[] | .package'  < "${pkg.preAnnotated}" | while read -r LINE
   do

@@ -1,6 +1,8 @@
-{ annotateAstsScript, benchmark, getDeps, getDepsScript, jq, parseJSON,
+{ annotateAstsScript, benchmark, explore, GetDeps, getDepsScript, jq, parseJSON,
   runScript, runTypesScript, stdenv, utillinux, writeScript }:
 { asts, pkg, pkgSrc ? null, quick }:
+
+with builtins;
 
 let annotateDb = writeScript "annotateDb" ''
       #!/usr/bin/env bash
@@ -12,11 +14,15 @@ let annotateDb = writeScript "annotateDb" ''
         "${getDepsScript}"
     '';
 
-    in parseJSON (runScript { buildInputs = [ jq getDeps utillinux ]; } ''
+    in parseJSON (runScript { buildInputs = explore.extractedEnv {
+                                              extraHs    = [ "GetDeps"    ];
+                                              standalone = pkgSrc;
+                                              f          = asts;
+                                            }; } ''
          set -e
          "${benchmark {
               inherit quick;
               cmd    = annotateDb;
-              inputs = [asts];
+              /*inputs = [ asts ];*/
           }}" < "${asts}" > "$out"
        '')

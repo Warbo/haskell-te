@@ -1,4 +1,4 @@
-{ annotateAstsScript, defaultClusters, getDeps, getDepsScript,
+{ annotateAstsScript, defaultClusters, GetDeps, getDepsScript,
   getTypesScript, jq, lib, ml4hs, ML4HSFE, nixRecurrentClusteringScript,
   parseJSON, processPackages, runScript, runTypes, runWeka, storeResult,
   utillinux }:
@@ -20,7 +20,7 @@ let clusters         = listToAttrs (map (c: {
     extend            = pkg: with pkg; pkg // rec {
       ranTypes  = runTypes dump pkg {};
 
-      preAnnotated = runScript { buildInputs = [ jq getDeps utillinux ]; } ''
+      preAnnotated = runScript { buildInputs = [ GetDeps ]; } ''
         set -e
         "${annotateAstsScript}" < "${ranTypes}" > annotated.json
         "${storeResult}" annotated.json "$out"
@@ -33,7 +33,7 @@ let clusters         = listToAttrs (map (c: {
         "${storeResult}" scopeResults.json "$out"
       '';
 
-      gotTypes = runScript { buildInputs = [ jq getDeps utillinux ]; } ''
+      gotTypes = runScript { buildInputs = [ GetDeps ]; } ''
         set -e
         "${getTypesScript}" < "${scopeResults}" > types.json
         "${storeResult}" types.json "$out"
@@ -46,7 +46,7 @@ let clusters         = listToAttrs (map (c: {
         "${storeResult}" typeResults.json "$out"
       '';
 
-      deps = runScript { buildInputs = [ jq getDeps utillinux ]; } ''
+      deps = runScript { buildInputs = [ GetDeps ]; } ''
         set -e
         "${getDepsScript}" < "${annotated}" > deps.json
         "${storeResult}" deps.json "$out"

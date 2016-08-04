@@ -8,7 +8,7 @@ let typeResults = runScript {} ''
       "${storeResult}" typeResults.json "$out"
     '';
 
-    arities = runScript { buildInputs = [ jq getDeps utillinux ]; } ''
+    arities = runScript { buildInputs = [ jq GetDeps utillinux ]; } ''
       set -e
       "${getAritiesScript}" < "${typeResults}" > arities.json
       "${storeResult}" arities.json "$out"

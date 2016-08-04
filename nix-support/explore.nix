@@ -1,5 +1,5 @@
-{ benchmark, ourCheck, self, format, haskellPackages, jq, lib, ml4hs, mlspec,
-  parseJSON, runScript, strip, writeScript }:
+{ benchmark, haskellPackageNames, format, haskellPackages, jq, lib, ml4hs,
+  mlspec, ourCheck, parseJSON, runScript, self, strip, writeScript }:
 with builtins;
 with lib;
 
@@ -19,7 +19,7 @@ explore-theories = f: writeScript "explore-theories" ''
 '';
 
 extractEnv = f:
-  trace "Extracting env from '${f}'" (runScript { buildInputs = [ jq ]; } ''
+  trace "Extracting env from '${f}'" (runScript {} ''
     set -e
     set -o pipefail
 
@@ -32,6 +32,33 @@ extractEnv = f:
       sort -u > "$out"
   '');
 
+findHsPkgReferences =
+  let extractionScript = writeScript "find-references" ''
+        # Allow package names to be given directly, one per line
+        INPUT=$(cat)
+        echo "$INPUT"
+
+        # Take package names from JSON fields. These include:
+        #
+        #  - Objects with a 'package' field
+        #  - Arrays of such objects
+        #  - Arrays of arrays of such objects
+        #
+        # We should be able to ignore dependencies, as they'll be brought in
+        # automatically.
+        FLATTEN='if type == "array" then .[] else .'
+        echo "$INPUT" | jq -r "$FLATTEN | $FLATTEN | .package" 2> /dev/null || true
+      '';
+   in writeScript "unique-references" ''
+        while read -r NAME
+        do
+          if grep -Fx "$NAME" < "${haskellPackageNames}" > /dev/null
+          then
+            echo "$NAME"
+          fi
+        done < <("${extractionScript}" | sort -u | grep '^.')
+      '';
+
 hsPkgsInEnv = env: names:
   let check = p: ''
         if ghc-pkg list "${p}" | grep "(no packages)" > /dev/null
@@ -40,7 +67,7 @@ hsPkgsInEnv = env: names:
           exit 1
         fi
       '';
-   in parseJSON (runScript env ''
+   in trace "FIXME: hsPkgsInEnv should use checkHsEnv" parseJSON (runScript env ''
         ${concatStringsSep "\n" (map check names)}
         echo "true" > "$out"
       '');
@@ -176,6 +203,6 @@ checkAndExplore = { quick, formatted, standalone ? null }:
 
 in {
   inherit extra-haskell-packages explore-theories exploreEnv
-          extractedEnv;
+          extractedEnv findHsPkgReferences;
   explore = checkAndExplore;
 }

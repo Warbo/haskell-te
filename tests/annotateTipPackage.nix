@@ -24,7 +24,7 @@ haveDump = {
 # our scripts can handle packages taken straight from Cabal directories
 asts      = dump.stdout;
 pkgName   = pkg.name;
-env       = { buildInputs = [ jq getDeps utillinux ]; };
+env       = { buildInputs = [ jq GetDeps utillinux ]; };
 
 ranTypes = parseJSON (runScript env ''
              set -e
