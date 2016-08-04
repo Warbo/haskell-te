@@ -5,7 +5,9 @@ let
 path  = toString ./exploreTheoriesExamples;
 files = map (f: "${path}/${f}") (attrNames (readDir path));
 
-noDupesFor = f: parseJSON (runScript { buildInputs = explore.extractedEnv null f; } ''
+noDupesFor = f: parseJSON (runScript { buildInputs = explore.extractedEnv {
+                                                       inherit f;
+                                                     }; } ''
   set -e
   set -o pipefail
 

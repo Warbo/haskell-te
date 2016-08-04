@@ -45,10 +45,21 @@ hsPkgsInEnv = env: names:
         echo "true" > "$out"
       '');
 
-# Work out which packages we need, by reading JSON from 'f'. If 'standalone' is
-# not null, use it as the path to a directory containing a Haskell package which
-# we'll also include.
-extractedEnv = standalone: f:
+# Make a list of packages suitable for a 'buildInputs' field. We treat Haskell
+# packages separately from everything else. The Haskell packages will include:
+#
+#  - The contents of 'extra-haskell-packages', required for our scripts
+#  - The contents of the 'extraHs' argument; use '[]' for none
+#  - The cabal package contained at path 'standalone' (requires a 'default.nix'
+#    file, e.g. from 'nixFromCabal'); use 'null' for none
+#  - Any 'package' fields read from the JSON file 'f'
+#
+# The non-Haskell packages will include:
+#
+#  - The contents of extra-packages, required by our scripts
+#  - The contents of the 'extraPkgs' argument; use '[]' for none
+#
+extractedEnv = { extraPkgs ? [], extraHs ? [], standalone ? null, f }:
       # Use a variety of extra settings when 'standalone' is given
   let attrs   = if standalone != null &&
                    pathExists (unsafeDiscardStringContext
@@ -63,15 +74,16 @@ extractedEnv = standalone: f:
                      pkgs  = [];
                      names = [];
                    };
-      hsNames = map strip (splitString "\n" (extractEnv f)) ++
-                  extra-haskell-packages;
+      hsNames = concat [ (map strip (splitString "\n" (extractEnv f)))
+                         extra-haskell-packages
+                         extraHs ];
       hsPkgs  = h: (concatMap (n: if haskellPackages ? "${n}"
                                      then [ h."${n}" ]
                                      else [          ])
                               hsNames) ++ attrs.pkgs;
-      extra   = map (n: self."${n}") extra-packages;
-      ps      = [ (haskellPackages.ghcWithPackages hsPkgs) ] ++
-                  extra;
+      ps      = concat [ [ (haskellPackages.ghcWithPackages hsPkgs) ]
+                         extra-packages
+                         extraPkgs ];
    in assert hsPkgsInEnv { buildInputs = ps; } (hsNames ++ attrs.names);
       trace "Extracted env from '${f}'" ps;
 
@@ -82,11 +94,11 @@ extra-haskell-packages = [ "mlspec" "mlspec-helper" "runtime-arbitrary"
 prefixed-haskell-packages = concatStringsSep "\n"
                               (map (x: "h.${x}") extra-haskell-packages);
 
-extra-packages = [ "jq" "mlspec" ];
+extra-packages = [ jq mlspec ];
 
 exploreEnv = [ (haskellPackages.ghcWithPackages (h: map (n: h."${n}")
                                                     extra-haskell-packages)) ] ++
-             (map (n: self."${n}") extra-packages);
+             extra-packages;
 
 mkGhcPkg = writeScript "mkGhcPkg" ''
   set -e
@@ -122,7 +134,7 @@ doExplore = standalone: quick: clusterCount: f:
              inputs = [f];
          }}" < "${f}" > "$out"
       '';
-      env    = { buildInputs = extractedEnv standalone f; };
+      env    = { buildInputs = extractedEnv { inherit standalone f; }; };
    in parseJSON (runScript env script);
 
 go = { quick, standalone }: clusterCount: clusters:
@@ -164,7 +176,7 @@ checkAndExplore = { quick, formatted, standalone ? null }:
                 else assert aCheck formatted result.results; result;
 
 in {
-  inherit extra-haskell-packages extra-packages explore-theories exploreEnv
+  inherit extra-haskell-packages explore-theories exploreEnv
           extractedEnv;
   explore = checkAndExplore;
 }

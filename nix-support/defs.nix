@@ -23,8 +23,8 @@ rec {
           cluster nixRecurrentClusteringScript recurrentClusteringScript;
 
   inherit (callPackage ./test-defs.nix {})
-          checkPlot runTestInDrv testAll testDbg testMsg testPackages testRun
-          testWrap;
+          checkPlot runTestInDrv testAll testDbg testMsg testPackages testRec
+          testRun testWrap;
 
   inherit (plotResults)
           mkTbl;

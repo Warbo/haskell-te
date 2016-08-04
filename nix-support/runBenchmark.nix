@@ -1,5 +1,5 @@
 { bash, callPackage, coreutils, explore, jq, lib, mlspec-bench, ourCheck,
-  stdenv, time, writeScript }:
+  stdenv, strip, time, writeScript }:
 
 with builtins; with lib;
 
@@ -111,7 +111,7 @@ rec {
       INPUT=""
       [ -t 0 ] || INPUT=$(cat)
 
-      echo "$INPUT" | "${checkHsEnv []}" || {
+      echo "$INPUT" | "${checkHsEnv (concatMap (i: map strip (splitString "\n" (readFile i))) inputs)}" || {
         echo "checkHsEnv failed" 1>&2
         exit 1
       }
@@ -206,6 +206,12 @@ rec {
    let shellArgs = map escapeShellArg args;
        argStr    = concatStringsSep " " shellArgs;
     in writeScript "with-time" ''
+
+         echo "$INPUT" | "${checkHsEnv (concatMap (i: map strip (splitString "\n" (readFile i))) inputs)}" || {
+           echo "checkHsEnv failed" 1>&2
+           exit 1
+         }
+
          # Measure time with 'time', limit time/memory using 'timeout'
          "${time}/bin/time" -f '%e' -o time \
            "${timeout}" "${cmd}" ${argStr} 1> stdout 2> stderr

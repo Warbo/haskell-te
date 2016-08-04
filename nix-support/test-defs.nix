@@ -24,6 +24,14 @@ rec {
                      (assert areTests tests;
                       testWrap tests "Collected tests");
 
+  testRec = s: if isAttrs s
+                  then if s ? type && s.type == "derivation"
+                          then s
+                          else testAll (map testRec (attrValues s))
+                  else if isList s
+                          then testAll (map testRec s)
+                          else abort "Don't know how to test ${toJSON s}";
+
   # Create a new test out of other ones; this lets us assign a 'higher level'
   # meaning to some results, e.g. 'tests' might be 'foo contains x',
   # 'foo contains y', 'foo contains z', whilst 'msg' might be
@@ -56,6 +64,9 @@ rec {
                '');
 
   testRun = msg: dbg: envOverride: script:
+            assert isString msg;
+            assert isString script;
+            assert isAttrs  envOverride;
             let info       = toJSON
                                ({ inherit msg; } // (if dbg == null
                                                         then {}
@@ -66,27 +77,26 @@ rec {
                 hash       = unsafeDiscardStringContext (stripStr msg);
                 env        = {
                   inherit info msg scriptFile;
-                  name         = "test-${hash}";
-                  passAsFile   = [ "info" ];
-                  buildCommand = ''
-                    source $stdenv/setup
-
-                    echo "# $msg" >> "$out"
-                    echo "true"   >> "$out"
-
-                    if "${scriptFile}"
-                    then
-                      echo     "ok - $msg"
-                      exit 0
-                    else
-                      echo "not ok - $msg"
-                      cat "$infoPath" 1>&2
-                      exit 1
-                    fi
-                  '';
+                  name       = "test-${hash}";
+                  passAsFile = [ "info" ];
                 };
+                buildCommand = ''
+                  echo "# $msg" >> "$out"
+                  echo "true"   >> "$out"
+
+                  if "${scriptFile}"
+                  then
+                    echo     "ok - $msg"
+                    exit 0
+                  else
+                    echo "not ok - $msg"
+                    cat "$infoPath" 1>&2
+                    exit 1
+                  fi
+                '';
              in err (assert isString msg;
-                     stdenv.mkDerivation (env // envOverride));
+                     drvFromScript (env // envOverride)
+                                   buildCommand);
 
   checkPlot = plot:
     let w      = "640";

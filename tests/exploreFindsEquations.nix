@@ -7,7 +7,7 @@ path   = toString ./exploreTheoriesExamples;
 files  = map (f: "${path}/${f}") (attrNames (readDir path));
 
 foundEquations = f:
-  let env = { buildInputs = explore.extractedEnv null f; };
+  let env = { buildInputs = explore.extractedEnv { inherit f; }; };
       cmd = ''
         set -e
         set -o pipefail

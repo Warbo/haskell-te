@@ -51,9 +51,12 @@ let result = script: parseJSON (runScript {
                                '';
           shouldSucceed = testRun "'benchmark' works when packages found"
                                   null
-                                  {}
+                                  { buildInputs = [
+                                      (haskellPackages.ghcWithPackages (h:
+                                        [ h.text h.aeson h.parsec ]))
+                                    ]; }
                                   ''
-                                    "${benchmark allArgs}" || {
+                                    "${benchmark allArgs}" < "${inputPkgs}" || {
                                       echo "Benchmark didn't work" 1>&2
                                       exit 1
                                     }
@@ -72,15 +75,15 @@ let result = script: parseJSON (runScript {
     hasStdDev = testMsg (isString criterionResult.time.stddev.estPoint)
                         "Criterion gives standard deviation";
 
- in {
-   inherit hasStdDev;
+ in testRec {
+  inherit hasStdDev;
 
-   quick = {
-     echo  = check timeResult;
-     input = checkInput { quick = true; };
-   };
-   slow  = {
-     echo  = check criterionResult;
-     input = checkInput { quick = false; };
-   };
+  quick = {
+    echo  = check timeResult;
+    input = checkInput { quick = true; };
+  };
+  slow  = {
+    echo  = check criterionResult;
+    input = checkInput { quick = false; };
+  };
 }
