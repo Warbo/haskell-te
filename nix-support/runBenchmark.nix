@@ -101,7 +101,6 @@ rec {
     writeScript "with-criterion" ''
       #!${bash}/bin/bash
       set -e
-      set -x
 
       # Check if we need to provide any input; to prevent prompting the user
       INPUT=""
@@ -202,6 +201,9 @@ rec {
    let shellArgs = map escapeShellArg args;
        argStr    = concatStringsSep " " shellArgs;
     in writeScript "with-time" ''
+         # Check if we need to provide any input; to prevent prompting the user
+         INPUT=""
+         [ -t 0 ] || INPUT=$(cat)
 
          echo "$INPUT" | "${checkHsEnv (concatMap (i: map strip (splitString "\n" (readFile i))) inputs)}" || {
            echo "checkHsEnv failed" 1>&2

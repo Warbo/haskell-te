@@ -132,9 +132,8 @@ rec {
   runTestInDrv = testPath: extraArgs:
     let allArgs = ["(import ./nix-support {})"] ++ extraArgs;
         argStr  = concatStringsSep " " allArgs;
-        dir     = unsafeDiscardStringContext (toString ./..);
-     in drvFromScript { inherit testPath argStr dir; } ''
-          cd "$dir"
+     in drvFromScript { inherit testPath argStr; } ''
+          cd "${./..}"
           nix-build --show-trace --no-out-link \
                     -E "import ./$testPath $argStr" || exit 1
           touch "$out"

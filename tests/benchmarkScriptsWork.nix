@@ -4,7 +4,8 @@ with lib;
 
 let result = script: parseJSON (runScript {
                                   inherit script;
-                                  passAsFile = [ "script" ];
+                                  passAsFile  = [ "script" ];
+                                  buildInputs = explore.extractedEnv {};
                                 }
                                 ''
                                   chmod +x "$scriptPath"
@@ -39,37 +40,43 @@ let result = script: parseJSON (runScript {
 
     checkInput = args:
       let shouldFail = testRun "'benchmark' should abort when packages missing"
-                               null
-                               {}
+                               { inherit allArgs; }
+                               { inherit dbg;
+                                 buildInputs = explore.extractedEnv {}; }
                                ''
                                  if "${benchmark allArgs}" < "${inputPkgs}"
                                  then
                                    echo "'benchmark' didn't spot error" 1>&2
+                                   echo "$dbg"                          1>&2
                                    exit 1
                                  fi
                                  touch "$out"
                                '';
           shouldSucceed = testRun "'benchmark' works when packages found"
-                                  null
-                                  { buildInputs = [
-                                      (haskellPackages.ghcWithPackages (h:
-                                        [ h.text h.aeson h.parsec ]))
-                                    ]; }
+                                  { inherit allArgs; }
+                                  {
+                                    inherit dbg;
+                                    buildInputs = explore.extractedEnv {
+                                      extraHs = [ "list-extras" "hlint" ];
+                                    };
+                                  }
                                   ''
                                     "${benchmark allArgs}" < "${inputPkgs}" || {
                                       echo "Benchmark didn't work" 1>&2
+                                      echo "$dbg"                  1>&2
                                       exit 1
                                     }
                                   '';
+          # Haskell packages which don't appear in our scripts' dependencies
           inputPkgs = writeScript "inputs" ''
-                        text
-                        aeson
-                        parsec
+                        list-extras
+                        hlint
                       '';
           allArgs = args // {
             cmd    = "true";
             inputs = [ inputPkgs ];
           };
+          dbg     = toJSON { inherit allArgs; };
        in { inherit shouldFail shouldSucceed; };
 
     hasStdDev = testMsg (isString criterionResult.time.stddev.estPoint)
