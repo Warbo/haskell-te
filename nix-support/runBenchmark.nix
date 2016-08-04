@@ -179,10 +179,10 @@ rec {
       export BENCHMARK_COMMAND="${cmd}"
       export BENCHMARK_ARGS='${toJSON args}'
 
-      echo "$INPUT" | "${mlspec-bench}/bin/mlspec-bench"            \
-                        --template json                             \
-                        --output report.json 1> >(tee bench.stdout) \
-                                             2> >(tee bench.stderr) ||
+      echo "$INPUT" | "${mlspec-bench}/bin/mlspec-bench"     \
+                        --template json                      \
+                        --output report.json 1> bench.stdout \
+                                             2> bench.stderr ||
       CODE="$?"
 
       FAILED=false
