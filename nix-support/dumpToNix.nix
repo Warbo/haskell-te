@@ -1,8 +1,8 @@
-{ benchmark, drvFromScript, dump-package, parseJSON, perl, runScript, stdenv,
-  writeScript }:
+{ benchmark, drvFromScript, dump-package, explore, parseJSON, perl,
+  runScript, stdenv, writeScript }:
 { quick, pkgDir }:
 
-drvFromScript {} ''
+drvFromScript { buildInputs = explore.extractedEnv { standalone = pkgDir; }; } ''
   set -e
 
   D="${toString pkgDir}"

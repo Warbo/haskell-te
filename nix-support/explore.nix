@@ -1,5 +1,5 @@
-{ benchmark, ourCheck, self, format, haskellPackages, jq, lib, ml4hs, parseJSON,
-  runScript, strip, writeScript }:
+{ benchmark, ourCheck, self, format, haskellPackages, jq, lib, ml4hs, mlspec,
+  parseJSON, runScript, strip, writeScript }:
 with builtins;
 with lib;
 
@@ -19,7 +19,7 @@ explore-theories = f: writeScript "explore-theories" ''
 '';
 
 extractEnv = f:
-  runScript { buildInputs = [ jq ]; } ''
+  trace "Extracting env from '${f}'" (runScript { buildInputs = [ jq ]; } ''
     set -e
     set -o pipefail
 
@@ -30,7 +30,7 @@ extractEnv = f:
 
     jq -r '.[] | (if type == "array" then .[] else . end) | .package' < "${f}" |
       sort -u > "$out"
-  '';
+  '');
 
 hsPkgsInEnv = env: names:
   let check = p: ''
@@ -59,7 +59,7 @@ hsPkgsInEnv = env: names:
 #  - The contents of extra-packages, required by our scripts
 #  - The contents of the 'extraPkgs' argument; use '[]' for none
 #
-extractedEnv = { extraPkgs ? [], extraHs ? [], standalone ? null, f }:
+extractedEnv = { extraPkgs ? [], extraHs ? [], standalone ? null, f ? null }:
       # Use a variety of extra settings when 'standalone' is given
   let attrs   = if standalone != null &&
                    pathExists (unsafeDiscardStringContext
@@ -74,18 +74,17 @@ extractedEnv = { extraPkgs ? [], extraHs ? [], standalone ? null, f }:
                      pkgs  = [];
                      names = [];
                    };
-      hsNames = concat [ (map strip (splitString "\n" (extractEnv f)))
-                         extra-haskell-packages
-                         extraHs ];
+      extracted = if f == null then []
+                               else map strip (splitString "\n" (extractEnv f));
+      hsNames = extracted ++ extra-haskell-packages ++ extraHs;
       hsPkgs  = h: (concatMap (n: if haskellPackages ? "${n}"
                                      then [ h."${n}" ]
                                      else [          ])
                               hsNames) ++ attrs.pkgs;
-      ps      = concat [ [ (haskellPackages.ghcWithPackages hsPkgs) ]
-                         extra-packages
-                         extraPkgs ];
+      ps      = [ (haskellPackages.ghcWithPackages hsPkgs) ] ++
+                extra-packages ++ extraPkgs;
    in assert hsPkgsInEnv { buildInputs = ps; } (hsNames ++ attrs.names);
-      trace "Extracted env from '${f}'" ps;
+      ps;
 
 # Haskell packages required for MLSpec
 extra-haskell-packages = [ "mlspec" "mlspec-helper" "runtime-arbitrary"
