@@ -94,6 +94,65 @@ rec {
           exit 0
         '';
 
+  getInput = ''
+    # Check if we need to provide any input; to prevent prompting the user
+    INPUT=""
+    [ -t 0 ] || INPUT=$(cat)
+  '';
+
+  checkEnv = inputs: ''
+    echo "$INPUT" | "${checkHsEnv (concatMap (i: map strip (splitString "\n" (readFile i))) inputs)}" || {
+      echo "checkHsEnv failed" 1>&2
+      exit 1
+    }
+  '';
+
+  cacheOutputs = ''
+    # Cache results in the store, so we make better use of the cache and avoid
+    # sending huge strings into Nix
+    STDOUT=$(nix-store --add stdout)
+    STDERR=$(nix-store --add stderr)
+  '';
+
+  checkResult = { cmd, args, stdout, stderr, time }: ''
+    if [[ "$CODE" -ne 0 ]]
+    then
+      echo "Failed to time '${cmd}' with '${args}'" 1>&2
+
+      echo "Contents of stderr:" 1>&2
+      cat  ${stderr}             1>&2 || true
+      echo "End of stderr"       1>&2
+
+      echo "Contents of stdout:" 1>&2
+      cat  ${stdout}             1>&2 || true
+      echo "End of stdout"       1>&2
+
+      FAILED=true
+    elif ! "${checkStderr}" "$STDERR"
+    then
+      echo "Errors found in '$STDERR' for '${cmd}'" 1>&2
+      FAILED=true
+    else
+      DURATION=$(cat "${time}")
+      echo "Benchmarked '${cmd}', took:" 1>&2
+      cat "${time}"                      1>&2
+    fi
+  '';
+
+  mkReport = { cmd, args, inFields, outFields }: ''
+    "${jq}/bin/jq" -n ${inFields} --arg     cmd    '${cmd}'         \
+                                  --argjson args   '${toJSON args}' \
+                                  --arg     stdout "$STDOUT"        \
+                                  --arg     stderr "$STDERR"        \
+                                  --argjson failed "$FAILED"        \
+                      '{"failed"   : $failed,
+                        "cmd"      : $cmd,
+                        "args"     : $args,
+                        "stdout"   : $stdout,
+                        "stderr"   : $stderr,
+                        ${outFields} }'
+  '';
+
   inherit (callPackage ./timeout.nix {}) timeout;
 
   # A thorough benchmark, which performs multiple runs using Criterion
@@ -102,14 +161,8 @@ rec {
       #!${bash}/bin/bash
       set -e
 
-      # Check if we need to provide any input; to prevent prompting the user
-      INPUT=""
-      [ -t 0 ] || INPUT=$(cat)
-
-      echo "$INPUT" | "${checkHsEnv (concatMap (i: map strip (splitString "\n" (readFile i))) inputs)}" || {
-        echo "checkHsEnv failed" 1>&2
-        exit 1
-      }
+      ${getInput}
+      ${checkEnv inputs}
 
       echo "Setting up environment for mlspec-bench" 1>&2
 
@@ -152,48 +205,28 @@ rec {
         }
       done
 
-      # Cache results in the store, so we make better use of the cache and avoid
-      # sending huge strings into Nix
-      STDOUT=$(nix-store --add stdout)
-      STDERR=$(nix-store --add stderr)
-        TIME=$(nix-store --add report.json)
+      ${cacheOutputs}
 
-      if [[ "$CODE" -ne 0 ]]
-      then
-        echo "Failed to time '${cmd}' with '${toJSON args}'" 1>&2
+      TIME=$(nix-store --add report.json)
 
-        echo "Contents of stderr:"                           1>&2
-        cat         bench.stderr                             1>&2 || true
-        echo      "End of stderr"                            1>&2
+      ${checkResult {
+          inherit cmd;
+          args   = toJSON args;
+          stdout = "bench.stdout";
+          stderr = "bench.stderr";
+          time   = "$TIME";
+      }}
 
-        echo "Contents of stdout:"                           1>&2
-        cat         bench.stdout                             1>&2 || true
-        echo      "End of stdout"                            1>&2
-
-        FAILED=true
-      elif ! "${checkStderr}" "$STDERR"
-      then
-        echo "Errors found in '$STDERR' for '${cmd}'" 1>&2
-        FAILED=true
-      else
-        echo "Benchmarked '${cmd}'" 1>&2
-        cat "$TIME" 1>&2
-      fi
-
-      "${jq}/bin/jq" -n --arg       cmd    '${cmd}'         \
-                        --argjson   args   '${toJSON args}' \
-                        --arg       stdout "$STDOUT"        \
-                        --arg       stderr "$STDERR"        \
-                        --slurpfile report report.json      \
-                        --argjson   failed "$FAILED"        \
-                        '{"failed" : $failed,
-                          "cmd"    : $cmd,
-                          "args"   : $args,
-                          "stdout" : $stdout,
-                          "stderr" : $stderr,
-                          "time"   : {
-                            "mean"   : ($report[0][0].reportAnalysis.anMean),
-                            "stddev" : ($report[0][0].reportAnalysis.anStdDev)}}'
+      ${mkReport {
+          inherit cmd args;
+          inFields = ''
+            --slurpfile report report.json \
+          '';
+          outFields = ''
+            "time" : {"mean"   : ($report[0][0].reportAnalysis.anMean),
+                      "stddev" : ($report[0][0].reportAnalysis.anStdDev)}
+          '';
+      }}
     '';
 
   # A fast benchmark, which only performs one run
@@ -201,57 +234,38 @@ rec {
    let shellArgs = map escapeShellArg args;
        argStr    = concatStringsSep " " shellArgs;
     in writeScript "with-time" ''
-         # Check if we need to provide any input; to prevent prompting the user
-         INPUT=""
-         [ -t 0 ] || INPUT=$(cat)
-
-         echo "$INPUT" | "${checkHsEnv (concatMap (i: map strip (splitString "\n" (readFile i))) inputs)}" || {
-           echo "checkHsEnv failed" 1>&2
-           exit 1
-         }
+         ${getInput}
+         ${checkEnv inputs}
 
          # Measure time with 'time', limit time/memory using 'timeout'
          "${time}/bin/time" -f '%e' -o time \
            "${timeout}" "${cmd}" ${argStr} 1> stdout 2> stderr
          CODE="$?"
 
-         # Cache results in the store, so we make better use of the cache and avoid
-         # sending huge strings into Nix
-         STDOUT=$(nix-store --add stdout)
-         STDERR=$(nix-store --add stderr)
-           TIME=$(nix-store --add time)
+         ${cacheOutputs}
+
+         TIME=$(nix-store --add time)
 
          FAILED=false
-         if [[ "$CODE" -ne 0 ]]
-         then
-           echo "Failed to time '${cmd}' with '${argStr}'" 1>&2
-           echo "Contents of stderr:"                      1>&2
-           cat stderr                                      1>&2
-           echo "End of stderr"                            1>&2
-           FAILED=true
-         elif ! "${checkStderr}" "$STDERR"
-         then
-           echo "Errors found in '$STDERR' for '${cmd}'" 1>&2
-           FAILED=true
-         else
-           echo "Benchmarked '${cmd}' at '$(cat time)' seconds" 1>&2
-         fi
+         ${checkResult {
+             inherit cmd;
+             args   = argStr;
+             stdout = "stdout";
+             stderr = "stderr";
+             time   = "time";
+         }}
 
-         "${jq}/bin/jq" -n --arg     time     "$(grep "^[0-9][0-9.]*$" < time)" \
-                           --arg     cmd      "${cmd}"                          \
-                           --argjson args     '${toJSON args}'                  \
-                           --arg     stdout   "$STDOUT"                         \
-                           --arg     stderr   "$STDERR"                         \
-                           --arg     timefile "$TIME"                           \
-                           --argjson failed   "$FAILED"                         \
-                           '{"failed"   : $failed,
-                             "cmd"      : $cmd,
-                             "args"     : $args,
-                             "stdout"   : $stdout,
-                             "stderr"   : $stderr,
-                             "timefile" : $timefile,
-                             "time"     : {
-                               "mean"   : {"estPoint": $time}}}'
+         ${mkReport {
+             inherit cmd args;
+             inFields = ''
+               --arg time     "$(grep "^[0-9][0-9.]*$" < time)" \
+               --arg timefile "$TIME"                           \
+             '';
+             outFields = ''
+               "timefile" : $timefile,
+               "time"     : {"mean" : {"estPoint" : $time}}
+             '';
+         }}
        '';
 
   benchmark = args: (if args.quick then withTime else withCriterion) args;
