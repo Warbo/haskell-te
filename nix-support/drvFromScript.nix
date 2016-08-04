@@ -25,9 +25,7 @@ let # Required for running 'timeout'
                           [ nix ]     ++
                           (if any (e: lib.hasPrefix "ghc-" e.name) existing
                               then []
-                              else [ (haskellPackages.ghcWithPackages
-                                       (h: map (n: h."${n}")
-                                               explore.extra-haskell-packages)) ]);
+                              else abort "No GHC in environment");
 
             NIX_PATH    = lib.concatStringsSep ":" parts;
 
