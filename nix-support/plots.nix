@@ -3,7 +3,7 @@
 with builtins;
 with lib;
 
-let quick = trace "FIXME: Take 'quick' from environment" true; in
+let quick = true; in
 
 with plotResults;
 
