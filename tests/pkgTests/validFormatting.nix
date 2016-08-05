@@ -1,5 +1,6 @@
 defs: with defs; pkg:
 with lib;
+with builtins;
 
 let check = data: drvFromScript { buildInputs = [ jq ]; } ''
       set -e
