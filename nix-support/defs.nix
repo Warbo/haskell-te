@@ -7,9 +7,6 @@ rec {
   inherit (callPackage ./dumping.nix {})
           dump-package;
 
-  inherit (callPackage ../annotatedb {})
-          annotateAsts dumpAndAnnotate;
-
   inherit (callPackage ./runBenchmark.nix {})
           benchmark checkHsEnv lastEntry withCriterion withTime;
 
@@ -34,6 +31,7 @@ rec {
           AstPlugin GetDeps ML4HSFE mlspec mlspec-bench reduce-equations;
 
   annotate             = callPackage ./annotate.nix           {};
+  annotateAsts         = callPackage ./annotateAsts.nix       {};
   annotateAstsScript   = callPackage ./annotateAstsScript.nix {};
   buildPackage         = callPackage ./buildPackage.nix       {
                            inherit (haskellPackages) cabal2nix cabal-install;
@@ -43,6 +41,7 @@ rec {
                            inherit (haskellPackages) cabal-install;
                          };
   drvFromScript        = callPackage ./drvFromScript.nix      {};
+  dumpAndAnnotate      = callPackage ./dumpAndAnnotate.nix    {};
   dumpPackage          = callPackage ./dumpPackage.nix        {};
   dumpToNix            = callPackage ./dumpToNix.nix          {};
   explore              = callPackage ./explore.nix            { self = self; }; # Avoid the Self language
