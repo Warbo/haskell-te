@@ -1,8 +1,14 @@
 defs: with defs; pkg:
 with builtins;
 
-let count = parseJSON (runScript { buildInputs = [ ML4HSFE ]; } ''
-      set -e
-      grep -c "^" < "${pkg.features}" > "$out" || true
-    '');
- in fromJSON count > 0
+drvFromScript { buildInputs = [ ML4HSFE ]; } ''
+  set -e
+  COUNT=$(grep -c "^" < "${pkg.features}") || true
+
+  if [[ "$COUNT" -eq 0 ]]
+  then
+    echo "Got no features" 1>&2
+    exit 1
+  fi
+  echo "Found '$COUNT' features" 1>&2
+''
