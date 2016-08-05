@@ -50,13 +50,14 @@ findHsPkgReferences =
         echo "$INPUT" | jq -r "$FLATTEN | $FLATTEN | .package" 2> /dev/null || true
       '';
    in writeScript "unique-references" ''
+        INPUT=$(cat | grep '[a-zA-Z_]')
         while read -r NAME
         do
-          if grep -Fx "$NAME" < "${haskellPackageNames}" > /dev/null
+          if grep -xF "$NAME" < "${haskellPackageNames}" > /dev/null
           then
             echo "$NAME"
           fi
-        done < <("${extractionScript}" | sort -u | grep '^.')
+        done < <(echo "$INPUT" | "${extractionScript}" | sort -u | grep '^.')
       '';
 
 hsPkgsInEnv = env: names:

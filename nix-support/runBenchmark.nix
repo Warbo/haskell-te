@@ -1,5 +1,5 @@
 { bash, callPackage, coreutils, explore, jq, lib, mlspec-bench, ourCheck,
-  stdenv, strip, time, writeScript }:
+  runScript, stdenv, strip, time, writeScript }:
 
 with builtins; with lib;
 
@@ -52,8 +52,12 @@ rec {
           #!/usr/bin/env bash
           set -e
           set -o pipefail
+          set -x
 
           function ensurePkg {
+            # Skip empty lines
+            echo "$1" | grep '[a-zA-Z_]' > /dev/null || return 0
+
             if ghc-pkg list "$1" | grep "$1" > /dev/null
             then
               return 0
@@ -80,7 +84,7 @@ rec {
             while read -r PKG
             do
               ensurePkg "$PKG"
-            done < <(echo "$INPUT" | "${explore.findHsPkgReferences}")
+            done < <(echo "$INPUT" | grep '[a-zA-Z_]' | bash -x "${explore.findHsPkgReferences}")
           fi
 
           while read -r PKG
@@ -99,15 +103,19 @@ rec {
     [ -t 0 ] || INPUT=$(cat)
   '';
 
-  checkEnv = inputs: ''
-    echo "$INPUT" | "${checkHsEnv (concatMap (i: map strip
-                                                     (splitString "\n"
-                                                                  (readFile i)))
-                                             inputs)}" || {
-      echo "checkHsEnv failed" 1>&2
-      exit 1
-    }
-  '';
+  checkEnv = inputs:
+    let pkgNames = if inputs == [] then []
+                                   else splitString "\n" (runScript {} ''
+          cat ${concatStringsSep " " (map (x: "'${x}'") inputs)} |
+            grep '[a-zA-Z_]'                                     |
+            "${explore.findHsPkgReferences}" > "$out"
+        '');
+     in ''
+          echo "$INPUT" | "${checkHsEnv (map strip pkgNames)}" || {
+            echo "checkHsEnv failed" 1>&2
+            exit 1
+          }
+        '';
 
   cacheOutputs = ''
     # Cache results in the store, so we make better use of the cache and avoid
