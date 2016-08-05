@@ -56,7 +56,6 @@ rec {
   haskellPackages      = callPackage ./haskellPackages.nix    {
                            superHaskellPackages = super.haskellPackages;
                          };
-  hte-scripts          = callPackage ./scripts.nix            {};
   importDir            = callPackage ./importDir.nix          {};
   ml4hs                = callPackage ../ml4hs                 {};
   parseJSON            = callPackage ./parseJSON.nix          {};
