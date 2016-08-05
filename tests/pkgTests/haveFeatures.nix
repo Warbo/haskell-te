@@ -1,12 +1,12 @@
 defs: with defs; pkg:
 with builtins;
 
-drvFromScript { buildInputs = [ ML4HSFE ]; } ''
+drvFromScript { buildInputs = [ ML4HSFE jq ]; } ''
   set -e
   echo -e "Features:"       1>&2
   cat     "${pkg.features}" 1>&2
 
-  COUNT=$(grep -c "^" < "${pkg.features}") || true
+  COUNT=$(jq 'length' < "${pkg.features}")
 
   echo "COUNT: $COUNT" 1>&2
 
