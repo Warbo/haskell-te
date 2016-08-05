@@ -24,14 +24,16 @@ foundEquations = f:
           exit 3
         fi
 
-        if echo "$OUTPUT" | grep "^{" > /dev/null
+        COUNT=$(echo "$OUTPUT" | jq 'length')
+
+        if [[ "$COUNT" -eq 0 ]]
         then
-          echo "Found equations for '${f}'" 1>&2
-          echo "true" > "$out"
-        else
           echo -e "Couldn't find any equations in output of '${f}':\n$OUTPUT" 1>&2
           echo "false" > "$out"
         fi
+
+        echo "Found '$COUNT' equations for '${f}'" 1>&2
+        echo "true" > "$out"
       '';
    in parseJSON (runScript env cmd);
 
