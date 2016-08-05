@@ -30,10 +30,10 @@ foundEquations = f:
         then
           echo -e "Couldn't find any equations in output of '${f}':\n$OUTPUT" 1>&2
           echo "false" > "$out"
+        else
+          echo "Found '$COUNT' equations for '${f}'" 1>&2
+          echo "true" > "$out"
         fi
-
-        echo "Found '$COUNT' equations for '${f}'" 1>&2
-        echo "true" > "$out"
       '';
    in parseJSON (runScript env cmd);
 
