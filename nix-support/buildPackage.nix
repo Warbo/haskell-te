@@ -1,8 +1,12 @@
-{ benchmark, cabal2nix, cabal-install, parseJSON, runScript, writeScript }:
+{ benchmark, cabal2nix, cabal-install, explore, parseJSON, runScript,
+  writeScript }:
 
 { src, quick, hsEnv }:
 
-parseJSON (runScript { buildInputs = [ cabal2nix cabal-install ]; } ''
+parseJSON (runScript { buildInputs = explore.extractedEnv {
+                         extraPkgs = [ cabal2nix cabal-install ];
+                       };
+                     } ''
   set -e
   cp -r "${src}" ./src
   chmod +w -R ./src
