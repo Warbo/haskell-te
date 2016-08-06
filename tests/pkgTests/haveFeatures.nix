@@ -2,7 +2,7 @@ defs: with defs; pkg:
 with builtins;
 
 drvFromScript { buildInputs = [ ML4HSFE jq ];
-                info = toJSON { inherit (pkg) features annotated; } ''
+                info = toJSON { inherit (pkg) features annotated; }; } ''
   set -e
   echo "$info" 1>&2
 
