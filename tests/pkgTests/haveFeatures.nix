@@ -1,10 +1,10 @@
 defs: with defs; pkg:
 with builtins;
 
-drvFromScript { buildInputs = [ ML4HSFE jq ]; } ''
+drvFromScript { buildInputs = [ ML4HSFE jq ];
+                info = toJSON { inherit (pkg) features annotated; } ''
   set -e
-  echo -e "Features:"       1>&2
-  cat     "${pkg.features}" 1>&2
+  echo "$info" 1>&2
 
   COUNT=$(jq 'length' < "${pkg.features}")
 
