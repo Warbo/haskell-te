@@ -1,5 +1,6 @@
-{ annotateAstsScript, benchmark, explore, GetDeps, getDepsScript, jq, parseJSON,
-  runScript, runTypesScript, stdenv, utillinux, writeScript }:
+{ annotateAstsScript, benchmark, explore, GetDeps, getDepsScript, jq,
+  nixedHsPkg, parseJSON, runScript, runTypesScript, stdenv, utillinux,
+  writeScript }:
 { asts, pkg, pkgSrc ? null, quick }:
 
 with builtins;
