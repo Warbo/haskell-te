@@ -90,7 +90,7 @@ processed = tipBenchmarks.process { inherit quick; };
 tipAnnotated = testMsg (!processed.rawAnnotated.failed)
                        "Tip benchmarks annotated";
 
-in {
-  inherit haveSrc haveDump; # canRunTypes canAnnotateAsts canGetDeps rawAnnotated
-          #tipAnnotated;
+in testRec {
+  inherit haveSrc haveDump canRunTypes canAnnotateAsts canGetDeps rawAnnotated
+          tipAnnotated;
 }
