@@ -30,8 +30,8 @@ processPkg = { clusters, quick, sampleSize ? null }: name: pkg: rec {
   rawDump = dumpPackage { inherit quick src; };
 
   rawAnnotated = annotate { inherit quick pkg;
-                            asts    = dump;
-                            pkgSrc  = src; };
+                            asts   = dump;
+                            pkgSrc = src; };
 
   rawClustered = cluster { inherit annotated clusters quick; };
 

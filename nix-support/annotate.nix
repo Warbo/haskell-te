@@ -4,19 +4,23 @@
 
 with builtins;
 
-let annotateDb = writeScript "annotateDb" ''
+let pkgSrcNixed = if pathExists (unsafeDiscardStringContext
+                       "${toString standalone}/default.nix")
+                     then pkgSrc
+                     else nixedHsPkg "${pkgSrc}" null;
+    annotateDb = writeScript "annotateDb" ''
       #!/usr/bin/env bash
 
       # Turns output from dump-package or dump-hackage into a form suitable for ML4HS.
 
-      "${runTypesScript { inherit pkg pkgSrc; }}" |
+      "${runTypesScript { inherit pkg pkgSrcNixed; }}" |
         "${annotateAstsScript}"                   |
         "${getDepsScript}"
     '';
 
     in parseJSON (runScript { buildInputs = explore.extractedEnv {
                                               extraHs    = [ "GetDeps"    ];
-                                              standalone = pkgSrc;
+                                              standalone = pkgSrcNixed;
                                               f          = asts;
                                             }; } ''
          set -e
