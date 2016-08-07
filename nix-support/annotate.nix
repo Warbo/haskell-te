@@ -5,7 +5,7 @@
 with builtins;
 
 let pkgSrcNixed = if pathExists (unsafeDiscardStringContext
-                       "${toString standalone}/default.nix")
+                       "${toString pkgSrc}/default.nix")
                      then pkgSrc
                      else nixedHsPkg "${pkgSrc}" null;
     annotateDb = writeScript "annotateDb" ''
