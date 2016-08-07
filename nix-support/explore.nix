@@ -104,7 +104,7 @@ extractedEnv = { extraPkgs ? [], extraHs ? [], standalone ? null, f ? null }:
                    };
       extracted = if f == null then []
                                else map strip (splitString "\n" (extractEnv f));
-      hsNames = extracted ++ extra-haskell-packages ++ extraHs;
+      hsNames = unique (extracted ++ extra-haskell-packages ++ extraHs);
       hsPkgs  = h: (concatMap (n: if haskellPackages ? "${n}"
                                      then [ h."${n}" ]
                                      else [          ])
