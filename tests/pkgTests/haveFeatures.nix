@@ -6,6 +6,9 @@ drvFromScript { buildInputs = [ ML4HSFE jq ];
   set -e
   echo "$info" 1>&2
 
+  ANNCOUNT=$(jq 'length' < "${pkg.annotated}")
+  echo "ANNCOUNT: $ANNCOUNT" 1>&2
+
   COUNT=$(jq 'length' < "${pkg.features}")
 
   echo "COUNT: $COUNT" 1>&2
