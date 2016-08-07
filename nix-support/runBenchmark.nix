@@ -12,11 +12,12 @@ rec {
     syntax error
     Argument list too long
     out of memory
+    ^error:
   '';
 
   checkStderr = writeScript "check-stderr" ''
     set -e
-    if grep -Ff "${knownErrors}" < "$1" 1>&2
+    if grep -f "${knownErrors}" < "$1" 1>&2
     then
       echo "Errors found in '$1'" 1>&2
       exit 2
