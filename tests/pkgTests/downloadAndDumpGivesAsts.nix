@@ -21,7 +21,7 @@ let count = asts: parseJSON (runScript {} ''
                                    else resultN > 0)
                                "Got downloaded & dumped ASTs"
                                { inherit quick result asts;
-                                 inherit (pkg) name };
+                                 inherit (pkg) name; };
  in testRec {
       fast = found true;
       slow = found false;
