@@ -68,6 +68,7 @@ rec {
   shuffledList         = callPackage ./shufflePackages.nix    {};
   tabulate             = callPackage ./tabulate.nix           {};
   tagAstsScript        = callPackage ./tagAstsScript.nix      {};
+  tests                = callPackage ./tests.nix              { pkgs = self; };
   timeCalc             = callPackage ./timeCalc.nix           {};
   tipBenchmarks        = callPackage ./tipBenchmarks.nix      {};
 

@@ -3,7 +3,9 @@ with builtins;
 with lib;
 
 let result = asts:
-      let str = runScript {} ''
+      let str = runScript {
+                  buildInputs = [ tests.pkgTests.haveRawAsts."${pkg.name}" ];
+                } ''
             RESULTS="{}"
             for FIELD in package module name ast
             do

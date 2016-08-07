@@ -3,7 +3,9 @@ with builtins;
 
 drvFromScript { info = toJSON {
                   inherit (pkg) annotated dump rawDump rawAnnotated;
-                }; } ''
+                };
+                buildInputs = [ tests.pkgTests.haveRawAsts."${pkg.name}" ];
+              } ''
   set -e
   echo "$info" 1>&2
 
