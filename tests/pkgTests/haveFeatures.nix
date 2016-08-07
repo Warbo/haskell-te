@@ -1,7 +1,7 @@
 defs: with defs; pkg:
 with builtins;
 
-drvFromScript { buildInputs = [ ML4HSFE tests.pkgTests.haveAnnotated."${pkg}" ];
+drvFromScript { buildInputs = [ ML4HSFE tests.pkgTests.haveAnnotated."${pkg.name}" ];
                 info = toJSON { inherit (pkg) features annotated; }; } ''
   set -e
   echo "$info" 1>&2
