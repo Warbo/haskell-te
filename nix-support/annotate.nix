@@ -13,8 +13,8 @@ let pkgSrcNixed = if pathExists (unsafeDiscardStringContext
 
       # Turns output from dump-package or dump-hackage into a form suitable for ML4HS.
 
-      "${runTypesScript { inherit pkg pkgSrcNixed; }}" |
-        "${annotateAstsScript}"                   |
+      "${runTypesScript { inherit pkg; pkgSrc = pkgSrcNixed; }}" |
+        "${annotateAstsScript}"                                  |
         "${getDepsScript}"
     '';
 
