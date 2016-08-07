@@ -15,7 +15,9 @@ topLevel = mapAttrs runTest (pkgs.importDir ../tests);
 
 pkgTests = import ./pkgTests.nix pkgs;
 
-allTests = { inherit pkgTests topLevel; };
+testDrvs = import ./testDrvs.nix pkgs;
+
+allTests = { inherit pkgTests testDrvs topLevel; };
 
 # Remove cruft, like "override" and "overrideDerivation"
 strip = as: if isAttrs as
