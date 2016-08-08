@@ -54,7 +54,9 @@ let result = script: drvFromScript {
                  echo "Looking for mean time in $found" 1>&2
                  T=$(jq -r '.time.mean.estPoint | type' < "$found")
                  echo "Got '$T'" 1>&2
-                 [[ "x$T" = "xstring" ]] || exit 1
+                 [[ "x$T" = "xstring" ]] && exit 0
+                 [[ "x$T" = "xnumber" ]] && exit 0
+                 exit 1
                '';
     };
 
