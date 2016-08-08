@@ -1,5 +1,5 @@
 { haskellPackages, jq, writeScript }: { pkg, pkgSrc }:
-
+with builtins;
 let
 
 # Recombines any lines which GHCi split up
