@@ -18,7 +18,7 @@ replLines = writeScript "replLines" ''
 repl = let cmd    = "nix-shell --run 'ghci -v0 -XTemplateHaskell'";
            msg    = "No default.nix found " + toJSON {
                       inherit pkgSrc;
-                      inherit (pkg) name
+                      inherit (pkg) name;
                       srcNixed = if pkg ? srcNixed
                                     then { inherit (pkg) srcNixed; }
                                     else {};
