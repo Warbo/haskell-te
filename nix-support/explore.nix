@@ -1,5 +1,5 @@
-{ benchmark, haskellPackageNames, format, haskellPackages, jq, lib, ml4hs,
-  mlspec, ourCheck, parseJSON, runScript, self, strip, writeScript }:
+{ benchmark, checkHsEnv, haskellPackageNames, format, haskellPackages, jq, lib,
+  ml4hs, mlspec, ourCheck, parseJSON, runScript, self, strip, writeScript }:
 with builtins;
 with lib;
 
