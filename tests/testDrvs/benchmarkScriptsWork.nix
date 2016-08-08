@@ -20,15 +20,16 @@ let result = script: drvFromScript {
                                               args  = ["hello" "world"]; });
 
     testField = found: field: expect:
-      let val = found."${field}";
-        #x = testMsg (val == expect)
-        #          "${field} '${toJSON val}' should be '${toJSON expect}'";
-       in           testRun "Checking field ${field}" { inherit field expect; }
-                          { inherit found; }
-                          ''
-                            echo "FOUND: $found"
-                            exit 1
-                          '';
+      testRun "Checking field ${field}" { inherit field expect; }
+              { inherit expect field found; }
+              ''
+                echo "FOUND: $found" 1>&2
+                GOT=$(jq -cr ".$field" < "$found")
+
+                echo -e "GOT: $GOT\nEXPECT: $expect" 1>&2
+
+                [[ "x$GOT" = "x$expect" ]] || exit 1
+              '';
 
     testFieldFile = found: field: expect:
       testRun "Checking field file ${field}" null
@@ -45,7 +46,7 @@ let result = script: drvFromScript {
 
     check = found: {
       cmd    = testField     found "cmd"    "echo";
-      args   = testField     found "args"   ["hello" "world"];
+      args   = testField     found "args"   ''["hello","world"]'';
       stderr = testFieldFile found "stderr" "";
       stdout = testFieldFile found "stdout" "hello world";
 
