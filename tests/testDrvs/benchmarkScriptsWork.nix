@@ -21,8 +21,8 @@ let result = script: drvFromScript {
 
     testField = found: field: expect:
       let val = found."${field}";
-        x = testMsg (val == expect)
-                  "${field} '${toJSON val}' should be '${toJSON expect}'";
+        #x = testMsg (val == expect)
+        #          "${field} '${toJSON val}' should be '${toJSON expect}'";
        in           testRun "Checking field ${field}" { inherit field expect; }
                           { inherit found; }
                           ''
@@ -31,9 +31,15 @@ let result = script: drvFromScript {
                           '';
 
     testFieldFile = found: field: expect:
-      let val = readFile (found."${field}");
-       in testMsg (val == expect)
-                    "${field} '${toJSON val}' should be '${toJSON expect}'";
+      let x=1;#val = readFile (found."${field}");
+       in #testMsg (val == expect)
+          #          "${field} '${toJSON val}' should be '${toJSON expect}'";
+          testRun "Checking field file ${field}" null
+                  { inherit found; } ''
+                    echo "TFF: $found" 1>&2
+                    exit 1
+                  '';
+
 
     check = found: {
       cmd    = testField     found "cmd"    "echo";
@@ -85,15 +91,13 @@ let result = script: drvFromScript {
           dbg     = toJSON { inherit allArgs; };
        in { inherit shouldFail shouldSucceed; };
 
-    hasStdDev = #testMsg (isString criterionResult.time.stddev.estPoint)
-                #        "Criterion gives standard deviation";
-                testRun "Criterion gives standard deviation" null
+    hasStdDev = testRun "Criterion gives standard deviation" null
                         { inherit criterionResult; } ''
-                          echo "EO: $envOverride"
-                          exit 1
+                          T=$(jq -r '.time.stddev.estPoint | type' < "$criterionResult")
+                          [[ "x$T" = "xnumber" ]] || exit 1
                         '';
 
- in testRec {
+ in {
   inherit hasStdDev;
 
   quick = {
