@@ -10,7 +10,10 @@ let annotateDb = writeScript "annotateDb" ''
 
       # Turns output from dump-package or dump-hackage into a form suitable for ML4HS.
 
-      "${runTypesScript { inherit pkg; pkgSrc = pkg.srcNixed; }}" |
+      "${runTypesScript { inherit pkg;
+                          pkgSrc = if pkg ? srcNixed
+                                      then pkg.srcNixed
+                                      else pkgSrc; }}" |
         "${annotateAstsScript}"                                  |
         "${getDepsScript}"
     '';
@@ -18,7 +21,9 @@ let annotateDb = writeScript "annotateDb" ''
              then { extraHs    = [ "GetDeps" pkg.name ];
                     standalone = null; }
              else { extraHs    = [ "GetDeps" ];
-                    standalone = pkg.srcNixed; };
+                    standalone = if pkg ? srcNixed
+                                    then pkg.srcNixed
+                                    else pkgSrc; };
     in parseJSON (runScript { buildInputs = explore.extractedEnv (env // {
                                               f = asts;
                                             }); } ''
