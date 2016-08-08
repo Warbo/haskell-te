@@ -31,23 +31,30 @@ let result = script: drvFromScript {
                           '';
 
     testFieldFile = found: field: expect:
-      let x=1;#val = readFile (found."${field}");
-       in #testMsg (val == expect)
-          #          "${field} '${toJSON val}' should be '${toJSON expect}'";
-          testRun "Checking field file ${field}" null
-                  { inherit found; } ''
-                    echo "TFF: $found" 1>&2
-                    exit 1
-                  '';
+      testRun "Checking field file ${field}" null
+              { inherit expect field found; } ''
+                F=$(jq -r ".$field" < "$found")
+                echo "F: $F" 1>&2
+
+                GOT=$(cat "$F")
+                echo -e "GOT: $GOT\nEXPECT: $expect" 1>&2
+
+                [[ "x$GOT" = "x$expect" ]] || exit 1
+              '';
 
 
     check = found: {
       cmd    = testField     found "cmd"    "echo";
       args   = testField     found "args"   ["hello" "world"];
       stderr = testFieldFile found "stderr" "";
-      stdout = testFieldFile found "stdout" "hello world\n";
+      stdout = testFieldFile found "stdout" "hello world";
 
-      time   = testMsg (isString found.time.mean.estPoint) "Got mean time";
+      time   = testRun "Got mean time" null { inherit found; } ''
+                 echo "Looking for mean time in $found" 1>&2
+                 T=$(jq -r '.time.mean.estPoint | type' < "$found")
+                 echo "Got '$T'" 1>&2
+                 [[ "x$T" = "xstring" ]] || exit 1
+               '';
     };
 
     checkInput = args:
