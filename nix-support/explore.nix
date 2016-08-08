@@ -61,17 +61,10 @@ findHsPkgReferences =
       '';
 
 hsPkgsInEnv = env: names:
-  let check = p: ''
-        if ghc-pkg list "${p}" | grep "(no packages)" > /dev/null
-        then
-          echo "Package '${p}' not in generated environment" 1>&2
-          exit 1
-        fi
-      '';
-   in trace "FIXME: hsPkgsInEnv should use checkHsEnv" parseJSON (runScript env ''
-        ${concatStringsSep "\n" (map check names)}
-        echo "true" > "$out"
-      '');
+  parseJSON (runScript env ''
+    "${checkHsEnv names}" || exit 1
+    echo "true" > "$out"
+  '');
 
 # Make a list of packages suitable for a 'buildInputs' field. We treat Haskell
 # packages separately from everything else. The Haskell packages will include:
