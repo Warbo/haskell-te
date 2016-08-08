@@ -16,11 +16,23 @@ replLines = writeScript "replLines" ''
             '';
 
 repl = let cmd    = "nix-shell --run 'ghci -v0 -XTemplateHaskell'";
+           msg    = "No default.nix found " + toJSON {
+                      inherit pkgSrc;
+                      inherit (pkg) name
+                      srcNixed = if pkg ? srcNixed
+                                    then { inherit (pkg) srcNixed; }
+                                    else {};
+                    };
            given  = if pkgSrc == null
                        then if haskellPackages ? "${pkg.name}"
                                then "x.${pkg.name}"
                                else abort "haskellPackages doesn't contain '${pkg.name}'"
-                       else ''(x.callPackage "${pkgSrc}" {})'';
+                       else if pathExists "${pkgSrc}/default.nix"
+                               then ''(x.callPackage "${pkgSrc}" {})''
+                               else if pkg ? srcNixed &&
+                                       pathExists "${pkg.srcNixed}/default.nix"
+                                       then ''(x.callPackage "${pkg.srcNixed}" {})''
+                                       else abort msg;
            hsPkgs = "[x.QuickCheck x.quickspec ${given}]";
         in writeScript "repl" ''
              ${cmd} -p "haskellPackages.ghcWithPackages (x: ${hsPkgs})"
