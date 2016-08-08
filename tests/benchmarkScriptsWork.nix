@@ -2,15 +2,15 @@ defs: with defs;
 with builtins;
 with lib;
 
-let result = script: parseJSON (runScript {
-                                  inherit script;
-                                  passAsFile  = [ "script" ];
-                                  buildInputs = explore.extractedEnv {};
-                                }
-                                ''
-                                  chmod +x "$scriptPath"
-                                  "$scriptPath" > "$out"
-                                '');
+let result = script: drvFromScript {
+                       inherit script;
+                       passAsFile  = [ "script" ];
+                       buildInputs = explore.extractedEnv {};
+                     }
+                     ''
+                       chmod +x "$scriptPath"
+                       "$scriptPath" > "$out"
+                     '';
 
     timeResult      = result (withTime      { quick = true;
                                               cmd   = "echo";
@@ -21,8 +21,14 @@ let result = script: parseJSON (runScript {
 
     testField = found: field: expect:
       let val = found."${field}";
-       in testMsg (val == expect)
+        x = testMsg (val == expect)
                   "${field} '${toJSON val}' should be '${toJSON expect}'";
+       in           testRun "Checking field ${field}" { inherit field expect; }
+                          { inherit found; }
+                          ''
+                            echo "FOUND: $found"
+                            exit 1
+                          '';
 
     testFieldFile = found: field: expect:
       let val = readFile (found."${field}");
@@ -79,8 +85,13 @@ let result = script: parseJSON (runScript {
           dbg     = toJSON { inherit allArgs; };
        in { inherit shouldFail shouldSucceed; };
 
-    hasStdDev = testMsg (isString criterionResult.time.stddev.estPoint)
-                        "Criterion gives standard deviation";
+    hasStdDev = #testMsg (isString criterionResult.time.stddev.estPoint)
+                #        "Criterion gives standard deviation";
+                testRun "Criterion gives standard deviation" null
+                        { inherit criterionResult; } ''
+                          echo "EO: $envOverride"
+                          exit 1
+                        '';
 
  in testRec {
   inherit hasStdDev;
