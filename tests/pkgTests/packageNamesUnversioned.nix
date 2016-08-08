@@ -1,6 +1,6 @@
 defs: with defs; pkg:
 
-drvFromScript { buildInputs = [ jq ]; } ''
+drvFromScript {} ''
   set -e
 
   function assertNoVersions {

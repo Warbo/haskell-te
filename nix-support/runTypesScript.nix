@@ -1,4 +1,4 @@
-{ haskellPackages, jq, writeScript }: { pkg, pkgSrc }:
+{ haskellPackages, jq, runScript, writeScript }: { pkg, pkgSrc }:
 with builtins;
 let
 
@@ -27,7 +27,10 @@ repl = let cmd    = "nix-shell --run 'ghci -v0 -XTemplateHaskell'";
                        then if haskellPackages ? "${pkg.name}"
                                then "x.${pkg.name}"
                                else abort "haskellPackages doesn't contain '${pkg.name}'"
-                       else if pathExists "${pkgSrc}/default.nix"
+                       else assert isString (runScript { inherit pkgSrc; } ''
+                                     printf "%s" "$pkgSrc" > "$out"
+                                   '');
+                            if pathExists (unsafeDiscardStringContext "${pkgSrc}/default.nix")
                                then ''(x.callPackage "${pkgSrc}" {})''
                                else if pkg ? srcNixed &&
                                        pathExists "${pkg.srcNixed}/default.nix"

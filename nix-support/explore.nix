@@ -86,13 +86,12 @@ extractedEnv = { extraPkgs ? [], extraHs ? [], standalone ? null, f ? null }:
                    pathExists (unsafeDiscardStringContext
                                  "${toString standalone}/default.nix")
                    then trace "Including '${toString standalone}'" rec {
-                     pkg   = haskellPackages.callPackage
-                               (import standalone) {};
-                     pkgs  = [ pkg      ];
-                     names = [ pkg.name ];
+                     pkg   = h: h.callPackage (import standalone) {};
+                     pkgs  = h: [ (pkg h) ];
+                     names = [ (pkg haskellPackages).name ];
                    }
                    else {
-                     pkgs  = [];
+                     pkgs  = h: [];
                      names = [];
                    };
       extracted = if f == null then []
@@ -101,7 +100,7 @@ extractedEnv = { extraPkgs ? [], extraHs ? [], standalone ? null, f ? null }:
       hsPkgs  = h: (concatMap (n: if haskellPackages ? "${n}"
                                      then [ h."${n}" ]
                                      else [          ])
-                              hsNames) ++ attrs.pkgs;
+                              hsNames) ++ attrs.pkgs h;
       ps      = [ (haskellPackages.ghcWithPackages hsPkgs) ] ++
                 extra-packages ++ extraPkgs;
    in assert hsPkgsInEnv { buildInputs = ps; } (hsNames ++ attrs.names);

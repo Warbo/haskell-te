@@ -1,6 +1,6 @@
 { annotate, bc, buildPackage, ourCheck, cluster, defaultClusters, dumpPackage,
   explore, extractTarball, format, haskellPackages, jq, lib, nixedHsPkg,
-  nixFromCabal, nth, parseJSON, reduce, runScript, stdenv, storeResult,
+  nixFromCabal, nth, parseJSON, pkgName, reduce, runScript, stdenv, storeResult,
   timeCalc, writeScript
 }:
 with builtins;
@@ -10,9 +10,10 @@ let
 
 sum = fold (x: y: x + y) 0;
 
-processPkg = { clusters, quick, sampleSize ? null }: name: pkg: rec {
+processPkg = { clusters, quick, sampleSize ? null }: givenName: givenPkg: rec {
   # Original Haskell fields
-  inherit name pkg;
+  pkg  = givenPkg // { inherit name; };
+  name = pkgName givenName;
 
   # Extract tarballs if necessary
   src = if typeOf pkg.src == "path"
@@ -31,7 +32,7 @@ processPkg = { clusters, quick, sampleSize ? null }: name: pkg: rec {
 
   rawAnnotated = annotate { inherit quick pkg;
                             asts   = dump;
-                            pkgSrc = src; };
+                            pkgSrc = srcNixed; };
 
   rawClustered = cluster { inherit annotated clusters quick; };
 
