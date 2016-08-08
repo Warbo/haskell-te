@@ -3,8 +3,8 @@ with builtins;
 with lib;
 
 let result = asts: field:
-      drvFromScript { inherit field; } ''
-        R=$(jq -n --argfile asts    "${asts}" \
+      drvFromScript { inherit asts field; } ''
+        R=$(jq -n --argfile asts    "$asts"   \
                   --arg     field   "$field"  \
                   '{($field) : ($asts                             |
                                 map(has($field) and
@@ -19,7 +19,7 @@ let result = asts: field:
 
     slow    = processPackages { quick = false; };
     slowPkg = slow."${pkg.name}";
- in {
+ in testRec {
    pkgDump        = check     pkg.dump;
    pkgRawDump     = check     pkg.rawDump.stdout;
    slowPkgDump    = check slowPkg.dump;
