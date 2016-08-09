@@ -98,12 +98,6 @@ rec {
 
   # Snippets of code which are common to both withTime and withCriterion
 
-  getInput = ''
-    # Check if we need to provide any input; to prevent prompting the user
-    INPUT=""
-    [ -t 0 ] || INPUT=$(cat)
-  '';
-
   checkEnv = inputs:
     let pkgNames = if inputs == [] then []
                                    else splitString "\n" (runScript {} ''
@@ -172,7 +166,7 @@ rec {
       #!${bash}/bin/bash
       set -e
 
-      ${getInput}
+      INPUT=$(cat)
       ${checkEnv inputs}
 
       echo "Setting up environment for mlspec-bench" 1>&2
@@ -238,12 +232,13 @@ rec {
    let shellArgs = map escapeShellArg args;
        argStr    = concatStringsSep " " shellArgs;
     in writeScript "with-time" ''
-         ${getInput}
+         INPUT=$(cat)
          ${checkEnv inputs}
 
          # Measure time with 'time', limit time/memory using 'timeout'
-         "${time}/bin/time" -f '%e' -o time \
-           "${timeout}" "${cmd}" ${argStr} 1> stdout 2> stderr
+         echo "$INPUT" |
+           "${time}/bin/time" -f '%e' -o time \
+             "${timeout}" "${cmd}" ${argStr} 1> stdout 2> stderr
          CODE="$?"
 
          ${cacheOutputs}
