@@ -5,7 +5,7 @@ drvFromScript { inherit (pkg) annotated; } ''
   set -e
 
   COUNT=$(jq 'length' < "$annotated")
-  echo "COUNT: $ANNCOUNT" 1>&2
+  echo "COUNT: $COUNT" 1>&2
 
   if [[ "$COUNT" -eq 0 ]]
   then

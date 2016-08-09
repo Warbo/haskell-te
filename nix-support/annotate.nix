@@ -38,11 +38,11 @@ let annotateDb = writeScript "annotateDb" ''
 
            echo "$R" > "$out"
 
-           SO=$(echo "$R" | jq '.stdout')
-           echo "$SO" "$stdout"
+           SO=$(echo "$R" | jq -r '.stdout')
+           cp -ar "$SO" "$stdout"
 
-           SE=$(echo "$R" | jq '.stderr')
-           echo "$SE" "$stderr"
+           SE=$(echo "$R" | jq -r '.stderr')
+           cp -ar "$SE" "$stderr"
 
-           echo "$R" | jq '.time' > "$time"
+           echo "$R" | jq -r '.time' > "$time"
        ''
