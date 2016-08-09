@@ -2,20 +2,21 @@
   runScript, stdenv, writeScript }:
 { quick, pkgDir }:
 
-drvFromScript { buildInputs = explore.extractedEnv { /*standalone = pkgDir;*/ }; } ''
+drvFromScript {
+    inherit pkgDir;
+    buildInputs = explore.extractedEnv {};
+  } ''
   set -e
 
-  D="${toString pkgDir}"
-
-  [[ -d "$D" ]] || {
-    echo "Couldn't find directory to dump '$D'" 1>&2
+  [[ -d "$pkgDir" ]] || {
+    echo "Couldn't find directory to dump '$pkgDir'" 1>&2
     exit 1
   }
 
-  cp -r "$D" ./pkgDir
+  cp -r "$pkgDir" ./pkgDir
   chmod +w -R pkgDir
 
-  echo "Dumping '$D'" 1>&2
+  echo "Dumping '$pkgDir'" 1>&2
   HOME="$PWD" DIR="$PWD/pkgDir" \
     "${benchmark {
          inherit quick;
