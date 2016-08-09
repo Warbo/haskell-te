@@ -27,7 +27,9 @@ rec {
   testRec = s: if isAttrs s
                   then if s ? type && s.type == "derivation"
                           then s
-                          else testAll (map testRec (attrValues s))
+                          else testAll (map (n: testWrap [(testRec s."${n}")]
+                                                         "Attribute ${n}")
+                                            (attrNames s))
                   else if isList s
                           then testAll (map testRec s)
                           else abort "Don't know how to test ${toJSON s}";
