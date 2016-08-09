@@ -1,11 +1,11 @@
 { runScript }:
 with builtins;
 
-name:
+givenName:
 
-assert isString name;
+assert isString givenName;
 
-runScript { inherit name; } ''
-  N=$(echo "$name" | sed -e 's/-[0-9][0-9.]*$//g')
+runScript { inherit givenName; } ''
+  N=$(echo "$givenName" | sed -e 's/-[0-9][0-9.]*$//g')
   printf "%s" "$N" > "$out"
 ''
