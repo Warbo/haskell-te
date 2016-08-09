@@ -11,9 +11,6 @@ assert isString pkgName;
 
 runScript { buildInputs = [ cabal-install ]; } ''
   set -e
-  DELETEME=$(mktemp -d --tmpdir "download-to-nix-XXXXX")
-  cd "$DELETEME"
-
   export HOME="$TMPDIR"
   cabal update
   cabal get "${pkgName}" || exit 1
