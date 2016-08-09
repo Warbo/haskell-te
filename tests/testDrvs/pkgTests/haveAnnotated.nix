@@ -1,10 +1,10 @@
 defs: with defs; pkg:
 with builtins;
 
-drvFromScript {} ''
+drvFromScript { inherit (pkg) annotated; } ''
   set -e
 
-  COUNT=$(jq 'length' < "${pkg.annotated}")
+  COUNT=$(jq 'length' < "$annotated")
   echo "COUNT: $ANNCOUNT" 1>&2
 
   if [[ "$COUNT" -eq 0 ]]

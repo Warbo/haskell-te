@@ -1,4 +1,4 @@
-{ annotateAstsScript, benchmark, explore, GetDeps, getDepsScript,
+{ annotateAstsScript, benchmark, drvFromScript, explore, GetDeps, getDepsScript,
   haskellPackages, jq, parseJSON, runScript, runTypesScript, stdenv, utillinux,
   writeScript }:
 { asts, pkg, pkgSrc ? null, quick }:
@@ -24,13 +24,25 @@ let annotateDb = writeScript "annotateDb" ''
                     standalone = if pkg ? srcNixed
                                     then pkg.srcNixed
                                     else pkgSrc; };
-    in parseJSON (runScript { buildInputs = explore.extractedEnv (env // {
-                                              f = asts;
-                                            }); } ''
-         set -e
-         "${benchmark {
-              inherit quick;
-              cmd    = annotateDb;
-              /*inputs = [ asts ];*/
-          }}" < "${asts}" > "$out"
-       '')
+    in drvFromScript {
+           buildInputs = explore.extractedEnv (env // { f = asts; });
+           outputs     = [ "out" "stdout" "stderr" "time" ];
+           inherit asts;
+         } ''
+           set -e
+           R=$("${benchmark {
+                    inherit quick;
+                    cmd    = annotateDb;
+                    /*inputs = [ asts ];*/
+                }}" < "$asts")
+
+           echo "$R" > "$out"
+
+           SO=$(echo "$R" | jq '.stdout')
+           echo "$SO" "$stdout"
+
+           SE=$(echo "$R" | jq '.stderr')
+           echo "$SE" "$stderr"
+
+           echo "$R" | jq '.time' > "$time"
+       ''

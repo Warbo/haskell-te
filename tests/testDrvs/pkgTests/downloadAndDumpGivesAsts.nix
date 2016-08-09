@@ -1,28 +1,34 @@
 defs: with defs; pkg:
 with builtins;
 
-let count = asts: parseJSON (runScript {} ''
-              COUNT=$(jq -r 'length' < "${asts.stdout}")
-              if [[ -n "$COUNT" ]]
-              then
-                echo "$COUNT" > "$out"
-              else
-                echo '"null"' > "$out"
-              fi
-            '');
-    found = quick: let asts    = downloadAndDump {
-                                   inherit quick;
-                                   pkgName = pkg.name;
-                                 };
-                       result  = count asts;
-                       resultN = fromJSON result;
-                    in testDbg (if resultN == null
-                                   then trace "Got null count" false
-                                   else resultN > 0)
-                               "Got downloaded & dumped ASTs"
-                               { inherit quick result asts;
-                                 inherit (pkg) name; };
- in testRec {
+let count = asts: drvFromScript { inherit asts; } ''
+
+            '';
+    found = quick: let asts = downloadAndDump {
+                                inherit quick;
+                                pkgName = pkg.name;
+                              };
+                    in testRun "Got downloaded & dumped ASTs"
+                               { inherit quick asts;
+                                 inherit (pkg) name; }
+                               { inherit (asts) stdout; }
+                               ''
+                                 COUNT=$(jq -r 'length' < "$stdout")
+                                 if [[ -n "$COUNT" ]]
+                                 then
+                                   if [[ "$COUNT" -gt 0 ]]
+                                   then
+                                     exit 0
+                                   else
+                                     echo "Count: $COUNT" 1>&2
+                                     exit 1
+                                   fi
+                                 else
+                                   echo "Empty count" 1>&2
+                                   exit 1
+                                 fi
+                               '';
+ in {
       fast = found true;
       slow = found false;
     }
