@@ -26,6 +26,7 @@ check = data:
               if [[ "x$STDOUT" = "xtrue" ]]
               then
                 printf "ok - %s" "$(cat "$msgPath")" 1>&2
+                touch "$out"
                 exit 0
               else
                 echo "not ok - %s" "$(cat "$msgPath")" 1>&2
@@ -33,14 +34,6 @@ check = data:
               fi
             '';
           };
-  # let stdout = runScript { buildInputs = [ jq ]; } ''
-  #                set -e
-  #                jq 'map(.quickspecable) | all' < "${data}" > "$out"
-  #              '';
-  #     result = if stdout == ""
-  #                 then trace "Got empty output" false
-  #                 else parseJSON stdout;
-  #  in testMsg result "Ensuring all quickspecable ${toJSON data}";
 
 checkAll = mapAttrs (c: fmt: testWrap (map check fmt)
                                       "Checking ${c} quickspecable")
