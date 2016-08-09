@@ -7,22 +7,19 @@ with lib;
 # Each test is a derivation, which we collect up and present for evaluation
 
 rec {
-  assertList = l: dbug "assertList ${toJSON l}"
-                    (assert isList l; true);
+  assertList = l: isList l || abort "Not list ${toJSON l}";
 
-  assertTest = t: dbug "assertTest ${toJSON t}"
-                    (assert isBool t || isAttrs t; true);
+  assertTest = t: isBool t || isAttrs t || abort "Not test ${toJSON t}";
 
-  areTests   = ts: dbug "areTests ${toJSON ts}"
-                     (assertList ts && all assertTest ts);
+  areTests   = ts: (assertList ts && all assertTest ts) ||
+                   abort "Not tests ${toJSON ts}";
 
   stripStr   = stringAsChars (c: if elem c (upperChars ++ lowerChars)
                                     then c
                                     else "");
 
-  testAll = tests: dbug "testAll ${toJSON tests}"
-                     (assert areTests tests;
-                      testWrap tests "Collected tests");
+  testAll = tests: assert areTests tests;
+                   testWrap tests "Collected tests";
 
   testRec = s: if isAttrs s
                   then if s ? type && s.type == "derivation"
@@ -39,31 +36,34 @@ rec {
   # 'foo contains y', 'foo contains z', whilst 'msg' might be
   # 'foo has all required fields'
   testWrap = tests: msg:
-               dbug "testWrap ${toJSON { inherit tests msg; }}"
-                 (assert areTests tests;
-                  # If there are any raw booleans in 'tests', turn them into
-                  # trivial derivations
-                  let testDrvs = map (t: if isBool t
-                                            then testMsg t "Unknown test"
-                                            else assert isAttrs t; t)
-                                     tests;
-                   in testRun msg null { buildInputs = testDrvs; } ''
-                        # Always pass; failure is triggered by our buildInputs
-                        exit 0
-                      '');
+               assert areTests tests ||
+                      abort "testWrap ${toJSON { inherit tests msg; }}";
+               # If there are any raw booleans in 'tests', turn them into
+               # trivial derivations
+               let testDrvs = map (t: if isBool t
+                                         then testMsg t "Unknown test"
+                                         else assert isAttrs t; t)
+                                  tests;
+                in testRun msg null { buildInputs = testDrvs; } ''
+                     # Always pass; failure is triggered by our buildInputs
+                     exit 0
+                   '';
 
   testMsg = cond: msg:
-              addErrorContext "testMsg ${toJSON { inherit cond msg; }}"
-                (assert isBool   cond;
-                 assert isString msg;
-                 testDbg cond msg null);
+              let info = toJSON { inherit cond msg; };
+               in assert isBool   cond ||
+                         abort "testMsg condition not bool ${info}";
+                 assert isString msg ||
+                        abort "testMsg message not string ${info}";
+                 testDbg cond msg null;
 
   testDbg = cond: msg: dbg:
-              addErrorContext "testDbg ${toJSON { inherit cond msg dbg; }}"
-              (assert isBool cond;
-               testRun msg dbg {} ''
-                 exit ${if cond then "0" else "1"}
-               '');
+              let info = toJSON { inherit cond msg dbg; };
+               in assert isBool cond ||
+                         abort "testDbg condition not bool ${info}";
+                  testRun msg dbg {} ''
+                    exit ${if cond then "0" else "1"}
+                  '';
 
   testRun = msg: dbg: envOverride: script:
             assert isString msg;
@@ -73,8 +73,6 @@ rec {
                                ({ inherit msg; } // (if dbg == null
                                                         then {}
                                                         else { inherit dbg; }));
-                err        = x: trace "Testing ${info}"
-                                  (dbug "Testing ${info}" x);
                 scriptFile = writeScript "test-script" script;
                 hash       = unsafeDiscardStringContext (stripStr msg);
                 env        = {
@@ -96,9 +94,9 @@ rec {
                     exit 1
                   fi
                 '';
-             in err (assert isString msg;
-                     drvFromScript (env // envOverride)
-                                   buildCommand);
+             in assert isString msg ||
+                       abort "testRun message not string ${info}";
+                drvFromScript (env // envOverride) buildCommand;
 
   checkPlot = plot:
     let w      = "640";
