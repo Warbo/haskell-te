@@ -7,12 +7,11 @@ let result = asts: field:
               { inherit asts field; }
               { inherit asts field; }
               ''
-                R=$(jq -n --argfile asts    "$asts"   \
-                          --arg     field   "$field"  \
-                          '{($field) : ($asts                             |
-                                        map(has($field) and
-                                            (.[$field] | length | . > 0)) |
-                                        all)}')
+                R=$(jq -r -n --argfile asts    "$asts"   \
+                             --arg     field   "$field"  \
+                      '$asts |
+                       map(has($field) and (.[$field] | length | . > 0)) |
+                       all')
                 echo "Result: $R" 1>&2
                 [[ "x$R" = "xtrue" ]] || exit 1
                 touch "$out"
