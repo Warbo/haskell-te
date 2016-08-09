@@ -1,5 +1,6 @@
 { benchmark, checkHsEnv, haskellPackageNames, format, haskellPackages, jq, lib,
-  ml4hs, mlspec, ourCheck, parseJSON, runScript, self, strip, writeScript }:
+  ml4hs, mlspec, ourCheck, parseJSON, pkgName, runScript, self, strip,
+  writeScript }:
 with builtins;
 with lib;
 
@@ -87,8 +88,11 @@ extractedEnv = { extraPkgs ? [], extraHs ? [], standalone ? null, f ? null }:
                                  "${toString standalone}/default.nix")
                    then trace "Including '${toString standalone}'" rec {
                      pkg   = h: h.callPackage (import standalone) {};
-                     pkgs  = h: [ (pkg h) ];
-                     names = [ (pkg haskellPackages).name ];
+                     pkgs  = h: if elem name hsNames
+                                   then []
+                                   else [ (pkg h) ];
+                     name  = pkgName (pkg haskellPackages).name;
+                     names = [ name ];
                    }
                    else {
                      pkgs  = h: [];
@@ -96,7 +100,7 @@ extractedEnv = { extraPkgs ? [], extraHs ? [], standalone ? null, f ? null }:
                    };
       extracted = if f == null then []
                                else map strip (splitString "\n" (extractEnv f));
-      hsNames = unique (extracted ++ extra-haskell-packages ++ extraHs);
+      hsNames = unique (map pkgName (extracted ++ extra-haskell-packages ++ extraHs));
       hsPkgs  = h: (concatMap (n: if haskellPackages ? "${n}"
                                      then [ h."${n}" ]
                                      else [          ])
@@ -113,7 +117,7 @@ extra-haskell-packages = [ "mlspec" "mlspec-helper" "runtime-arbitrary"
 prefixed-haskell-packages = concatStringsSep "\n"
                               (map (x: "h.${x}") extra-haskell-packages);
 
-extra-packages = [ jq mlspec ];
+extra-packages = [ jq ];
 
 exploreEnv = [ (haskellPackages.ghcWithPackages (h: map (n: h."${n}")
                                                     extra-haskell-packages)) ] ++
