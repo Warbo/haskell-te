@@ -6,7 +6,7 @@ rec {
 
 timeLimSecs   = 3600;
 
-memLimKb      = 2000000;
+memLimKb      = 5000000;
 
 timeoutScript = writeScript "timeout"
                             (builtins.readFile
