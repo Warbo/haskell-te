@@ -11,6 +11,9 @@ assert isString pkgName;
 
 runScript { buildInputs = [ cabal-install ]; } ''
   set -e
+  mkdir pkg
+  cd pkg
+
   export HOME="$TMPDIR"
   cabal update
   cabal get "${pkgName}" || exit 1
