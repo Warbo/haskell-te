@@ -2,22 +2,34 @@ defs: with defs;
 with builtins;
 with lib;
 
-let result = script: drvFromScript {
-                       inherit script;
+let result = script: input: drvFromScript {
+                       inherit script input;
                        passAsFile  = [ "script" ];
                        buildInputs = explore.extractedEnv {};
                      }
                      ''
                        chmod +x "$scriptPath"
-                       "$scriptPath" > "$out"
+                       echo "$input" | "$scriptPath" > "$out"
                      '';
 
     timeResult      = result (withTime      { quick = true;
                                               cmd   = "echo";
-                                              args  = ["hello" "world"]; });
+                                              args  = ["hello" "world"]; })
+                             "";
     criterionResult = result (withCriterion { quick = false;
                                               cmd   = "echo";
-                                              args  = ["hello" "world"]; });
+                                              args  = ["hello" "world"]; })
+                             "";
+
+    timeCat      = result (withTime { quick = true;
+                                      cmd   = "cat"; })
+                          "hello world";
+
+    criterionCat = result (withCriterion { quick = false;
+                                           cmd   = "cat"; })
+                          "hello world";
+
+    checkCat = found: testFieldFile found "stdout" "hello world";
 
     testField = found: field: expect:
       testRun "Checking field ${field}" { inherit field expect; }
@@ -42,7 +54,6 @@ let result = script: drvFromScript {
 
                 [[ "x$GOT" = "x$expect" ]] || exit 1
               '';
-
 
     check = found: {
       cmd    = testField     found "cmd"    "echo";
@@ -113,9 +124,11 @@ let result = script: drvFromScript {
   quick = {
     echo  = check timeResult;
     input = checkInput { quick = true; };
+    cat   = checkCat timeCat;
   };
   slow  = {
     echo  = check criterionResult;
     input = checkInput { quick = false; };
+    cat   = checkCat criterionCat;
   };
 }
