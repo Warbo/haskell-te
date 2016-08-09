@@ -6,7 +6,8 @@ let check = c:
           stdin = readFile pkg.clustered."${sC}";
           have  = parseJSON (runScript { buildInputs = [ jq ]; } ''
             set -e
-            FOUND=$(jq '.[] | .cluster' < "${pkg.clustered.${sC}}")
+            set -x
+            FOUND=$(jq '.[] | .cluster' < "${pkg.clustered."${sC}"}")
             for NUM in $(seq 1 "${sC}")
             do
               echo "$FOUND" | grep "^$NUM$" > /dev/null || {
