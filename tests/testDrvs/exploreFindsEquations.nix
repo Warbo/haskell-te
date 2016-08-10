@@ -2,7 +2,7 @@ defs: with defs; with builtins;
 
 let
 
-path   = toString ./exploreTheoriesExamples;
+path   = toString ../exploreTheoriesExamples;
 
 files  = map (f: "${path}/${f}") (attrNames (readDir path));
 
@@ -29,14 +29,14 @@ foundEquations = f:
         if [[ "$COUNT" -eq 0 ]]
         then
           echo -e "Couldn't find any equations in output of '${f}':\n$OUTPUT" 1>&2
-          echo "false" > "$out"
+          exit 1
         else
           echo "Found '$COUNT' equations for '${f}'" 1>&2
-          echo "true" > "$out"
+          exit 0
         fi
       '';
-   in parseJSON (runScript env cmd);
+   in testRun "Testing ${f}" null env cmd;
 
-foundAny = any foundEquations files;
+foundAny = map foundEquations files;
 
-in testMsg foundAny "Equations found"
+in testWrap foundAny "Equations found"
