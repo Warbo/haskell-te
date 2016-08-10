@@ -1,10 +1,14 @@
 defs: with defs;
 with builtins;
 
-let result = runScript {} ''
-               echo -e 'foo\n-----\nbar\n-----\nbaz' > input
-               "${lastEntry}" input > "$out"
-             '';
-    expected = "baz\n";
- in testMsg (result == expected)
-            "Checking equality ${toJSON { inherit result expected; }}"
+testRun "Checking lastEntry"
+        null
+        {}
+        ''
+          echo -e 'foo\n-----\nbar\n-----\nbaz' > input
+          O=$("${lastEntry}" input)
+          [[ "x$O" = "xbaz" ]] && exit 0
+
+          echo "Got '$O'" 1>&2
+          exit 1
+        ''
