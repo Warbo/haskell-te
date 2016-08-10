@@ -4,27 +4,12 @@ with builtins;
 let asts      = pkg.annotated;
     haveField = field:
                   assert isString field;
-                  assert pathExists "${asts}";
-                  runScript { buildInputs = [ jq ]; } ''
+                  testRun "Have ${field}" null { inherit asts; } ''
                     set -e
-                    jq -c 'map(has("${field}")) | all' < "${asts}" > "$out"
+                    R=$(jq -rc 'map(has("${field}")) | all' < "$asts")
+                    [[ "x$R" = "xtrue" ]] || exit 1
+                    exit 0
                   '';
-    checkField = field:
-                   let result     = haveField field;
-                       jResult    = addErrorContext "Parsing JSON '${result}'"
-                                                    (fromJSON result);
-                       safeResult = if result == ""
-                                       then trace "Empty result for '${field}'"
-                                                  false
-                                       else jResult;
-                    in testMsg safeResult "Checking JSON has field '${field}'";
- in testWrap (map checkField [
-      "package"
-      "module"
-      "name"
-      "ast"
-      "type"
-      "arity"
-      "quickspecable"
-      "dependencies"
-    ]) "Have fields for package '${pkg.name}'"
+ in listToAttrs (map (n: { name = n; value = haveField n; })
+                     [ "package" "module" "name" "ast" "type" "arity"
+                       "quickspecable" "dependencies" ])
