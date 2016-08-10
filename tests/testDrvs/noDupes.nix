@@ -2,12 +2,12 @@ defs: with defs; with builtins;
 
 let
 
-path  = toString ./exploreTheoriesExamples;
+path  = toString ../exploreTheoriesExamples;
 files = map (f: "${path}/${f}") (attrNames (readDir path));
 
-noDupesFor = f: parseJSON (runScript { buildInputs = explore.extractedEnv {
-                                                       inherit f;
-                                                     }; } ''
+noDupesFor = f: testRun "Testing ${f}" null { buildInputs = explore.extractedEnv {
+                                                              inherit f;
+                                                            }; } ''
   set -e
   set -o pipefail
 
@@ -32,9 +32,9 @@ noDupesFor = f: parseJSON (runScript { buildInputs = explore.extractedEnv {
 
   echo "$OUTPUT" | noDupes
 
-  echo "true" > "$out"
-'');
+  exit 0
+'';
 
-noDupes = all noDupesFor files;
+noDupes = map noDupesFor files;
 
-in testMsg noDupes "No duplicate environments"
+in testWrap noDupes "No duplicate environments"
