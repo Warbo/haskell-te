@@ -19,20 +19,13 @@ isValue = x: addErrorContext "isValue ${toJSON x}"
                (testMsg (isInt x || isString x)
                         "isValue ${toJSON x}");
 
-checkTable = tbl: addErrorContext "Checking table '${toJSON tbl}'"
-  (testAll [
-    (testMsg (isAttrs tbl.series)
-             "Table has a set of series ${toJSON tbl.series}")
+in testAll [
+  (testMsg (isAttrs eqsVsTimeForClusters.series)
+           "Table has a set of series ${toJSON eqsVsTimeForClusters.series}")
 
-    (testMsg (all (n: isList tbl.series."${n}") (attrNames tbl.series))
-             "Table rows are lists ${toJSON tbl.series}")
+  (testMsg (all (n: isList eqsVsTimeForClusters.series."${n}") (attrNames eqsVsTimeForClusters.series))
+           "Table rows are lists ${toJSON eqsVsTimeForClusters.series}")
 
-    (testAll (map (n: testAll (map hasValues tbl.series."${n}"))
-                              (attrNames tbl.series)))
-  ]);
-
-in
-
-testAll (map checkTable [
-  eqsVsTimeForClusters
-])
+  (testAll (map (n: testAll (map hasValues eqsVsTimeForClusters.series."${n}"))
+                (attrNames eqsVsTimeForClusters.series)))
+]
