@@ -1,15 +1,15 @@
 defs: with defs; pkg:
 with builtins;
 
-drvFromScript { buildInputs = [ ML4HSFE tests.pkgTests.haveAnnotated."${pkg.name}" ];
-                info = toJSON { inherit (pkg) features annotated; }; } ''
+drvFromScript { buildInputs = [ ML4HSFE ];
+                inherit (pkg) features annotated; } ''
   set -e
   echo "$info" 1>&2
 
-  ANNCOUNT=$(jq 'length' < "${pkg.annotated}")
+  ANNCOUNT=$(jq 'length' < "$annotated")
   echo "ANNCOUNT: $ANNCOUNT" 1>&2
 
-  COUNT=$(jq 'length' < "${pkg.features}")
+  COUNT=$(jq 'length' < "$features")
 
   echo "COUNT: $COUNT" 1>&2
 
