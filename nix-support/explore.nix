@@ -98,8 +98,8 @@ extractedEnv = { extraPkgs ? [], extraHs ? [], standalone ? null, f ? null }:
                      pkgs  = h: [];
                      names = [];
                    };
-      extracted = if f == null then []
-                               else map strip (splitString "\n" (extractEnv f));
+      extracted = [];#if f == null then []
+                     #           else map strip (splitString "\n" (extractEnv f));
       hsNames = unique (map pkgName (extracted ++ extra-haskell-packages ++ extraHs));
       hsPkgs  = h: (concatMap (n: if haskellPackages ? "${n}"
                                      then [ h."${n}" ]
