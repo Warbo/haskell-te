@@ -97,7 +97,8 @@ cluster = { quick, annotated, clusters }: let
                         clusters);
 
   result = { inherit results;
-             failed = any (n: results."${n}".failed) (attrNames results); };
+             failed = any (n: import "${results.${n}.failed}")
+                          (attrNames results); };
 
   checkedResult = assert isAttrs results;
                   assert all (n: isInt (fromJSON n))    (attrNames results);

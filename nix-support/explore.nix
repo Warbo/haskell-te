@@ -193,7 +193,9 @@ aCheck = formatted: result:
 
 checkAndExplore = { quick, formatted, standalone ? null }:
   let results = mapAttrs (go { inherit quick standalone; }) formatted;
-      failed  = any (n: any (x: x.failed) results."${n}") (attrNames results);
+      failed  = any (n: any (x: import "${x.failed}")
+                            results."${n}")
+                    (attrNames results);
       result  = { inherit results failed; };
    in if failed then result
                 else assert aCheck formatted result.results; result;

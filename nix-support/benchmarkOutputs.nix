@@ -48,7 +48,9 @@ processPkg = { clusters, quick, sampleSize ? null }: givenName: givenPkg: rec {
 
   rawReduced = reduce.reduce { inherit explored quick; };
 
-  failed = any id [
+  failed = any (x: if isBool x
+                      then x
+                      else import "${x}") [
              build.failed
              rawDump.failed
              rawAnnotated.failed
