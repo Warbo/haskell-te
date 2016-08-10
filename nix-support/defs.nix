@@ -119,15 +119,14 @@ rec {
   havePath = n: any (x: x.prefix == n) nixPath;
 
   nth = n: lst:
-    assert ourCheck "Given integer '${toJSON n}'" (isInt  n);
-    assert ourCheck "Expecting list, given '${typeOf lst}'" (isList lst);
-    assert ourCheck "Index '${toJSON n}' in bounds '${toJSON (length lst)}'"
-                 (n <= length lst);
+    assert isInt  n          || abort "Should be int '${toJSON n}'";
+    assert isList lst        || abort "Expecting list, given '${typeOf lst}'";
+    assert (n <= length lst) || abort "Index '${toJSON n}' in bounds '${toJSON (length lst)}'";
     if n == 1
        then head lst
        else nth (n - 1) (tail lst);
 
-  ourCheck = msg: cond: builtins.addErrorContext msg (assert cond; cond);
+  ourCheck = msg: cond: cond || abort msg;
 
   runWeka = callPackage (if havePath "runWeka"
                             then <runWeka>

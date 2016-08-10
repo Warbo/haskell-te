@@ -22,7 +22,7 @@ areTimeLists = ts:
                                      (all (x: assert ourCheck "checkTime ${toJSON x}"
                                                            (checkTime x);
                                               true)
-                                          ts.${n});
+                                          ts."${n}");
                         true)
                     (attrNames ts));
   true;
@@ -109,13 +109,7 @@ pkgTimes = { annotateTime, clusterTimes, dumpTime, exploreTimes }:
       totalTimes = mapAttrs (_: t: sumTimes [t staticTime])
                             dynamicTimes;
 
-   # Force inputs, to expose any latent errors
-   in assert forceVal     dumpTime  "Forcing     dumpTime ";
-      assert forceVal annotateTime  "Forcing annotateTime ";
-      assert forceVal  clusterTimes "Forcing  clusterTimes";
-      assert forceVal  exploreTimes "Forcing  exploreTimes";
-
-      # Check that inputs appear correct
+   in # Check that inputs appear correct
       assert ourCheck " checkTime          dumpTime " ( checkTime          dumpTime );
       assert ourCheck " checkTime      annotateTime " ( checkTime      annotateTime );
       assert ourCheck "areTimes      clusterTimes" (areTimes      clusterTimes);
