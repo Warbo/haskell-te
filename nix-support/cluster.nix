@@ -97,7 +97,8 @@ cluster = { quick, annotated, clusters }: let
                         clusters);
 
   result = { inherit results;
-             failed = any (n: import "${results.${n}.failed}")
+             failed = any (n: let f = results."${n}".failed;
+                               in if isBool f then f else import "${f}")
                           (attrNames results); };
 
   checkedResult = assert isAttrs results;
