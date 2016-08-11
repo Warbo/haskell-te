@@ -27,7 +27,6 @@ let clusters         = listToAttrs (map (c: {
         }
         ''
           set -e
-          set -x
           cat "$ranTypes" 1>&2
           "${annotateAstsScript}" < "$ranTypes" > "$out"
         '';
