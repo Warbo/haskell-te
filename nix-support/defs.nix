@@ -87,10 +87,7 @@ rec {
                  in map (x: x.failed) l;
      in if all isBool fails
            then any id fails
-           else drvFromScript (listToAttrs (map (n: {
-                                              name  = "failed${toString n}";
-                                              value = results."${n}".failed;
-                                           }) (attrNames results))) ''
+           else drvFromScript { inherit fails; } ''
                   for FAIL in $fails
                   do
                     R=$(cat "$FAIL")
