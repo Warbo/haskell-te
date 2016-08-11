@@ -4,22 +4,29 @@ with lib;
 
 let
 
-two  = { mean = { estPoint = "2"; }; };
-two2 = timeCalc.sumTimes [ two ];
-four = timeCalc.sumTimes [ two two ];
+two  = writeScript "two" ''{ "mean":{"estPoint":"2"}}'';
+two2 = timeCalc.sumTimeDrvs [ two ];
+four = timeCalc.sumTimeDrvs [ two two ];
 
-in
+in {
+  twoEqTwo = testRun "sum [2] should equal 2" null { inherit two2; } ''
+               set -e
 
-testWrap [
-  (testMsg (two.mean.estPoint  == "2")
-           "sum [2] should equal 2, got ${toJSON two}")
+               N=$(jq -r '.mean.estPoint' < "$two2")
+               [[ "$N" -eq "2" ]] && exit 0
 
-  (testMsg (four.mean.estPoint == "4")
-           "sum [2 2] should equal 4, got ${toJSON four}")
+               echo "From '$two2' got N: $N" 1>&2
+               exit 1
+             '';
 
-  (testMsg (timeCalc.floatLessThan "1.2345678" "2.3456789") "1.x < 2.x")
+  twoPlusTwo = testRun "sum [2 2] should equal 4" null
+                       { inherit four; } ''
+                         set -e
 
-  (testMsg (! timeCalc.floatLessThan "1.2345678" "0.1234567") "0.x < 1.x")
+                         N=$(jq -r '.mean.estPoint' < "$four")
+                         [[ "$N" -eq "4" ]] && exit 0
 
-  (testMsg (! timeCalc.floatLessThan "1.2345678" "1.2345678") "! (x < x)")
-] "Time tests"
+                         echo "From '$four' got N: $N" 1>&2
+                         exit 1
+                       '';
+}
