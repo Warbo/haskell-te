@@ -11,8 +11,9 @@ numericKeys = testDbg (all isNum (attrNames pkg.explored))
                       "'explored' keys are numeric"
                       pkg.explored;
 
-hasPaths = testDbg (all (n: all isString pkg.explored."${n}") (attrNames pkg.explored))
-                   "'explored.N' contains paths"
+hasPaths = let typ = x: isString x || (isAttrs x && x ? type && x.type == "derivation");
+            in testDbg (all (n: all typ pkg.explored."${n}") (attrNames pkg.explored))
+                   "'explored.N' contains derivations"
                    pkg.explored;
 
 pathsExist =
