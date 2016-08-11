@@ -1,4 +1,5 @@
-{ benchmark, explore, jq, ML4HSFE, parseJSON, runScript, runWeka, writeScript }:
+{ benchmark, drvFromScript, explore, jq, ML4HSFE, parseJSON, runScript, runWeka,
+  stdParts, storeParts, writeScript }:
 with builtins;
 
 let
@@ -77,20 +78,22 @@ clusterScript = writeScript "cluster" ''
 
 cluster = { quick, annotated, clusters }: let
 
-  go = c: parseJSON
-            (runScript { buildInputs = explore.extractedEnv {
-                                         f         = annotated;
-                                         extraPkgs = [ runWeka   ];
-                                         extraHs   = [ "ML4HSFE" ];
-                                       }; } ''
+  go = c: drvFromScript { buildInputs = explore.extractedEnv {
+                                          f         = annotated;
+                                          extraPkgs = [ runWeka   ];
+                                          extraHs   = [ "ML4HSFE" ];
+                                        };
+                          outputs = stdParts; } ''
               set -e
               export CLUSTERS="${toString c}"
-              "${benchmark {
-                   inherit quick;
-                   cmd    = clusterScript;
-                   inputs = [annotated];
-               }}" < "${annotated}" > "$out"
-            '');
+              O=$("${benchmark {
+                       inherit quick;
+                       cmd    = clusterScript;
+                       inputs = [annotated];
+                   }}" < "${annotated}")
+
+              ${storeParts}
+            '';
 
   results = listToAttrs (map (c: { name  = toString c;
                                    value = go c; })

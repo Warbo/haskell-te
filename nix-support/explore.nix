@@ -1,6 +1,6 @@
-{ benchmark, checkHsEnv, haskellPackageNames, format, haskellPackages, jq, lib,
-  ml4hs, mlspec, ourCheck, parseJSON, pkgName, runScript, self, strip,
-  writeScript }:
+{ benchmark, checkHsEnv, drvFromScript, haskellPackageNames, format,
+  haskellPackages, jq, lib, ml4hs, mlspec, ourCheck, parseJSON, pkgName,
+  runScript, self, stdParts, storeParts, strip, writeScript }:
 with builtins;
 with lib;
 
@@ -152,13 +152,16 @@ doExplore = standalone: quick: clusterCount: f:
       script = ''
         set -e
         export CLUSTERS="${clusterCount}"
-        "${benchmark {
-             inherit quick cmd;
-             inputs = [f];
-         }}" < "${f}" > "$out"
+        O=$("${benchmark {
+                 inherit quick cmd;
+                 inputs = [f];
+             }}" < "${f}")
+
+        ${storeParts}
       '';
-      env    = { buildInputs = extractedEnv { inherit standalone f; }; };
-   in parseJSON (runScript env script);
+      env    = { buildInputs = extractedEnv { inherit standalone f; };
+                 outputs     = stdParts; };
+   in drvFromScript env script;
 
 go = { quick, standalone }: clusterCount: clusters:
        map (doExplore standalone quick clusterCount) clusters;
@@ -193,7 +196,9 @@ aCheck = formatted: result:
 
 checkAndExplore = { quick, formatted, standalone ? null }:
   let results = mapAttrs (go { inherit quick standalone; }) formatted;
-      failed  = any (n: any (x: import "${x.failed}")
+      failed  = any (n: any (x: if isBool x.failed
+                                   then x.failed
+                                   else import "${x.failed}")
                             results."${n}")
                     (attrNames results);
       result  = { inherit results failed; };
