@@ -1,5 +1,4 @@
-{ ourCheck, equations, lib, equationCounts, nth, sizeCounts,
-  timeToBucket, totalTimes }:
+{ ourCheck, equations, lib, equationCounts, nth, sizeCounts, totalTimes }:
 with builtins;
 with lib;
 
@@ -88,8 +87,7 @@ checkPoints = all checkPoint allPoints;
 checkPoint = p:
   assert ourCheck "Point type ${typeOf p} == set" (isAttrs p);
   assert all (n: ourCheck "Point contains ${n}" (p ? "${n}"))
-                 ["eqCount" "size" "totalTime" "timeBucket"
-                  "clusterCount"];
+                 ["eqCount" "size" "totalTime" "clusterCount"];
   assert isInt p.eqCount;
   true;
 
@@ -99,7 +97,6 @@ mkPoint = cCount: rec {
   eqCount       = equationCounts."${cCount}";
   size          = sizeCounts."${cCount}";
   totalTime     = totalTimes."${cCount}";
-  timeBucket    = timeToBucket totalTime;
   clusterCount  = cCount;
 };
 

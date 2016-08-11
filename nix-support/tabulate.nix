@@ -179,22 +179,6 @@ tabulated = listToAttrs
          }
 
          {
-           name = "eqsVsClustersForTimes";
-           x    = "eqCount";
-           y    = "clusterCount";
-           z    = "timeBucket";
-           data = dataByClusterCount;
-         }
-
-         {
-           name = "eqsVsSizeForTimes";
-           x    = "eqCount";
-           y    = "size";
-           z    = "timeBucket";
-           data = dataByClusterCount;
-         }
-
-         {
            name = "timeVsClustersForEqs";
            x    = "clusterCount";
            y    = "totalTime";
