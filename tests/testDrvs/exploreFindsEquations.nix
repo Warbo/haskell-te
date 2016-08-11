@@ -1,20 +1,29 @@
 defs: with defs; with builtins;
+with lib;
 
 let
 
 path   = toString ../exploreTheoriesExamples;
 
-files  = map (f: "${path}/${f}") (attrNames (readDir path));
+files  = mapAttrs (f: _: "${path}/${f}") (readDir path);
 
-foundEquations = f:
-  let env = { buildInputs = explore.extractedEnv { inherit f; }; };
+foundEquations = name: f:
+  let env = { buildInputs = explore.extractedEnv { inherit f; };
+              inherit f; };
       cmd = ''
         set -e
         set -o pipefail
 
-        echo "Exploring '${f}'" 1>&2
-        OUTPUT=$("${explore.explore-theories f}" < "${f}" 2>&1) || {
-          echo -e "Failed to explore '${f}', output follows:\n$OUTPUT\nEND" 1>&2
+        function finish {
+          echo "OUTPUT: $OUTPUT" 1>&2
+          echo  "COUNT: $COUNT"  1>&2
+        }
+        trap finish EXIT
+
+
+        echo "Exploring '$f'" 1>&2
+        OUTPUT=$("${explore.explore-theories f}" < "$f" 2>&1) || {
+          echo -e "Failed to explore '$f', output follows:\n$OUTPUT\nEND" 1>&2
           exit 2
         }
 
@@ -28,15 +37,13 @@ foundEquations = f:
 
         if [[ "$COUNT" -eq 0 ]]
         then
-          echo -e "Couldn't find any equations in output of '${f}':\n$OUTPUT" 1>&2
-          exit 1
+          echo -e "Couldn't find any equations in output of '$f':\n$OUTPUT" 1>&2
+          exit 0
         else
-          echo "Found '$COUNT' equations for '${f}'" 1>&2
+          echo "Found '$COUNT' equations for '$f'" 1>&2
           exit 0
         fi
       '';
-   in testRun "Testing ${f}" null env cmd;
+   in testRun "Testing ${name}" null env cmd;
 
-foundAny = map foundEquations files;
-
-in testWrap foundAny "Equations found"
+in mapAttrs foundEquations files
