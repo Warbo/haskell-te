@@ -1,4 +1,5 @@
-{ bc, ourCheck, checkStdDev, checkTime, lib, nth, parseJSON, runScript }:
+{ bc, ourCheck, checkStdDev, checkTime, drvFromScript, lib, nth, parseJSON,
+  runScript }:
 with builtins;
 with lib;
 
@@ -80,7 +81,7 @@ addTimes = x: y:
    in assert ourCheck "Result is a time ${toJSON result}" (checkTime result);
       result;
 
-sumTimes = fold addTimes null;
+sumTimes = ts: fold addTimes null;
 
 # For coarse-grained series, we want to group together many times. To achieve
 # this, we group them into "buckets" based on their mean
@@ -98,39 +99,70 @@ indices = l: range 1 (length l);
 
 # Times
 
-pkgTimes = { annotateTime, clusterTimes, dumpTime, exploreTimes }:
-  let staticTime = sumTimes [ dumpTime annotateTime ];
+sumTimeDrvs = ts: if ts == []
+                     then null
+                     else if length ts == 1
+                             then head ts
+                             else addMaybeTimes (head ts)
+                                                (sumTimeDrvs (tail ts));
 
-      dynamicTimes = mapAttrs (cCount: arr: sumTimes (
+addMaybeTimes = x: y: if x == null
+                         then y
+                         else if y == null
+                                 then x
+                                 else addTimeDrvs x y;
+
+addTimeDrvs = x: y: drvFromScript { inherit x y; } ''
+                      echo -e "x: $x\ny: $y" 1>&2
+
+                      XM=$(jq -r   '.mean.estPoint' < "$x")
+                      YM=$(jq -r   '.mean.estPoint' < "$y")
+                      XS=$(jq -r '.stddev.estPoint' < "$x")
+                      YS=$(jq -r '.stddev.estPoint' < "$y")
+
+                      echo -e "XM: $XM\nYM: $YM\nXS: $XS\nYS: $YS" 1>&2
+
+                        MEAN='{"mean"  :{"estPoint": ($xm+$ym)}}'
+                      STDDEV='{"stddev":{"estPoint": ($xs+$ys)}}'
+                       CHECK='$xs == null'
+
+                      jq -n --argjson xm "$XM" \
+                            --argjson ym "$YM" \
+                            --argjson xs "$XS" \
+                            --argjson ys "$YS" \
+                            "$MEAN + if $CHECK then {} else $STDDEV end" > "$out"
+                    '';
+
+pkgTimes = { annotateTime, clusterTimes, dumpTime, exploreTimes }:
+  let staticTime = addTimeDrvs dumpTime annotateTime;
+
+      dynamicTimes = mapAttrs (cCount: arr: sumTimeDrvs (
                                               [clusterTimes."${cCount}"] ++
-                                              exploreTimes."${cCount}"))
+                                               exploreTimes."${cCount}"))
                               exploreTimes; # exploreTimes has the structure we want
 
-      totalTimes = mapAttrs (_: t: sumTimes [t staticTime])
+      totalTimes = mapAttrs (_: t: sumTimeDrvs [t staticTime])
                             dynamicTimes;
 
    in # Check that inputs appear correct
-      assert ourCheck " checkTime          dumpTime " ( checkTime          dumpTime );
-      assert ourCheck " checkTime      annotateTime " ( checkTime      annotateTime );
-      assert ourCheck "areTimes      clusterTimes" (areTimes      clusterTimes);
-      assert ourCheck "areTimeLists  exploreTimes" (areTimeLists  exploreTimes);
+      #assert ourCheck " checkTime          dumpTime " ( checkTime          dumpTime );
+      #assert ourCheck " checkTime      annotateTime " ( checkTime      annotateTime );
+      #assert ourCheck "areTimes      clusterTimes" (areTimes      clusterTimes);
+      #assert ourCheck "areTimeLists  exploreTimes" (areTimeLists  exploreTimes);
 
       # Wrap each output attribute in assertions, so they'll be checked if they're
       # ever used
-      {
-        dynamicTimes = assert forceVal dynamicTimes "Forcing dynamicTimes";
-                       assert ourCheck "areTimes dynamicTimes"
-                                    (areTimes dynamicTimes);
+      trace "FIXME: Check times in derivation" {
+        dynamicTimes = #assert ourCheck "areTimes dynamicTimes"
+                       #             (areTimes dynamicTimes);
                        dynamicTimes;
 
-         staticTime  = assert forceVal  staticTime  "Forcing  staticTime ";
-                       assert ourCheck "checkTime staticTime"
-                                    (checkTime staticTime);
+         staticTime  = #assert ourCheck "checkTime staticTime"
+                       #             (checkTime staticTime);
                        staticTime;
 
-          totalTimes = assert forceVal   totalTimes "Forcing   totalTimes";
-                       assert ourCheck "areTimes totalTimes"
-                                    (areTimes totalTimes);
+          totalTimes = #assert ourCheck "areTimes totalTimes"
+                       #             (areTimes totalTimes);
                        totalTimes;
       };
 }

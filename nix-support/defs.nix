@@ -132,6 +132,22 @@ rec {
                             then <runWeka>
                             else ../packages/runWeka) {};
 
+  stdParts = [ "failed" "out" "stderr" "stdout" "time" ];
+
+  storeParts = ''
+    echo "$O" > "$out"
+
+    SO=$(echo "$O" | jq -r ".stdout")
+    cp "$SO" "$stdout"
+
+    SE=$(echo "$O" | jq -r ".stderr")
+    cp "$SE" "$stderr"
+
+    echo "$O" | jq -r ".time" > "$time"
+
+    echo "$O" | jq -r ".failed" > "$failed"
+  '';
+
   storeResult = self.writeScript "store-result" ''
     set -e
     RESULT=$(nix-store --add "$1")

@@ -37,9 +37,7 @@ processPkg = { clusters, quick, sampleSize ? null }: givenName: givenPkg: rec {
   rawClustered = cluster { inherit annotated clusters quick; };
 
   # Simple format change; don't benchmark
-  formatted = mapAttrs (clusterCount: clusters:
-                          format clusterCount clusters)
-                       clustered;
+  formatted = mapAttrs format clustered;
 
   rawExplored = explore.explore {
                   inherit formatted quick;
