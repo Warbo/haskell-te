@@ -1,17 +1,31 @@
 defs: with defs; pkg:
 with builtins;
 
-let count = parseJSON (runScript {} ''
+let count = drvFromScript { inherit (pkg) preAnnotated; } ''
       set -e
-      "${jq}/bin/jq" -cr '.[] | .name' < "${pkg.preAnnotated}" |
-        grep -cF ".$" > "$out" || true # Grep "fails" when we succeed
-    '');
- in testWrap [
-      (testMsg (pkg ? preAnnotated) "Have preAnnotated")
+      if jq -cr '.[] | .name' < "$preAnnotated" |
+           grep -cF ".$"
+      then
+        echo "Found core names in '$preAnnotated'" 1>&2
+        exit 1
+      fi
 
-      (testMsg (pathExists pkg.preAnnotated)
-               "'${pkg.name}.preAnnotated' (${pkg.preAnnotated}) exists")
+      touch "$out"
+      exit 0
+    '';
+ in {
+      havePreannotated = testMsg (pkg ? preAnnotated) "Have preAnnotated";
 
-      (testMsg (count == "0")
-               "Found '${count}' Core names beginning with $ for '${pkg.name}'")
-    ] "No core names found in ${pkg.name}"
+      preannotatedExists = drvFromScript { inherit (pkg) preAnnotated; } ''
+                             if [[ -e "$preAnnotated" ]]
+                             then
+                               touch "$out"
+                               exit 0
+                             fi
+
+                             echo "preAnnotated '$preAnnotated'" doesn't exist" 1>&2
+                             exit 1
+                           '';
+
+      noCoreNames = count;
+    }
