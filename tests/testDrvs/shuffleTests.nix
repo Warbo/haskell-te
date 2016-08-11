@@ -9,28 +9,22 @@ let
 
 uniquePkgs =
   let elems  = writeScript "pkg-names" (concatStringsSep "\n" shuffledList);
-      unique = parseJSON (runScript { buildInputs = [ jq ]; } ''
-                 set -e
-                 if sort < "${elems}" | uniq -d | grep '^.' > /dev/null
-                 then
-                   # `uniq -d` prints duplicate lines. Since `grep` found
-                   # something, there must have been duplicates
-                   echo "false"  > "$out"
-                 else
-                   # `grep` didn't find any (non-empty) lines, so `uniq` didn't
-                   # find any dupes
-                   echo "true" > "$out"
-                 fi
-               '');
+   in drvFromScript { inherit elems; } ''
+        set -e
+        if sort < "$elems" | uniq -d | grep '^.' > /dev/null
+        then
+          # `uniq -d` prints duplicate lines. Since `grep` found
+          # something, there must have been duplicates
+          exit 1
+        else
+          # `grep` didn't find any (non-empty) lines, so `uniq` didn't
+          # find any dupes
+          touch "$out"
+        fi
+      '';
 
-   in testMsg unique "Shuffled package names look unique";
+in {
+ inherit uniquePkgs;
 
-selection = random.randStrings shuffledList (length shuffledList);
-
-in
-
-testAll [
-  (testMsg (isList shuffledList) "isList ${typeOf shuffledList}")
-
-  uniquePkgs
-]
+ isShuffledList = testMsg (isList shuffledList) "isList";
+}
