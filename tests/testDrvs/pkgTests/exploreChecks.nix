@@ -24,7 +24,9 @@ with lib;
                                            "explored key ${n} is numeric")
                             pkg.rawExplored.results;
 
-  exploredLists  = mapAttrs (n: v: isList v) pkg.rawExplored.results;
+  exploredLists  = mapAttrs (n: v: testMsg (isList v)
+                                           "Have list ${n}")
+                            pkg.rawExplored.results;
 
   exploredSets   = mapAttrs (n: v: testMsg (all isAttrs v) "All ${n} attrs")
                             pkg.rawExplored.results;
