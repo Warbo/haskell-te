@@ -1,5 +1,5 @@
-{ benchmark, explore, haskellPackages, lib, parseJSON, reduce-equations,
-  runScript, writeScript }:
+{ benchmark, checkFailures, explore, haskellPackages, lib, parseJSON,
+  reduce-equations, runScript, writeScript }:
 with builtins;
 with lib;
 
@@ -24,7 +24,7 @@ doReduce = quick: clusterCount: inputs:
 
 reduce = { quick, explored }:
   let results = mapAttrs (doReduce quick) explored;
-      failed  = any (n: import "${results.${n}.failed}") (attrNames results);
+      failed  = checkFailures results;
       result  = { inherit results failed; };
    in result;
 
