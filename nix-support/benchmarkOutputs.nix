@@ -139,15 +139,6 @@ processPkg = { clusters, quick, sampleSize ? null }: givenName: givenPkg: rec {
           dynamicTimes staticTime totalTimes;
 };
 
-forceVal = x: msg: ourCheck msg (isString "${toJSON x}");
-
-forceAttr = p: a:
-  assert isAttrs p;
-  assert isString a;
-  assert ourCheck "Looking for attribute '${a}'" (p ? "${a}");
-  assert forceVal p."${a}" "Forcing attribute '${a}' of type ${typeOf p.${a}}";
-  true;
-
 checkProcessed = p:
   assert isAttrs p;
   assert p ? pkg;

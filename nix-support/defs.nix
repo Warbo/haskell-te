@@ -79,6 +79,29 @@ rec {
 
   callPackage = super.newScope self;
 
+  checkFailures = results:
+    let names = attrNames results;
+        fails = let l = concatMap (n: if isList results."${n}"
+                                         then results."${n}"
+                                         else [ results."${n}" ]) names;
+                 in map (x: x.failed) l;
+     in if all isBool fails
+           then any id fails
+           else drvFromScript (listToAttrs (map (n: {
+                                              name  = "failed${toString n}";
+                                              value = results."${n}".failed;
+                                           }) (attrNames results))) ''
+                  for FAIL in $fails
+                  do
+                    R=$(cat "$FAIL")
+                    [[ "x$R" = "xtrue" ]] && continue
+                    echo "false" > "$out"
+                    exit 0
+                  done
+
+                  echo "true" > "$out"
+                '';
+
   checkStdDev = sd:
     assert ourCheck "isAttrs stddev '${toJSON sd}'"
                     (isAttrs sd);

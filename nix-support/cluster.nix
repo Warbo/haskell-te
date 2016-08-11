@@ -1,5 +1,5 @@
-{ benchmark, drvFromScript, explore, jq, ML4HSFE, parseJSON, runScript, runWeka,
-  stdParts, storeParts, writeScript }:
+{ benchmark, checkFailures, drvFromScript, explore, jq, ML4HSFE, parseJSON,
+  runScript, runWeka, stdParts, storeParts, writeScript }:
 with builtins;
 
 let
@@ -79,18 +79,19 @@ clusterScript = writeScript "cluster" ''
 cluster = { quick, annotated, clusters }: let
 
   go = c: drvFromScript { buildInputs = explore.extractedEnv {
-                                          f         = annotated;
+                                          #f         = annotated;
                                           extraPkgs = [ runWeka   ];
                                           extraHs   = [ "ML4HSFE" ];
                                         };
+                          inherit annotated;
                           outputs = stdParts; } ''
               set -e
               export CLUSTERS="${toString c}"
               O=$("${benchmark {
                        inherit quick;
                        cmd    = clusterScript;
-                       inputs = [annotated];
-                   }}" < "${annotated}")
+                       #inputs = [annotated];
+                   }}" < "$annotated")
 
               ${storeParts}
             '';
@@ -100,17 +101,9 @@ cluster = { quick, annotated, clusters }: let
                         clusters);
 
   result = { inherit results;
-             failed = any (n: let f = results."${n}".failed;
-                               in if isBool f then f else import "${f}")
-                          (attrNames results); };
+             failed = checkFailures results;
+           };
 
-  checkedResult = assert isAttrs results;
-                  assert all (n: isInt (fromJSON n))    (attrNames results);
-                  assert all (n: results."${n}" ? stdout) (attrNames results);
-                  assert all (n: results."${n}" ? time)   (attrNames results);
-                  result;
-
-  in if result.failed then result
-                      else checkedResult;
+  in result;
 
 in { inherit cluster nixRecurrentClusteringScript recurrentClusteringScript; }

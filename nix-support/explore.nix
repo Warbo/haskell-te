@@ -1,12 +1,12 @@
-{ benchmark, checkHsEnv, drvFromScript, haskellPackageNames, format,
-  haskellPackages, jq, lib, ml4hs, mlspec, ourCheck, parseJSON, pkgName,
+{ benchmark, checkFailures, checkHsEnv, drvFromScript, haskellPackageNames,
+  format, haskellPackages, jq, lib, ml4hs, mlspec, ourCheck, parseJSON, pkgName,
   runScript, self, stdParts, storeParts, strip, writeScript }:
 with builtins;
 with lib;
 
 let
 
-explore-theories = f: writeScript "explore-theories" ''
+explore-theories = _: writeScript "explore-theories" ''
   set -e
   set -o pipefail
 
@@ -20,18 +20,18 @@ explore-theories = f: writeScript "explore-theories" ''
 '';
 
 extractEnv = f:
-  trace "Extracting env from '${f}'" (runScript {} ''
+  drvFromScript { inherit f; } ''
     set -e
     set -o pipefail
 
-    [[ -e "${f}" ]] || {
-      echo "Path '${f}' doesn't exist" 1>&2
+    [[ -e "$f" ]] || {
+      echo "Path '$f' doesn't exist" 1>&2
       exit 1
     }
 
-    jq -r '.[] | (if type == "array" then .[] else . end) | .package' < "${f}" |
+    jq -r '.[] | (if type == "array" then .[] else . end) | .package' < "$f" |
       sort -u > "$out"
-  '');
+  '';
 
 findHsPkgReferences =
   let extractionScript = writeScript "find-references" ''
@@ -154,56 +154,24 @@ doExplore = standalone: quick: clusterCount: f:
         export CLUSTERS="${clusterCount}"
         O=$("${benchmark {
                  inherit quick cmd;
-                 inputs = [f];
-             }}" < "${f}")
+                 #inputs = [f];
+             }}" < "$f")
 
         ${storeParts}
       '';
-      env    = { buildInputs = extractedEnv { inherit standalone f; };
+      env    = { buildInputs = extractedEnv { inherit standalone; };
+                 inherit f;
                  outputs     = stdParts; };
    in drvFromScript env script;
 
 go = { quick, standalone }: clusterCount: clusters:
        map (doExplore standalone quick clusterCount) clusters;
 
-aCheck = formatted: result:
-  assert isAttrs formatted;
-  assert all (n: isString n)                  (attrNames formatted);
-  assert all (n: isInt (fromJSON n))          (attrNames formatted);
-  assert all (n: isList formatted."${n}")       (attrNames formatted);
-  assert all (n: all isString formatted."${n}") (attrNames formatted);
-
-  assert ourCheck "explored is set ${toJSON result}"
-               (isAttrs result);
-
-  assert ourCheck "explored keys are numeric ${toJSON result}"
-               (all (n: isInt  (fromJSON n))  (attrNames result));
-
-  assert ourCheck "explored values are lists ${toJSON result}"
-               (all (n: isList result."${n}") (attrNames result));
-
-  assert ourCheck "explored values contain sets ${toJSON result}"
-               (all (n: all isAttrs result."${n}") (attrNames result));
-
-  assert ourCheck "explored values have stdout ${toJSON result}"
-               (all (n: all (x: x ? stdout) result."${n}")
-                    (attrNames result));
-
-  assert ourCheck "explored values have time ${toJSON result}"
-               (all (n: all (x: x ? time) result."${n}")
-                    (attrNames result));
-  true;
-
 checkAndExplore = { quick, formatted, standalone ? null }:
   let results = mapAttrs (go { inherit quick standalone; }) formatted;
-      failed  = any (n: any (x: if isBool x.failed
-                                   then x.failed
-                                   else import "${x.failed}")
-                            results."${n}")
-                    (attrNames results);
+      failed  = checkFailures results;
       result  = { inherit results failed; };
-   in if failed then result
-                else assert aCheck formatted result.results; result;
+   in result;
 
 in {
   inherit extra-haskell-packages explore-theories exploreEnv

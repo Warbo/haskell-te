@@ -53,7 +53,6 @@ rec {
           #!/usr/bin/env bash
           set -e
           set -o pipefail
-          set -x
 
           function ensurePkg {
             # Skip empty lines
