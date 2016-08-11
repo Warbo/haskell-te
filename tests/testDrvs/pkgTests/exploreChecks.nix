@@ -1,43 +1,39 @@
 defs: with defs; pkg:
 
+with builtins;
+with lib;
+
 {
   formattedAttrs   = testMsg (isAttrs pkg.formatted) "attrs formatted";
 
-  formattedStrings = testMsg (all (n: isString n)
-                                  (attrNames pkg.formatted))
-                             "All formatted keys are strings";
+  formattedInts    = mapAttrs (n: v: testMsg (isInt (fromJSON n))
+                                             "All 'formatted' keys are ints")
+                              pkg.formatted;
 
-  formattedInts    = testMsg (all (n: isInt (fromJSON n))
-                                  (attrNames pkg.formatted))
-                             "All 'formatted' keys are ints";
+  formattedLists   = mapAttrs (n: v: testMsg (isList v)
+                                             "All 'formatted' values are lists")
+                              pkg.formatted;
 
-  formattedLists   = testMsg (all (n: isList pkg.formatted."${n}")
-                                  (attrNames pkg.formatted))
-                             "All 'formatted' values are lists";
+  formattedKeys = mapAttrs (n: v: testMsg (all isString v)
+                                          "All 'formatted' keys are strings")
+                           pkg.formatted;
 
-  formattedStrings = testMsg (all (n: all isString pkg.formatted."${n}")
-                                  (attrNames pkg.formatted))
-                             "All 'formatted' keys are strings";
+  exploredAttrs  = testMsg (isAttrs pkg.rawExplored.results) "explored is set";
 
-  exploredAttrs  = testMsg (isAttrs pkg.rawExplored) "explored is set";
+  exploredInts   = mapAttrs (n: v: testMsg (isInt (fromJSON n))
+                                           "explored key ${n} is numeric")
+                            pkg.rawExplored.results;
 
-  exploredInts   = testMsg (all (n: isInt  (fromJSON n))
-                                (attrNames pkg.rawExplored))
-                           "explored keys are numeric";
+  exploredLists  = mapAttrs (n: v: isList v) pkg.rawExplored.results;
 
-  exploredLists  = testMsg (all (n: isList pkg.rawExplored."${n}")
-                                (attrNames pkg.rawExplored))
-                           "explored values are lists";
+  exploredSets   = mapAttrs (n: v: testMsg (all isAttrs v) "All ${n} attrs")
+                            pkg.rawExplored.results;
 
-  exploredSets   = testMsg (all (n: all isAttrs pkg.rawExplored."${n}")
-                                (attrNames pkg.rawExplored))
-                           "explored values contain sets";
+  exploredStdout = mapAttrs (n: v: testMsg (all (x: x ? stdout) v)
+                                           "explored values have stdout")
+                            pkg.rawExplored.results;
 
-  exploredStdout = testMsg (all (n: all (x: x ? stdout) pkg.rawExplored."${n}")
-                                (attrNames pkg.rawExplored))
-                           "explored values have stdout";
-
-  exploredTimes  = testMsg (all (n: all (x: x ? time) pkg.rawExplored."${n}")
-                                (attrNames pkg.rawExplored))
-                           "explored values have time";
+  exploredTimes  = mapAttrs (n: v: testMsg (all (x: x ? time) v)
+                                           "explored values have time")
+                            pkg.rawExplored.results;
 }
