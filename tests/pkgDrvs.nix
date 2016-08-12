@@ -2,7 +2,8 @@ defs: with defs;
 with builtins;
 with lib;
 
-let tests      = importDir ./pkgTests;
+# Package tests which are safe to import as-is (they won't slow down evaluation)
+let tests      = importDir ./pkgDrvs;
 
     testOnPkgs = _: test:
       mapAttrs (_: pkg: test defs pkg)
