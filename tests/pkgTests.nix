@@ -2,11 +2,11 @@ defs: with defs;
 with builtins;
 with lib;
 
-# Run the tests in tests/pkgTests with testPackages
+# Run tests ./pkgTests, deferring their evaluation to avoid slowdowns
 
 let
 
-tests = importDir ../tests/pkgTests;
+tests = importDir ./pkgTests;
 
 # Apply the given test to all testPackages
 testOnPkgs = testName: _:
