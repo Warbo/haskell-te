@@ -1,17 +1,17 @@
-{ jq, parseJSON, runScript, storeResult }:
+{ drvFromScript, lib, parseJSON, runScript, storeResult }:
 with builtins;
+with lib;
 
 clusterCount: clusters:
 
-assert isString clusterCount;
-assert isInt (fromJSON clusterCount);
-assert isString "${clusters}";
-
-let result = parseJSON (runScript { buildInputs = [ jq ]; } ''
+let cCount = fromJSON clusterCount;
+    result = drvFromScript { inherit clusters;
+                             outputs = map (n: "out" + toString n)
+                                           (range 1 cCount); } ''
   set -e
 
-  [[ -f "${clusters}" ]] || {
-    echo "Given cluster file '${clusters}' doesn't exist" 1>&2
+  [[ -f "$clusters" ]] || {
+    echo "Given cluster file '$clusters' doesn't exist" 1>&2
     exit 2
   }
 
@@ -19,23 +19,25 @@ let result = parseJSON (runScript { buildInputs = [ jq ]; } ''
   # non-null "type" attribute and a true "quickspecable" attribute.
   FILTER='map(select(.cluster == $cls and .type != null and .quickspecable))'
   function clusterContent {
-    jq -c --argjson cls "$1" "$FILTER" < "${clusters}"
+    jq -c --argjson cls "$1" "$FILTER" < "$clusters"
   }
 
-  function clusterPaths {
-    for CLUSTER in $(seq 1 "${clusterCount}")
-    do
-      # Store the cluster's content
-      clusterContent "$CLUSTER" > cluster.json
-      nix-store --add cluster.json
-    done
-  }
+  for CLUSTER in $(seq 1 "${clusterCount}")
+  do
+    # Work out the relevant output path; we use "$out1" "$out2", etc. to avoid
+    # clashing with bash's argument names "$1", "$2", etc.
+    outPath=$(eval echo "\$out$CLUSTER")
 
-  # Read the paths into JSON strings then accumulate into an array
-  clusterPaths | jq -R '.' | jq -s '.' > "$out"
-'');
+    # Store the cluster's content at this path
+    clusterContent "$CLUSTER" > "$outPath"
+  done
+'';
+
+    wrapped = map (n: result."out${toString n}") (range 1 cCount);
 
 in
 
-assert isList result;
-result
+assert isList wrapped;
+assert isString clusterCount;
+assert isInt cCount;
+wrapped
