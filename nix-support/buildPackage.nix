@@ -1,12 +1,13 @@
-{ benchmark, cabal2nix, cabal-install, explore, parseJSON, runScript,
-  writeScript }:
+{ benchmark, cabal2nix, cabal-install, drvFromScript, explore, parseJSON,
+  runScript, stdParts, storeParts, writeScript }:
 
 { src, quick, hsEnv }:
 
-parseJSON (runScript { buildInputs = explore.extractedEnv {
-                         extraPkgs = [ cabal2nix cabal-install ];
-                       };
-                     } ''
+drvFromScript { buildInputs = explore.extractedEnv {
+                  extraPkgs = [ cabal2nix cabal-install ];
+                };
+                outputs = stdParts;
+              } ''
   set -e
   cp -r "${src}" ./src
   chmod +w -R ./src
@@ -19,9 +20,11 @@ parseJSON (runScript { buildInputs = explore.extractedEnv {
     exit 0
   }
 
-  "${benchmark {
-       inherit quick;
-       cmd  = "cabal";
-       args = ["build"];
-   }}" > "$out"
-'')
+  O=$("${benchmark {
+           inherit quick;
+           cmd  = "cabal";
+           args = ["build"];
+       }}" > "$out")
+
+  ${storeParts}
+''
