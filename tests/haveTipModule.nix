@@ -1,19 +1,9 @@
 defs: with defs; with builtins;
 
-rec {
+let env = {
+      buildInputs = [ (haskellPackages.ghcWithPackages (p: [
+                        (nixFromCabal (toString tipBenchmarks.module) null)
+                      ])) ];
+    };
 
-  env =  {
-           buildInputs = [
-                           (haskellPackages.ghcWithPackages (p: [
-                             (nixFromCabal (toString tipBenchmarks.module) null)
-                           ]))
-                         ];
-         };
-
-  result = runScript env ''
-             echo "true" > "$out"
-           '';
-
- test = testMsg (parseJSON result) "Can build TIP module";
-
-}.test
+ in testRun "Can build TIP module" null env "exit 0"
