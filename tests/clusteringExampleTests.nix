@@ -10,6 +10,15 @@ let examples = mapAttrs (f: _: ./clusteringExamples + "/${f}")
                mapAttrs (f: _: let inherit (func f) script msg env;
                                 in testRun msg null env script)
                         examples) {
+  valid = f: {
+    msg    = "Example '${f}' is valid";
+    env    = {};
+    script = ''
+      set -e
+      jq '.' < "${f}" > /dev/null
+    '';
+  };
+
   conform = f: {
     msg    = "Example ${f} conforms";
     env    = { buildInputs = [ ML4HSFE ]; };
