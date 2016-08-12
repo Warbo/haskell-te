@@ -18,18 +18,20 @@ outScript = input: ''
 checkReduce = n:
   let iScript = inScript n;
       oScript = outScript input;
-      input   = addErrorContext "inScript: ${iScript}"
+      input   = addErrorContext "inScript: ${iScript} "
                                 (runScript {} iScript);
-      output  = addErrorContext "oScript: ${oScript}"
+      output  = addErrorContext "oScript: ${oScript} "
                                 (runScript {
-                                    buildInputs = [ reduce-equations ];
+                                    buildInputs = extractedEnv {
+                                      extraHs = [ "reduce-equations" ];
+                                    };
                                   }
                                   oScript);
-      dbg     = "${toJSON { inherit iScript oScript input output; }}";
+      dbg     = toJSON { inherit iScript oScript input output; };
       result  = output != "";
    in addErrorContext dbg result;
 
-tryReduce = n: addErrorContext "reducing: ${toJSON pkg.explored.${n}}"
+tryReduce = n: addErrorContext "reducing: ${toJSON pkg.explored.${n}} "
                                (checkReduce n);
 
 result = testMsg (all tryReduce (attrNames pkg.explored)) "Can reduce";

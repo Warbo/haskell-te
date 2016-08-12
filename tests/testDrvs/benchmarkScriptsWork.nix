@@ -83,7 +83,6 @@ let result = script: input: drvFromScript {
                                    echo "$dbg"                          1>&2
                                    exit 1
                                  fi
-                                 touch "$out"
                                '';
           shouldSucceed = testRun "'benchmark' works when packages found"
                                   { inherit allArgs; }
