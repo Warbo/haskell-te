@@ -37,7 +37,7 @@ foundEquations = name: f:
         trap finish EXIT
 
         echo "Exploring '$f'" 1>&2
-        "${explore.explore-theories f}" < "$f" 1> sout 2> serr || {
+        "${explore.explore-theories}" < "$f" 1> sout 2> serr || {
           echo -e "Failed to explore '$f'"
           exit 2
         }

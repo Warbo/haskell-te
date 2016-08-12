@@ -6,7 +6,7 @@ with lib;
 
 let
 
-explore-theories = _: writeScript "explore-theories" ''
+explore-theories = writeScript "explore-theories" ''
   set -e
   set -o pipefail
 
@@ -151,7 +151,7 @@ mkGhcPkg = writeScript "mkGhcPkg" ''
 '';
 
 doExplore = standalone: quick: clusterCount: f:
-  let cmd    = toString (explore-theories f);
+  let cmd    = toString explore-theories;
       script = ''
         set -e
         export CLUSTERS="${clusterCount}"

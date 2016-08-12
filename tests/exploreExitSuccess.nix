@@ -9,7 +9,7 @@ env = { buildInputs = explore.extractedEnv { f = input; }; };
 cmd = ''
   set -e
 
-  OUTPUT=$("${explore.explore-theories input}" "${input}" 2>&1) || {
+  OUTPUT=$("${explore.explore-theories}" "${input}" 2>&1) || {
     echo "Failed to explore 'hastily':\n$OUTPUT" 1>&2
     exit 1
   }

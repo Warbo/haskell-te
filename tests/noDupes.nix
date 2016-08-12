@@ -24,7 +24,7 @@ noDupesFor = f: testRun "Testing ${f}" null { buildInputs = explore.extractedEnv
   }
 
   echo "Exploring '${f}'" 1>&2
-  OUTPUT=$("${explore.explore-theories f}" < "${f}" 2>&1) || {
+  OUTPUT=$("${explore.explore-theories}" < "${f}" 2>&1) || {
     echo "Failed to explore '${f}'" 1>&2
     echo -e "OUTPUT:\n\n$OUTPUT\n\n" 1>&2
     exit 2
