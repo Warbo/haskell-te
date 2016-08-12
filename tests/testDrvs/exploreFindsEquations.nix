@@ -13,6 +13,7 @@ foundEquations = name: f:
       cmd = ''
         set -e
         set -o pipefail
+        set -x
 
         function finish {
           echo "OUTPUT: $OUTPUT" 1>&2

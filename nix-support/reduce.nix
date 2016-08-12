@@ -1,5 +1,5 @@
 { benchmark, checkFailures, explore, haskellPackages, lib, parseJSON,
-  reduce-equations, runScript, writeScript }:
+  reduce-equations, runScript, stdParts, storeParts, writeScript }:
 with builtins;
 with lib;
 
@@ -11,16 +11,19 @@ mkCat = inputs: "cat " + concatStringsSep " " (map (x: ''"${x}"'') inputs);
 
 doReduce = quick: clusterCount: inputs:
              let allInputs = mkCat inputs;
-             in parseJSON (runScript { buildInputs = explore.extractedEnv {
-                                         extraHs = [ "reduce-equations" ];
-                                       }; } ''
+              in drvFromScript { inherit inputs;
+                                 outputs = stdParts;
+                                 buildInputs = explore.extractedEnv {
+                                                 extraHs = [ "reduce-equations" ];
+                                                }; } ''
                   set -e
                   export CLUSTERS="${clusterCount}"
-                  ${allInputs} | "${benchmark {
-                                      inherit quick inputs;
-                                      cmd = toString script;
-                                  }}" > "$out"
-                '');
+                  O=$(cat $inputs | "${benchmark {
+                                         inherit quick inputs;
+                                         cmd = toString script;
+                                     }}")
+                  ${storeParts}
+                '';
 
 reduce = { quick, explored }:
   let results = mapAttrs (doReduce quick) explored;
