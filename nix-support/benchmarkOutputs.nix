@@ -1,7 +1,7 @@
-{ annotate, bc, buildPackage, ourCheck, cluster, defaultClusters, dumpPackage,
-  explore, extractTarball, format, haskellPackages, jq, lib, nixedHsPkg,
-  nixFromCabal, nth, parseJSON, pkgName, reduce, runScript, stdenv, storeResult,
-  timeCalc, writeScript
+{ annotate, bc, buildPackage, ourCheck, cluster, defaultClusters, drvFromScript,
+  dumpPackage, explore, extractTarball, format, haskellPackages, jq, lib,
+  nixedHsPkg, nixFromCabal, nth, parseJSON, pkgName, reduce, runScript, stdenv,
+  storeResult, timeCalc, writeScript
 }:
 with builtins;
 with lib;
@@ -46,16 +46,40 @@ processPkg = { clusters, quick, sampleSize ? null }: givenName: givenPkg: rec {
 
   rawReduced = reduce.reduce { inherit explored quick; };
 
-  failed = any (x: if isBool x
-                      then x
-                      else import "${x}") [
-             build.failed
-             rawDump.failed
-             rawAnnotated.failed
-             rawClustered.failed
-             rawExplored.failed
-             rawReduced.failed
-           ];
+  failed =
+    let toDrv = x: if isBool x
+                      then writeScript "failed" "${toString x}"
+                      else x;
+     in drvFromScript { fails = map toDrv [        build.failed
+                                                 rawDump.failed
+                                            rawAnnotated.failed
+                                            rawClustered.failed
+                                             rawExplored.failed
+                                              rawReduced.failed ]; } ''
+       FOUND_FAILURE=0
+       for F in $fails
+       do
+         CONTENTS=$(cat "$F")
+         [[ "x$CONTENTS" = "xtrue" ]] && continue
+
+         if [[ "x$CONTENTS" = "xfalse" ]]
+         then
+           FOUND_FAILURE=1
+           continue
+         fi
+
+         echo "Unknown boolean: $CONTENTS" 1>&2
+         exit 1
+       done
+
+       if [[ "$FOUND_FAILURE" -eq 0 ]]
+       then
+         echo "true"  > "$out"
+       else
+         echo "false" > "$out"
+       fi
+       exit 0
+     '';
 
   # Stick to the quick output, so testing is faster
   dump = if sampleSize == null
