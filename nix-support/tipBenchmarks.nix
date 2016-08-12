@@ -1,4 +1,4 @@
-{ bash, defaultClusters, fetchurl, haskellPackages, nixFromCabal,
+{ bash, callPackage, defaultClusters, fetchurl, haskellPackages, nixFromCabal,
   processPackage, python, racket, runScript, stdenv, storeResult, writeScript }:
 
 with builtins;
@@ -6,15 +6,10 @@ let path = if any (x: x.prefix == "te-benchmarks") nixPath
               then <te-benchmarks>
               else ../packages/te-benchmark;
  in rec {
-  inherit (import path {
-             inherit bash fetchurl haskellPackages python racket stdenv
-                     writeScript;
-           })
-    tip-benchmarks;
+  inherit (callPackage path {})
+    tip-benchmarks te-benchmark-tests;
 
-  module = tip-benchmarks;
-
-  pkgDef = nixFromCabal (toString module) null;
+  pkgDef = nixFromCabal (toString tip-benchmarks) null;
 
   pkg = haskellPackages.callPackage pkgDef {};
 
