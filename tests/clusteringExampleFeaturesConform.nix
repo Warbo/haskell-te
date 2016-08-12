@@ -1,11 +1,12 @@
 defs: with defs;
 with builtins;
+with lib;
 
-let examples = map (f: ./clusteringExamples + "/${f}")
-                   (builtins.attrNames (builtins.readDir ./clusteringExamples));
-    valid    = f: testMsg (parseJSON (runScript {
-                             buildInputs = [ jq ML4HSFE ];
-                           } ''
+let examples = mapAttrs (f: _: ./clusteringExamples + "/${f}")
+                        (builtins.readDir ./clusteringExamples);
+    valid    = f: _: testRun "Example '${f}' is valid"
+                             null
+                             { buildInputs = [ ML4HSFE ]; } ''
                    set -e
                    function featuresConform {
                      FEATURELENGTHS=$(jq -r '.[] | .features | length')
@@ -22,6 +23,6 @@ let examples = map (f: ./clusteringExamples + "/${f}")
 
                    WIDTH=30 HEIGHT=30 ml4hsfe-loop < "${f}" | featuresConform
 
-                   echo "true" > "$out"
-               '')) "Example '${f}' is valid";
- in testAll (map valid examples)
+                   exit 1
+               '';
+ in mapAttrs valid examples
