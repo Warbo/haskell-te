@@ -17,24 +17,24 @@ vars = ''
   export CLUSTERS=4
 '';
 
-shOutput = runScript env ''
+shOutput = drvFromScript env ''
   ${vars}
   "${clusterScript}" < "${ex}" > sh_output
   "${storeResult}" sh_output "$out"
 '';
 
-progOutput = runScript env ''
+progOutput = drvFromScript env ''
   ${vars}
   ml4hsfe-outer-loop < "${ex}" > prog_output
   "${storeResult}" prog_output "$out"
 '';
 
-in drvFromScript env ''
+in drvFromScript (env // { inherit shOutput progOutput; }) ''
   set -e
   for EXPR in type length 'map(type)' 'map(has("cluster"))'
   do
-      SH=$(jq "$EXPR" <   "${shOutput}")
-    PROG=$(jq "$EXPR" < "${progOutput}")
+      SH=$(jq "$EXPR" <   "$shOutput")
+    PROG=$(jq "$EXPR" < "$progOutput")
 
     [[ "x$SH" = "x$PROG" ]] || {
       echo "Mismatch for '$EXPR': '$SH' vs '$PROG'" 1>&2

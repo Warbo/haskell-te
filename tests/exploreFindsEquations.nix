@@ -3,7 +3,7 @@ with lib;
 
 let
 
-path   = toString ../exploreTheoriesExamples;
+path   = toString ./exploreTheoriesExamples;
 
 files  = mapAttrs (f: _: "${path}/${f}") (readDir path);
 
