@@ -14,9 +14,9 @@ with lib;
                                              "All 'formatted' values are lists")
                               pkg.formatted;
 
-  formattedKeys = mapAttrs (n: v: testMsg (all isString v)
-                                          "All 'formatted' keys are strings")
-                           pkg.formatted;
+  formattedEntries = mapAttrs (n: v: testMsg (all isAttrs v)
+                                             "All 'formatted' list entries are attrs")
+                              pkg.formatted;
 
   exploredAttrs  = testMsg (isAttrs pkg.rawExplored.results) "explored is set";
 
