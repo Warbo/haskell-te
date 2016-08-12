@@ -62,10 +62,10 @@ findHsPkgReferences =
       '';
 
 hsPkgsInEnv = env: names:
-  parseJSON (runScript env ''
+  drvFromScript env ''
     "${checkHsEnv names}" || exit 1
     echo "true" > "$out"
-  '');
+  '';
 
 # Make a list of packages suitable for a 'buildInputs' field. We treat Haskell
 # packages separately from everything else. The Haskell packages will include:
@@ -107,8 +107,11 @@ extractedEnv = { extraPkgs ? [], extraHs ? [], standalone ? null, f ? null }:
                               hsNames) ++ attrs.pkgs h;
       ps      = [ (haskellPackages.ghcWithPackages hsPkgs) ] ++
                 extra-packages ++ extraPkgs;
-   in assert hsPkgsInEnv { buildInputs = ps; } (hsNames ++ attrs.names);
-      ps;
+      # Checks whether all required Haskell packages are found. We add this to
+      # our result, so that the environment will be checked during dependency
+      # building
+      check   = hsPkgsInEnv { buildInputs = ps; } (hsNames ++ attrs.names);
+   in ps ++ [ check ];
 
 # Haskell packages required for MLSpec
 extra-haskell-packages = [ "mlspec" "mlspec-helper" "runtime-arbitrary"

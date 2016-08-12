@@ -84,7 +84,7 @@ rec {
             while read -r PKG
             do
               ensurePkg "$PKG"
-            done < <(echo "$INPUT" | grep '[a-zA-Z_]' | bash -x "${explore.findHsPkgReferences}")
+            done < <(echo "$INPUT" | grep '[a-zA-Z_]' | "${explore.findHsPkgReferences}")
           fi
 
           while read -r PKG
@@ -98,14 +98,15 @@ rec {
   # Snippets of code which are common to both withTime and withCriterion
 
   checkEnv = inputs:
-    let pkgNames = if inputs == [] then []
-                                   else splitString "\n" (runScript {} ''
+    let pkgNames      = map strip maybePkgNames;
+        maybePkgNames = if inputs == [] then []
+                                        else splitString "\n" (runScript {} ''
           cat ${concatStringsSep " " (map (x: "'${x}'") inputs)} |
             grep '[a-zA-Z_]'                                     |
             "${explore.findHsPkgReferences}" > "$out"
         '');
      in ''
-          echo "$INPUT" | "${checkHsEnv (map strip pkgNames)}" || {
+          echo "$INPUT" | "${checkHsEnv []}" || {
             echo "checkHsEnv failed" 1>&2
             exit 1
           }

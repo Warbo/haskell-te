@@ -5,11 +5,7 @@ with builtins;
 
 let
 
-topLevel = mapAttrs (_: test: test pkgs) (pkgs.importDir ../tests);
-
-pkgTests = import ./pkgTests.nix pkgs;
-
-allTests = { inherit pkgTests testDrvs topLevel; };
+allTests = mapAttrs (_: test: test pkgs) (pkgs.importDir ../tests);
 
 # Remove cruft, like "override" and "overrideDerivation"
 strip = as: if isAttrs as

@@ -6,7 +6,7 @@ path  = toString ../exploreTheoriesExamples;
 files = map (f: "${path}/${f}") (attrNames (readDir path));
 
 noDupesFor = f: testRun "Testing ${f}" null { buildInputs = explore.extractedEnv {
-                                                              inherit f;
+                                                              #inherit f;
                                                             }; } ''
   set -e
   set -o pipefail
