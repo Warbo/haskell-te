@@ -24,7 +24,7 @@ drvFromScript { buildInputs = explore.extractedEnv {
            inherit quick;
            cmd  = "cabal";
            args = ["build"];
-       }}" > "$out")
+       }}")
 
   ${storeParts}
 ''
