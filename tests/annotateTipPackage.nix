@@ -72,7 +72,7 @@ canRunTypes = let err = readFile ranTypes.stderr;
                     (testMsg val "No runTypeScript errors for tip module")
                   ];
 
-annotatedAsts = drvFromScript (env // { inherit (ranTypes) stdout) ''
+annotatedAsts = drvFromScript (env // { inherit (ranTypes) stdout; }) ''
                   set -e
                   "${annotateAstsScript}" < "$stdout" > out
                   "${storeResult}" out
