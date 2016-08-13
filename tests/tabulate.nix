@@ -44,4 +44,4 @@ tests = [
                 "Equations vs time for clusters works")
 ];
 
-in testWrap tests "Testing ${toJSON tests}"
+in testWrap [] "Tabulate tests"

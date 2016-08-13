@@ -196,9 +196,7 @@ tabulated = listToAttrs
 
        ]);
 
-in
-
-assert ourCheck "Checking tabulate inputs" (all id [
+assertions = assert ourCheck "Checking tabulate inputs" (all id [
 
   (ourCheck "packageNames is list ${toJSON packageNames}"
          (isList packageNames))
@@ -239,5 +237,9 @@ assert ourCheck "Checking tabulate output" (all id [
               (attrNames tabulated)))
 
 ]);
+
+null;
+
+in
 
 tabulated
