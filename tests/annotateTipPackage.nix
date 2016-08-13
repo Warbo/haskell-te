@@ -16,8 +16,15 @@ quick = true;
 dump = dumpPackage { inherit quick; inherit (pkg) src; };
 
 haveDump = {
-  dumpSuccess = testMsg (!dump.failed)           "Tip module dump succeeded";
-  haveStdout  = testMsg (pathExists dump.stdout) "Dumped Tip module";
+  dumpSuccess = testRun "Tip module dump succeeded" null
+                        { inherit (dump) failed; } ''
+                          O=$(cat "$dump")
+                          [[ "x$O" = "xfalse" ]] || exit 1
+                        '';
+  haveStdout  = testRun "Dumped Tip module" null
+                        { inherit (dump) stdout; } ''
+                          [[ -e "$stdout" ]] || exit 1
+                        '';
 };
 
 # Annotation is trickier, so these are mainly regressions tests to ensure that
@@ -30,20 +37,20 @@ env       = { buildInputs = explore.extractedEnv {
                               standalone = pkg.src;
                             }; };
 
-ranTypes = parseJSON (runScript env ''
+ranTypes = drvFromScript (env // { outputs = [ "stdout" "stdout" "code" ];
+                                   inherit asts; }) ''
              set -e
              "${runTypesScript {
                   inherit pkg;
                   pkgSrc = pkg.src;
-              }}" < "${asts}" > stdout 2> stderr
+              }}" < "$asts" > stdout 2> stderr
              CODE="$?"
 
-             STDOUT=$(nix-store --add stdout)
-             STDERR=$(nix-store --add stderr)
+             echo "$CODE" > "$code"
 
-             printf '{"stdout": "%s", "stderr": "%s", "code": %s}' \
-                     "$STDOUT"       "$STDERR"       "$CODE" > "$out"
-           '');
+             cp stdout "$stdout"
+             cp stderr "$stderr"
+           '';
 
 checkStderr = parseJSON (runScript {} ''
                 if grep -v '<interactive>.*parse error on input' < "${ranTypes.stderr}" |
@@ -65,36 +72,49 @@ canRunTypes = let err = readFile ranTypes.stderr;
                     (testMsg val "No runTypeScript errors for tip module")
                   ];
 
-annotatedAsts = runScript env ''
+annotatedAsts = drvFromScript env ''
                   set -e
                   "${annotateAstsScript}" < "${ranTypes.stdout}" > out
                   "${storeResult}" out
                 '';
 
-canAnnotateAsts = testMsg ("${annotatedAsts}" != "")
-                          "Can run annotateAstsScript on tip module";
+canAnnotateAsts = testRun "Can run annotateAstsScript on tip module" null
+                          { inherit annotatedAsts; } ''
+                            O=$(cat "$annotatedAst")
+                            [[ -n "$O" ]] || exit 1
+                          '';
 
-gotDeps = runScript env ''
-            "${getDepsScript}" < "${annotatedAsts}" > out
+gotDeps = drvFromScript (env // { inherit annotatedAsts; }) ''
+            "${getDepsScript}" < "$annotatedAsts" > out
             "${storeResult}" out
           '';
 
-canGetDeps = testMsg ("${gotDeps}" != "")
-                     "Can run getDepsScript on tip module";
+canGetDeps = testRun "Can run getDepsScript on tip module" null
+                     { inherit gotDeps; } ''
+                       O=$(cat "$gotDeps")
+                       [[ -n "$O" ]] || exit 1
+                     '';
 
 # Try the 'annotate' function, which combines the above pieces
 annotated = annotate { inherit quick asts pkg;
                        pkgSrc = pkg.src; };
 
-rawAnnotated = testMsg (!annotated.failed) "Tip module annotation succeeded";
+rawAnnotated = testRun "Tip module annotation succeeded" null
+                       { inherit (annotated) failed; } ''
+                         O=$(cat "$failed")
+                         [[ "x$O" = "xfalse" ]] || exit 1
+                       '';
 
 # Just to make sure, also check the encapsulated version we actually use
 processed = tipBenchmarks.process { inherit quick; };
 
-tipAnnotated = testMsg (!processed.rawAnnotated.failed)
-                       "Tip benchmarks annotated";
+tipAnnotated = testRun "Tip benchmarks annotated" null
+                       { inherit (processed.rawAnnotated) failed; } ''
+                         O=$(cat "$failed")
+                         [[ "x$O" = "xfalse" ]] || exit 1
+                       '';
 
-in testRec {
+in {
   inherit haveSrc haveDump canRunTypes canAnnotateAsts canGetDeps rawAnnotated
           tipAnnotated;
 }
