@@ -105,12 +105,13 @@ processPkg = { clusters, quick, sampleSize ? null }: givenName: givenPkg: rec {
   equations = mapAttrs (_:      x: x.stdout)  rawReduced.results;
 
   # Useful for benchmarking
-  equationCounts = mapAttrs (_: f: fromJSON (runScript {} ''
-    "${jq}/bin/jq" -s 'length' < "${f}" > "$out"
-  '')) equations;
+  equationCounts = mapAttrs (_: f: drvFromScript { inherit f; } ''
+                                     jq -s 'length' < "$f" > "$out"
+                                   '')
+                            equations;
 
   sizeCounts = mapAttrs (_: fs: sum (map (f: fromJSON (runScript {} ''
-      "${jq}/bin/jq" -s 'length' < "${f}" > "$out"
+      jq -s 'length' < "${f}" > "$out"
     '')) fs))
     formatted;
 

@@ -1,4 +1,4 @@
-defs: with defs; with builtins;
+defs: with defs; with builtins; with lib;
 
 let
 
@@ -14,31 +14,32 @@ singleClusterFails =
   let output    = tipBenchmarks.process { quick = true; clusters = [ 1 ]; };
       explored  = head output.rawExplored.results."1";
       memUsageS = runScript { buildInputs = [ jq ]; } ''
-                    MEM=$(grep -o "MAXMEM [0-9]*" < "${explored.stderr}" |
-                          grep -o "[0-9]*")
 
-                    if [[ -n "$MEM" ]]
-                    then
-                      echo "$MEM" > "$out"
-                    else
-                      echo "null" > "$out"
-                    fi
                   '';
       memUsage  = addErrorContext "Parsing number from '${memUsageS}'"
                     (fromJSON memUsageS);
-      outOfMem  = if isInt memUsage
-                     then memUsage > memLimKb
-                     else trace "Couldn't get memory usage" false;
-      check     = c: m: testDbg c m (toJSON { inherit output memLimKb; });
-   in testAll [
-        (check   output.failed               "TIP fails for 1 cluster")
-        (check (!output.rawAnnotated.failed) "TIP annotated for 1 cluster")
-        (check (!output.rawDump.failed)      "TIP dumped for 1 cluster")
-        (check (!output.rawClustered.failed) "TIP clustered for 1 cluster")
-        (check   output.rawExplored.failed   "Can't explore 1 TIP cluster")
-        (check  explored.failed              "Can't explore single TIP cluster")
-        (check  outOfMem                     "Exploring TIP ran out of memory on 1 cluster")
-      ];
+   in {
+        shouldFail   = testDrvString "true"  output.failed              "TIP fails for 1 cluster";
+        ann          = testDrvString "false" output.rawAnnotated.failed "TIP annotated for 1 cluster";
+        dump         = testDrvString "false" output.rawDump.failed      "TIP dumped for 1 cluster";
+        cluster      = testDrvString "false" output.rawClustered.failed "TIP clustered for 1 cluster";
+        noRawExplore = testDrvString "true"  output.rawExplored.failed  "Can't explore 1 TIP cluster";
+        noExplore    = testDrvString "true"  explored.failed            "Can't explore single TIP cluster";
+        shouldOOM    = testRun "Exploring TIP ran out of memory on 1 cluster" null
+                               { inherit (explored) stderr;
+                                 limit = toString memLimKb; } ''
+                                 MEM=$(grep -o "MAXMEM [0-9]*" < "$stderr" |
+                                       grep -o "[0-9]*")
+
+                                 if [[ -n "$MEM" ]]
+                                 then
+                                   echo "$MEM" > "$out"
+                                 else
+                                   exit 1
+                                 fi
+                                 [[ "$memUsage" -gt "$memLimKb" ]] || exit 1
+                               '';
+      };
 
 multipleClustersPass =
   let num      = 40;
@@ -52,21 +53,29 @@ multipleClustersPass =
       haveEqs  = all (n: strippedContent output.equations."${n}" != "")
                      (attrNames output.equations);
 
-      nonZeroEqs = all (n: output.equationCounts."${n}" > 0)
-                       (attrNames output.equationCounts);
+      nonZeroEqs = testRec (mapAttrs (n: count:
+                                       testRun "${n} equation count nonzero"
+                                               null
+                                               { inherit count; }
+                                               ''
+                                                 O=$(jq -r '. > 0' < "$count")
+                                                 [[ "x$O" = "xtrue" ]] || exit 1
+                                               '')
+                                     output.equationCounts);
+   in {
+        notFail    = testRun "Explored TIP with ${toString num} clusters" null
+                             { inherit (output) failed; } ''
+                               O=$(cat failed)
+                               [[ "x$O" = "xfalse" ]] || exit 1
+                             '';
 
-      check    = c: m: testDbg c m (toJSON { inherit num output; });
+        explored   = testWrap [ explored   ] "Exploring TIP gave output";
 
-   in testAll [
-        (check (!output.failed) "Explored TIP with ${toString num} clusters")
+        equations  = testWrap [ haveEqs    ] "Got TIP equations";
 
-        (check explored "Exploring TIP gave output")
-
-        (check haveEqs  "Got TIP equations")
-
-        (check nonZeroEqs "Non-zero equation counts")
-      ];
+        nonZeroEqs = testWrap [ nonZeroEqs ] "Non-zero equation counts";
+      };
 
 withDbg = dbg: msg: x: addErrorContext dbg (testMsg x msg || trace dbg false);
 
-in testAll [singleClusterFails multipleClustersPass]
+in { inherit singleClusterFails multipleClustersPass; }

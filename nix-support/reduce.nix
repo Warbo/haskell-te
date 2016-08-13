@@ -30,5 +30,4 @@ reduce = { quick, explored }:
       failed  = checkFailures results;
       result  = { inherit results failed; };
    in result;
-
 }

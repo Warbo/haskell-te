@@ -1,4 +1,5 @@
-# Custom definitions
+# Custom definitions; most functions, values, etc. are imported here and passed
+# to their users via 'callPackage'
 self: super:
 
 with builtins; with super.lib;
@@ -20,8 +21,8 @@ rec {
           cluster nixRecurrentClusteringScript recurrentClusteringScript;
 
   inherit (callPackage ./test-defs.nix {})
-          checkPlot runTestInDrv testAll testDbg testMsg testPackages testRec
-          testRun testWrap;
+          checkPlot runTestInDrv testAll testDbg testDrvString testMsg
+          testPackages testRec testRun testWrap;
 
   inherit (plotResults)
           mkTbl;

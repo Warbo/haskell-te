@@ -18,7 +18,7 @@ dump = dumpPackage { inherit quick; inherit (pkg) src; };
 haveDump = {
   dumpSuccess = testRun "Tip module dump succeeded" null
                         { inherit (dump) failed; } ''
-                          O=$(cat "$dump")
+                          O=$(cat "$failed")
                           [[ "x$O" = "xfalse" ]] || exit 1
                         '';
   haveStdout  = testRun "Dumped Tip module" null

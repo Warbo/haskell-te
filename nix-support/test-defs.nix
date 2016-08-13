@@ -98,6 +98,11 @@ rec {
                        abort "testRun message not string ${info}";
                 drvFromScript (env // envOverride) buildCommand;
 
+  testDrvString = expect: d: msg: testRun msg null { inherit d expect; } ''
+                       O=$(cat "$d")
+                       [[ "x$O" = "x$expect" ]] || exit 1
+                     '';
+
   checkPlot = plot:
     let w      = "640";
         h      = "480";

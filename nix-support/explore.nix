@@ -35,9 +35,10 @@ extractEnv = f:
 
 findHsPkgReferences =
   let extractionScript = writeScript "find-references" ''
-        # Allow package names to be given directly, one per line
+        # Allow package names to be given directly, one per line (limit to 128
+        # chars to avoid craziness)
         INPUT=$(cat)
-        echo "$INPUT"
+        echo "$INPUT" | cut -c1-128
 
         # Take package names from JSON fields. These include:
         #
@@ -48,7 +49,8 @@ findHsPkgReferences =
         # We should be able to ignore dependencies, as they'll be brought in
         # automatically.
         FLATTEN='if type == "array" then .[] else .'
-        echo "$INPUT" | jq -r "$FLATTEN | $FLATTEN | .package" 2> /dev/null || true
+        echo "$INPUT" | jq -r "$FLATTEN | $FLATTEN | .package" 2> /dev/null ||
+          true
       '';
    in writeScript "unique-references" ''
         INPUT=$(cat | grep '[a-zA-Z_]')
