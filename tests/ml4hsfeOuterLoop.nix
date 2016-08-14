@@ -9,7 +9,7 @@ clusterScript = writeScript "cluster-script" ''
 
 ex = ./ml4hsfeExamples/ml4hsfe-outer-loop-example-input.json;
 
-env = { buildInputs = [ haskellPackages.ML4HSFE ]; };
+env = { buildInputs = [ haskellPackages.ML4HSFE runWeka ]; };
 
 vars = ''
   export WIDTH=30
