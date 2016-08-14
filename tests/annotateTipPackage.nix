@@ -37,7 +37,7 @@ env       = { buildInputs = explore.extractedEnv {
                               standalone = pkg.src;
                             }; };
 
-ranTypes = drvFromScript (env // { outputs = [ "stdout" "stdout" "code" ];
+ranTypes = drvFromScript (env // { outputs = [ "stdout" "stderr" "code" ];
                                    inherit asts; }) ''
              set -e
              "${runTypesScript {
@@ -52,24 +52,23 @@ ranTypes = drvFromScript (env // { outputs = [ "stdout" "stdout" "code" ];
              cp stderr "$stderr"
            '';
 
-checkStderr = parseJSON (runScript {} ''
-                if grep -v '<interactive>.*parse error on input' < "${ranTypes.stderr}" |
+checkStderr = drvFromScript { inherit (ranTypes) stderr; } ''
+                if grep -v '<interactive>.*parse error on input' < "$stderr" |
                    grep "error" 1>&2
                 then
-                  echo "false" > "$out"
+                  exit 1
                 else
                   echo "true" > "$out"
+                  exit 0
                 fi
-              '');
+              '';
 
 canRunTypes = let err = readFile ranTypes.stderr;
-                  val = if checkStderr
-                           then true
-                           else trace (toJSON ranTypes) false;
+                  val = checkStderr;
                in testAll [
-                    (testMsg (ranTypes.code == "0")
-                             "Ran runTypesScript on tip module")
-                    (testMsg val "No runTypeScript errors for tip module")
+                    (testDrvString "0" ranTypes.code
+                                   "Ran runTypesScript on tip module")
+                    val
                   ];
 
 annotatedAsts = drvFromScript (env // { inherit (ranTypes) stdout; }) ''
