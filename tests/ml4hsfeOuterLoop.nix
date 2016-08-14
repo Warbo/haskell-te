@@ -9,7 +9,7 @@ clusterScript = writeScript "cluster-script" ''
 
 ex = ./ml4hsfeExamples/ml4hsfe-outer-loop-example-input.json;
 
-env = { buildInputs = [ jq haskellPackages.ML4HSFE ]; };
+env = { buildInputs = [ haskellPackages.ML4HSFE ]; };
 
 vars = ''
   export WIDTH=30
@@ -19,14 +19,12 @@ vars = ''
 
 shOutput = drvFromScript env ''
   ${vars}
-  "${clusterScript}" < "${ex}" > sh_output
-  "${storeResult}" sh_output "$out"
+  "${clusterScript}" < "${ex}" > "$out"
 '';
 
 progOutput = drvFromScript env ''
   ${vars}
-  ml4hsfe-outer-loop < "${ex}" > prog_output
-  "${storeResult}" prog_output "$out"
+  ml4hsfe-outer-loop < "${ex}" > "$out"
 '';
 
 in drvFromScript (env // { inherit shOutput progOutput; }) ''
