@@ -63,11 +63,8 @@ multipleClustersPass =
                                                '')
                                      output.equationCounts);
    in {
-        notFail    = testRun "Explored TIP with ${toString num} clusters" null
-                             { inherit (output) failed; } ''
-                               O=$(cat failed)
-                               [[ "x$O" = "xfalse" ]] || exit 1
-                             '';
+        notFail    = testDrvString "false" output.failed
+                                   "Explored TIP with ${toString num} clusters";
 
         explored   = testWrap [ explored   ] "Exploring TIP gave output";
 

@@ -7,7 +7,7 @@ let examples = mapAttrs (f: _: ./clusteringExamples + "/${f}")
 
     unversioned = f: _ testMsg (parseJSON (runScript  )) ;
  in mapAttrs (_: func:
-               mapAttrs (f: _: let inherit (func f) script msg env;
+               mapAttrs (_: f: let inherit (func f) script msg env;
                                 in testRun msg null env script)
                         examples) {
   valid = f: {
