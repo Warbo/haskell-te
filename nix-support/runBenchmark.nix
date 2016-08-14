@@ -158,8 +158,6 @@ rec {
                         ${outFields} }'
   '';
 
-  inherit (callPackage ./timeout.nix {}) timeout;
-
   # A thorough benchmark, which performs multiple runs using Criterion
   withCriterion = { quick, cmd, args ? [], inputs ? []}:
     writeScript "with-criterion" ''
@@ -235,10 +233,10 @@ rec {
          INPUT=$(cat)
          ${checkEnv inputs}
 
-         # Measure time with 'time', limit time/memory using 'timeout'
+         # Measure time with 'time'
          echo "$INPUT" |
            "${time}/bin/time" -f '%e' -o time \
-             "${timeout}" "${cmd}" ${argStr} 1> stdout 2> stderr
+             "${cmd}" ${argStr} 1> stdout 2> stderr
          CODE="$?"
 
          ${cacheOutputs}

@@ -1,6 +1,6 @@
 { benchmark, checkFailures, checkHsEnv, drvFromScript, haskellPackageNames,
   format, haskellPackages, jq, lib, ml4hs, mlspec, ourCheck, parseJSON, pkgName,
-  runScript, self, stdParts, storeParts, strip, writeScript }:
+  runScript, self, stdParts, storeParts, strip, timeout, writeScript }:
 with builtins;
 with lib;
 
@@ -16,7 +16,8 @@ explore-theories = writeScript "explore-theories" ''
     grep -v "^Depth" || true # Don't abort if nothing found
   }
 
-  echo "$INPUT" | MLSpec "$@" | noDepth | jq -s '.'
+  # limit time/memory using 'timeout'
+  echo "$INPUT" | ${timeout} MLSpec "$@" | noDepth | jq -s '.'
 '';
 
 extractEnv = f:

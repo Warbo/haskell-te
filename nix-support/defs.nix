@@ -27,6 +27,9 @@ rec {
   inherit (plotResults)
           mkTbl;
 
+  inherit (callPackage ./timeout.nix {})
+          timeLimSecs memLimKb timeout;
+
   # These provide executables
   inherit (haskellPackages)
           AstPlugin GetDeps ML4HSFE mlspec mlspec-bench reduce-equations;
