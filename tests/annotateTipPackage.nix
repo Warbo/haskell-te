@@ -79,7 +79,7 @@ annotatedAsts = drvFromScript (env // { inherit (ranTypes) stdout; }) ''
 
 canAnnotateAsts = testRun "Can run annotateAstsScript on tip module" null
                           { inherit annotatedAsts; } ''
-                            O=$(cat "$annotatedAst")
+                            O=$(cat "$annotatedAsts")
                             [[ -n "$O" ]] || exit 1
                           '';
 
