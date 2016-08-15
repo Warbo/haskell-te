@@ -103,7 +103,7 @@ rec {
                        [[ "x$O" = "x$expect" ]] || exit 1
                      '';
 
-  testFiles = fs: msg: script: runTest msg null { inherit fs script; } ''
+  testFiles = fs: msg: script: testRun msg null { inherit fs script; } ''
                   for F in $fs
                   do
                     "$script" "$F" || exit 1
