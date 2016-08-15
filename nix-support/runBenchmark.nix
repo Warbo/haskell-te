@@ -76,7 +76,7 @@ rec {
 
           # '|| true' to appease 'set -e' when we have no input
           INPUT=""
-          [ -t 0 ] || INPUT=$(sort -u | grep "^.") || true
+          [ -t 0 ] || INPUT=$(sort -u | grep "^." | cut -c1-128) || true
 
           if [[ -n "$INPUT" ]]
           then
@@ -84,7 +84,9 @@ rec {
             while read -r PKG
             do
               ensurePkg "$PKG"
-            done < <(echo "$INPUT" | grep '[a-zA-Z_]' | "${explore.findHsPkgReferences}")
+            done < <(echo "$INPUT"    |
+                     grep '[a-zA-Z_]' |
+                     "${explore.findHsPkgReferences}")
           fi
 
           while read -r PKG

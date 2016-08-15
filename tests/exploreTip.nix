@@ -8,9 +8,9 @@ strippedContent = f: drvFromScript { inherit f; } ''
   tr -dc '\n\t ' < "$f" > "$out"
 '';
 
-nonEmpty = f: msg: testRun msg null { f = strippedContent f; } ''
-  C=$(cat "$f")
-  echo "Got: $C" 1>&2
+nonEmpty = f: msg: testRun msg null { inherit f; s = strippedContent f; } ''
+  C=$(cat "$s")
+  echo "Using '$f', stripped '$s', got: $C" 1>&2
   [[ -n "$C" ]] || exit 1
 '';
 
