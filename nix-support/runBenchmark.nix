@@ -145,17 +145,17 @@ rec {
   '';
 
   mkReport = { cmd, args, inFields, outFields }: ''
-    "${jq}/bin/jq" -n ${inFields} --arg     cmd    '${cmd}'         \
-                                  --argjson args   '${toJSON args}' \
-                                  --arg     stdout "$STDOUT"        \
-                                  --arg     stderr "$STDERR"        \
-                                  --argjson failed "$FAILED"        \
-                      '{"failed"   : $failed,
-                        "cmd"      : $cmd,
-                        "args"     : $args,
-                        "stdout"   : $stdout,
-                        "stderr"   : $stderr,
-                        ${outFields} }'
+    jq -n ${inFields} --arg     cmd    '${cmd}'         \
+                      --argjson args   '${toJSON args}' \
+                      --arg     stdout "$STDOUT"        \
+                      --arg     stderr "$STDERR"        \
+                      --argjson failed "$FAILED"        \
+       '{"failed"   : $failed,
+         "cmd"      : $cmd,
+         "args"     : $args,
+         "stdout"   : $stdout,
+         "stderr"   : $stderr,
+         ${outFields} }'
   '';
 
   # A thorough benchmark, which performs multiple runs using Criterion
