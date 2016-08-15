@@ -11,5 +11,5 @@ let pkgs = builtins.trace "FIXME: Do 64 and 32 bit" import ./nix-support {};
   inherit (pkgs)
     mlspec mlspec-bench reduce-equations runWeka;
 
-  #tip-eqs = import ./nix-support/exploreTip.nix;
+  tip-eqs = pkgs.callPackage ./nix-support/exploreTip.nix {};
 }
