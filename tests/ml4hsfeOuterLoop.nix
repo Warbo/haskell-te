@@ -7,9 +7,14 @@ clusterScript = writeScript "cluster-script" ''
   ml4hsfe-loop | "${recurrentClusteringScript}"
 '';
 
-ex = ./ml4hsfeExamples/ml4hsfe-outer-loop-example-input.json;
+ex = let f = ./ml4hsfeExamples/ml4hsfe-outer-loop-example-input.json;
+      in drvFromScript {} ''
+           # Select 50 random ASTs
+           ASTS=$(jq -c '.[]' < "${f}")
+           echo "$ASTS" | shuf | head -n50 | jq -s '.' > "$out"
+         '';
 
-env = { buildInputs = [ haskellPackages.ML4HSFE runWeka ]; };
+env = { EXAMPLE = ex; buildInputs = [ haskellPackages.ML4HSFE runWeka ]; };
 
 vars = ''
   export WIDTH=30
@@ -17,27 +22,36 @@ vars = ''
   export CLUSTERS=4
 '';
 
-shOutput = drvFromScript env ''
+shOutput = writeScript "sh" ''
   ${vars}
-  "${clusterScript}" < "${ex}" > "$out"
+  "${clusterScript}" < "$EXAMPLE"
 '';
 
-progOutput = drvFromScript env ''
+progOutput = writeScript "prog" ''
   ${vars}
-  ml4hsfe-outer-loop < "${ex}" > "$out"
+  ml4hsfe-outer-loop < "$EXAMPLE"
 '';
 
 in drvFromScript (env // { inherit shOutput progOutput; }) ''
   set -e
+  echo "Running shell version" 1>&2
+    SH=$("$shOutput")
+
+  echo "Running Haskell version" 1>&2
+  PROG=$("$progOutput")
+
   for EXPR in type length 'map(type)' 'map(has("cluster"))'
   do
-      SH=$(jq "$EXPR" <   "$shOutput")
-    PROG=$(jq "$EXPR" < "$progOutput")
+      GOTSH=$(echo "$SH"   | jq "$EXPR")
+    GOTPROG=$(echo "$PROG" | jq "$EXPR")
 
-    [[ "x$SH" = "x$PROG" ]] || {
-      echo "Mismatch for '$EXPR': '$SH' vs '$PROG'" 1>&2
-      exit 2
-    }
+    [[ "x$GOTSH" = "x$GOTPROG" ]] && continue
+
+    echo "Mismatch for '$EXPR'" 1>&2
+    echo "Shell version:"       1>&2
+    echo "$GOTSH"               1>&2
+    echo "Haskell version:"     1>&2
+    echo "$GOTPROG"             1>&2
   done
 
   touch "$out"
