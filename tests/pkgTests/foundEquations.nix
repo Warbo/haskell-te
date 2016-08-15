@@ -15,4 +15,4 @@ in testRun "${pkg.name} has non-zero equation count" null
                O=$(jq -r -n --argjson x "$X" '$x > 0')
                [[ "x$O" = "xtrue" ]] || exit 1
              done
-           '';
+           ''
