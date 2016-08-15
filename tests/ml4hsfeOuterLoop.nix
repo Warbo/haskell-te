@@ -32,7 +32,7 @@ progOutput = writeScript "prog" ''
   ml4hsfe-outer-loop < "$EXAMPLE"
 '';
 
-in drvFromScript (env // { inherit shOutput progOutput; }) ''
+in trace "FIXME: Is Haskell or Shell more correct?" drvFromScript (env // { inherit shOutput progOutput; }) ''
   set -e
   echo "Running shell version" 1>&2
     SH=$("$shOutput")
