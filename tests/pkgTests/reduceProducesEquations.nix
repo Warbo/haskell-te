@@ -22,7 +22,7 @@ checkReduce = n:
                                 (runScript {} iScript);
       output  = addErrorContext "oScript: ${oScript} "
                                 (runScript {
-                                    buildInputs = extractedEnv {
+                                    buildInputs = explore.extractedEnv {
                                       extraHs = [ "reduce-equations" ];
                                     };
                                   }
