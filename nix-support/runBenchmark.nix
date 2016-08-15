@@ -183,7 +183,7 @@ rec {
       echo "$INPUT" | "${mlspec-bench}/bin/mlspec-bench"     \
                         --template json                      \
                         --output report.json 1> bench.stdout \
-                                             2> bench.stderr ||
+                                             2> bench.stderr
       CODE="$?"
 
       FAILED=false
