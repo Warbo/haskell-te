@@ -53,15 +53,18 @@ multipleClustersPass =
       haveEqs  = all (n: strippedContent output.equations."${n}" != "")
                      (attrNames output.equations);
 
-      nonZeroEqs = testRec (mapAttrs (n: count:
-                                       testRun "${n} equation count nonzero"
-                                               null
-                                               { inherit count; }
-                                               ''
-                                                 O=$(jq -r '. > 0' < "$count")
-                                                 [[ "x$O" = "xtrue" ]] || exit 1
-                                               '')
-                                     output.equationCounts);
+      nonZeroEqs = testRec
+                     (mapAttrs (n: count:
+                                 testRun "${n} equation count nonzero"
+                                         null { inherit count; }
+                                         ''
+                                           X=$(cat "$count")
+                                           O=$(echo "$X" | jq -r '. > 0')
+                                           echo "count: $count"   1>&2
+                                           echo -e "X: $X\nO: $O" 1>&2
+                                           [[ "x$O" = "xtrue" ]] || exit 1
+                                         '')
+                               output.equationCounts);
    in {
         notFail    = testDrvString "false" output.failed
                                    "Explored TIP with ${toString num} clusters";
