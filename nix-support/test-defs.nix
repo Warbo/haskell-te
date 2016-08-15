@@ -100,6 +100,7 @@ rec {
 
   testDrvString = expect: d: msg: testRun msg null { inherit d expect; } ''
                        O=$(cat "$d")
+                       echo -e "d: $d, O: $O, expect: $expect" 1>&2
                        [[ "x$O" = "x$expect" ]] || exit 1
                      '';
 
