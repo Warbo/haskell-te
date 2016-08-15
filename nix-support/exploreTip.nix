@@ -2,7 +2,7 @@
 with builtins;
 
 let clusters    = [ 1 2 4 8 16 32 ];
-     sampleNums = [ 1 2 4 8 16 32 ];
+     sampleNums = [];#[ 1 2 4 8 16 32 ];
 
     outputs =
       let runSamples = sampleSize: {
