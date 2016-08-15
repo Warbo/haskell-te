@@ -12,6 +12,7 @@ in testRun "${pkg.name} has non-zero equation count" null
            { inherit counts; } ''
              for X in $counts
              do
+               echo "Checking '$X'" 1>&2
                O=$(jq -r -n --argjson x "$X" '$x > 0')
                [[ "x$O" = "xtrue" ]] || exit 1
              done
