@@ -43,10 +43,11 @@ multipleClustersPass =
   let num    = 40;
       output = tipBenchmarks.process { quick = true; clusters = [ num ]; };
    in {
-        explored = mapAttrs (n: eqs: testFiles eqs "Non-empty explored" ''
-                              C=$(cat "$1" | tr -dc '\n\t ')
-                              [[ -n "$C" ]] || exit 1
-                            '')
+        explored = mapAttrs (n: eqs: testFiles eqs "Non-empty explored"
+                                       (writeScript "non-empty" ''
+                                         C=$(cat "$1" | tr -dc '\n\t ')
+                                         [[ -n "$C" ]] || exit 1
+                                       ''))
                             output.explored;
 
         haveEqs  = mapAttrs (n: eqs: nonEmpty eqs "Non-empty ${n}")
