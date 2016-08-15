@@ -8,11 +8,11 @@ counts = fold (n: old: old ++ [pkg.equationCounts."${n}"])
               []
               (attrNames pkg.equationCounts);
 
-info = pkg // { pkg = "Elided"; };
-
-test = testDbg
-         (any (x: x > 0) counts)
-         "${pkg.name} has non-zero equation count ${toJSON pkg.equationCounts}"
-         "Debug: ${toJSON info}";
-
-in test
+in testRun "${pkg.name} has non-zero equation count" null
+           { inherit counts; } ''
+             for X in $counts
+             do
+               O=$(jq -r -n --argjson x "$X" '$x > 0')
+               [[ "x$O" = "xtrue" ]] || exit 1
+             done
+           '';
