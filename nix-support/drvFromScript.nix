@@ -50,4 +50,4 @@ let commonDeps = [ bash jq nix perl procps utillinux ];
 
 in env: text:
      let script = writeScript "script" text;
-      in runCommand  "runner" (withNix env) script
+      in runCommand "runner" (withNix env) script

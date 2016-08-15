@@ -4,20 +4,19 @@ let
 
 memLimKb = (defs.callPackage ../nix-support/timeout.nix {}).memLimKb;
 
-strippedContent = f:
-  let content  = readFile f;
-   in replaceStrings ["\n" " " "\t"]
-                     [""   ""  ""]
-                     content;
+strippedContent = f: drvFromScript { inherit f; } ''
+  tr -dc '\n\t ' < "$f" > "$out"
+'';
+
+nonEmpty = f: msg: testRun msg null { f = strippedContent f; } ''
+  C=$(cat "$f")
+  echo "Got: $C" 1>&2
+  [[ -n "$C" ]] || exit 1
+'';
 
 singleClusterFails =
   let output    = tipBenchmarks.process { quick = true; clusters = [ 1 ]; };
       explored  = head output.rawExplored.results."1";
-      memUsageS = runScript { buildInputs = [ jq ]; } ''
-
-                  '';
-      memUsage  = addErrorContext "Parsing number from '${memUsageS}'"
-                    (fromJSON memUsageS);
    in {
         shouldFail   = testDrvString "true"  output.failed              "TIP fails for 1 cluster";
         ann          = testDrvString "false" output.rawAnnotated.failed "TIP annotated for 1 cluster";
@@ -33,11 +32,10 @@ singleClusterFails =
 
                                  if [[ -n "$MEM" ]]
                                  then
-                                   echo "$MEM" > "$out"
+                                   [[ "$MEM" -gt "$limit" ]] || exit 1
                                  else
                                    exit 1
                                  fi
-                                 [[ "$memUsage" -gt "$memLimKb" ]] || exit 1
                                '';
       };
 
@@ -46,15 +44,16 @@ multipleClustersPass =
 
       output   = tipBenchmarks.process { quick = true; clusters = [ num ]; };
 
-      explored = all (n: all (x: strippedContent x != "")
-                             output.explored."${n}")
-                     (attrNames output.explored);
+      explored = mapAttrs (n: eqs: testFiles eqs "Non-empty explored" ''
+                                       C=$(cat "$1" | tr -dc '\n\t ')
+                                       [[ -n "$C" ]] || exit 1
+                                     '')
+                          output.explored;
 
-      haveEqs  = all (n: strippedContent output.equations."${n}" != "")
-                     (attrNames output.equations);
+      haveEqs  = mapAttrs (n: eqs: nonEmpty eqs "Non-empty ${n}")
+                          output.equations;
 
-      nonZeroEqs = testRec
-                     (mapAttrs (n: count:
+      nonZeroEqs = mapAttrs (n: count:
                                  testRun "${n} equation count nonzero"
                                          null { inherit count; }
                                          ''
@@ -64,14 +63,14 @@ multipleClustersPass =
                                            echo -e "X: $X\nO: $O" 1>&2
                                            [[ "x$O" = "xtrue" ]] || exit 1
                                          '')
-                               output.equationCounts);
+                               output.equationCounts;
    in {
         notFail    = testDrvString "false" output.failed
                                    "Explored TIP with ${toString num} clusters";
 
         explored   = testWrap [ explored   ] "Exploring TIP gave output";
 
-        equations  = testWrap [ haveEqs    ] "Got TIP equations";
+        equations  = haveEqs;
 
         nonZeroEqs = testWrap [ nonZeroEqs ] "Non-zero equation counts";
       };
