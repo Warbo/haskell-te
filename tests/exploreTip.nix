@@ -40,39 +40,31 @@ singleClusterFails =
       };
 
 multipleClustersPass =
-  let num      = 40;
-
-      output   = tipBenchmarks.process { quick = true; clusters = [ num ]; };
-
-      explored = mapAttrs (n: eqs: testFiles eqs "Non-empty explored" ''
-                                       C=$(cat "$1" | tr -dc '\n\t ')
-                                       [[ -n "$C" ]] || exit 1
-                                     '')
-                          output.explored;
-
-      haveEqs  = mapAttrs (n: eqs: nonEmpty eqs "Non-empty ${n}")
-                          output.equations;
-
-      nonZeroEqs = mapAttrs (n: count:
-                                 testRun "${n} equation count nonzero"
-                                         null { inherit count; }
-                                         ''
-                                           X=$(cat "$count")
-                                           O=$(echo "$X" | jq -r '. > 0')
-                                           echo "count: $count"   1>&2
-                                           echo -e "X: $X\nO: $O" 1>&2
-                                           [[ "x$O" = "xtrue" ]] || exit 1
-                                         '')
-                               output.equationCounts;
+  let num    = 40;
+      output = tipBenchmarks.process { quick = true; clusters = [ num ]; };
    in {
+        explored = mapAttrs (n: eqs: testFiles eqs "Non-empty explored" ''
+                              C=$(cat "$1" | tr -dc '\n\t ')
+                              [[ -n "$C" ]] || exit 1
+                            '')
+                            output.explored;
+
+        haveEqs  = mapAttrs (n: eqs: nonEmpty eqs "Non-empty ${n}")
+                            output.equations;
+
+        nonZeroEqs = mapAttrs (n: count:
+                                testRun "${n} equation count nonzero"
+                                        null { inherit count; } ''
+                                          X=$(cat "$count")
+                                          O=$(echo "$X" | jq -r '. > 0')
+                                          echo "count: $count"   1>&2
+                                          echo -e "X: $X\nO: $O" 1>&2
+                                          [[ "x$O" = "xtrue" ]] || exit 1
+                                        '')
+                              output.equationCounts;
+
         notFail    = testDrvString "false" output.failed
                                    "Explored TIP with ${toString num} clusters";
-
-        explored   = testWrap [ explored   ] "Exploring TIP gave output";
-
-        equations  = haveEqs;
-
-        nonZeroEqs = testWrap [ nonZeroEqs ] "Non-zero equation counts";
       };
 
 withDbg = dbg: msg: x: addErrorContext dbg (testMsg x msg || trace dbg false);
