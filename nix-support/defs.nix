@@ -83,22 +83,37 @@ rec {
 
   callPackage = super.newScope self;
 
-  checkFailures = results:
+  checkFailures = type: results:
+    assert type == "any" || type == "all";
     let names = attrNames results;
         fails = let l = concatMap (n: if isList results."${n}"
                                          then results."${n}"
                                          else [ results."${n}" ]) names;
                  in map (x: x.failed) l;
+        bFunc = if type == "any" then any else all;
      in if all isBool fails
-           then any id fails
-           else drvFromScript { inherit fails; } ''
+           then bFunc id fails
+           else drvFromScript { inherit type; inherit fails; } ''
+                  COUNT=0
+                  FAILS=0
                   for FAIL in $fails
                   do
+                    COUNT=$(( COUNT + 1 ))
                     R=$(cat "$FAIL")
-                    [[ "x$R" = "xtrue" ]] && continue
-                    echo "true" > "$out"
-                    exit 0
+                    [[ "x$R" = "xtrue" ]] || FAILS=$(( FAILS + 1 ))
                   done
+
+                  if [[ "x$type" = "xany" ]] && [[ "$FAILS" -gt 0 ]]
+                  then
+                    echo "true " > "$out"
+                    exit
+                  fi
+
+                  if [[ "x$type" = "xall" ]] && [[ "$FAILS" -ge "$COUNT" ]]
+                  then
+                    echo "true" > "$out"
+                    exit
+                  fi
 
                   echo "false" > "$out"
                 '';

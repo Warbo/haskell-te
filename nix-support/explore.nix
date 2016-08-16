@@ -175,7 +175,7 @@ go = { quick, standalone }: clusterCount: clusters:
 
 checkAndExplore = { quick, formatted, standalone ? null }:
   let results = mapAttrs (go { inherit quick standalone; }) formatted;
-      failed  = checkFailures results;
+      failed  = checkFailures "all" results;
       result  = { inherit results failed; };
    in result;
 

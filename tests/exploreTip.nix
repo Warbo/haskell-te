@@ -40,7 +40,7 @@ singleClusterFails =
       };
 
 multipleClustersPass =
-  let num    = 40;
+  let num    = 10;
       output = tipBenchmarks.process { quick = true; clusters = [ num ]; };
    in {
         explored = mapAttrs (n: eqs: testFiles eqs "Non-empty explored"

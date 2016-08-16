@@ -27,7 +27,7 @@ doReduce = quick: clusterCount: inputs:
 
 reduce = { quick, explored }:
   let results = mapAttrs (doReduce quick) explored;
-      failed  = checkFailures results;
+      failed  = checkFailures "any" results;
       result  = { inherit results failed; };
    in result;
 }

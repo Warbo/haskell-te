@@ -101,7 +101,7 @@ cluster = { quick, annotated, clusters }: let
                         clusters);
 
   result = { inherit results;
-             failed = checkFailures results;
+             failed = checkFailures "any" results;
            };
 
   in result;
