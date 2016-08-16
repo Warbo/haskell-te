@@ -60,9 +60,9 @@ processPkg = { clusters, quick, sampleSize ? null }: givenName: givenPkg: rec {
        for F in $fails
        do
          CONTENTS=$(cat "$F")
-         [[ "x$CONTENTS" = "xtrue" ]] && continue
+         echo "$CONTENTS" | grep "true" > /dev/null && continue
 
-         if [[ "x$CONTENTS" = "xfalse" ]]
+         if echo "$CONTENTS" | grep "false" > /dev/null
          then
            FOUND_FAILURE=1
            continue
