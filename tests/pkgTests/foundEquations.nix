@@ -10,10 +10,13 @@ counts = fold (n: old: old ++ [pkg.equationCounts."${n}"])
 
 in testRun "${pkg.name} has non-zero equation count" null
            { inherit counts; } ''
+             EMPTY=0
              for X in $counts
              do
-               echo "Checking '$X'" 1>&2
-               O=$(jq -r -n --argjson x "$X" '$x > 0')
-               [[ "x$O" = "xtrue" ]] || exit 1
+               C=$(cat "$X")
+               echo -e "Checking '$X', containing '$C'" 1>&2
+               O=$(jq -r -n --argjson x "$C" '$x > 0')
+               [[ "x$O" = "xtrue" ]] || EMPTY=1
              done
+             [[ "$EMPTY" -eq 0 ]] || exit 1
            ''
