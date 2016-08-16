@@ -96,11 +96,11 @@ rec {
                   do
                     R=$(cat "$FAIL")
                     [[ "x$R" = "xtrue" ]] && continue
-                    echo "false" > "$out"
+                    echo "true" > "$out"
                     exit 0
                   done
 
-                  echo "true" > "$out"
+                  echo "false" > "$out"
                 '';
 
   checkStdDev = sd:
