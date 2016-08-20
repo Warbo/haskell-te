@@ -1,5 +1,5 @@
 { benchmark, checkFailures, checkHsEnv, drvFromScript, haskellPackageNames,
-  format, haskellPackages, jq, lib, ml4hs, mlspec, ourCheck, parseJSON, pkgName,
+  format, haskellPackages, jq, lib, mlspec, ourCheck, parseJSON, pkgName,
   runScript, self, stdParts, storeParts, strip, timeout, writeScript }:
 with builtins;
 with lib;

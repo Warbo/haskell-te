@@ -60,7 +60,6 @@ rec {
                            superHaskellPackages = super.haskellPackages;
                          };
   importDir            = callPackage ./importDir.nix          {};
-  ml4hs                = callPackage ../ml4hs                 {};
   parseJSON            = callPackage ./parseJSON.nix          {};
   pkgName              = callPackage ./pkgName.nix            {};
   plotResults          = callPackage ./plotResults.nix        {};
