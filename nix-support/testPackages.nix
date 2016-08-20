@@ -61,15 +61,6 @@ let clusters         = listToAttrs (map (c: {
         WIDTH=30 HEIGHT=30 ml4hsfe-loop < "${annotated}" > features.json
         "${storeResult}" features.json "$out"
       '';
-
-      # Like 'clustered', but comes from 'features', rather than using 'cluster'
-      # which acts on 'annotated'
-      preClustered = mapAttrs (c: _:
-        runScript { buildInputs = [ ML4HSFE jq runWeka ]; } ''
-          export CLUSTERS="${c}"
-          "${nixRecurrentClusteringScript}" < "${features}" > pre-clustered.json
-          "${storeResult}" pre-clustered.json "$out"
-        '') clusters;
     };
 
 in

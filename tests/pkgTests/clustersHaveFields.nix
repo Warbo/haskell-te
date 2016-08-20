@@ -25,10 +25,5 @@ checkCluster = src: c:
                       (go src c))
            "${pkg.name} cluster ${toString c} has fields";
 
-in testWrap (map (src: testWrap (map (checkCluster src) defaultClusters)
-                                "Checking cluster")
-                 [
-                   pkg.clustered
-                   pkg.preClustered
-                 ])
-            "Clusters have fields"
+in testWrap (map (checkCluster pkg.clustered) defaultClusters)
+            "Checking cluster"

@@ -19,44 +19,6 @@ let examples = mapAttrs (f: _: ./clusteringExamples + "/${f}")
     '';
   };
 
-  haveFeatures = f: {
-    msg    = "Checking for features in '${f}'";
-    env    = { buildInputs = [ ML4HSFE ]; };
-    script = ''
-      set -e
-      O=$(WIDTH=30 HEIGHT=30 ml4hsfe-loop < "${f}" |
-            grep -c "^")
-
-      [[ "$O" -gt 0 ]] && exit 0
-
-      echo -e "f: ${f}\nO: $O" 1>&2
-      exit 1
-    '';
-  };
-
-  conform = f: {
-    msg    = "Example ${f} conforms";
-    env    = { buildInputs = [ ML4HSFE ]; };
-    script = ''
-      set -e
-      function featuresConform {
-        FEATURELENGTHS=$(jq -r '.[] | .features | length')
-        COUNT=$(echo "$FEATURELENGTHS" | head -n 1)
-        echo "$FEATURELENGTHS" | while read -r LINE
-        do
-          if [[ "$LINE" -ne "$COUNT" ]]
-          then
-            echo "Found '$LINE' features instead of '$COUNT'" 1>&2
-            exit 1
-          fi
-        done
-      }
-
-      WIDTH=30 HEIGHT=30 ml4hsfe-loop < "${f}" | featuresConform
-      exit 0
-    '';
-  };
-
   unversioned = f: {
     msg    = "Checking for versioned package names in '${f}'";
     env    = { buildInputs = [ jq ]; };
