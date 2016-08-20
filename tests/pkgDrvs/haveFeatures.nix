@@ -2,12 +2,9 @@ defs: with defs; pkg:
 with builtins;
 
 drvFromScript { buildInputs = [ ML4HSFE ];
-                inherit (pkg) features annotated; } ''
+                inherit (pkg) features; } ''
   set -e
   echo "$info" 1>&2
-
-  ANNCOUNT=$(jq 'length' < "$annotated")
-  echo "ANNCOUNT: $ANNCOUNT" 1>&2
 
   COUNT=$(jq 'length' < "$features")
 
