@@ -55,12 +55,6 @@ let clusters         = listToAttrs (map (c: {
         "${getDepsScript}" < "${annotated}" > deps.json
         "${storeResult}" deps.json "$out"
       '';
-
-      features = runScript { buildInputs = [ ML4HSFE ]; } ''
-        echo "Turning annotated '${pkg.name}' at '${annotated}' into features" 1>&2
-        WIDTH=30 HEIGHT=30 ml4hsfe-loop < "${annotated}" > features.json
-        "${storeResult}" features.json "$out"
-      '';
     };
 
 in
