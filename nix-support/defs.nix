@@ -17,9 +17,6 @@ rec {
   inherit (callPackage ./nixFromCabal.nix {})
           nixFromCabal nixedHsPkg;
 
-  inherit (callPackage ./cluster.nix {})
-          cluster nixRecurrentClusteringScript recurrentClusteringScript;
-
   inherit (callPackage ./test-defs.nix {})
           runTestInDrv testAll testDbg testDrvString testFiles testMsg
           testPackages testRec testRun testWrap;
@@ -37,6 +34,7 @@ rec {
   buildPackage         = callPackage ./buildPackage.nix       {
                            inherit (haskellPackages) cabal2nix cabal-install;
                          };
+  cluster              = callPackage ./cluster.nix            {};
   downloadAndDump      = callPackage ./downloadAndDump.nix    {};
   downloadToNix        = callPackage ./downloadToNix.nix      {
                            inherit (haskellPackages) cabal-install;
