@@ -112,33 +112,6 @@ rec {
                   exit 0
                 '';
 
-  checkPlot = plot:
-    let w      = "640";
-        h      = "480";
-        exists = testMsg (pathExists plot) "Checking if plot '${plot}' exists";
-        dims   = testMsg
-                   (parseJSON
-                     (runScript { buildInputs = [ file jq ]; } ''
-                       set -e
-                       echo "Checking '${plot}' bigger than ${w}x${h}" 1>&2
-                       GEOM=$(file "${plot}" | # filename: foo, W x H, baz
-                              cut -d : -f 2  | # foo, W x H,baz
-                              cut -d , -f 2  ) # W x H
-                       W=$(echo "$GEOM" | cut -d x -f 1)
-                       H=$(echo "$GEOM" | cut -d x -f 2)
-
-                       echo "Checking '$W'x'$H' against '${w}'x'${h}'" 1>&2
-                       jq -n --argjson width  "$W" \
-                             --argjson height "$H" \
-                             '$width >= ${w} and $height >= ${h}' > "$out"
-                     ''))
-                   "Plot dimensions sufficient (indicates GNUPlot succeeded)";
-     in testWrap [
-          (plot != null)
-          exists
-          dims
-        ] "Checking plot ${toJSON plot}";
-
   testPackages = callPackage ./testPackages.nix {};
 
   # Build the contents of a Nix file, using nix-build. This lets us use Nix to

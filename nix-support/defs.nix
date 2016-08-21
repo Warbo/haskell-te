@@ -21,11 +21,8 @@ rec {
           cluster nixRecurrentClusteringScript recurrentClusteringScript;
 
   inherit (callPackage ./test-defs.nix {})
-          checkPlot runTestInDrv testAll testDbg testDrvString testFiles testMsg
+          runTestInDrv testAll testDbg testDrvString testFiles testMsg
           testPackages testRec testRun testWrap;
-
-  inherit (plotResults)
-          mkTbl;
 
   inherit (callPackage ./timeout.nix {})
           timeLimSecs memLimKb timeout;
@@ -62,15 +59,12 @@ rec {
   importDir            = callPackage ./importDir.nix          {};
   parseJSON            = callPackage ./parseJSON.nix          {};
   pkgName              = callPackage ./pkgName.nix            {};
-  plotResults          = callPackage ./plotResults.nix        {};
-  plots                = callPackage ./plots.nix              {};
   random               = callPackage ./random.nix             {};
   reduce               = callPackage ./reduce.nix             {};
   runScript            = callPackage ./runScript.nix          {};
   runTypes             = callPackage ./runTypes.nix           {};
   runTypesScript       = callPackage ./runTypesScript.nix     {};
   shuffledList         = callPackage ./shufflePackages.nix    {};
-  tabulate             = callPackage ./tabulate.nix           {};
   tagAstsScript        = callPackage ./tagAstsScript.nix      {};
   tests                = callPackage ./tests.nix              { pkgs = self; };
   timeCalc             = callPackage ./timeCalc.nix           {};

@@ -110,50 +110,6 @@ processPkg = { clusters, quick, sampleSize ? null }: givenName: givenPkg: rec {
                                    '')
                             equations;
 
-  sizeCounts = mapAttrs (_: fs: sum (map (f: fromJSON (runScript {} ''
-      jq -s 'length' < "${f}" > "$out"
-    '')) fs))
-    formatted;
-
-  # Gather all values into a list of points
-  sizeDataPoints = import ./getSizeDataPoints.nix {
-                     inherit ourCheck equations lib equationCounts nth
-                             sizeCounts totalTimes;
-                   };
-
-  # Make another list of points, with clustering runs aggregated together
-  clusterDataPoints =
-  assert ourCheck "isList sizeDataPoints"      (isList sizeDataPoints);
-  assert ourCheck "all isAttrs sizeDataPoints" (all isAttrs sizeDataPoints);
-  let
-    # Combine one cluster with the others from the same run
-    addTo = x: y:
-      assert isInt x.eqCount;
-      assert isInt y.eqCount;
-      assert x.clusterCount == y.clusterCount;
-      rec {
-        inherit (x) clusterCount;
-        eqCount    = x.eqCount + y.eqCount;
-        totalTime  = timeCalc.sumTimeDrvs [x.totalTime  y.totalTime];
-      };
-
-    # Given a new point, partition the previous points into those from the
-    # same run ("right") and those from other runs ("wrong"). If there's a
-    # "right" point add the new one to it; otherwise use the new point as-is
-    accum = newP: old:
-      assert ourCheck "isList  ${toJSON old}"     (isList  old);
-      assert ourCheck "isAttrs ${toJSON newP}"    (isAttrs newP);
-      assert ourCheck "all isAttrs ${toJSON old}" (all isAttrs old);
-      assert ourCheck "newP has clusterCount ${toJSON newP}" (newP ? clusterCount);
-      assert ourCheck "Old points have clusterCount ${toJSON old}"
-                   (all (p: p ? clusterCount) old);
-      with partition (oldP: oldP.clusterCount == newP.clusterCount) old;
-      assert (length right < 2);
-      wrong ++ (if length right == 1
-                   then [(addTo newP (head right))]
-                   else [newP]);
-  in fold accum [] sizeDataPoints;
-
   # Total benchmark times (split up according to clusters)
   inherit (timeCalc.pkgTimes {
             dumpTime     = rawDump.time;
