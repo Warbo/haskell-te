@@ -43,9 +43,8 @@ rec {
   dumpAndAnnotate      = callPackage ./dumpAndAnnotate.nix    {};
   dumpPackage          = callPackage ./dumpPackage.nix        {};
   dumpToNix            = callPackage ./dumpToNix.nix          {};
-  explore              = callPackage ./explore.nix            { self = self; }; # Avoid the Self language
+  explore              = callPackage ./explore.nix            {};
   extractTarball       = callPackage ./extractTarball.nix     {};
-  format               = callPackage ./format.nix             {};
   getAritiesScript     = callPackage ./getAritiesScript.nix   {};
   getDepsScript        = callPackage ./getDepsScript.nix      {
                            inherit (haskellPackages) GetDeps;

@@ -1,4 +1,4 @@
-{ annotate, buildPackage, cluster, defaultClusters, drvFromScript,
+{ annotate, buildPackage, callPackage, cluster, defaultClusters, drvFromScript,
   dumpPackage, explore, extractTarball, format, haskellPackages, lib,
   nixedHsPkg, nixFromCabal, pkgName, reduce, runScript, stdenv,
   storeResult, timeCalc, writeScript }:
@@ -8,6 +8,8 @@ with lib;
 let
 
 sum = fold (x: y: x + y) 0;
+
+format = callPackage ./format.nix {};
 
 processPkg = { clusters, quick, sampleSize ? null }: givenName: givenPkg: rec {
   # Original Haskell fields
