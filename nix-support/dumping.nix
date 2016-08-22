@@ -1,10 +1,7 @@
-{ bash, callPackage, gnutar, haskellPackages, jq, lib, nix, perl, procps,
-  runCommand, runScript, stdenv, writeScript }:
+{ writeScript }:
 with builtins;
 
 rec {
-  ghcWithPlugin = ./ghcWithPlugin.nix;
-
   # Extracts ASTs from a Cabal package
   dump-package = writeScript "dump-package" ''
     #!/usr/bin/env bash
@@ -22,8 +19,9 @@ rec {
     }
 
     PKG=$("${dump-package-name}" "$DIR")
+    export PKG
 
-    ENV=$(echo "with import <nixpkgs> {}; import \"${ghcWithPlugin}\" \"$PKG\"") || {
+    ENV=$(echo "with import <nixpkgs> {}; import \"${./ghcWithPlugin.nix}\" \"$PKG\"") || {
       echo "Unable to get package environment; aborting" 1>&2
       exit 2
     }
@@ -74,25 +72,17 @@ rec {
     }
 
     function build {
-
         # NOTE: We swap stderr (2) and stdout (1) via a temporary fd (3), since GHC
         # plugins write to stderr
         cabal --ghc-options="$OPTIONS" build 3>&2 2>&1 1>&3
     }
 
     function packageMissing {
-        for P in "$PKG_NAME" AstPlugin
+        for P in "$PKG" AstPlugin
         do
             "$1" list "$P" | grep '(no packages)' > /dev/null && return 0
         done
         return 1
-    }
-
-    [[ "$#" -eq 0 ]] && echo "runAstPlugin needs a directory" && exit 1
-
-    PKG_NAME=$("${dump-package-name}" "$1") || {
-        echo "Couldn't get package name from '$1'" 1>&2
-        exit 1
     }
 
     cd "$1"
@@ -107,17 +97,17 @@ rec {
             # Ignore entries which don't contain ghc-pkg
             [[ -e "$DIR/ghc-pkg" ]] || continue
 
-            # Ignore ghc-pkg entries which don't contain AstPlugin or $PKG_NAME
+            # Ignore ghc-pkg entries which don't contain AstPlugin or $PKG
             packageMissing "$DIR/ghc-pkg" && continue
 
-            # If we're here, we've found a ghc-pkg with AstPlugin and $PKG_NAME
+            # If we're here, we've found a ghc-pkg with AstPlugin and $PKG
             GHC_PKG=$("$DIR/ghc-pkg" list | head -n 1 | tr -d ':')
             break
         done < <(echo "$PATH" | tr ':' '\n' | grep ghc)
 
         if [[ -z "$GHC_PKG" ]]
         then
-            echo "Couldn't find ghc-pkg for AstPlugin & '$PKG_NAME'" 1>&2
+            echo "Couldn't find ghc-pkg for AstPlugin & '$PKG'" 1>&2
             exit 1
         fi
     else
@@ -126,9 +116,8 @@ rec {
 
     OPTIONS="-package-db=$GHC_PKG -package AstPlugin -fplugin=AstPlugin.Plugin"
 
-    [[ -n "$SKIP_CABAL_CONFIG" ]] ||
-        cabal configure --package-db="$GHC_PKG" 1>&2
+    cabal configure --package-db="$GHC_PKG" 1>&2
 
-    getAsts | jq -c ". + {package: \"$PKG_NAME\"}" | jq -s '.'
+    getAsts | jq -c ". + {package: \"$PKG\"}" | jq -s '.'
   '';
 }
