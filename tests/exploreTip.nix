@@ -2,8 +2,6 @@ defs: with defs; with builtins; with lib;
 
 let
 
-memLimKb = (defs.callPackage ../nix-support/timeout.nix {}).memLimKb;
-
 strippedContent = f: drvFromScript { inherit f; } ''
   tr -dc '\n\t ' < "$f" > "$out"
 '';

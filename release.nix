@@ -10,7 +10,4 @@ let pkgs = builtins.trace "FIXME: Do 64 and 32 bit" import ./nix-support {};
 
   inherit (pkgs)
     mlspec mlspec-bench reduce-equations runWeka;
-
-  tip-eqs = let set = pkgs.callPackage ./nix-support/exploreTip.nix {};
-             in builtins.removeAttrs set [ "override" "overrideDerivation" ];
 }
