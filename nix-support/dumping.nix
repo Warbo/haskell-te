@@ -116,7 +116,8 @@ rec {
 
     OPTIONS="-package-db=$GHC_PKG -package AstPlugin -fplugin=AstPlugin.Plugin"
 
-    cabal configure --package-db="$GHC_PKG" 1>&2
+    cabal configure 1>&2
+    # --package-db="$GHC_PKG" 1>&2
 
     getAsts | jq -c ". + {package: \"$PKG\"}" | jq -s '.'
   '';

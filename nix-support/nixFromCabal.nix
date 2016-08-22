@@ -1,4 +1,4 @@
-{ haskellPackages, lib, stdenv }:
+{ drvFromScript, haskellPackages, lib, stdenv }:
 with builtins; with lib;
 
 # Make a Nix package definition from a Cabal project. The result is a function,
@@ -19,56 +19,57 @@ rec {
 
 nixedHsPkg = dir: f:
 
-assert typeOf dir == "path" || isString dir;
-assert f == null || isFunction f;
+  assert typeOf dir == "path" || isString dir;
+  assert f == null || isFunction f;
 
-let hsVer   = haskellPackages.ghc.version;
+  let hsVer   = haskellPackages.ghc.version;
 
-    # Find the .cabal file and read properties from it
-    cabalF  = head (filter (x: hasSuffix ".cabal" x) (attrNames (readDir dir)));
-    cabalC  = map (replaceStrings [" " "\t"] ["" ""])
-                  (splitString "\n" (readFile (dir + "/${cabalF}")));
+      # Find the .cabal file and read properties from it
+      cabalF  = head (filter (x: hasSuffix ".cabal" x) (attrNames (readDir dir)));
+      cabalC  = map (replaceStrings [" " "\t"] ["" ""])
+                    (splitString "\n" (readFile (dir + "/${cabalF}")));
 
-    getField = f: replaceStrings [f (toLower f)] ["" ""]
-                                 (head (filter (l: hasPrefix          f  l ||
-                                                   hasPrefix (toLower f) l)
-                                               cabalC));
+      getField = f: replaceStrings [f (toLower f)] ["" ""]
+                                   (head (filter (l: hasPrefix          f  l ||
+                                                     hasPrefix (toLower f) l)
+                                                 cabalC));
 
-    pkgName = unsafeDiscardStringContext (getField "Name:");
-    pkgV    = unsafeDiscardStringContext (getField "Version:");
+      pkgName = unsafeDiscardStringContext (getField "Name:");
+      pkgV    = unsafeDiscardStringContext (getField "Version:");
+   in drvFromScript {
+        inherit dir;
+        name         = "nixFromCabal-${hsVer}-${pkgName}-${pkgV}";
+        buildInputs  = [ haskellPackages.cabal2nix ];
+      } ''
+          source $stdenv/setup
 
-    nixed   = stdenv.mkDerivation {
-      inherit dir;
-      name         = "nixFromCabal-${hsVer}-${pkgName}-${pkgV}";
-      buildInputs  = [ haskellPackages.cabal2nix ];
-      buildCommand = ''
-        source $stdenv/setup
+          echo "Source is '$dir'" 1>&2
+          cp -vr "$dir" ./source-"$name"
+          pushd ./source-* > /dev/null
 
-        echo "Copying '$dir' to '$out'"
-        cp -vr "$dir" "$out"
-        cd "$out"
+          echo "Setting permissions" 1>&2
+          chmod +w . -R # We need this if dir has come from the store
 
-        echo "Setting permissions"
-        chmod +w . # We need this if dir has come from the store
+          echo "Cleaning up unnecessary files" 1>&2
+          rm -rf ".git" || true
 
-        echo "Cleaning up unnecessary files"
-        rm -rf ".git" || true
+          echo "Creating 'default.nix'" 1>&2
+          touch default.nix
+          chmod +w default.nix
 
-        echo "Creating '$out/default.nix'"
-        touch default.nix
-        chmod +w default.nix
+          echo "Generating package definition" 1>&2
+          cabal2nix ./. > default.nix
+          echo "Finished generating" 1>&2
 
-        echo "Generating package definition"
-        cabal2nix ./. > default.nix
-        echo "Finished generating"
-      '';
-    };
- in nixed;
+          echo "Adding to store" 1>&2
+          popd > /dev/null
+          nix-store --add ./source-* > "$out"
+        '';
 
 nixFromCabal = dir: f:
 let nixed = nixedHsPkg dir f;
 
-    result = import "${nixed}";
+    result = let path = import "${nixed}"; in import path;
 
     # Support an "inner-composition" of "f" and "result", which behaves like
     # "args: f (result args)" but has explicit named arguments, to allow
