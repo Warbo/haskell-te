@@ -5,9 +5,6 @@ self: super:
 with builtins; with super.lib;
 
 rec {
-  inherit (callPackage ./dumping.nix {})
-          dump-package;
-
   inherit (callPackage ./runBenchmark.nix {})
           benchmark checkHsEnv lastEntry withCriterion withTime;
 
@@ -28,40 +25,39 @@ rec {
   inherit (haskellPackages)
           AstPlugin GetDeps ML4HSFE mlspec mlspec-bench reduce-equations;
 
-  annotate             = callPackage ./annotate.nix           {};
-  annotateAstsScript   = callPackage ./annotateAstsScript.nix {};
-  buildPackage         = callPackage ./buildPackage.nix       {
-                           inherit (haskellPackages) cabal2nix cabal-install;
-                         };
-  cluster              = callPackage ./cluster.nix            {};
-  downloadToNix        = callPackage ./downloadToNix.nix      {
-                           inherit (haskellPackages) cabal-install;
-                         };
-  drvFromScript        = callPackage ./drvFromScript.nix      {};
-  dumpPackage          = callPackage ./dumpPackage.nix        {};
-  dumpToNix            = callPackage ./dumpToNix.nix          {};
-  explore              = callPackage ./explore.nix            {};
-  extractTarball       = callPackage ./extractTarball.nix     {};
-  getAritiesScript     = callPackage ./getAritiesScript.nix   {};
-  getDepsScript        = callPackage ./getDepsScript.nix      {
-                           inherit (haskellPackages) GetDeps;
-                         };
-  getTypesScript       = callPackage ./getTypesScript.nix     {};
-  haskellPackages      = callPackage ./haskellPackages.nix    {
-                           superHaskellPackages = super.haskellPackages;
-                         };
-  importDir            = callPackage ./importDir.nix          {};
-  parseJSON            = callPackage ./parseJSON.nix          {};
-  pkgName              = callPackage ./pkgName.nix            {};
-  reduce               = callPackage ./reduce.nix             {};
-  runScript            = callPackage ./runScript.nix          {};
-  runTypes             = callPackage ./runTypes.nix           {};
-  runTypesScript       = callPackage ./runTypesScript.nix     {};
-  shuffledList         = callPackage ./shufflePackages.nix    {};
-  tagAstsScript        = callPackage ./tagAstsScript.nix      {};
-  tests                = callPackage ./tests.nix              { pkgs = self; };
-  timeCalc             = callPackage ./timeCalc.nix           {};
-  tipBenchmarks        = callPackage ./tipBenchmarks.nix      {};
+  annotate           = callPackage ./annotate.nix           {};
+  annotateAstsScript = callPackage ./annotateAstsScript.nix {};
+  cluster            = callPackage ./cluster.nix            {};
+  drvFromScript      = callPackage ./drvFromScript.nix      {};
+  dump-package       = callPackage ./dump-package.nix       {};
+  dumpPackage        = callPackage ./dumpPackage.nix        {};
+  dumpToNix          = callPackage ./dumpToNix.nix          {};
+  explore            = callPackage ./explore.nix            {};
+  extractTarball     = callPackage ./extractTarball.nix     {};
+  getAritiesScript   = callPackage ./getAritiesScript.nix   {};
+  getTypesScript     = callPackage ./getTypesScript.nix     {};
+  importDir          = callPackage ./importDir.nix          {};
+  parseJSON          = callPackage ./parseJSON.nix          {};
+  pkgName            = callPackage ./pkgName.nix            {};
+  reduce             = callPackage ./reduce.nix             {};
+  runScript          = callPackage ./runScript.nix          {};
+  runTypes           = callPackage ./runTypes.nix           {};
+  runTypesScript     = callPackage ./runTypesScript.nix     {};
+  shuffledList       = callPackage ./shufflePackages.nix    {};
+  tagAstsScript      = callPackage ./tagAstsScript.nix      {};
+  timeCalc           = callPackage ./timeCalc.nix           {};
+  tipBenchmarks      = callPackage ./tipBenchmarks.nix      {};
+
+  buildPackage    = callPackage ./buildPackage.nix
+                      { inherit (haskellPackages) cabal2nix cabal-install; };
+  downloadToNix   = callPackage ./downloadToNix.nix
+                      { inherit (haskellPackages) cabal-install;           };
+  getDepsScript   = callPackage ./getDepsScript.nix
+                      { inherit (haskellPackages) GetDeps;                 };
+  haskellPackages = callPackage ./haskellPackages.nix
+                      { superHaskellPackages = super.haskellPackages;      };
+  tests           = callPackage ./tests.nix
+                      { pkgs = self;                                       };
 
   callPackage = super.newScope self;
 

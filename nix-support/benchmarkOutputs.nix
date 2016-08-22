@@ -24,7 +24,7 @@ processPkg = { clusters, quick, sampleSize ? null }: givenName: givenPkg: rec {
   # Run cabal2nix if necessary
   srcNixed = if pathExists (unsafeDiscardStringContext "${src}/default.nix")
                 then src
-                else nixedHsPkg "${src}" null;
+                else import (nixedHsPkg "${src}" null);
 
   # Building with regular GHC
   build = buildPackage { inherit src quick; hsEnv = pkg.env; };

@@ -78,12 +78,11 @@ let nixed = nixedHsPkg dir f;
     # Build a string "a,b,c" for the arguments of "result" which don't have
     # defaults
     resultArgs = functionArgs result;
-    required   = filter (n: !resultArgs.${n}) (attrNames resultArgs);
+    required   = filter (n: !resultArgs."${n}") (attrNames resultArgs);
     arglist    = lib.concatStrings (lib.intersperse "," required);
 
     # Strip the dependencies off our strings, so they can be embedded
     arglistF   = unsafeDiscardStringContext arglist;
-    nixedF     = unsafeDiscardStringContext nixed;
 
     # Write a special-purpose composition function to a file, accepting the same
     # arguments ("arglistF") as "result".
