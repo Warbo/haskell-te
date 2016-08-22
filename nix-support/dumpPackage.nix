@@ -10,4 +10,4 @@ with builtins; with lib;
     ''
       O=$(cat "$dumped")
       ${storeParts}
-    '';
+    ''
