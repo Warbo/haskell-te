@@ -1,6 +1,6 @@
 { annotateAstsScript, defaultClusters, drvFromScript, GetDeps, getDepsScript,
-  getTypesScript, jq, lib, ML4HSFE, parseJSON, processPackages, runScript,
-  runTypes, runWeka, storeResult, utillinux }:
+  getTypesScript, lib, ML4HSFE, processPackages, runScript,
+  runTypes, runWeka, storeResult }:
 with builtins;
 with lib;
 
@@ -30,7 +30,7 @@ let clusters         = listToAttrs (map (c: {
           "${annotateAstsScript}" < "$ranTypes" > "$out"
         '';
 
-      scopeResults = runScript { buildInputs = [ jq ]; } ''
+      scopeResults = runScript {} ''
         set -e
         jq -r '.scoperesult' < "${ranTypes}" \
                              > scopeResults.json
@@ -45,8 +45,7 @@ let clusters         = listToAttrs (map (c: {
 
       typeResults = runScript {} ''
         set -e
-        "${jq}/bin/jq" -r '.result' < "${ranTypes}" \
-                                    > typeResults.json
+        jq -r '.result' < "${ranTypes}" > typeResults.json
         "${storeResult}" typeResults.json "$out"
       '';
 

@@ -1,5 +1,5 @@
-{ benchmark, checkFailures, drvFromScript, explore, jq, ML4HSFE, parseJSON,
-  runScript, runWeka, stdParts, storeParts, writeScript }:
+{ benchmark, checkFailures, drvFromScript, explore, ML4HSFE, runWeka, stdParts,
+  storeParts, writeScript }:
 with builtins;
 
 let

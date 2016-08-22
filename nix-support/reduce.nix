@@ -1,5 +1,5 @@
 { benchmark, checkFailures, drvFromScript, explore, haskellPackages, lib,
-  parseJSON, reduce-equations, runScript, stdParts, storeParts, writeScript }:
+  reduce-equations, stdParts, storeParts, writeScript }:
 with builtins;
 with lib;
 
