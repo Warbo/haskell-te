@@ -29,7 +29,6 @@ rec {
   annotateAstsScript = callPackage ./annotateAstsScript.nix {};
   cluster            = callPackage ./cluster.nix            {};
   drvFromScript      = callPackage ./drvFromScript.nix      {};
-  dump-package       = callPackage ./dump-package.nix       {};
   dumpPackage        = callPackage ./dumpPackage.nix        {};
   dumpToNix          = callPackage ./dumpToNix.nix          {};
   explore            = callPackage ./explore.nix            {};
