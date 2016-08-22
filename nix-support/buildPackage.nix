@@ -1,5 +1,5 @@
-{ benchmark, cabal2nix, cabal-install, drvFromScript, explore, parseJSON,
-  runScript, stdParts, storeParts, writeScript }:
+{ benchmark, cabal2nix, cabal-install, drvFromScript, explore, stdParts,
+  storeParts, writeScript }:
 
 { src, quick, hsEnv }:
 

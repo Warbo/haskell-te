@@ -1,5 +1,4 @@
-{ benchmark, drvFromScript, dump-package, explore, parseJSON, perl,
-  runScript, stdenv, writeScript }:
+{ benchmark, drvFromScript, dump-package, explore, writeScript }:
 { quick, pkgDir }:
 
 drvFromScript {

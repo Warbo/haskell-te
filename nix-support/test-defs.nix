@@ -1,5 +1,4 @@
-{ buildEnv, callPackage, dbug, drvFromScript, file, jq, lib, parseJSON,
-  runScript, stdenv, writeScript}:
+{ callPackage, dbug, drvFromScript, lib, writeScript }:
 
 with builtins;
 with lib;

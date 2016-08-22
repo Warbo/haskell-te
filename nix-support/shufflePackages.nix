@@ -1,11 +1,11 @@
-{ coreutils, jq, parseJSON, pv, runScript, storeResult, wget, writeScript }:
+{ parseJSON, runScript, storeResult, wget, writeScript }:
 with builtins;
 
-let listUrl     = "http://hackage.haskell.org/packages/index.tar.gz";
+let listUrl = "http://hackage.haskell.org/packages/index.tar.gz";
 
-    packageList = runScript {} ''
+    packageList = runScript { buildInputs = [ wget ]; } ''
       set -e
-      "${wget}/bin/wget" -O "index.tar.gz" "${listUrl}"
+      wget -O "index.tar.gz" "${listUrl}"
       "${storeResult}" index.tar.gz
     '';
 
@@ -26,16 +26,14 @@ let listUrl     = "http://hackage.haskell.org/packages/index.tar.gz";
 
         # Bump the latest version we've seen
         LATEST=$(echo "$LINE" | cut -d / -f 2)
-      done < <("${pv}/bin/pv" -f < "${packageList}" | \
-               tar -zt | grep -o '[^/][^/]*/[0-9][^/]*')
+      done < <(tar -zt < "${packageList}" | grep -o '[^/][^/]*/[0-9][^/]*')
 
       echo -e "$PKG\t$LATEST"
     '';
 
     shuffled = runScript {} ''
       set -e
-      "${extractVersions}" | "${coreutils}/bin/uniq" | \
-                             "${coreutils}/bin/shuf" > shuffled
+      "${extractVersions}" | uniq | shuf > shuffled
       "${storeResult}" shuffled
     '';
 
@@ -49,7 +47,7 @@ let listUrl     = "http://hackage.haskell.org/packages/index.tar.gz";
                                    shuffled
                 else trace "Using package list from SHUFFLED_LIST ${given}"
                            given;
-in parseJSON (runScript { buildInputs = [ jq ]; } ''
+in parseJSON (runScript {} ''
   set -e
   cut -f 1 < "${file}" | jq -R '.' | jq -s '.' > "$out"
 '')

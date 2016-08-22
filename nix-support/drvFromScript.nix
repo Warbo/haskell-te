@@ -1,8 +1,8 @@
-{ bash, explore, haskellPackages, jq, lib, nix, perl, procps, runCommand,
-  utillinux, writeScript }:
+{ bash, coreutils, explore, haskellPackages, jq, lib, nix, perl, procps,
+  runCommand, utillinux, writeScript }:
 with builtins;
 
-let commonDeps = [ bash jq nix perl procps utillinux ];
+let commonDeps = [ bash coreutils jq nix perl procps utillinux ];
 
     # Ensure we can write to the Nix store (or ask a builders to do so for us)
     nixRemote  =

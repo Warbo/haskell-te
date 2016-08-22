@@ -1,6 +1,5 @@
-{ annotateAstsScript, benchmark, drvFromScript, explore, GetDeps, getDepsScript,
-  haskellPackages, jq, parseJSON, runScript, runTypesScript, stdenv, stdParts,
-  storeParts, utillinux, writeScript }:
+{ annotateAstsScript, benchmark, drvFromScript, explore, getDepsScript,
+  haskellPackages, runTypesScript, stdParts, storeParts, writeScript }:
 { asts, pkg, pkgSrc ? null, quick }:
 
 with builtins;

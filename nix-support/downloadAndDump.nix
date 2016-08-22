@@ -1,4 +1,4 @@
-{ dumpToNix, downloadToNix, drvFromScript, parseJSON }:
+{ dumpToNix, downloadToNix, drvFromScript }:
 { quick, pkgName}:
 
 with builtins;
