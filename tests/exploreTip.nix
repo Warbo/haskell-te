@@ -42,7 +42,7 @@ singleClusterFails =
 multipleClustersPass =
   let num    = 10;
       output = tipBenchmarks.process { quick = true; clusters = [ num ]; };
-   in {
+   in trace "FIXME: Test these some other way; they take too long" {
         explored = mapAttrs (n: eqs: testFiles eqs "Non-empty explored"
                                        (writeScript "non-empty" ''
                                          C=$(cat "$1" | tr -dc '\n\t ')
@@ -70,4 +70,4 @@ multipleClustersPass =
 
 withDbg = dbg: msg: x: addErrorContext dbg (testMsg x msg || trace dbg false);
 
-in { inherit singleClusterFails multipleClustersPass; }
+in { inherit singleClusterFails; }
