@@ -35,7 +35,6 @@ rec {
                            inherit (haskellPackages) cabal2nix cabal-install;
                          };
   cluster              = callPackage ./cluster.nix            {};
-  downloadAndDump      = callPackage ./downloadAndDump.nix    {};
   downloadToNix        = callPackage ./downloadToNix.nix      {
                            inherit (haskellPackages) cabal-install;
                          };
