@@ -109,22 +109,6 @@ rec {
                   echo "false" > "$out"
                 '';
 
-  checkStdDev = sd:
-    assert ourCheck "isAttrs stddev '${toJSON sd}'"
-                    (isAttrs sd);
-    assert ourCheck "Stddev '${toJSON sd}' has estPoint"
-                    (sd ? estPoint);
-    assert ourCheck "Stddev estPoint '${toJSON sd.estPoint}'"
-                    (isString sd.estPoint);
-    true;
-
-  checkTime = t:
-    assert ourCheck "isAttrs '${toJSON t}'"           (isAttrs t);
-    assert ourCheck "${toJSON t} has mean"            (t ? mean);
-    assert ourCheck "isAttrs '${toJSON t.mean}'"      (isAttrs t.mean);
-    assert ourCheck "'${toJSON t.mean}' has estPoint" (t.mean ? estPoint);
-    t ? stddev -> ourCheck "Checking stddev" (checkStdDev t.stddev);
-
   # Use 'dbug foo bar' in place of 'bar' when 'bar' is fragile, tricky, etc. The
   # value of 'foo' will be included in the stack trace in case of an error, and
   # if the environment variable "TRACE" is non-empty it will also be printed out
@@ -155,8 +139,6 @@ rec {
     if n == 1
        then head lst
        else nth (n - 1) (tail lst);
-
-  ourCheck = msg: cond: cond || abort msg;
 
   runWeka = callPackage (if havePath "runWeka"
                             then <runWeka>

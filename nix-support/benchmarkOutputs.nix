@@ -1,8 +1,7 @@
-{ annotate, bc, buildPackage, ourCheck, cluster, defaultClusters, drvFromScript,
-  dumpPackage, explore, extractTarball, format, haskellPackages, jq, lib,
-  nixedHsPkg, nixFromCabal, nth, parseJSON, pkgName, reduce, runScript, stdenv,
-  storeResult, timeCalc, writeScript
-}:
+{ annotate, buildPackage, cluster, defaultClusters, drvFromScript,
+  dumpPackage, explore, extractTarball, format, haskellPackages, lib,
+  nixedHsPkg, nixFromCabal, pkgName, reduce, runScript, stdenv,
+  storeResult, timeCalc, writeScript }:
 with builtins;
 with lib;
 
@@ -84,7 +83,7 @@ processPkg = { clusters, quick, sampleSize ? null }: givenName: givenPkg: rec {
   # Stick to the quick output, so testing is faster
   dump = if sampleSize == null
             then rawDump.stdout
-            else runScript { buildInputs = [ jq ]; } ''
+            else runScript {} ''
                    # Sample from quickspecable definitions
                    cat "${rawDump.stdout}"                   |
                    jq -c 'map(select(.quickspecable)) | .[]' |

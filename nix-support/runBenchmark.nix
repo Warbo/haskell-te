@@ -1,5 +1,4 @@
-{ bash, callPackage, coreutils, explore, jq, lib, mlspec-bench, ourCheck,
-  runScript, stdenv, strip, time, writeScript }:
+{ coreutils, explore, lib, mlspec-bench, runScript, strip, time, writeScript }:
 
 with builtins; with lib;
 
@@ -163,7 +162,7 @@ rec {
   # A thorough benchmark, which performs multiple runs using Criterion
   withCriterion = { quick, cmd, args ? [], inputs ? []}:
     writeScript "with-criterion" ''
-      #!${bash}/bin/bash
+      #!/usr/bin/env bash
       set -e
 
       INPUT=$(cat)
