@@ -189,15 +189,4 @@ rec {
               in if unsuf == s
                     then s
                     else strip unsuf;
-
-  uniq =
-    let uniq' = list: acc:
-          seq acc (if list == []
-                      then acc
-                      else let x  = head   list;
-                               xs = drop 1 list;
-                            in uniq' xs (acc ++ (if elem x xs
-                                                    then []
-                                                    else [x])));
-     in l: uniq' l [];
 }
