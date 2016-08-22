@@ -132,14 +132,6 @@ rec {
 
   havePath = n: any (x: x.prefix == n) nixPath;
 
-  nth = n: lst:
-    assert isInt  n          || abort "Should be int '${toJSON n}'";
-    assert isList lst        || abort "Expecting list, given '${typeOf lst}'";
-    assert (n <= length lst) || abort "Index '${toJSON n}' in bounds '${toJSON (length lst)}'";
-    if n == 1
-       then head lst
-       else nth (n - 1) (tail lst);
-
   runWeka = callPackage (if havePath "runWeka"
                             then <runWeka>
                             else ../packages/runWeka) {};
