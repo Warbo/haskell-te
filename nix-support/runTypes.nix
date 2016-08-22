@@ -1,5 +1,4 @@
-{ drvFromScript, jq, runScript, runTypesScript, storeResult, GetDeps,
-  utillinux }:
+{ drvFromScript, runTypesScript, GetDeps }:
 asts: pkg: { pkgSrc ? null }:
 
 drvFromScript { inherit asts; buildInputs = [ GetDeps ]; } ''

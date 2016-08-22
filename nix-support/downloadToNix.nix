@@ -1,4 +1,4 @@
-{ cabal-install, drvFromScript, runScript, storeResult }:
+{ cabal-install, drvFromScript }:
 with builtins;
 
 pkgName:

@@ -1,4 +1,4 @@
-{ drvFromScript, lib, parseJSON, runScript, storeResult }:
+{ drvFromScript, lib }:
 with builtins;
 with lib;
 

@@ -1,5 +1,5 @@
 { bash, callPackage, defaultClusters, fetchurl, haskellPackages, nixFromCabal,
-  processPackage, python, racket, runScript, stdenv, storeResult, writeScript }:
+  processPackage, python, racket, runScript, stdenv, writeScript }:
 
 with builtins;
 let path = if any (x: x.prefix == "te-benchmarks") nixPath
