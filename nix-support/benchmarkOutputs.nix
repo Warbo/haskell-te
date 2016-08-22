@@ -1,7 +1,7 @@
 { annotate, buildPackage, callPackage, cluster, defaultClusters, drvFromScript,
-  dumpPackage, explore, extractTarball, format, haskellPackages, lib,
-  nixedHsPkg, nixFromCabal, pkgName, reduce, runScript, stdenv,
-  storeResult, timeCalc, writeScript }:
+  dumpPackage, explore, extractTarball, haskellPackages, lib, nixedHsPkg,
+  nixFromCabal, pkgName, reduce, runScript, stdenv, storeResult, timeCalc,
+  writeScript }:
 with builtins;
 with lib;
 
