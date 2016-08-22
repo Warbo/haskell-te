@@ -57,7 +57,6 @@ rec {
   importDir            = callPackage ./importDir.nix          {};
   parseJSON            = callPackage ./parseJSON.nix          {};
   pkgName              = callPackage ./pkgName.nix            {};
-  random               = callPackage ./random.nix             {};
   reduce               = callPackage ./reduce.nix             {};
   runScript            = callPackage ./runScript.nix          {};
   runTypes             = callPackage ./runTypes.nix           {};
@@ -67,10 +66,6 @@ rec {
   tests                = callPackage ./tests.nix              { pkgs = self; };
   timeCalc             = callPackage ./timeCalc.nix           {};
   tipBenchmarks        = callPackage ./tipBenchmarks.nix      {};
-
-  assertMsg = cond: msg:
-    builtins.addErrorContext "not ok - ${msg}"
-                             (assert cond; trace "ok - ${msg}" cond);
 
   callPackage = super.newScope self;
 
@@ -121,10 +116,6 @@ rec {
      in addErrorContext msg v;
 
   defaultClusters = [ 1 2 4 ];
-
-  # Nix doesn't handle floats, so use bc
-  floatDiv = x: y: runScript { buildInputs = [ self.bc ]; }
-                     ''echo "scale=16; ${x}/${y}" | bc > "$out"'';
 
   haskellPackageNames = self.writeScript
                           "haskell-names"
