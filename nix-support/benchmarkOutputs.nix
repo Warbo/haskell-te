@@ -107,7 +107,7 @@ processPkg = { clusters, quick, sampleSize ? null }: givenName: givenPkg: rec {
 
   # Useful for benchmarking
   equationCounts = mapAttrs (_: f: drvFromScript { inherit f; } ''
-                                     jq -s 'length' < "$f" > "$out"
+                                     grep -c "==" < "$f" > "$out"
                                    '')
                             equations;
 
