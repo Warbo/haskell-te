@@ -116,6 +116,8 @@ rec {
   cacheOutputs = ''
     # Cache results in the store, so we make better use of the cache and avoid
     # sending huge strings into Nix
+    echo "$INPUT" > stdin
+     STDIN=$(nix-store --add stdin)
     STDOUT=$(nix-store --add stdout)
     STDERR=$(nix-store --add stderr)
   '';
@@ -124,6 +126,11 @@ rec {
     if [[ "$CODE" -ne 0 ]]
     then
       echo "Failed to time '${cmd}' with '${args}'" 1>&2
+
+      echo "Contents of stdin:" 1>&2
+      cat  stdin                1>&2 || true
+      echo "End of stdin"       1>&2
+
 
       echo "Contents of stderr:" 1>&2
       cat  ${stderr}             1>&2 || true
@@ -148,12 +155,14 @@ rec {
   mkReport = { cmd, args, inFields, outFields }: ''
     jq -n ${inFields} --arg     cmd    '${cmd}'         \
                       --argjson args   '${toJSON args}' \
+                      --arg     stdin  "$STDIN"         \
                       --arg     stdout "$STDOUT"        \
                       --arg     stderr "$STDERR"        \
                       --argjson failed "$FAILED"        \
        '{"failed"   : $failed,
          "cmd"      : $cmd,
          "args"     : $args,
+         "stdin"    : $stdin,
          "stdout"   : $stdout,
          "stderr"   : $stderr,
          ${outFields} }'
