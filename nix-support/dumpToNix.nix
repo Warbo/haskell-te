@@ -39,7 +39,7 @@ runAstPlugin = writeScript "runAstPlugin" ''
 mkDeps = hsPkgs:
   let pkgDeps = if hsPkgs ? "${pName}"
                    then [ hsPkgs."${pName}" ]
-                   else [ (pkgDir // { inherit currentTime; }) ];
+                   else [ (hsPkgs.callPackage pkgDir {}) ];
    in [ hsPkgs.quickspec hsPkgs.QuickCheck hsPkgs.AstPlugin
         hsPkgs.mlspec hsPkgs.mlspec-helper ] ++ pkgDeps;
 
