@@ -1,12 +1,14 @@
-{ benchmark, drvFromScript, explore, lib, runScript, writeScript }:
+{ benchmark, drvFromScript, explore, haskellPackages, lib, runScript,
+  writeScript }:
 with builtins;
 with lib;
 
+# Extract ASTs from a Cabal package
 { quick, pkgDir }:
 
-# Extract ASTs from a Cabal package
 let
 
+# Look for a .cabal file and extract the "name:" field
 pName = let files = filter (hasSuffix ".cabal")
                            (attrNames (readDir pkgDir));
             cabal = if files == []
@@ -81,12 +83,18 @@ runAstPlugin = writeScript "runAstPlugin" ''
   getAsts | jq -c ". + {package: \"${pName}\"}" | jq -s '.'
 '';
 
+mkDeps = hsPkgs:
+  let pkgDeps = if hsPkgs ? "${pName}"
+                   then [ hsPkgs."${pName}" ]
+                   else [ (pkgDir // { inherit currentTime; }) ];
+   in [ hsPkgs.quickspec hsPkgs.QuickCheck hsPkgs.AstPlugin
+        hsPkgs.mlspec hsPkgs.mlspec-helper ] ++ pkgDeps;
+
 in drvFromScript
   {
     inherit pkgDir;
-    ENV = ''with import <nixpkgs> {};
-            import "${./ghcWithPlugin.nix}" "${pName}"'';
-    buildInputs = explore.extractedEnv {};
+    buildInputs = [ haskellPackages.cabal-install
+                    (haskellPackages.ghcWithPackages mkDeps) ];
   }
   ''
     set -e
@@ -106,10 +114,7 @@ in drvFromScript
            cmd = writeScript "dump-package" ''
                    #!/usr/bin/env bash
                    set -e
-
-                   nix-shell --show-trace \
-                             -E "$ENV" \
-                             --run "'${runAstPlugin}' '$DIR'"
+                   "${runAstPlugin}" "$DIR"
                  '';
        }}" > "$out"
   ''

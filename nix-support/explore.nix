@@ -117,7 +117,7 @@ extractedEnv = { extraPkgs ? [], extraHs ? [], standalone ? null, f ? null }:
 
 # Haskell packages required for MLSpec
 extra-haskell-packages = [ "mlspec" "mlspec-helper" "runtime-arbitrary"
-                           "quickspec" ];
+                           "quickspec" "QuickCheck" "AstPlugin" ];
 
 prefixed-haskell-packages = concatStringsSep "\n"
                               (map (x: "h.${x}") extra-haskell-packages);
