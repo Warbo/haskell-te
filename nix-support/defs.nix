@@ -38,6 +38,7 @@ rec {
   importDir          = callPackage ./importDir.nix          {};
   parseJSON          = callPackage ./parseJSON.nix          {};
   pkgName            = callPackage ./pkgName.nix            {};
+  quickspecBench     = callPackage ./quickspecBench.nix     {};
   reduce             = callPackage ./reduce.nix             {};
   runScript          = callPackage ./runScript.nix          {};
   runTypes           = callPackage ./runTypes.nix           {};
