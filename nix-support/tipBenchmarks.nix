@@ -7,7 +7,7 @@ let path = if any (x: x.prefix == "te-benchmarks") nixPath
               else ../packages/te-benchmark;
  in rec {
   inherit (callPackage path {})
-    tip-benchmarks te-benchmark-tests;
+    te-benchmark tip-benchmarks te-benchmark-tests;
 
   pkgDef = nixFromCabal (toString tip-benchmarks) null;
 

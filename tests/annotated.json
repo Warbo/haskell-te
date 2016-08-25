@@ -1,0 +1,167 @@
+[
+  {
+    "arity": 2,
+    "quickspecable": true,
+    "name": "le",
+    "module": "A",
+    "type": "A.Nat -> A.Nat -> Bool",
+    "package": "tip-benchmark-sig",
+    "ast": "(\"Lam\" ((\"Var\" (\"name\" \"ds\"))) (\"Lam\" ((\"Var\" (\"name\" \"localy\"))) (\"Case\" (\"Var\" ((\"Var\" (\"name\" \"ds\")))) ((\"Var\" (\"name\" \"wild\"))) (\"TyConApp\" ((\"TyCon\" ((\"name\" \"Bool\") (\"mod\" \"GHC.Types\") (\"pkg\" \"ghc-prim-0.4.0.0\")))) (\"[]\")) (\"(:)\" (\"(,,)\" (\"DataAlt\" ((\"DataCon\" ((\"name\" \"Z\") (\"mod\" \"A\") (\"pkg\" \"tip-benchmark-sig-0.1.0.0\"))))) (\"[]\") (\"Var\" ((\"Var\" ((\"name\" \"True\") (\"mod\" \"GHC.Types\") (\"pkg\" \"ghc-prim-0.4.0.0\")))))) (\"(:)\" (\"(,,)\" (\"DataAlt\" ((\"DataCon\" ((\"name\" \"Prodprop14smt2S\") (\"mod\" \"A\") (\"pkg\" \"tip-benchmark-sig-0.1.0.0\"))))) (\"(:)\" ((\"Var\" (\"name\" \"localz\"))) (\"[]\")) (\"Case\" (\"Var\" ((\"Var\" (\"name\" \"localy\")))) ((\"Var\" (\"name\" \"wild\"))) (\"TyConApp\" ((\"TyCon\" ((\"name\" \"Bool\") (\"mod\" \"GHC.Types\") (\"pkg\" \"ghc-prim-0.4.0.0\")))) (\"[]\")) (\"(:)\" (\"(,,)\" (\"DataAlt\" ((\"DataCon\" ((\"name\" \"Z\") (\"mod\" \"A\") (\"pkg\" \"tip-benchmark-sig-0.1.0.0\"))))) (\"[]\") (\"Var\" ((\"Var\" ((\"name\" \"False\") (\"mod\" \"GHC.Types\") (\"pkg\" \"ghc-prim-0.4.0.0\")))))) (\"(:)\" (\"(,,)\" (\"DataAlt\" ((\"DataCon\" ((\"name\" \"Prodprop14smt2S\") (\"mod\" \"A\") (\"pkg\" \"tip-benchmark-sig-0.1.0.0\"))))) (\"(:)\" ((\"Var\" (\"name\" \"localx2\"))) (\"[]\")) (\"App\" (\"App\" (\"Var\" ((\"Var\" ((\"name\" \"le\") (\"mod\" \"A\") (\"pkg\" \"tip-benchmark-sig-0.1.0.0\"))))) (\"Var\" ((\"Var\" (\"name\" \"localz\"))))) (\"Var\" ((\"Var\" (\"name\" \"localx2\")))))) (\"[]\"))))) (\"[]\"))))))",
+    "dependencies": [
+      {
+        "name": "Bool",
+        "package": "ghc-prim",
+        "module": "GHC.Types",
+        "version": "0.4.0.0"
+      },
+      {
+        "name": "Z",
+        "package": "tip-benchmark-sig",
+        "module": "A",
+        "version": "0.1.0.0"
+      },
+      {
+        "name": "True",
+        "package": "ghc-prim",
+        "module": "GHC.Types",
+        "version": "0.4.0.0"
+      },
+      {
+        "name": "Prodprop14smt2S",
+        "package": "tip-benchmark-sig",
+        "module": "A",
+        "version": "0.1.0.0"
+      },
+      {
+        "name": "False",
+        "package": "ghc-prim",
+        "module": "GHC.Types",
+        "version": "0.4.0.0"
+      },
+      {
+        "name": "le",
+        "package": "tip-benchmark-sig",
+        "module": "A",
+        "version": "0.1.0.0"
+      }
+    ]
+  },
+  {
+    "arity": 1,
+    "quickspecable": true,
+    "name": "sorted",
+    "module": "A",
+    "type": "A.List A.Nat -> Bool",
+    "package": "tip-benchmark-sig",
+    "ast": "(\"Lam\" ((\"Var\" (\"name\" \"ds\"))) (\"Case\" (\"Var\" ((\"Var\" (\"name\" \"ds\")))) ((\"Var\" (\"name\" \"wild\"))) (\"TyConApp\" ((\"TyCon\" ((\"name\" \"Bool\") (\"mod\" \"GHC.Types\") (\"pkg\" \"ghc-prim-0.4.0.0\")))) (\"[]\")) (\"(:)\" (\"(,,)\" (\"DataAlt\" ((\"DataCon\" ((\"name\" \"Nil\") (\"mod\" \"A\") (\"pkg\" \"tip-benchmark-sig-0.1.0.0\"))))) (\"[]\") (\"Var\" ((\"Var\" ((\"name\" \"True\") (\"mod\" \"GHC.Types\") (\"pkg\" \"ghc-prim-0.4.0.0\")))))) (\"(:)\" (\"(,,)\" (\"DataAlt\" ((\"DataCon\" ((\"name\" \"Cons\") (\"mod\" \"A\") (\"pkg\" \"tip-benchmark-sig-0.1.0.0\"))))) (\"(:)\" ((\"Var\" (\"name\" \"localy2\"))) (\"(:)\" ((\"Var\" (\"name\" \"ds\"))) (\"[]\"))) (\"Case\" (\"Var\" ((\"Var\" (\"name\" \"ds\")))) ((\"Var\" (\"name\" \"wild\"))) (\"TyConApp\" ((\"TyCon\" ((\"name\" \"Bool\") (\"mod\" \"GHC.Types\") (\"pkg\" \"ghc-prim-0.4.0.0\")))) (\"[]\")) (\"(:)\" (\"(,,)\" (\"DataAlt\" ((\"DataCon\" ((\"name\" \"Nil\") (\"mod\" \"A\") (\"pkg\" \"tip-benchmark-sig-0.1.0.0\"))))) (\"[]\") (\"Var\" ((\"Var\" ((\"name\" \"True\") (\"mod\" \"GHC.Types\") (\"pkg\" \"ghc-prim-0.4.0.0\")))))) (\"(:)\" (\"(,,)\" (\"DataAlt\" ((\"DataCon\" ((\"name\" \"Cons\") (\"mod\" \"A\") (\"pkg\" \"tip-benchmark-sig-0.1.0.0\"))))) (\"(:)\" ((\"Var\" (\"name\" \"localy22\"))) (\"(:)\" ((\"Var\" (\"name\" \"localxs\"))) (\"[]\"))) (\"App\" (\"App\" (\"Var\" ((\"Var\" ((\"name\" \"&&\") (\"mod\" \"GHC.Classes\") (\"pkg\" \"ghc-prim-0.4.0.0\"))))) (\"App\" (\"App\" (\"Var\" ((\"Var\" ((\"name\" \"le\") (\"mod\" \"A\") (\"pkg\" \"tip-benchmark-sig-0.1.0.0\"))))) (\"Var\" ((\"Var\" (\"name\" \"localy2\"))))) (\"Var\" ((\"Var\" (\"name\" \"localy22\")))))) (\"App\" (\"Var\" ((\"Var\" ((\"name\" \"sorted\") (\"mod\" \"A\") (\"pkg\" \"tip-benchmark-sig-0.1.0.0\"))))) (\"App\" (\"App\" (\"App\" (\"Var\" ((\"Var\" ((\"name\" \"Cons\") (\"mod\" \"A\") (\"pkg\" \"tip-benchmark-sig-0.1.0.0\"))))) (\"Type\" (\"TyConApp\" ((\"TyCon\" ((\"name\" \"Nat\") (\"mod\" \"A\") (\"pkg\" \"tip-benchmark-sig-0.1.0.0\")))) (\"[]\")))) (\"Var\" ((\"Var\" (\"name\" \"localy22\"))))) (\"Var\" ((\"Var\" (\"name\" \"localxs\")))))))) (\"[]\"))))) (\"[]\")))))",
+    "dependencies": [
+      {
+        "name": "Bool",
+        "package": "ghc-prim",
+        "module": "GHC.Types",
+        "version": "0.4.0.0"
+      },
+      {
+        "name": "Nil",
+        "package": "tip-benchmark-sig",
+        "module": "A",
+        "version": "0.1.0.0"
+      },
+      {
+        "name": "True",
+        "package": "ghc-prim",
+        "module": "GHC.Types",
+        "version": "0.4.0.0"
+      },
+      {
+        "name": "Cons",
+        "package": "tip-benchmark-sig",
+        "module": "A",
+        "version": "0.1.0.0"
+      },
+      {
+        "name": "&&",
+        "package": "ghc-prim",
+        "module": "GHC.Classes",
+        "version": "0.4.0.0"
+      },
+      {
+        "name": "le",
+        "package": "tip-benchmark-sig",
+        "module": "A",
+        "version": "0.1.0.0"
+      },
+      {
+        "name": "sorted",
+        "package": "tip-benchmark-sig",
+        "module": "A",
+        "version": "0.1.0.0"
+      },
+      {
+        "name": "Nat",
+        "package": "tip-benchmark-sig",
+        "module": "A",
+        "version": "0.1.0.0"
+      }
+    ]
+  },
+  {
+    "arity": 2,
+    "quickspecable": true,
+    "name": "prodprop14smt2insert2",
+    "module": "A",
+    "type": "A.Nat -> A.List A.Nat -> A.List A.Nat",
+    "package": "tip-benchmark-sig",
+    "ast": "(\"Lam\" ((\"Var\" (\"name\" \"localx\"))) (\"Lam\" ((\"Var\" (\"name\" \"ds\"))) (\"Case\" (\"Var\" ((\"Var\" (\"name\" \"ds\")))) ((\"Var\" (\"name\" \"wild\"))) (\"TyConApp\" ((\"TyCon\" ((\"name\" \"List\") (\"mod\" \"A\") (\"pkg\" \"tip-benchmark-sig-0.1.0.0\")))) (\"(:)\" (\"TyConApp\" ((\"TyCon\" ((\"name\" \"Nat\") (\"mod\" \"A\") (\"pkg\" \"tip-benchmark-sig-0.1.0.0\")))) (\"[]\")) (\"[]\"))) (\"(:)\" (\"(,,)\" (\"DataAlt\" ((\"DataCon\" ((\"name\" \"Nil\") (\"mod\" \"A\") (\"pkg\" \"tip-benchmark-sig-0.1.0.0\"))))) (\"[]\") (\"App\" (\"App\" (\"App\" (\"Var\" ((\"Var\" ((\"name\" \"Cons\") (\"mod\" \"A\") (\"pkg\" \"tip-benchmark-sig-0.1.0.0\"))))) (\"Type\" (\"TyConApp\" ((\"TyCon\" ((\"name\" \"Nat\") (\"mod\" \"A\") (\"pkg\" \"tip-benchmark-sig-0.1.0.0\")))) (\"[]\")))) (\"Var\" ((\"Var\" (\"name\" \"localx\"))))) (\"App\" (\"Var\" ((\"Var\" ((\"name\" \"Nil\") (\"mod\" \"A\") (\"pkg\" \"tip-benchmark-sig-0.1.0.0\"))))) (\"Type\" (\"TyConApp\" ((\"TyCon\" ((\"name\" \"Nat\") (\"mod\" \"A\") (\"pkg\" \"tip-benchmark-sig-0.1.0.0\")))) (\"[]\")))))) (\"(:)\" (\"(,,)\" (\"DataAlt\" ((\"DataCon\" ((\"name\" \"Cons\") (\"mod\" \"A\") (\"pkg\" \"tip-benchmark-sig-0.1.0.0\"))))) (\"(:)\" ((\"Var\" (\"name\" \"localz2\"))) (\"(:)\" ((\"Var\" (\"name\" \"localxs2\"))) (\"[]\"))) (\"Case\" (\"App\" (\"App\" (\"Var\" ((\"Var\" ((\"name\" \"le\") (\"mod\" \"A\") (\"pkg\" \"tip-benchmark-sig-0.1.0.0\"))))) (\"Var\" ((\"Var\" (\"name\" \"localx\"))))) (\"Var\" ((\"Var\" (\"name\" \"localz2\"))))) ((\"Var\" (\"name\" \"wild\"))) (\"TyConApp\" ((\"TyCon\" ((\"name\" \"List\") (\"mod\" \"A\") (\"pkg\" \"tip-benchmark-sig-0.1.0.0\")))) (\"(:)\" (\"TyConApp\" ((\"TyCon\" ((\"name\" \"Nat\") (\"mod\" \"A\") (\"pkg\" \"tip-benchmark-sig-0.1.0.0\")))) (\"[]\")) (\"[]\"))) (\"(:)\" (\"(,,)\" (\"DataAlt\" ((\"DataCon\" ((\"name\" \"False\") (\"mod\" \"GHC.Types\") (\"pkg\" \"ghc-prim-0.4.0.0\"))))) (\"[]\") (\"App\" (\"App\" (\"App\" (\"Var\" ((\"Var\" ((\"name\" \"Cons\") (\"mod\" \"A\") (\"pkg\" \"tip-benchmark-sig-0.1.0.0\"))))) (\"Type\" (\"TyConApp\" ((\"TyCon\" ((\"name\" \"Nat\") (\"mod\" \"A\") (\"pkg\" \"tip-benchmark-sig-0.1.0.0\")))) (\"[]\")))) (\"Var\" ((\"Var\" (\"name\" \"localz2\"))))) (\"App\" (\"App\" (\"Var\" ((\"Var\" ((\"name\" \"prodprop14smt2insert2\") (\"mod\" \"A\") (\"pkg\" \"tip-benchmark-sig-0.1.0.0\"))))) (\"Var\" ((\"Var\" (\"name\" \"localx\"))))) (\"Var\" ((\"Var\" (\"name\" \"localxs2\"))))))) (\"(:)\" (\"(,,)\" (\"DataAlt\" ((\"DataCon\" ((\"name\" \"True\") (\"mod\" \"GHC.Types\") (\"pkg\" \"ghc-prim-0.4.0.0\"))))) (\"[]\") (\"App\" (\"App\" (\"App\" (\"Var\" ((\"Var\" ((\"name\" \"Cons\") (\"mod\" \"A\") (\"pkg\" \"tip-benchmark-sig-0.1.0.0\"))))) (\"Type\" (\"TyConApp\" ((\"TyCon\" ((\"name\" \"Nat\") (\"mod\" \"A\") (\"pkg\" \"tip-benchmark-sig-0.1.0.0\")))) (\"[]\")))) (\"Var\" ((\"Var\" (\"name\" \"localx\"))))) (\"App\" (\"App\" (\"App\" (\"Var\" ((\"Var\" ((\"name\" \"Cons\") (\"mod\" \"A\") (\"pkg\" \"tip-benchmark-sig-0.1.0.0\"))))) (\"Type\" (\"TyConApp\" ((\"TyCon\" ((\"name\" \"Nat\") (\"mod\" \"A\") (\"pkg\" \"tip-benchmark-sig-0.1.0.0\")))) (\"[]\")))) (\"Var\" ((\"Var\" (\"name\" \"localz2\"))))) (\"Var\" ((\"Var\" (\"name\" \"localxs2\"))))))) (\"[]\"))))) (\"[]\"))))))",
+    "dependencies": [
+      {
+        "name": "List",
+        "package": "tip-benchmark-sig",
+        "module": "A",
+        "version": "0.1.0.0"
+      },
+      {
+        "name": "Nat",
+        "package": "tip-benchmark-sig",
+        "module": "A",
+        "version": "0.1.0.0"
+      },
+      {
+        "name": "Nil",
+        "package": "tip-benchmark-sig",
+        "module": "A",
+        "version": "0.1.0.0"
+      },
+      {
+        "name": "Cons",
+        "package": "tip-benchmark-sig",
+        "module": "A",
+        "version": "0.1.0.0"
+      },
+      {
+        "name": "le",
+        "package": "tip-benchmark-sig",
+        "module": "A",
+        "version": "0.1.0.0"
+      },
+      {
+        "name": "False",
+        "package": "ghc-prim",
+        "module": "GHC.Types",
+        "version": "0.4.0.0"
+      },
+      {
+        "name": "prodprop14smt2insert2",
+        "package": "tip-benchmark-sig",
+        "module": "A",
+        "version": "0.1.0.0"
+      },
+      {
+        "name": "True",
+        "package": "ghc-prim",
+        "module": "GHC.Types",
+        "version": "0.4.0.0"
+      }
+    ]
+  }
+]

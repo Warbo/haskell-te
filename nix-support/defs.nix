@@ -21,6 +21,13 @@ rec {
   inherit (callPackage ./timeout.nix {})
           timeLimSecs memLimKb timeout;
 
+  # Inherit from the result, so that haskellPackages.override works on the
+  # available packages, rather than the arguments to this callPackage invocation
+  inherit (callPackage ./haskellPackages.nix {
+            superHaskellPackages = super.haskellPackages;
+          })
+          haskellPackages hsOverride;
+
   # These provide executables
   inherit (haskellPackages)
           AstPlugin GetDeps ML4HSFE mlspec mlspec-bench reduce-equations;
@@ -36,6 +43,7 @@ rec {
   getAritiesScript   = callPackage ./getAritiesScript.nix   {};
   getTypesScript     = callPackage ./getTypesScript.nix     {};
   importDir          = callPackage ./importDir.nix          {};
+  package            = callPackage ./package.nix            {};
   parseJSON          = callPackage ./parseJSON.nix          {};
   pkgName            = callPackage ./pkgName.nix            {};
   quickspecBench     = callPackage ./quickspecBench.nix     {};
@@ -54,10 +62,52 @@ rec {
                       { inherit (haskellPackages) cabal-install;           };
   getDepsScript   = callPackage ./getDepsScript.nix
                       { inherit (haskellPackages) GetDeps;                 };
-  haskellPackages = callPackage ./haskellPackages.nix
-                      { superHaskellPackages = super.haskellPackages;      };
   tests           = callPackage ./tests.nix
                       { pkgs = self;                                       };
+
+  annotated = pkgDir:
+    let nixed  = import (nixedHsPkg pkgDir null);
+        dumped = dumpPackage {
+                   quick = true;
+                   src   = nixed;
+                 };
+        ann    = annotate {
+                   pkg    = { name = "dummy"; };
+                   quick  = true;
+                   asts   = dumped.stdout;
+                   pkgSrc = nixed;
+                 };
+        failed = drvFromScript
+                   {
+                     dumpF = dumped.failed;
+                     dumpE = dumped.stderr;
+                      annF = ann.failed;
+                      annE = ann.stderr;
+                   }
+                   ''
+                     D=$(cat "$dumpF")
+                     [[ "x$D" = "xfalse" ]] || {
+                       cat "$dumpE" 1>&2
+                       echo "Dump failed (failed = '$D')" 1>&2
+                       exit 1
+                     }
+
+                     A=$(cat "$annF")
+                     [[ "x$A" = "xfalse" ]] || {
+                       cat "$annE" 1>&2
+                       echo "Annotate failed (failed = '$A')" 1>&2
+                       exit 1
+                     }
+                     touch "$out"
+                   '';
+     in drvFromScript
+          {
+            inherit failed;
+            ann = ann.stdout;
+          }
+          ''
+             cat "$ann" > "$out"
+          '';
 
   callPackage = super.newScope self;
 
