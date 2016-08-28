@@ -21,13 +21,19 @@ getAnnotated = writeScript "get-annotated" ''
 '';
 
 mkSigHs = writeScript "mkSig.hs" ''
+  {-# LANGUAGE OverloadedStrings #-}
   import MLSpec.Theory
   import Language.Eval.Internal
+
+  cmdFor = unwords . ("runhaskell":) . flagsOf
 
   main = do
     [t]    <- getProjects <$> getContents
     (f, x) <- renderTheory t
-    putStrLn (buildInput f x)
+    let y = withPkgs ["bench"] x
+    putStrLn (cmdFor  y)
+    putStrLn (pkgOf   y)
+    putStrLn (buildInput f y)
 '';
 
 customHs = writeScript "custom-hs.nix" ''
@@ -70,11 +76,24 @@ mkQuickSpecSig = writeScript "mk-quickspec-sig" ''
   echo "NIX_EVAL_HASKELL_PKGS: $NIX_EVAL_HASKELL_PKGS" 1>&2
   echo "OUT_DIR: $OUT_DIR" 1>&2
 
-  CONTENT=$(cat "${vars.ANNOTATED}")
-  echo "$CONTENT" |
-    nix-shell -p '(haskellPackages.ghcWithPackages (h: [ h.mlspec h.nix-eval ]))' \
-              --show-trace --run 'runhaskell ${mkSigHs}'
+  OUTPUT=$(nix-shell \
+    -p '(haskellPackages.ghcWithPackages (h: [ h.mlspec h.nix-eval ]))' \
+    --show-trace --run 'runhaskell ${mkSigHs}' < "${vars.ANNOTATED}")
+
+  RUNHASKELL=$(echo "$OUTPUT" | head -n1)
+      HS_ENV=$(echo "$OUTPUT" | head -n2 | tail -n1)
+      HS_SRC=$(echo "$OUTPUT" | tail -n +3)
+
+  mkdir -p "${vars.SIG}"
+  echo "$RUNHASKELL"                             > "${vars.SIG}/runhaskell.sh"
+  echo "${benchCmd} '${vars.SIG}/runhaskell.sh'" > "${vars.SIG}/bench.sh"
+  echo "$HS_ENV"                                 > "${vars.SIG}/env.nix"
+  echo "$HS_SRC"                                 > "${vars.SIG}/sig.hs"
+
+  chmod +x "${vars.SIG}/runhaskell.sh" "${vars.SIG}/bench.sh"
 '';
+
+benchCmd = "bench";
 
 runQuickSpecSig = writeScript "run-quickspec-sig" ''
   exit 1
@@ -137,7 +156,8 @@ from stdin, but it looks like a terminal; either type in your data manually
   then
     echo "Making signature for QuickSpec" 1>&2
     ${names.SIG}="${vars.DIR}/sig.hs"
-    "${mkQuickSpecSig}" > "${vars.SIG}"
+    export ${names.SIG}
+    "${mkQuickSpecSig}"
   fi
 
   if [[ -z "${vars.RESULT}" ]]
