@@ -33,19 +33,11 @@ mapAttrs (name: testRun name null { buildInputs = [ package ]; }) {
   '';
 
   runSig = ''
+    set -x
     OUT_DIR="${./testPackage}" ANNOTATED="${./annotated.json}" SIG="$PWD" \
       "${mkQuickSpecSig}"
-    nix-shell -E 'import ./env.nix' ./bench.sh < sig.hs || {
-      echo "START SIG"   1>&2
-      cat         sig.hs 1>&2
-      echo   "END SIG"   1>&2
-
-      echo "START CMD" 1>&2
-      cat         cmd  1>&2
-      echo   "END CMD" 1>&2
-
-      exit 1
-    }
+    cat run.sh bench.sh env.nix sig.hs
+    bash -x ./run.sh
   '';
 
   getJsonOutput = ''

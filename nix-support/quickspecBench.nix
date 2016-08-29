@@ -1,4 +1,4 @@
-{ jq, lib, tipBenchmarks, writeScript }:
+{ glibcLocales, jq, lib, tipBenchmarks, writeScript }:
 
 with builtins; with lib;
 
@@ -66,34 +66,58 @@ mkQuickSpecSig = writeScript "mk-quickspec-sig" ''
     exit 1
   }
 
-  HASKELL_NAME=$(cat "$OUT_DIR"/*.cabal | grep -i "name[ ]*:" | grep -o ":.*" | grep -o "[^: ]*")
+  [[ -n "${vars.SIG}" ]] || {
+    echo "Got no SIG" 1>&2
+    exit 1
+  }
+
+  mkdir -p "${vars.SIG}"
+  cd "${vars.SIG}"
+
+  HASKELL_NAME=$(cat "$OUT_DIR"/*.cabal | grep -i "name[ ]*:" |
+                                          grep -o ":.*"       |
+                                          grep -o "[^: ]*")
   NIX_EVAL_HASKELL_PKGS="${customHs}"
 
   export HASKELL_NAME
   export NIX_EVAL_HASKELL_PKGS
 
-  echo "HASKELL_NAME: $HASKELL_NAME" 1>&2
-  echo "NIX_EVAL_HASKELL_PKGS: $NIX_EVAL_HASKELL_PKGS" 1>&2
-  echo "OUT_DIR: $OUT_DIR" 1>&2
-
   OUTPUT=$(nix-shell \
     -p '(haskellPackages.ghcWithPackages (h: [ h.mlspec h.nix-eval ]))' \
     --show-trace --run 'runhaskell ${mkSigHs}' < "${vars.ANNOTATED}")
 
-  RUNHASKELL=$(echo "$OUTPUT" | head -n1)
-      HS_ENV=$(echo "$OUTPUT" | head -n2 | tail -n1)
-      HS_SRC=$(echo "$OUTPUT" | tail -n +3)
+  echo "$OUTPUT" | head -n2 | tail -n1 > env.nix
+  E=$(nix-store --add env.nix)
 
-  mkdir -p "${vars.SIG}"
-  echo "$RUNHASKELL"                             > "${vars.SIG}/runhaskell.sh"
-  echo "${benchCmd} '${vars.SIG}/runhaskell.sh'" > "${vars.SIG}/bench.sh"
-  echo "$HS_ENV"                                 > "${vars.SIG}/env.nix"
-  echo "$HS_SRC"                                 > "${vars.SIG}/sig.hs"
+  echo "$OUTPUT" | tail -n +3 > sig.hs
+  HS=$(nix-store --add sig.hs)
 
-  chmod +x "${vars.SIG}/runhaskell.sh" "${vars.SIG}/bench.sh"
+  echo "export LANG='en_US.UTF-8'"                                       >  runhaskell.sh
+  echo "export LOCALE_ARCHIVE=${glibcLocales}/lib/locale/locale-archive" >> runhaskell.sh
+  echo "$OUTPUT" | head -n1 | tr -d '\n'                                 >> runhaskell.sh
+  echo " < $HS"                                                          >> runhaskell.sh
+  chmod +x runhaskell.sh
+  RH=$(nix-store --add runhaskell.sh)
+
+  echo "${benchCmd} $RH" > bench.sh
+  chmod +x bench.sh
+  B=$(nix-store --add bench.sh)
+
+  cat << EOF > run.sh
+  export NIX_EVAL_HASKELL_PKGS='$NIX_EVAL_HASKELL_PKGS'
+  export OUT_DIR='$OUT_DIR'
+  export HASKELL_NAME='$HASKELL_NAME'
+  nix-shell --show-trace -p '(import $E)' --run "$B" < "$HS"
+  EOF
+
+  chmod +x run.sh
+  nix-store --add run.sh
 '';
 
-benchCmd = "bench";
+benchCmd = ''
+  export LANG='en_US.UTF-8'
+  export LOCALE_ARCHIVE=${glibcLocales}/lib/locale/locale-archive
+  bench'';
 
 runQuickSpecSig = writeScript "run-quickspec-sig" ''
   exit 1
