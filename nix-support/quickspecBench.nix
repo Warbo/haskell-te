@@ -8,46 +8,41 @@ rec {
 # stage. We define these names in Nix, e.g. { DIR = "DIR"; ... } so that
 # evaluation will fail if there's a mismatch.
 names = listToAttrs (map (name: { inherit name; value = name; }) [
-          "DIR" "SMT_FILE" "OUT_DIR" "ANNOTATED" "SIG" "RESULT"
+          "DIR" "SMT_FILE" "OUT_DIR" "ANNOTATED" "SIG" "RESULT" "BENCH_COMMAND"
         ]);
 vars  = mapAttrs (_: x: "$" + x) names;
-
-# Use ./.. so all of our dependencies are included
-getAnnotated = writeScript "get-annotated" ''
-  STORED=$(nix-store --add "${vars.OUT_DIR}")
-    EXPR="with import ${./..}/nix-support {}; annotated \"$STORED\""
-  F=$(nix-build --show-trace -E "$EXPR")
-  "${jq}/bin/jq" 'map(select(.quickspecable))' < "$F"
-'';
 
 mkSigHs = writeScript "mkSig.hs" ''
   {-# LANGUAGE OverloadedStrings #-}
   import MLSpec.Theory
   import Language.Eval.Internal
 
-  cmdFor = unwords . ("runhaskell":) . flagsOf
-
+  -- Construct a QuickSpec signature and associated shell/Nix commands for stdin
   main = do
     [t]    <- getProjects <$> getContents
     (f, x) <- renderTheory t
     let y = withPkgs ["bench"] x
-    putStrLn (cmdFor  y)
+    putStrLn . unwords . ("runhaskell":) . flagsOf $ y
     putStrLn (pkgOf   y)
     putStrLn (buildInput f y)
 '';
 
 customHs = writeScript "custom-hs.nix" ''
+  # Provides a set of Haskell packages which includes HASKELL_NAME, whose source
+  # is OUT_DIR
   with import ${./..}/nix-support {};
   with builtins;
   let hsName = getEnv "HASKELL_NAME";
       hsDir  = getEnv "OUT_DIR";
       hsPkgs = haskellPackages.override {
         overrides = self: super:
+          # Include existing overrides, along with our new one
           hsOverride self super // listToAttrs [{
             name  = hsName;
             value = self.callPackage hsDir {};
           }];
       };
+      # Echo "true", with our Haskell package as a dependency
       check = stdenv.mkDerivation {
         name = "check-for-pkg";
         buildInputs  = [(hsPkgs.ghcWithPackages (h: [h."''${hsName}"]))];
@@ -61,18 +56,10 @@ customHs = writeScript "custom-hs.nix" ''
 '';
 
 mkQuickSpecSig = writeScript "mk-quickspec-sig" ''
-  [[ -n "$OUT_DIR" ]] || {
-    echo "Got no OUT_DIR" 1>&2
-    exit 1
-  }
-
-  [[ -n "${vars.SIG}" ]] || {
-    echo "Got no SIG" 1>&2
-    exit 1
-  }
-
+  ${names.SIG}="${vars.DIR}"
+  export ${names.SIG}
   mkdir -p "${vars.SIG}"
-  cd "${vars.SIG}"
+  pushd "${vars.SIG}" > /dev/null
 
   HASKELL_NAME=$(cat "$OUT_DIR"/*.cabal | grep -i "name[ ]*:" |
                                           grep -o ":.*"       |
@@ -111,19 +98,14 @@ mkQuickSpecSig = writeScript "mk-quickspec-sig" ''
   EOF
 
   chmod +x run.sh
-  nix-store --add run.sh
-
-  echo "$RH"
+  ${names.BENCH_COMMAND}=$(nix-store --add run.sh)
+  popd > /dev/null
 '';
 
 benchCmd = ''
   export LANG='en_US.UTF-8'
   export LOCALE_ARCHIVE=${glibcLocales}/lib/locale/locale-archive
   bench'';
-
-runQuickSpecSig = writeScript "run-quickspec-sig" ''
-  exit 1
-'';
 
 mkDir = writeScript "mkDir.sh" ''
   OUR_DIR=$(mktemp -d --tmpdir "quickspecBenchXXXXX")
@@ -154,20 +136,18 @@ mkPkg = writeScript "mkPkg.sh" ''
   popd > /dev/null
 '';
 
+# Use ./.. so all of our dependencies are included
 getAsts = writeScript "getAsts.sh" ''
   ${names.ANNOTATED}="${vars.DIR}/annotated.json"
-  "${getAnnotated}" > "${vars.ANNOTATED}"
-'';
-
-mkSig = writeScript "mkSig.sh" ''
-  ${names.SIG}="${vars.DIR}/sig.hs"
-  export ${names.SIG}
-  "${mkQuickSpecSig}"
+  STORED=$(nix-store --add "${vars.OUT_DIR}")
+    EXPR="with import ${./..}/nix-support {}; annotated \"$STORED\""
+       F=$(nix-build --show-trace -E "$EXPR")
+  "${jq}/bin/jq" 'map(select(.quickspecable))' < "$F" > "${vars.ANNOTATED}"
 '';
 
 runSig = writeScript "runSig.sh" ''
   ${names.RESULT}="${vars.DIR}/result"
-  "${runQuickSpecSig}" > "${vars.RESULT}"
+  "${vars.BENCH_COMMAND}" > "${vars.RESULT}"
 '';
 
 script = writeScript "quickspec-bench" ''
@@ -182,12 +162,12 @@ script = writeScript "quickspec-bench" ''
   }
   trap cleanup EXIT
 
-  [[ -n "${vars.DIR      }" ]] || source ${mkDir  }
-  [[ -n "${vars.SMT_FILE }" ]] || source ${mkSmt  }
-  [[ -n "${vars.OUT_DIR  }" ]] || source ${mkPkg  }
-  [[ -n "${vars.ANNOTATED}" ]] || source ${getAsts}
-  [[ -n "${vars.SIG      }" ]] || source ${mkSig  }
-  [[ -n "${vars.RESULT   }" ]] || source ${runSig }
+  [[ -n "${vars.DIR      }" ]] || source ${mkDir         }
+  [[ -n "${vars.SMT_FILE }" ]] || source ${mkSmt         }
+  [[ -n "${vars.OUT_DIR  }" ]] || source ${mkPkg         }
+  [[ -n "${vars.ANNOTATED}" ]] || source ${getAsts       }
+  [[ -n "${vars.SIG      }" ]] || source ${mkQuickSpecSig}
+  [[ -n "${vars.RESULT   }" ]] || source ${runSig        }
 
   cat "${vars.RESULT}"
 '';

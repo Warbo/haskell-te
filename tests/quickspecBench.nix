@@ -23,7 +23,7 @@ mapAttrs (name: testRun name null { buildInputs = [ package ]; }) {
     OUT_DIR="${./testPackage}" ANNOTATED="${./annotated.json}" SIG="$PWD" \
       "${mkQuickSpecSig}"
 
-    for F in ./sig.hs ./bench.sh ./runhaskell.sh
+    for F in sig.hs bench.sh runhaskell.sh run.sh env.nix
     do
       [[ -e "$F" ]] || {
         echo "Couldn't find '$F'" 1>&2
@@ -34,10 +34,11 @@ mapAttrs (name: testRun name null { buildInputs = [ package ]; }) {
 
   runSig = ''
     set -x
-    OUT_DIR="${./testPackage}" ANNOTATED="${./annotated.json}" SIG="$PWD" \
-      "${mkQuickSpecSig}"
-    cat run.sh bench.sh env.nix sig.hs
-    bash -x ./run.sh
+    export   OUT_DIR="${./testPackage}"
+    export ANNOTATED="${./annotated.json}"
+    export       DIR="$PWD"
+    source ${mkQuickSpecSig}
+    ${vars.BENCH_COMMAND} || exit 1
   '';
 
   getJsonOutput = ''
