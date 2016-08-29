@@ -125,7 +125,12 @@ runQuickSpecSig = writeScript "run-quickspec-sig" ''
   exit 1
 '';
 
-mkSmt = ''
+mkDir = writeScript "mkDir.sh" ''
+  OUR_DIR=$(mktemp -d --tmpdir "quickspecBenchXXXXX")
+  ${names.DIR}="$OUR_DIR"
+'';
+
+mkSmt = writeScript "mkSmt.sh" ''
   if [ -t 0 ]
   then
     echo "WARNING: quickspecBench needs smtlib data. You can set the
@@ -139,7 +144,8 @@ mkSmt = ''
   cat > "${ vars.SMT_FILE}"
 '';
 
-mkPkg = ''
+mkPkg = writeScript "mkPkg.sh" ''
+  export ${names.SMT_FILE}="$1"
   ${names.OUT_DIR}="${vars.DIR}/hsPkg"
   export ${names.OUT_DIR}
   mkdir -p "${vars.OUT_DIR}"
@@ -148,18 +154,18 @@ mkPkg = ''
   popd > /dev/null
 '';
 
-getAsts = ''
+getAsts = writeScript "getAsts.sh" ''
   ${names.ANNOTATED}="${vars.DIR}/annotated.json"
   "${getAnnotated}" > "${vars.ANNOTATED}"
 '';
 
-mkSig = ''
+mkSig = writeScript "mkSig.sh" ''
   ${names.SIG}="${vars.DIR}/sig.hs"
   export ${names.SIG}
   "${mkQuickSpecSig}"
 '';
 
-runSig = ''
+runSig = writeScript "runSig.sh" ''
   ${names.RESULT}="${vars.DIR}/result"
   "${runQuickSpecSig}" > "${vars.RESULT}"
 '';
@@ -176,22 +182,12 @@ script = writeScript "quickspec-bench" ''
   }
   trap cleanup EXIT
 
-  if [[ -z "${vars.DIR}" ]]
-  then
-    echo "Making temp dir" 1>&2
-    OUR_DIR=$(mktemp -d --tmpdir "quickspecBenchXXXXX")
-    ${names.DIR}="$OUR_DIR"
-  fi
-
-  ${mkSmt}
-
-  ${mkPkg}
-
-  ${getAsts}
-
-  ${mkSig}
-
-  ${runSig}
+  [[ -n "${vars.DIR      }" ]] || source ${mkDir  }
+  [[ -n "${vars.SMT_FILE }" ]] || source ${mkSmt  }
+  [[ -n "${vars.OUT_DIR  }" ]] || source ${mkPkg  }
+  [[ -n "${vars.ANNOTATED}" ]] || source ${getAsts}
+  [[ -n "${vars.SIG      }" ]] || source ${mkSig  }
+  [[ -n "${vars.RESULT   }" ]] || source ${runSig }
 
   cat "${vars.RESULT}"
 '';
