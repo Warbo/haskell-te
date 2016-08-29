@@ -126,62 +126,42 @@ runQuickSpecSig = writeScript "run-quickspec-sig" ''
 '';
 
 mkSmt = ''
-  if [[ -z "${vars.SMT_FILE}" ]]
+  if [ -t 0 ]
   then
-    echo "Making smtlib file from stdin" 1>&2
-    if [ -t 0 ]
-    then
-      echo "WARNING: quickspecBench needs smtlib data. You can set the
+    echo "WARNING: quickspecBench needs smtlib data. You can set the
   ${names.SMT_FILE} environment variable, or pipe data into stdin. Reading data
   from stdin, but it looks like a terminal; either type in your data manually
   (Ctrl-d to exit), or start again using a file or pipe." 1>&2
-    fi
-
-    ${names.SMT_FILE}="${vars.DIR}/input.smt2"
-    export ${names.SMT_FILE}
-    cat > "${ vars.SMT_FILE}"
   fi
+
+  ${names.SMT_FILE}="${vars.DIR}/input.smt2"
+  export ${names.SMT_FILE}
+  cat > "${ vars.SMT_FILE}"
 '';
 
 mkPkg = ''
-  if [[ -z "${vars.OUT_DIR}" ]]
-  then
-    echo "Generating Haskell package" 1>&2
-    ${names.OUT_DIR}="${vars.DIR}/hsPkg"
-    export ${names.OUT_DIR}
-    mkdir -p "${vars.OUT_DIR}"
-    pushd "${tipBenchmarks.te-benchmark}/lib" > /dev/null
-    ./full_haskell_package.sh
-    popd > /dev/null
-  fi
+  ${names.OUT_DIR}="${vars.DIR}/hsPkg"
+  export ${names.OUT_DIR}
+  mkdir -p "${vars.OUT_DIR}"
+  pushd "${tipBenchmarks.te-benchmark}/lib" > /dev/null
+  ./full_haskell_package.sh
+  popd > /dev/null
 '';
 
 getAsts = ''
-  if [[ -z "${vars.ANNOTATED}" ]]
-  then
-    echo "Getting ASTs from Haskell" 1>&2
-    ${names.ANNOTATED}="${vars.DIR}/annotated.json"
-    "${getAnnotated}" > "${vars.ANNOTATED}"
-  fi
+  ${names.ANNOTATED}="${vars.DIR}/annotated.json"
+  "${getAnnotated}" > "${vars.ANNOTATED}"
 '';
 
 mkSig = ''
-  if [[ -z "${vars.SIG}" ]]
-  then
-    echo "Making signature for QuickSpec" 1>&2
-    ${names.SIG}="${vars.DIR}/sig.hs"
-    export ${names.SIG}
-    "${mkQuickSpecSig}"
-  fi
+  ${names.SIG}="${vars.DIR}/sig.hs"
+  export ${names.SIG}
+  "${mkQuickSpecSig}"
 '';
 
 runSig = ''
-  if [[ -z "${vars.RESULT}" ]]
-  then
-    echo "Running QuickSpec" 1>&2
-    ${names.RESULT}="${vars.DIR}/result"
-    "${runQuickSpecSig}" > "${vars.RESULT}"
-  fi
+  ${names.RESULT}="${vars.DIR}/result"
+  "${runQuickSpecSig}" > "${vars.RESULT}"
 '';
 
 script = writeScript "quickspec-bench" ''
