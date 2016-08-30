@@ -1,5 +1,9 @@
 { glibcLocales, jq, lib, tipBenchmarks, writeScript }:
 
+# Provide a script which accepts smtlib data, runs it through QuickSpec and
+# outputs the resulting equations along with benchmark times. The script should
+# be runnable from the commandline, as long as the haskell-te package is in PATH
+
 with builtins; with lib;
 
 rec {
@@ -17,7 +21,8 @@ mkSigHs = writeScript "mkSig.hs" ''
   import MLSpec.Theory
   import Language.Eval.Internal
 
-  -- Construct a QuickSpec signature and associated shell/Nix commands for stdin
+  -- Reads JSON from stdin, outputs a QuickSpec signature and associated shell
+  -- and Nix commands for running it
   main = do
     [t]    <- getProjects <$> getContents
     (f, x) <- renderTheory t
@@ -28,8 +33,8 @@ mkSigHs = writeScript "mkSig.hs" ''
 '';
 
 customHs = writeScript "custom-hs.nix" ''
-  # Provides a set of Haskell packages which includes HASKELL_NAME, whose source
-  # is OUT_DIR
+  # Provides a set of Haskell packages for use by nix-eval. Uses env vars
+  # HASKELL_NAME and OUT_DIR to include the package generated from smtlib data
   with import ${./..}/nix-support {};
   with builtins;
   let hsName = getEnv "HASKELL_NAME";
@@ -39,7 +44,7 @@ customHs = writeScript "custom-hs.nix" ''
           # Include existing overrides, along with our new one
           hsOverride self super // listToAttrs [{
             name  = hsName;
-            value = self.callPackage hsDir {};
+            value = self.callPackage (nixedHsPkg hsDir null) {};
           }];
       };
       # Echo "true", with our Haskell package as a dependency
@@ -56,6 +61,10 @@ customHs = writeScript "custom-hs.nix" ''
 '';
 
 mkQuickSpecSig = writeScript "mk-quickspec-sig" ''
+  [[ -z "${vars.SIG}" ]] || return 0
+
+  source ${getAsts}
+
   ${names.SIG}="${vars.DIR}"
   export ${names.SIG}
   mkdir -p "${vars.SIG}"
@@ -108,11 +117,17 @@ benchCmd = ''
   bench'';
 
 mkDir = writeScript "mkDir.sh" ''
+  [[ -z "${vars.DIR}" ]] || return 0
+
   OUR_DIR=$(mktemp -d --tmpdir "quickspecBenchXXXXX")
   ${names.DIR}="$OUR_DIR"
 '';
 
 mkSmt = writeScript "mkSmt.sh" ''
+  [[ -z "${vars.SMT_FILE }" ]] || return 0
+
+  source ${mkDir}
+
   if [ -t 0 ]
   then
     echo "WARNING: quickspecBench needs smtlib data. You can set the
@@ -127,9 +142,13 @@ mkSmt = writeScript "mkSmt.sh" ''
 '';
 
 mkPkg = writeScript "mkPkg.sh" ''
-  export ${names.SMT_FILE}="$1"
+  [[ -z "${vars.OUT_DIR}" ]] || return 0
+
+  source ${mkSmt}
+
   ${names.OUT_DIR}="${vars.DIR}/hsPkg"
   export ${names.OUT_DIR}
+
   mkdir -p "${vars.OUT_DIR}"
   pushd "${tipBenchmarks.te-benchmark}/lib" > /dev/null
   ./full_haskell_package.sh
@@ -138,6 +157,10 @@ mkPkg = writeScript "mkPkg.sh" ''
 
 # Use ./.. so all of our dependencies are included
 getAsts = writeScript "getAsts.sh" ''
+  [[ -z "${vars.ANNOTATED}" ]] || return 0
+
+  source ${mkPkg}
+
   ${names.ANNOTATED}="${vars.DIR}/annotated.json"
   STORED=$(nix-store --add "${vars.OUT_DIR}")
     EXPR="with import ${./..}/nix-support {}; annotated \"$STORED\""
@@ -146,13 +169,17 @@ getAsts = writeScript "getAsts.sh" ''
 '';
 
 runSig = writeScript "runSig.sh" ''
+  [[ -z "${vars.RESULT}" ]] || return 0
+
+  source ${mkQuickSpecSig}
+
   ${names.RESULT}="${vars.DIR}/result"
   "${vars.BENCH_COMMAND}" > "${vars.RESULT}"
 '';
 
 script = writeScript "quickspec-bench" ''
   #!/usr/bin/env bash
-  set -e
+  set -ex
 
   function cleanup {
     if [[ -n "$OUR_DIR" ]] && [[ -d "$OUR_DIR" ]]
@@ -162,13 +189,7 @@ script = writeScript "quickspec-bench" ''
   }
   trap cleanup EXIT
 
-  [[ -n "${vars.DIR      }" ]] || source ${mkDir         }
-  [[ -n "${vars.SMT_FILE }" ]] || source ${mkSmt         }
-  [[ -n "${vars.OUT_DIR  }" ]] || source ${mkPkg         }
-  [[ -n "${vars.ANNOTATED}" ]] || source ${getAsts       }
-  [[ -n "${vars.SIG      }" ]] || source ${mkQuickSpecSig}
-  [[ -n "${vars.RESULT   }" ]] || source ${runSig        }
-
+  source ${runSig}
   cat "${vars.RESULT}"
 '';
 
