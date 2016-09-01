@@ -10,7 +10,8 @@ let checkVar = var: ''
         exit 1
       }
     '';
-   go = name: testRun name null { buildInputs = [ package ]; };
+    run = script: ''DIR="$PWD" source ${script} < ${./example.smt2} '';
+    go  = name: testRun name null { buildInputs = [ package ]; };
 in mapAttrs go {
 
   failOnGarbage = ''
@@ -27,7 +28,7 @@ in mapAttrs go {
     export ANNOTATED="${./annotated.json}"
     export       DIR="$PWD"
 
-    source "${mkQuickSpecSig}" < ${./example.smt2}
+    ${run mkQuickSpecSig}
 
     for F in sig.hs env.nix
     do
@@ -43,27 +44,27 @@ in mapAttrs go {
   '';
 
   runRunSig = ''
-    source ${runSig} < ${./example.smt2}
+    ${run runSig}
     ${checkVar "RESULT"}
   '';
 
   runMkQuickSpecSig = ''
-    source ${mkQuickSpecSig}
+    ${run mkQuickSpecSig}
     ${checkVar "SIG"}
   '';
 
   runGetAsts = ''
-    source ${getAsts} < ${./example.smt2}
+    ${run getAsts}
     ${checkVar "ANNOTATED"}
   '';
 
   runMkPkg = ''
-    source ${mkPkg} < ${./example.smt2}
+    ${run mkPkg}
     ${checkVar "OUT_DIR"}
   '';
 
   runMkSmt = ''
-    source ${mkSmt}
+    ${run mkSmt}
     ${checkVar "SMT_FILE"}
   '';
 

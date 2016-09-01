@@ -4,6 +4,8 @@ let pkgs = builtins.trace "FIXME: Do 64 and 32 bit" import ./nix-support {};
 
   tests = import ./nix-support/tests.nix {};
 
+  package = import ./.;
+
   inherit (pkgs.haskellPackages)
     ArbitraryHaskell runtime-arbitrary nix-eval mlspec-helper ifcxt AstPlugin
     GetDeps HS2AST ML4HSFE;

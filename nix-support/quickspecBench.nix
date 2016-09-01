@@ -13,12 +13,15 @@ mkSigHs = writeScript "mkSig.hs" ''
   import MLSpec.Theory
   import Language.Eval.Internal
 
+  render ts x = "main = do { quickSpecAndSimplify (" ++ withoutUndef' (renderWithVariables x ts) ++ ") }"
+
   -- Reads JSON from stdin, outputs a QuickSpec signature and associated shell
   -- and Nix commands for running it
   main = do
-    [t]    <- getProjects <$> getContents
-    (f, x) <- renderTheory t
-    let y = withPkgs ["bench"] x
+    [t]     <- getProjects <$> getContents
+    (ts, x) <- renderTheory t
+    let f = render ts
+        y = withPkgs ["bench"] x
     putStrLn . unwords . ("runhaskell":) . flagsOf $ y
     putStrLn (pkgOf   y)
     putStrLn (buildInput f y)
@@ -70,6 +73,12 @@ fileInStore = var: content: ''
   chmod +x filed
   ${var}=$(nix-store --add filed)
   rm -f filed
+'';
+
+# Turn QuickSpec output into a consistent, machine-readable format
+extractEquations = writeScript "extract-eqs.sh" ''
+  PAT="^[ ]*[0-9][0-9]*: "
+  grep "$PAT" | sed -e "s/$PAT//g"
 '';
 
 mkQuickSpecSig = writeScript "mk-quickspec-sig" ''
@@ -196,8 +205,8 @@ runSig = writeScript "runSig.sh" ''
   source ${mkQuickSpecSig}
   ${haveVars ["DIR" "BENCH_COMMAND" "RUN_COMMAND"]}
 
-  RESULT="$DIR/result"
-  "$RUN_COMMAND" | grep -v "^Depth" > "$RESULT"
+  RESULT="$DIR/eqs"
+  "$RUN_COMMAND" | grep -v '^Depth' | "${jq}/bin/jq" -s '.' > "$RESULT"
 
   "$BENCH_COMMAND"
 '';
@@ -221,7 +230,7 @@ mkJson = writeScript "mkJson.sh" ''
 
 script = writeScript "quickspec-bench" ''
   #!/usr/bin/env bash
-  set -ex
+  set -e
 
   function cleanup {
     if [[ -n "$OUR_DIR" ]] && [[ -d "$OUR_DIR" ]]
