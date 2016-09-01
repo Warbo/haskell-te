@@ -5,9 +5,11 @@ let env = buildEnv {
       paths = tipBenchmarks.te-benchmark.propagatedNativeBuildInputs;
     };
  in stdenv.mkDerivation {
-      buildInputs = [ makeWrapper ];
-
       name = "haskell-te";
+
+      buildInputs           = [ makeWrapper ];
+      propagatedBuildInputs = [ tipBenchmarks.te-benchmark ];
+
       buildCommand = ''
         source $stdenv/setup
 

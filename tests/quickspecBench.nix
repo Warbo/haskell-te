@@ -1,6 +1,17 @@
 defs: with defs; with lib; with quickspecBench;
 
-mapAttrs (name: testRun name null { buildInputs = [ package ]; }) {
+let checkVar = var: ''
+      [[ -n "${"$" + var}" ]] || {
+        echo "No ${var}" 1>&2
+        exit 1
+      }
+      [[ -e "${"$" + var}" ]] || {
+        echo "${var} '${"$" + var}' doesn't exist" 1>&2
+        exit 1
+      }
+    '';
+   go = name: testRun name null { buildInputs = [ package ]; };
+in mapAttrs go {
 
   failOnGarbage = ''
     if echo '!"£$%^&*()' | quickspecBench 1> stdout 2> stderr
@@ -11,19 +22,14 @@ mapAttrs (name: testRun name null { buildInputs = [ package ]; }) {
     exit 0
   '';
 
-  acceptSmtlib = ''
-    quickspecBench < ${./example.smt2} > /dev/null || exit 1
-  '';
-
-  acceptSmtlibFile = ''
-    ${names.SMT_FILE}="${./example.smt2}" quickspecBench
-  '';
-
   genSig = ''
-    OUT_DIR="${./testPackage}" ANNOTATED="${./annotated.json}" SIG="$PWD" \
-      "${mkQuickSpecSig}"
+    export   OUT_DIR="${./testPackage}"
+    export ANNOTATED="${./annotated.json}"
+    export       DIR="$PWD"
 
-    for F in sig.hs bench.sh runhaskell.sh run.sh env.nix
+    source "${mkQuickSpecSig}" < ${./example.smt2}
+
+    for F in sig.hs env.nix
     do
       [[ -e "$F" ]] || {
         echo "Couldn't find '$F'" 1>&2
@@ -32,19 +38,47 @@ mapAttrs (name: testRun name null { buildInputs = [ package ]; }) {
     done
   '';
 
-  runSig = ''
-    set -x
-    export   OUT_DIR="${./testPackage}"
-    export ANNOTATED="${./annotated.json}"
-    export       DIR="$PWD"
+  runScript = ''
+    quickspecBench < ${./example.smt2} > /dev/null || exit 1
+  '';
+
+  runRunSig = ''
+    source ${runSig} < ${./example.smt2}
+    ${checkVar "RESULT"}
+  '';
+
+  runMkQuickSpecSig = ''
     source ${mkQuickSpecSig}
-    ${vars.BENCH_COMMAND} || exit 1
+    ${checkVar "SIG"}
+  '';
+
+  runGetAsts = ''
+    source ${getAsts} < ${./example.smt2}
+    ${checkVar "ANNOTATED"}
+  '';
+
+  runMkPkg = ''
+    source ${mkPkg} < ${./example.smt2}
+    ${checkVar "OUT_DIR"}
+  '';
+
+  runMkSmt = ''
+    source ${mkSmt}
+    ${checkVar "SMT_FILE"}
+  '';
+
+  runMkDir = ''
+    source ${mkDir}
+    ${checkVar "DIR"}
   '';
 
   getJsonOutput = ''
     BENCH_OUT=$(quickspecBench < "${./example.smt2}") || exit 1
 
-    TYPE=$(echo "$BENCH_OUT" | jq -r 'type') || exit 1
+    TYPE=$(echo "$BENCH_OUT" | jq -r 'type') || {
+      echo -e "START BENCH_OUT\n\n$BENCH_OUT\n\nEND BENCH_OUT" 1>&2
+      exit 1
+    }
 
     [[ "x$TYPE" = "xobject" ]] || {
       echo -e "START BENCH_OUT\n\n$BENCH_OUT\n\nEND BENCH_OUT" 1>&2

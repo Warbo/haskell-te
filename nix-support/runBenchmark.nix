@@ -79,7 +79,6 @@ rec {
 
           if [[ -n "$INPUT" ]]
           then
-            echo "Checking for extra packages: $INPUT" 1>&2
             while read -r PKG
             do
               ensurePkg "$PKG"
