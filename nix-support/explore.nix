@@ -10,16 +10,13 @@ explore-theories = writeScript "explore-theories" ''
   set -e
   set -o pipefail
 
-  INPUT=$(cat)
-
   function noDepth {
     grep -v "^Depth" || true # Don't abort if nothing found
   }
 
   # limit time/memory using 'timeout'
-  echo "$INPUT" | ${timeout} MLSpec "$@" 1> "$TEMPDIR/explore-stdout" \
-                                         2> "$TEMPDIR/explore-stderr"
-  cat "$TEMPDIR/explore-stderr" 1>&2
+  ${timeout} MLSpec "$@" 1> "$TEMPDIR/explore-stdout" \
+                         2> >(tee "$TEMPDIR/explore-stderr" >&2)
 
   if grep "No instance for" < "$TEMPDIR/explore-stderr" > /dev/null
   then
