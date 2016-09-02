@@ -1,4 +1,4 @@
-{ glibcLocales, jq, lib, tipBenchmarks, writeScript }:
+{ ensureVars, glibcLocales, jq, lib, tipBenchmarks, writeScript }:
 
 # Provide a script which accepts smtlib data, runs it through QuickSpec and
 # outputs the resulting equations along with benchmark times. The script should
@@ -55,15 +55,6 @@ customHs = writeScript "custom-hs.nix" ''
       hsPkgs
 '';
 
-haveVars = vars: concatStringsSep "\n"
-                   (map (v: ''
-                              [[ -n "${"$" + v}" ]] || {
-                                echo "Variable '${v}' is empty" 1>&2
-                                exit 1
-                              }
-                            '')
-                        vars);
-
 # Write 'content' to a file, splicing in any shell variables. Add that file to
 # the Nix store and put the resulting path in the shell variable 'var'
 fileInStore = var: content: ''
@@ -85,7 +76,7 @@ mkQuickSpecSig = writeScript "mk-quickspec-sig" ''
   [[ -z "$SIG" ]] || return 0
 
   source ${getAsts}
-  ${haveVars ["DIR" "OUT_DIR" "ANNOTATED"]}
+  ${ensureVars ["DIR" "OUT_DIR" "ANNOTATED"]}
 
   SIG="$DIR"
   export SIG
@@ -153,7 +144,7 @@ mkSmt = writeScript "mkSmt.sh" ''
   [[ -z "$SMT_FILE" ]] || return 0
 
   source ${mkDir}
-  ${haveVars ["DIR"]}
+  ${ensureVars ["DIR"]}
 
   if [ -t 0 ]
   then
@@ -168,11 +159,8 @@ mkSmt = writeScript "mkSmt.sh" ''
   cat > "$SMT_FILE"
 '';
 
-mkPkg = writeScript "mkPkg.sh" ''
-  [[ -z "$OUT_DIR" ]] || return 0
-
-  source ${mkSmt}
-  ${haveVars ["DIR"]}
+mkPkgInner = ''
+  ${ensureVars ["DIR"]}
 
   OUT_DIR="$DIR/hsPkg"
   export OUT_DIR
@@ -185,12 +173,19 @@ mkPkg = writeScript "mkPkg.sh" ''
   OUT_DIR=$(nix-store --add "$OUT_DIR")
 '';
 
+mkPkg = writeScript "mkPkg.sh" ''
+  [[ -z "$OUT_DIR" ]] || return 0
+
+  source ${mkSmt}
+  ${mkPkgInner}
+'';
+
 # Use ./.. so all of our dependencies are included
 getAsts = writeScript "getAsts.sh" ''
   [[ -z "$ANNOTATED" ]] || return 0
 
   source ${mkPkg}
-  ${haveVars ["DIR" "OUT_DIR"]}
+  ${ensureVars ["DIR" "OUT_DIR"]}
 
   ANNOTATED="$DIR/annotated.json"
   STORED=$(nix-store --add "$OUT_DIR")
@@ -203,7 +198,7 @@ runSig = writeScript "runSig.sh" ''
   [[ -z "$RESULT" ]] || return 0
 
   source ${mkQuickSpecSig}
-  ${haveVars ["DIR" "BENCH_COMMAND" "RUN_COMMAND"]}
+  ${ensureVars ["DIR" "BENCH_COMMAND" "RUN_COMMAND"]}
 
   RESULT="$DIR/eqs"
   "$RUN_COMMAND" | grep -v '^Depth' | "${jq}/bin/jq" -s '.' > "$RESULT"
@@ -215,7 +210,7 @@ mkJson = writeScript "mkJson.sh" ''
   [[ -z "$JSON_OUT" ]] || return 0
 
   source ${runSig}
-  ${haveVars ["DIR" "TIME_JSON" "RESULT"]}
+  ${ensureVars ["DIR" "TIME_JSON" "RESULT"]}
 
   JSON_OUT="$DIR/out.json"
 

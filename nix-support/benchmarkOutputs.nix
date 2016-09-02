@@ -33,7 +33,7 @@ processPkg = { clusters, quick, sampleSize ? null }: givenName: givenPkg: rec {
                             asts   = dump;
                             pkgSrc = srcNixed; };
 
-  rawClustered = cluster { inherit annotated clusters quick; };
+  rawClustered = cluster.cluster { inherit annotated clusters quick; };
 
   # Simple format change; don't benchmark
   formatted = mapAttrs format.format clustered;

@@ -1,4 +1,5 @@
-{ buildEnv, explore, glibcLocales, haskellPackages, jq, reduce, writeScript }:
+{ annotate, buildEnv, cluster, ensureVars, explore, glibcLocales,
+  haskellPackages, jq, quickspecBench, reduce, writeScript }:
 with builtins;
 
 rec {
@@ -11,14 +12,18 @@ rec {
   env = buildEnv {
     name  = "mlspecBench-env";
     paths = [ (haskellPackages.ghcWithPackages (h: [
-                h.reduce-equations h.bench
+                h.reduce-equations h.bench h.mlspec h.ML4HSFE
               ])) ];
   };
 
   inner = writeScript "mlspecBench-inner.sh" ''
     set -e
     set -o pipefail
-    ${explore.explore-theories} | ${doReduce}
+
+    cat "$DIR/annotated.json"   |
+    ${cluster.clusterScript}    |
+    ${explore.explore-theories} |
+    ${doReduce}
   '';
 
   script = writeScript "mlspecBench" ''
@@ -48,12 +53,23 @@ rec {
     }
     export TEMPDIR="$DIR"
 
-    # Run mlspec once to generate equations
-    cat > "$DIR/input.smt2"
+    # Initialise all of the data we need
+    SMT_FILE="$DIR/input.smt2"
+    export SMT_FILE
+    cat > "$SMT_FILE"
+
+    ${quickspecBench.mkPkgInner}
+    ${ensureVars ["OUT_DIR"]}
+
+    STORED=$(nix-store --add "$OUT_DIR")
+      EXPR="with import ${./..}/nix-support {}; annotated \"$STORED\""
+         F=$(nix-build --show-trace -E "$EXPR")
+    cp "$F" "$DIR/annotated.json"
 
     echo "${inner} < '$DIR/input.smt2'" > "$DIR/cmd.sh"
     chmod +x "$DIR/cmd.sh"
 
+    # Run mlspec once to generate equations
     nix-shell -p ${env} --run "$DIR/cmd.sh" > "$DIR/eqs.json" || {
       echo "Failed to get eqs" 1>&2
       exit 1

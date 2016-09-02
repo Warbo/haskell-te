@@ -6,8 +6,10 @@ let
 
 clusterScript = writeScript "cluster" ''
   set -e
-  export WIDTH=30
-  export HEIGHT=30
+  [[ -n "$WIDTH"  ]] ||  WIDTH=30
+  [[ -n "$HEIGHT" ]] || HEIGHT=30
+  export WIDTH
+  export HEIGHT
   ml4hsfe-outer-loop
 '';
 
@@ -41,4 +43,4 @@ cluster = { quick, annotated, clusters }: let
 
   in result;
 
-in cluster
+in { inherit cluster clusterScript; }
