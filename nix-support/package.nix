@@ -1,4 +1,4 @@
-{ buildEnv, makeWrapper, quickspecBench, stdenv, tipBenchmarks }:
+{ buildEnv, makeWrapper, mlspecBench, quickspecBench, stdenv, tipBenchmarks }:
 
 let env = buildEnv {
       name  = "te-env";
@@ -17,5 +17,7 @@ let env = buildEnv {
 
         makeWrapper ${quickspecBench.script} "$out/bin/quickspecBench" \
           --prefix PATH : "${env}/bin"
+
+        cp ${mlspecBench.script} "$out/bin/mlspecBench"
       '';
     }

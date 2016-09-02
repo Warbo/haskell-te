@@ -19,6 +19,17 @@ script = writeScript "reduce-equations" ''
   cat "$TEMPDIR/reduce-stdout"
 '';
 
+preamble = ''
+  set -e
+
+  function getEqs {
+    for F in $inputs
+    do
+      jq -c '.[]' < "$F"
+    done
+  }
+'';
+
 doReduce = quick: clusterCount: inputs:
              drvFromScript { inherit inputs;
                              outputs = stdParts;
@@ -26,15 +37,10 @@ doReduce = quick: clusterCount: inputs:
                                              extraHs = [ "reduce-equations" ];
                                            }; } ''
                set -e
+
+               ${preamble}
+
                export CLUSTERS="${clusterCount}"
-
-               function getEqs {
-                 for F in $inputs
-                 do
-                   jq -c '.[]' < "$F"
-                 done
-               }
-
                O=$(getEqs | "${benchmark {
                                inherit quick inputs;
                                cmd = toString script;
