@@ -1,15 +1,13 @@
 { annotate, buildPackage, callPackage, cluster, defaultClusters, drvFromScript,
-  dumpPackage, explore, extractTarball, haskellPackages, lib, nixedHsPkg,
-  nixFromCabal, pkgName, reduce, runScript, stdenv, storeResult, timeCalc,
-  writeScript }:
+  dumpPackage, explore, extractTarball, format, haskellPackages, lib,
+  nixedHsPkg, nixFromCabal, pkgName, reduce, runScript, stdenv, storeResult,
+  timeCalc, writeScript }:
 with builtins;
 with lib;
 
 let
 
 sum = fold (x: y: x + y) 0;
-
-format = callPackage ./format.nix {};
 
 processPkg = { clusters, quick, sampleSize ? null }: givenName: givenPkg: rec {
   # Original Haskell fields
@@ -38,7 +36,7 @@ processPkg = { clusters, quick, sampleSize ? null }: givenName: givenPkg: rec {
   rawClustered = cluster { inherit annotated clusters quick; };
 
   # Simple format change; don't benchmark
-  formatted = mapAttrs format clustered;
+  formatted = mapAttrs format.format clustered;
 
   rawExplored = explore.explore {
                   inherit formatted quick;

@@ -40,9 +40,11 @@ rec {
   dumpToNix          = callPackage ./dumpToNix.nix          {};
   explore            = callPackage ./explore.nix            {};
   extractTarball     = callPackage ./extractTarball.nix     {};
+  format             = callPackage ./format.nix             {};
   getAritiesScript   = callPackage ./getAritiesScript.nix   {};
   getTypesScript     = callPackage ./getTypesScript.nix     {};
   importDir          = callPackage ./importDir.nix          {};
+  mlspecBench        = callPackage ./mlspecBench.nix        {};
   package            = callPackage ./package.nix            {};
   parseJSON          = callPackage ./parseJSON.nix          {};
   pkgName            = callPackage ./pkgName.nix            {};
@@ -158,6 +160,15 @@ rec {
      in addErrorContext msg v;
 
   defaultClusters = [ 1 2 4 ];
+
+  ensureVars = vars: concatStringsSep "\n"
+                       (map (v: ''
+                                  [[ -n "${"$" + v}" ]] || {
+                                    echo "Required variable '${v}' is empty" 1>&2
+                                    exit 2
+                                  }
+                                '')
+                            vars);
 
   haskellPackageNames = self.writeScript
                           "haskell-names"
