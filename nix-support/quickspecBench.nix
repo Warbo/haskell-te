@@ -28,30 +28,28 @@ mkSigHs = writeScript "mkSig.hs" ''
 '';
 
 customHs = writeScript "custom-hs.nix" ''
-  # Provides a set of Haskell packages for use by nix-eval. Uses env vars
-  # HASKELL_NAME and OUT_DIR to include the package generated from smtlib data
+  # Provides a set of Haskell packages for use by nix-eval. Uses OUT_DIR env var
+  # to include the package generated from smtlib data
   with import ${./..}/nix-support {};
   with builtins;
-  let hsName = getEnv "HASKELL_NAME";
+  let hsName = "tip-benchmark-sig";  # The name used by full_haskell_package.sh
       hsDir  = getEnv "OUT_DIR";
       hsPkgs = haskellPackages.override {
         overrides = self: super:
           # Include existing overrides, along with our new one
-          hsOverride self super // listToAttrs [{
-            name  = hsName;
-            value = self.callPackage (import (nixedHsPkg hsDir null)) {};
-          }];
+          hsOverride self super // {
+            "tip-benchmark-sig" = self.callPackage (import (nixedHsPkg hsDir null)) {};
+          };
       };
       # Echo "true", with our Haskell package as a dependency
       check = stdenv.mkDerivation {
         name = "check-for-pkg";
-        buildInputs  = [(hsPkgs.ghcWithPackages (h: [h."''${hsName}"]))];
+        buildInputs  = [(hsPkgs.ghcWithPackages (h: [h."tip-benchmark-sig"]))];
         buildCommand = "source $stdenv/setup; echo true > $out";
       };
-   in assert hsName != ""           || abort "Got no HASKELL_NAME";
-      assert hsDir  != ""           || abort "Got no OUT_DIR";
-      assert hsPkgs ? "''${hsName}" || abort "hsPkgs doesn't have ''${hsName}";
-      assert import "''${check}"    || abort "Couldn't build ''${hsName}";
+   in assert hsDir  != ""                 || abort "Got no OUT_DIR";
+      assert hsPkgs ? "tip-benchmark-sig" || abort "hsPkgs doesn't have pkg";
+      assert import "''${check}"          || abort "Couldn't build pkg";
       hsPkgs
 '';
 
@@ -83,12 +81,7 @@ mkQuickSpecSig = writeScript "mk-quickspec-sig" ''
   mkdir -p "$SIG"
   pushd "$SIG" > /dev/null
 
-  HASKELL_NAME=$(cat "$OUT_DIR"/*.cabal | grep -i "name[ ]*:" |
-                                          grep -o ":.*"       |
-                                          grep -o "[^: ]*")
   NIX_EVAL_HASKELL_PKGS="${customHs}"
-
-  export HASKELL_NAME
   export NIX_EVAL_HASKELL_PKGS
 
   OUTPUT=$(nix-shell \
@@ -119,7 +112,6 @@ mkQuickSpecSig = writeScript "mk-quickspec-sig" ''
 
   WRAP="export NIX_EVAL_HASKELL_PKGS='$NIX_EVAL_HASKELL_PKGS'
   export OUT_DIR='$OUT_DIR'
-  export HASKELL_NAME='$HASKELL_NAME'
   nix-shell --show-trace -p '(import $E)' --run"
 
   ${fileInStore "BENCH_COMMAND" ''
@@ -177,7 +169,7 @@ mkPkg = writeScript "mkPkg.sh" ''
   [[ -z "$OUT_DIR" ]] || return 0
 
   source ${mkSmt}
-  ${mkPkgInner}
+  ${mkPkgInner} < "$SMT_FILE"
 '';
 
 # Use ./.. so all of our dependencies are included

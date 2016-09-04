@@ -24,10 +24,16 @@ rec {
     do
       # Work out the relevant output path; we use "$out1" "$out2", etc. to avoid
       # clashing with bash's argument names "$1", "$2", etc.
-      outPath=$(eval echo "\$out$CLUSTER")
+      if [[ -n "$SIMPLE" ]]
+      then
+        clusterContent "$CLUSTER" > "$DIR/formatted.$CLUSTER.json"
+        echo "$DIR/formatted.$CLUSTER.json"
+      else
+        outPath=$(eval echo "\$out$CLUSTER")
 
-      # Store the cluster's content at this path
-      clusterContent "$CLUSTER" > "$outPath"
+        # Store the cluster's content at this path
+        clusterContent "$CLUSTER" > "$outPath"
+      fi
     done
   '';
 

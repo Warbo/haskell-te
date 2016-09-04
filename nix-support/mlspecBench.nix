@@ -1,5 +1,5 @@
-{ annotate, buildEnv, cluster, ensureVars, explore, glibcLocales,
-  haskellPackages, jq, quickspecBench, reduce, writeScript }:
+{ annotate, buildEnv, cluster, ensureVars, explore, format, glibcLocales,
+  haskellPackages, jq, quickspecBench, reduce, runWeka, writeScript }:
 with builtins;
 
 rec {
@@ -9,21 +9,56 @@ rec {
     getEqs | ${reduce.script}
   '';
 
+  doFormat = writeScript "doFormat.sh" ''
+    #!/usr/bin/env bash
+    export SIMPLE=1
+    ${writeScript "format" format.script}
+  '';
+
+  doExplore = writeScript "doExplore.sh" ''
+    #!/usr/bin/env bash
+    while read -r CLS
+    do
+      ${explore.explore-theories} < "$CLS"
+    done < <(${doFormat})
+  '';
+
   env = buildEnv {
     name  = "mlspecBench-env";
-    paths = [ (haskellPackages.ghcWithPackages (h: [
-                h.reduce-equations h.bench h.mlspec h.ML4HSFE
-              ])) ];
+    paths = [
+      (haskellPackages.ghcWithPackages (h: [
+        h.reduce-equations h.bench h.mlspec h.ML4HSFE
+      ]))
+      runWeka
+    ];
   };
 
   inner = writeScript "mlspecBench-inner.sh" ''
     set -e
     set -o pipefail
 
-    cat "$DIR/annotated.json"   |
-    ${cluster.clusterScript}    |
-    ${explore.explore-theories} |
-    ${doReduce}
+    clusters="$DIR/clusters.json"
+    ${cluster.clusterScript} > "$clusters"
+
+    clCount=$(${jq}/bin/jq 'map(.cluster) | max' < "$clusters")
+
+    export clusters
+    export clCount
+
+    ${doExplore} | ${doReduce}
+  '';
+
+  ourEnv = writeScript "our-env.nix" ''
+    with import ${./..}/nix-support {};
+    buildEnv {
+      name  = "mlspecbench-env";
+      paths = [
+        ((import ${quickspecBench.customHs}).ghcWithPackages (h: [
+          h.tip-benchmark-sig h.reduce-equations h.bench h.mlspec h.ML4HSFE
+        ]))
+        runWeka
+      ];
+    }
   '';
 
   script = writeScript "mlspecBench" ''
@@ -54,29 +89,29 @@ rec {
     export TEMPDIR="$DIR"
 
     # Initialise all of the data we need
-    SMT_FILE="$DIR/input.smt2"
-    export SMT_FILE
-    cat > "$SMT_FILE"
-
     ${quickspecBench.mkPkgInner}
     ${ensureVars ["OUT_DIR"]}
 
     STORED=$(nix-store --add "$OUT_DIR")
       EXPR="with import ${./..}/nix-support {}; annotated \"$STORED\""
          F=$(nix-build --show-trace -E "$EXPR")
-    cp "$F" "$DIR/annotated.json"
 
-    echo "${inner} < '$DIR/input.smt2'" > "$DIR/cmd.sh"
+    echo "DIR='$DIR' ${inner} < '$F'" > "$DIR/cmd.sh"
     chmod +x "$DIR/cmd.sh"
 
+    # Make sure our generated package is available to Nix
+    NIX_EVAL_HASKELL_PKGS="${quickspecBench.customHs}"
+    export NIX_EVAL_HASKELL_PKGS
+
     # Run mlspec once to generate equations
-    nix-shell -p ${env} --run "$DIR/cmd.sh" > "$DIR/eqs.json" || {
+    nix-shell --show-trace -p '(import ${ourEnv})' \
+              --run "$DIR/cmd.sh" > "$DIR/eqs.json" || {
       echo "Failed to get eqs" 1>&2
       exit 1
     }
 
     # Run mlspec over and over to benchmark
-    nix-shell -p ${env} --run \
+    nix-shell --show-trace -p '(import ${ourEnv})' --run \
       "bench --template json --output '$DIR/time.json' '$DIR/cmd.sh'" 1>&2 || {
       echo "Failed to benchmark" 1>&2
       exit 1
