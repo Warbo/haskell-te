@@ -7,6 +7,7 @@ with lib;
 let
 
 explore-theories = writeScript "explore-theories" ''
+  #!/usr/bin/env bash
   set -e
   set -o pipefail
 
