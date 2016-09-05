@@ -7,9 +7,9 @@ rec {
 
 script = writeScript "reduce-equations" ''
   INPUT=$(cat)
-  echo "Got input: $INPUT" 1>&2
-  echo "$INPUT" | reduce-equations 1> "$TEMPDIR/reduce-stdout" \
-                                   2> "$TEMPDIR/reduce-stderr"
+  echo "Reducing: $INPUT" 1>&2
+  echo "$INPUT" | reduce-equations 1>       "$TEMPDIR/reduce-stdout" \
+                                   2> >(tee "$TEMPDIR/reduce-stderr" >&2)
 
   SOUT=$(cat "$TEMPDIR/reduce-stdout")
   SERR=$(cat "$TEMPDIR/reduce-stderr")

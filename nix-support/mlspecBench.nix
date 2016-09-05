@@ -3,11 +3,6 @@
 with builtins;
 
 rec {
-  doReduce = writeScript "doReduce.sh" ''
-    ${reduce.preamble}
-
-    getEqs | ${reduce.script}
-  '';
 
   doFormat = writeScript "doFormat.sh" ''
     #!/usr/bin/env bash
@@ -19,7 +14,8 @@ rec {
     #!/usr/bin/env bash
     while read -r CLS
     do
-      ${explore.explore-theories} < "$CLS"
+      echo "Exploring '$CLS'" 1>&2
+      ${explore.explore-theories} < "$CLS" | jq -c '.[]'
     done < <(${doFormat})
   '';
 
@@ -42,10 +38,13 @@ rec {
 
     clCount=$(${jq}/bin/jq 'map(.cluster) | max' < "$clusters")
 
+    NIX_EVAL_EXTRA_IMPORTS='[("tip-benchmark-sig", "A")]'
+
     export clusters
     export clCount
+    export NIX_EVAL_EXTRA_IMPORTS
 
-    ${doExplore} | ${doReduce}
+    ${doExplore} | ${reduce.script}
   '';
 
   ourEnv = writeScript "our-env.nix" ''
