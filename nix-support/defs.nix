@@ -53,7 +53,6 @@ rec {
   runScript          = callPackage ./runScript.nix          {};
   runTypes           = callPackage ./runTypes.nix           {};
   runTypesScript     = callPackage ./runTypesScript.nix     {};
-  shuffledList       = callPackage ./shufflePackages.nix    {};
   tagAstsScript      = callPackage ./tagAstsScript.nix      {};
   timeCalc           = callPackage ./timeCalc.nix           {};
   tipBenchmarks      = callPackage ./tipBenchmarks.nix      {};
