@@ -116,8 +116,7 @@ rec {
       exit 1
     }
 
-    "${jq}/bin/jq" -n --slurpfile result "$DIR/eqs.json"  \
-                      --slurpfile time   "$DIR/time.json" \
-                   '{"time": $time, "result": $result}'
+    "${jq}/bin/jq" -sR --slurpfile time "$DIR/time.json" \
+                   '{"time": $time, "result": [.]}' < "$DIR/eqs.json"
   '';
 }

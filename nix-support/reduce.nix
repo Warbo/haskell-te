@@ -6,17 +6,7 @@ with lib;
 rec {
 
 script = writeScript "reduce-equations" ''
-  INPUT=$(cat)
-  echo "Reducing: $INPUT" 1>&2
-  echo "$INPUT" | reduce-equations 1>       "$TEMPDIR/reduce-stdout" \
-                                   2> >(tee "$TEMPDIR/reduce-stderr" >&2)
-
-  SOUT=$(cat "$TEMPDIR/reduce-stdout")
-  SERR=$(cat "$TEMPDIR/reduce-stderr")
-  echo -e "STDOUT START\n\n$SOUT\n\nSTDOUT END" 1>&2
-  echo -e "STDERR START\n\n$SERR\n\nSTDERR END" 1>&2
-
-  cat "$TEMPDIR/reduce-stdout"
+  reduce-equations
 '';
 
 preamble = ''
