@@ -159,7 +159,7 @@ mkPkgInner = ''
 
   mkdir -p "$OUT_DIR"
   pushd "${tipBenchmarks.te-benchmark}/lib" > /dev/null
-  ./full_haskell_package.sh
+  ./full_haskell_package.sh < "$SMT_FILE"
   popd > /dev/null
 
   OUT_DIR=$(nix-store --add "$OUT_DIR")
