@@ -19,16 +19,6 @@ rec {
     done < <(${doFormat})
   '';
 
-  env = buildEnv {
-    name  = "mlspecBench-env";
-    paths = [
-      (haskellPackages.ghcWithPackages (h: [
-        h.reduce-equations h.bench h.mlspec h.ML4HSFE
-      ]))
-      runWeka
-    ];
-  };
-
   inner = writeScript "mlspecBench-inner.sh" ''
     set -e
     set -o pipefail
