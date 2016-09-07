@@ -195,7 +195,13 @@ runSig = writeScript "runSig.sh" ''
   RESULT="$DIR/eqs"
   "$RUN_COMMAND" | grep -v '^Depth' | "${jq}/bin/jq" -s '.' > "$RESULT"
 
-  "$BENCH_COMMAND"
+  if [[ "$DO_BENCH" -eq 1 ]]
+  then
+    "$BENCH_COMMAND"
+  else
+    echo "Not benchmarking. To benchmark, set DO_BENCH env var to 1" 1>&2
+    echo '"Not benchmarked"' > "$TIME_JSON"
+  fi
 '';
 
 mkJson = writeScript "mkJson.sh" ''

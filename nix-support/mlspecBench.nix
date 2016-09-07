@@ -101,11 +101,17 @@ rec {
     }
 
     # Run mlspec over and over to benchmark
-    nix-shell --show-trace -p '(import ${ourEnv})' --run \
-      "bench --template json --output '$DIR/time.json' '$DIR/cmd.sh'" 1>&2 || {
-      echo "Failed to benchmark" 1>&2
-      exit 1
-    }
+    if [[ "$DO_BENCH" -eq 1 ]]
+    then
+      nix-shell --show-trace -p '(import ${ourEnv})' --run \
+        "bench --template json --output '$DIR/time.json' '$DIR/cmd.sh'" 1>&2 || {
+        echo "Failed to benchmark" 1>&2
+        exit 1
+      }
+    else
+      echo "Not benchmarking. To benchmark, set DO_BENCH env var to 1" 1>&2
+      echo '"Not benchmarked"' > "$DIR/time.json"
+    fi
 
     "${jq}/bin/jq" -sR --slurpfile time "$DIR/time.json" \
                    '{"time": $time, "result": [.]}' < "$DIR/eqs.json"
