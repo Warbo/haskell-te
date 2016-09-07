@@ -63,11 +63,6 @@ in mapAttrs go {
     ${checkVar "OUT_DIR"}
   '';
 
-  runMkSmt = ''
-    ${run mkSmt}
-    ${checkVar "SMT_FILE"}
-  '';
-
   runMkDir = ''
     source ${mkDir}
     ${checkVar "DIR"}
