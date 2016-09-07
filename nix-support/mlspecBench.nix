@@ -46,6 +46,7 @@ rec {
           h.tip-benchmark-sig h.reduce-equations h.bench h.mlspec h.ML4HSFE
         ]))
         runWeka
+        jq
       ];
     }
   '';
