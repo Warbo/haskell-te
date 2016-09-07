@@ -134,25 +134,6 @@ mkDir = writeScript "mkDir.sh" ''
   DIR="$OUR_DIR"
 '';
 
-mkSmt = writeScript "mkSmt.sh" ''
-  [[ -z "$SMT_FILE" ]] || return 0
-
-  source ${mkDir}
-  ${ensureVars ["DIR"]}
-
-  if [ -t 0 ]
-  then
-    echo "WARNING: quickspecBench needs smtlib data. You can set the
-  SMT_FILE environment variable, or pipe data into stdin. Reading data
-  from stdin, but it looks like a terminal; either type in your data manually
-  (Ctrl-d to exit), or start again using a file or pipe." 1>&2
-  fi
-
-  SMT_FILE="$DIR/input.smt2"
-  export SMT_FILE
-  cat > "$SMT_FILE"
-'';
-
 mkPkgInner = ''
   ${ensureVars ["DIR"]}
 
@@ -161,7 +142,7 @@ mkPkgInner = ''
 
   mkdir -p "$OUT_DIR"
   pushd "${tipBenchmarks.te-benchmark}/lib" > /dev/null
-  ./full_haskell_package.sh < "$SMT_FILE"
+  ./full_haskell_package.sh
   popd > /dev/null
 
   OUT_DIR=$(nix-store --add "$OUT_DIR")
@@ -170,8 +151,8 @@ mkPkgInner = ''
 mkPkg = writeScript "mkPkg.sh" ''
   [[ -z "$OUT_DIR" ]] || return 0
 
-  source ${mkSmt}
-  ${mkPkgInner} < "$SMT_FILE"
+  source ${mkDir}
+  ${mkPkgInner}
 '';
 
 # Use ./.. so all of our dependencies are included
