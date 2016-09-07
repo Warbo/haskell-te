@@ -13,7 +13,9 @@ mkSigHs = writeScript "mkSig.hs" ''
   import MLSpec.Theory
   import Language.Eval.Internal
 
-  render ts x = "main = do { quickSpecAndSimplify (" ++ withoutUndef' (renderWithVariables x ts) ++ ") }"
+  render ts x = "main = do { eqs <- quickSpecAndSimplify (" ++
+                  withoutUndef' (renderWithVariables x ts)  ++
+                  "); mapM_ print eqs; }"
 
   -- Reads JSON from stdin, outputs a QuickSpec signature and associated shell
   -- and Nix commands for running it
