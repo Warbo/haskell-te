@@ -2,7 +2,11 @@ defs: with defs;
 
 testRun "reduce-equations test suite" null
         {
+          LANG           = "en_US.UTF-8";
+          LOCALE_ARCHIVE = "${glibcLocales}/lib/locale/locale-archive";
+
           d = haskellPackages.reduce-equations.src;
+
           buildInputs = [
             cabal-install
             (haskellPackages.ghcWithPackages (h: [
