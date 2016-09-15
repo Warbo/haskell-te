@@ -113,7 +113,8 @@ rec {
       echo '"Not benchmarked"' > "$DIR/time.json"
     fi
 
-    "${jq}/bin/jq" -sR --slurpfile time "$DIR/time.json" \
-                   '{"time": $time, "result": [.]}' < "$DIR/eqs.json"
+    "${jq}/bin/jq" -n --slurpfile time   "$DIR/time.json" \
+                      --slurpfile result "$DIR/eqs.json"  \
+                      '{"time": $time, "result": $result}'
   '';
 }
