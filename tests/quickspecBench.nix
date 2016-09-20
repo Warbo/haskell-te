@@ -1,4 +1,4 @@
-defs: with defs; with lib; with quickspecBench;
+defs: with defs; with lib; with quickspecBench; with builtins;
 
 let checkVar = var: ''
       [[ -n "${"$" + var}" ]] || {
@@ -82,4 +82,30 @@ in mapAttrs go {
       exit 1
     }
   '';
+
+  filterSamples = let keepers = [
+    { name = "append"; module = "A"; package = "tip-benchmark-sig"; }
+    { name = "cNil";   module = "A"; package = "tip-benchmark-sig"; }
+    { name = "cCons";  module = "A"; package = "tip-benchmark-sig"; }
+  ];
+  in ''
+       set -e
+       export BENCH_FILTER_KEEPERS='${toJSON keepers}'
+       BENCH_OUT=$(quickspecBench < ${../benchmarks/list-full.smt2})
+       for S in append cNil cCons
+       do
+         echo "$BENCH_OUT" | jq '.result' | grep "$S" > /dev/null || {
+           echo "No equations for '$S'" 1>&2
+           exit 1
+         }
+       done
+       for S in map foldl foldr length reverse
+       do
+         if echo "$BENCH_OUT" | jq '.result' | grep "$S" > /dev/null
+         then
+           echo "Found equation with forbidden symbol '$S'" 1>&2
+           exit 1
+         fi
+       done
+     '';
 }

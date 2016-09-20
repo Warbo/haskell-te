@@ -127,6 +127,17 @@ mkQuickSpecSig = writeScript "mk-quickspec-sig" ''
   popd > /dev/null
 '';
 
+filterSample = writeScript "filterSample.sh" ''
+  #!/usr/bin/env bash
+  if [[ -z "$BENCH_FILTER_KEEPERS" ]]
+  then
+    cat
+  else
+    "${jq}/bin/jq" --argjson keepers "$BENCH_FILTER_KEEPERS" \
+       'map(select({"name": .name, "package": .package, "module": .module} as $this | $keepers | map({"name": .name, "package": .package, "module": .module} == $this) | any))'
+  fi
+'';
+
 mkDir = writeScript "mkDir.sh" ''
   [[ -z "$DIR" ]] || return 0
 
@@ -166,7 +177,7 @@ getAsts = writeScript "getAsts.sh" ''
   STORED=$(nix-store --add "$OUT_DIR")
     EXPR="with import ${./..}/nix-support {}; annotated \"$STORED\""
        F=$(nix-build --show-trace -E "$EXPR")
-  "${jq}/bin/jq" 'map(select(.quickspecable))' < "$F" > "$ANNOTATED"
+  "${jq}/bin/jq" 'map(select(.quickspecable))' < "$F" | "${filterSample}" > "$ANNOTATED"
 '';
 
 runSig = writeScript "runSig.sh" ''

@@ -1,5 +1,5 @@
 # Entry point for evaluating/building
-let pkgs = builtins.trace "FIXME: Do 64 and 32 bit" import ./nix-support {};
+let pkgs = import ./nix-support {};
  in {
 
   tests = import ./nix-support/tests.nix {};
