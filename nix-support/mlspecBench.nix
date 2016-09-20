@@ -86,7 +86,9 @@ rec {
       EXPR="with import ${./..}/nix-support {}; annotated \"$STORED\""
          F=$(nix-build --show-trace -E "$EXPR")
 
-    echo "DIR='$DIR' ${inner} < '$F'" > "$DIR/cmd.sh"
+    "${quickspecBench.filterSample}" < "$F" > "$DIR/filtered.json"
+
+    echo "DIR='$DIR' ${inner} < '$DIR/filtered.json'" > "$DIR/cmd.sh"
     chmod +x "$DIR/cmd.sh"
 
     # Make sure our generated package is available to Nix

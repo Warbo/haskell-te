@@ -127,14 +127,23 @@ mkQuickSpecSig = writeScript "mk-quickspec-sig" ''
   popd > /dev/null
 '';
 
-filterSample = writeScript "filterSample.sh" ''
+filterSample = let filter = writeScript "filter.jq" ''
+    def mkId: {"name": .name, "package": .package, "module": .module};
+
+    def keep($id): $keepers | map(. == $id) | any;
+
+    def setQS: . + {"quickspecable": (.quickspecable and keep(mkId))};
+
+    map(setQS)
+  '';
+in writeScript "filterSample.sh" ''
   #!/usr/bin/env bash
   if [[ -z "$BENCH_FILTER_KEEPERS" ]]
   then
     cat
   else
-    "${jq}/bin/jq" --argjson keepers "$BENCH_FILTER_KEEPERS" \
-       'map(select({"name": .name, "package": .package, "module": .module} as $this | $keepers | map({"name": .name, "package": .package, "module": .module} == $this) | any))'
+    # If an AST doesn't appear in BENCH_FILTER_KEEPERS, mark it as not quickspecable
+    "${jq}/bin/jq" --argjson keepers "$BENCH_FILTER_KEEPERS" -f "${filter}"
   fi
 '';
 
@@ -177,7 +186,7 @@ getAsts = writeScript "getAsts.sh" ''
   STORED=$(nix-store --add "$OUT_DIR")
     EXPR="with import ${./..}/nix-support {}; annotated \"$STORED\""
        F=$(nix-build --show-trace -E "$EXPR")
-  "${jq}/bin/jq" 'map(select(.quickspecable))' < "$F" | "${filterSample}" > "$ANNOTATED"
+  "${filterSample}" < "$F" | "${jq}/bin/jq" 'map(select(.quickspecable))' > "$ANNOTATED"
 '';
 
 runSig = writeScript "runSig.sh" ''
