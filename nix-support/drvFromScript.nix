@@ -35,13 +35,7 @@ let commonDeps = [ bash coreutils jq nix perl procps utillinux ];
                        "real=${real}"
                        (getEnv "NIX_PATH") ];
        in env // {
-            # Haskell packages are tricky, as they must be accumulated in the
-            # return value of the callback given to 'ghcWithPackages'. Getting
-            # this wrong is common enough to make a "No GHC" warning helpful!
-            buildInputs =  (if any (e: lib.hasPrefix "ghc-" e.name) existing
-                               then (x: x)
-                               else trace "Warning: No GHC in environment")
-                             (existing ++ commonDeps);
+            buildInputs = existing ++ commonDeps;
 
             # Required for calling nix recursively
             NIX_PATH   = lib.concatStringsSep ":" parts;
