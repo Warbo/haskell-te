@@ -1,0 +1,152 @@
+[
+  {
+    "name": "m",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "Pl",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "grammarspackratunambigPackratsmt2Z",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "grammarssimpexprunambig3smt2lin",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "Atom",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "App1",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "grammarspackratunambigPackratsmt2Y",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015propositionalAndIdempotentsmt2models2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortNStoogeSortPermutessmt2nstooge1sort2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "isaplannerprop54smt2S",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "OneAnd",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortNStoogeSortCountsmt2nstooge1sort1",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "twoThirds",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "heapSize",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "Heap",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "index",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "toNat",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "even",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "add3",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "EX",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortStoogeSort2Sortssmt2stooge2sort1",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortNStoogeSort2Countsmt2nstooge2sort1",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "App",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "eqList",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "ZeroAnd",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "takeWhile",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "isaplannerprop47smt2Tree",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015treesortAddSamesmt2Node0",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortTSortIsSortsmt2tsort",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "zisPermutation",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  }
+]

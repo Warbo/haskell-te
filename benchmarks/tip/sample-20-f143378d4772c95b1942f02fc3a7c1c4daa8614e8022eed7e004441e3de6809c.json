@@ -1,0 +1,102 @@
+[
+  {
+    "name": "tip2015intmulidentrightsmt2times",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "B0",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "lt",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "isaplannerprop85smt2rev",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "takeWhile",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "App1",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "select2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "zdrop",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "grammarssimpexprunambig3smt2Y",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "grammarssimpexprunambig1smt2lin",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "Nat",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "append",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "Leaf",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortNStoogeSortSortssmt2nstooge1sort1",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "sorted",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "insort",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "App0",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015heapSortPermutessmt2Node1",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "elem",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "Integer",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  }
+]

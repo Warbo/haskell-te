@@ -1,0 +1,52 @@
+[
+  {
+    "name": "Seq0",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "isaplannerprop85smt2rev",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "pair",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "take",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015escapeNoSpecialsmt2C",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "filter",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "Not0",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "ins1",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "lastOfTwo",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "isaplannerprop37smt2delete",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  }
+]

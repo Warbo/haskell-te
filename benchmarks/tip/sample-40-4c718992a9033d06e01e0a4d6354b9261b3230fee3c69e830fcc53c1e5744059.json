@@ -1,0 +1,202 @@
+[
+  {
+    "name": "nmsorttd",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "eps",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "zsplitAt",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "isSpecial",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortNStoogeSort2Permutessmt2nstooge2sort2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortNStoogeSortSortssmt2nstooge1sort1",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "grammarspackratunambigPackratsmt2Z",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "Seq1",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "fromList",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "removeOne",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "risers",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015heapSortPermutessmt2Node2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortNStoogeSort2Sortssmt2nstooge2sort2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "toInteger",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortBSortCountsmt2pairs",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "isRelaxedPrefix",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015propositionalAndImplicationsmt2models2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "T",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "grammarssimpexprunambig3smt2lin",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "grammarssimpexprunambig5smt2E",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "sort",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "Star0",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "grammarssimpexprunambig3smt2Plus",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "models4",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "Nothing",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "concatMap",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015propositionalAndIdempotentsmt2valid",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortStoogeSort2Countsmt2stooge2sort1",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortStoogeSortCountsmt2stooge1sort1",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015propositionalAndImplicationsmt2valid",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "free",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015treesortAddSamesmt2Node",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015substSubstFreeYessmt2Var",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015propositionalOkaysmt2models5",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "mult2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "ge",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015escapeNoSpecialsmt2A",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "heapSize",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "grammarssimpexprunambig1smt2lin",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "toHeap2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  }
+]

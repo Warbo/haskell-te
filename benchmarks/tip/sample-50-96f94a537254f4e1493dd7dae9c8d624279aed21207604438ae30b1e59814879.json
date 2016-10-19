@@ -1,0 +1,252 @@
+[
+  {
+    "name": "select3",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortStoogeSortCountsmt2stoogesort",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015polyrecseqindexsmt2Nil",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015treesortAddSamesmt2Node2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "mirror",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortStoogeSortSortssmt2stooge1sort1",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortBSortSortssmt2bmerge",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "revflat",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortStoogeSort2Permutessmt2stooge2sort1",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "len",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "pair",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015propositionalOkaysmt2models",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "Q",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "isRelaxedPrefix",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015escapeNoSpecialsmt2R",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015propositionalAndCommutativesmt2valid",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "lt",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "merge",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "maybeToList",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "grammarssimpexprunambig4smt2linTerm",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "grammarspackratunambigPackratsmt2B",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015heapSortPermutessmt2Node1",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "qexp",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "elem",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "lastOfTwo",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "Form",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "head",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "altmul",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortStoogeSort2IsSortsmt2stoogesort2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "eq",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015heapSortPermutessmt2Node2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortStoogeSort2Sortssmt2stoogesort2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "propSelectPermutations",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "grammarssimpexprunambig3smt2Plus",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "Expr",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "eqA",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015rotatestructuralmodsmt2rotate",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "qrevflat",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortStoogeSortIsSortsmt2stooge1sort1",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "bind",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortStoogeSortSortssmt2stooge1sort2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "double",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "heapSize",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortStoogeSort2IsSortsmt2stooge2sort2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortNStoogeSortSortssmt2nstoogesort",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "count",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015regexpRecPlussmt2Plus0",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "go",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015treesortSortPermutesticksmt2toTree",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortStoogeSort2Permutessmt2stooge2sort2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  }
+]

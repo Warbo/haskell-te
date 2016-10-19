@@ -1,0 +1,52 @@
+[
+  {
+    "name": "mult2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015rotatestructuralmodsmt2rotate",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortNStoogeSortIsSortsmt2nstoogesort",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015propositionalAndImplicationsmt2valid",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015heapSortPermutessmt2insert2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015intaddassocsmt2plus",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015listPairUnpairsmt2pairs",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "even",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "opposite",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortStoogeSort2Sortssmt2stooge2sort1",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  }
+]

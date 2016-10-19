@@ -1,0 +1,102 @@
+[
+  {
+    "name": "min2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015intaddassocsmt2plus",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "pairwise",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "Lam0",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "Leaf",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortStoogeSort2Sortssmt2stooge2sort1",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "App0",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "factorial",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "nil",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015propositionalSoundsmt2models2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "okay",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortNStoogeSort2Sortssmt2nstoogesort2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "Cons",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "free",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "Seq0",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "snoc",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortBSortSortssmt2bsort",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "grammarssimpexprunambig3smt2X",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "mult",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "all",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  }
+]

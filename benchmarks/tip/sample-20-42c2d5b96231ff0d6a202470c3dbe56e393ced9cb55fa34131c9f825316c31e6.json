@@ -1,0 +1,102 @@
+[
+  {
+    "name": "msorttd",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "TY",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortStoogeSortPermutessmt2stoogesort",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "models3",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015propositionalAndCommutativesmt2Var0",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015propositionalOkaysmt2models",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "half",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "splitAt",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "union2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "takeWhile",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "intersect2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortNStoogeSort2Sortssmt2nstoogesort2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "equal",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "map2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortStoogeSort2Permutessmt2stooge2sort2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "ok",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015propositionalAndImplicationsmt2valid",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortNStoogeSort2Countsmt2nstooge2sort2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "hmerging",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "propRecSeq",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  }
+]

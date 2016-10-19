@@ -1,0 +1,102 @@
+[
+  {
+    "name": "interleave",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "risers",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortTSortIsSortsmt2toTree",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015propositionalAndIdempotentsmt2models",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "isaplannerprop47smt2Node2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "cons",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "sort",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "merge",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortStoogeSortCountsmt2stooge1sort2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "flatten",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015intaddassocsmt2plus",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "zcount",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "snoc",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "Not",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "elem",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "free",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "pow",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "lastOfTwo",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "ok",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortNStoogeSort2Countsmt2nstooge2sort2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  }
+]

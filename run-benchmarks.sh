@@ -3,7 +3,7 @@
 BASE=$(dirname "$(readlink -f "$0")")
 
 FILES="$*"
-[[ -n "$FILES" ]] || FILES="$BASE"/benchmarks/*.smt2
+[[ -n "$FILES" ]] || FILES="$BASE/benchmarks/*.smt2"
 
 echo "Going to benchmark '$FILES'" 1>&2
 

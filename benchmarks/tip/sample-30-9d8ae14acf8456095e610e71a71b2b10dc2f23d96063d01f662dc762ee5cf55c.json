@@ -1,0 +1,152 @@
+[
+  {
+    "name": "tip2015heapSortPermutessmt2Node",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "deeps",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "ZeroAnd",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "lookup",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "grammarspackratunambigPackratsmt2Y",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015propositionalAndImplicationsmt2models",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "N0",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015intaddassocsmt2minus",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "App0",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortNStoogeSortCountsmt2nstooge1sort1",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "toNat",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "neg",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "head",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "grammarssimpexprunambig4smt2linTerm",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "grammarspackratunambigPackratsmt2X",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015propositionalOkaysmt2models",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "zsplitAt",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "Term0",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "Lam0",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortStoogeSort2IsSortsmt2stoogesort2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "minimum",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "isaplannerprop47smt2Tree",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "qexp",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "OneAnd",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "free",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "B0",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortNStoogeSortIsSortsmt2nstooge1sort1",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortNStoogeSortPermutessmt2nstoogesort",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "lt",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "epsR",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  }
+]

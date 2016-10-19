@@ -1,0 +1,202 @@
+[
+  {
+    "name": "len",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "or2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortStoogeSort2Countsmt2stooge2sort1",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortStoogeSort2Sortssmt2stoogesort2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "one",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortBSortPermutessmt2bmerge",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015propositionalSoundsmt2models5",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "isaplannerprop47smt2Node2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "grammarssimpexprunambig5smt2lin",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "bind",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "Pl",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "risers",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "propSelectPermutations",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "ZB",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "weirdconcat",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "append",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "list",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "exp",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "flatten",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "grammarssimpexprunambig5smt2Plus1",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "spec",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "grammarssimpexprunambig3smt2Plus0",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "ssort",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortStoogeSortSortssmt2stooge1sort2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortBSortPermutessmt2bsort",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015escapeNoSpecialsmt2C",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "add3acc",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "revflat",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "Maybe",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortNStoogeSort2Permutessmt2nstooge2sort2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "EY",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015heapSortPermutessmt2Node",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "modstructural",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "zelem",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "ztake",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "isort",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "isaplannerprop47smt2Node",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "Star0",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "flatten0",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "heapSize",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  }
+]

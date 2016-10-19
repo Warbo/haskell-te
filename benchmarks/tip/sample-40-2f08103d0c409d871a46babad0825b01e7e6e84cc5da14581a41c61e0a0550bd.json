@@ -1,0 +1,202 @@
+[
+  {
+    "name": "splitAt",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortNStoogeSortPermutessmt2nstooge1sort1",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "isort",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "ssort",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "qexp",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "null",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015propositionalAndCommutativesmt2Var0",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "grammarspackratunambigPackratsmt2S",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortNStoogeSortIsSortsmt2nstoogesort",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortStoogeSort2Sortssmt2stooge2sort1",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortNStoogeSortCountsmt2nstoogesort",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "grammarssimpexprunambig4smt2linTerm",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015propositionalOkaysmt2models2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortBSortIsSortsmt2bmerge",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "TY",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "linS",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "max2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015regexpRecPlussmt2Seq",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "grammarssimpexprunambig3smt2lin",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortNStoogeSort2Permutessmt2nstoogesort2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortStoogeSortIsSortsmt2stooge1sort1",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "Integer",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "isaplannerprop47smt2Node2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortStoogeSort2Permutessmt2stooge2sort2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "isSpecial",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "isaplannerprop47smt2Tree",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "m",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "split2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "msortbu2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "msortbu",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "zisPermutation",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "=2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "^1",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015treesortAddSamesmt2Node1",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "head",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "Token",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "bind",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortBSortSortssmt2bmerge",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortStoogeSort2Sortssmt2stooge2sort2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015propositionalSoundsmt2models5",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  }
+]

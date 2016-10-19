@@ -1,0 +1,152 @@
+[
+  {
+    "name": "isRelaxedPrefix",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "butlastConcat",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "App1",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "isaplannerprop54smt2plus",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "isaplannerprop54smt2minus",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "Eps",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "listDeleteMinimum",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortBSortPermutessmt2bsort",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortHSortSortssmt2toList",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015heapSortPermutessmt2Node1",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "grammarssimpexprunambig5smt2Plus0",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "sort2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "zip",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "nil",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "=2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "ZB",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "Not",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortNStoogeSort2IsSortsmt2nstooge2sort1",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortNStoogeSort2Sortssmt2nstoogesort2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortHSortSortssmt2hsort",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015propositionalSoundsmt2models",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015propositionalAndCommutativesmt2models",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "sort",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "mergingbu2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "zipConcat",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015propositionalOkaysmt2models5",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "sum",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortTSortIsSortsmt2add",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "TY",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "isSpecial",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  }
+]

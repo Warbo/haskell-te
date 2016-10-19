@@ -1,0 +1,102 @@
+[
+  {
+    "name": "tip2015sortNStoogeSortPermutessmt2nstooge1sort2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "intersect2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015escapeNoSpecialsmt2D",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "absVal",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015heapSortPermutessmt2insert2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "zdelete",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortStoogeSort2IsSortsmt2stooge2sort1",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortNStoogeSortCountsmt2nstooge1sort1",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "nil",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "lastOfTwo",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "zip",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "hpairwise",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortTSortIsSortsmt2tsort",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "One",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "zdeleteAll",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "list",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "isSpecial",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "Just",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "App1",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "isaplannerprop85smt2rev",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  }
+]

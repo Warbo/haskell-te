@@ -1,0 +1,52 @@
+[
+  {
+    "name": "zsplitAt",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortBSortIsSortsmt2bsort",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "snd",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "Heap",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "heap",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015regexpRecPlussmt2Nil",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "bind",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "risers",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "equal",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "isaplannerprop54smt2minus",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  }
+]

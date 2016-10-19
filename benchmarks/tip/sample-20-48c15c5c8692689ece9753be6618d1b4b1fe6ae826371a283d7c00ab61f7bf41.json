@@ -1,0 +1,102 @@
+[
+  {
+    "name": "tip2015propositionalAndCommutativesmt2models2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "grammarspackratunambigPackratsmt2A",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "flatten0",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "bubsort",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "ins1",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "third",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "models3",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "select3",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "snd",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "toList2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "&0",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015intmulidentrightsmt2times",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortTSortIsSortsmt2add",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "second",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "models4",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "drop",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015regexpRecPlussmt2Nil",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015treesortAddSamesmt2Node",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "eq",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortNStoogeSort2Sortssmt2nstooge2sort2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  }
+]

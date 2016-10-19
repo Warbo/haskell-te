@@ -1,0 +1,52 @@
+[
+  {
+    "name": "tip2015sortStoogeSort2Countsmt2stooge2sort1",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015propositionalAndImplicationsmt2models5",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015propositionalAndIdempotentsmt2models2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "linA",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "isEsc",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "accplus",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "maybeToList",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "deeps",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "Not0",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015sortStoogeSortSortssmt2stooge1sort2",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  }
+]

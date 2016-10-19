@@ -1,0 +1,52 @@
+[
+  {
+    "name": "grammarspackratunambigPackratsmt2S",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "all",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015heapSortPermutessmt2Node0",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "tip2015polyrecseqindexsmt2Seq",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "second",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "one",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "removeOne",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "sort",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "Lam1",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  },
+  {
+    "name": "mul3",
+    "package": "tip-benchmark-sig",
+    "module": "A"
+  }
+]
