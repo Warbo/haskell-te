@@ -66,16 +66,10 @@ fileInStore = var: content: ''
   rm -f filed
 '';
 
-# Turn QuickSpec output into a consistent, machine-readable format
-extractEquations = writeScript "extract-eqs.sh" ''
-  PAT="^[ ]*[0-9][0-9]*: "
-  grep "$PAT" | sed -e "s/$PAT//g"
-'';
-
-mkQuickSpecSig = writeScript "mk-quickspec-sig" ''
+mkQuickSpecSig = ''
   [[ -z "$SIG" ]] || return 0
 
-  source ${getAsts}
+  ${getAsts}
   ${ensureVars ["DIR" "OUT_DIR" "ANNOTATED"]}
 
   SIG="$DIR"
@@ -147,7 +141,7 @@ in writeScript "filterSample.sh" ''
   fi
 '';
 
-mkDir = writeScript "mkDir.sh" ''
+mkDir = ''
   [[ -z "$DIR" ]] || return 0
 
   OUR_DIR=$(mktemp -d --tmpdir "quickspecBenchXXXXX")
@@ -168,18 +162,18 @@ mkPkgInner = ''
   OUT_DIR=$(nix-store --add "$OUT_DIR")
 '';
 
-mkPkg = writeScript "mkPkg.sh" ''
+mkPkg = ''
   [[ -z "$OUT_DIR" ]] || return 0
 
-  source ${mkDir}
+  ${mkDir}
   ${mkPkgInner}
 '';
 
 # Use ./.. so all of our dependencies are included
-getAsts = writeScript "getAsts.sh" ''
+getAsts = ''
   [[ -z "$ANNOTATED" ]] || return 0
 
-  source ${mkPkg}
+  ${mkPkg}
   ${ensureVars ["DIR" "OUT_DIR"]}
 
   ANNOTATED="$DIR/annotated.json"
@@ -189,10 +183,10 @@ getAsts = writeScript "getAsts.sh" ''
   "${filterSample}" < "$F" | "${jq}/bin/jq" 'map(select(.quickspecable))' > "$ANNOTATED"
 '';
 
-runSig = writeScript "runSig.sh" ''
+runSig = ''
   [[ -z "$RESULT" ]] || return 0
 
-  source ${mkQuickSpecSig}
+  ${mkQuickSpecSig}
   ${ensureVars ["DIR" "BENCH_COMMAND" "RUN_COMMAND"]}
 
   RESULT="$DIR/eqs"
@@ -207,10 +201,10 @@ runSig = writeScript "runSig.sh" ''
   fi
 '';
 
-mkJson = writeScript "mkJson.sh" ''
+mkJson = ''
   [[ -z "$JSON_OUT" ]] || return 0
 
-  source ${runSig}
+  ${runSig}
   ${ensureVars ["DIR" "TIME_JSON" "RESULT"]}
 
   JSON_OUT="$DIR/out.json"
@@ -236,7 +230,7 @@ script = writeScript "quickspec-bench" ''
   }
   trap cleanup EXIT
 
-  source ${mkJson}
+  ${mkJson}
 
   cat "$JSON_OUT"
 '';

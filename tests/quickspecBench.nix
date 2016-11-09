@@ -28,7 +28,7 @@ in mapAttrs go {
     export ANNOTATED="${./annotated.json}"
     export       DIR="$PWD"
 
-    ${run mkQuickSpecSig}
+    ${run (writeScript "mk-quickspec-sig.sh" mkQuickSpecSig)}
 
     for F in sig.hs env.nix
     do
@@ -44,27 +44,27 @@ in mapAttrs go {
   '';
 
   runRunSig = ''
-    ${run runSig}
+    ${run (writeScript "runSig.sh" runSig)}
     ${checkVar "RESULT"}
   '';
 
   runMkQuickSpecSig = ''
-    ${run mkQuickSpecSig}
+    ${run (writeScript "mk-quickspec-sig.sh" mkQuickSpecSig)}
     ${checkVar "SIG"}
   '';
 
   runGetAsts = ''
-    ${run getAsts}
+    ${run (writeScript "getAsts.sh" getAsts)}
     ${checkVar "ANNOTATED"}
   '';
 
   runMkPkg = ''
-    ${run mkPkg}
+    ${run (writeScript "mkPkg.sh" mkPkg)}
     ${checkVar "OUT_DIR"}
   '';
 
   runMkDir = ''
-    source ${mkDir}
+    ${mkDir}
     ${checkVar "DIR"}
   '';
 

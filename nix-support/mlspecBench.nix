@@ -4,19 +4,19 @@ with builtins;
 
 rec {
 
-  doFormat = writeScript "doFormat.sh" ''
-    #!/usr/bin/env bash
-    export SIMPLE=1
-    ${writeScript "format" format.script}
-  '';
-
   doExplore = writeScript "doExplore.sh" ''
     #!/usr/bin/env bash
+
+    function doFormat {
+      export SIMPLE=1
+      ${writeScript "format" format.script}
+    }
+
     while read -r CLS
     do
       echo "Exploring '$CLS'" 1>&2
       ${explore.explore-theories} < "$CLS" | jq -c '.[]'
-    done < <(${doFormat})
+    done < <(doFormat)
   '';
 
   inner = writeScript "mlspecBench-inner.sh" ''
