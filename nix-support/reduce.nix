@@ -5,10 +5,6 @@ with lib;
 
 rec {
 
-script = writeScript "reduce-equations" ''
-  reduce-equations
-'';
-
 preamble = ''
   set -e
 
@@ -24,7 +20,7 @@ doReduce = quick: clusterCount: inputs:
              drvFromScript { inherit inputs;
                              outputs = stdParts;
                              buildInputs = explore.extractedEnv {
-                                             extraHs = [ "reduce-equations" ];
+                                             extraPkgs = [ reduce-equations ];
                                            }; } ''
                set -e
 
@@ -33,7 +29,7 @@ doReduce = quick: clusterCount: inputs:
                export CLUSTERS="${clusterCount}"
                O=$(getEqs | "${benchmark {
                                inherit quick inputs;
-                               cmd = toString script;
+                               cmd = "reduce-equations";
                              }}")
                ${storeParts}
              '';

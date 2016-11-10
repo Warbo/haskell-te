@@ -30,7 +30,7 @@ rec {
 
   # These provide executables
   inherit (haskellPackages)
-          AstPlugin GetDeps ML4HSFE mlspec mlspec-bench reduce-equations;
+          AstPlugin GetDeps ML4HSFE mlspec mlspec-bench;
 
   annotate           = callPackage ./annotate.nix           {};
   annotateAstsScript = callPackage ./annotateAstsScript.nix {};
@@ -174,6 +174,16 @@ rec {
                           (self.lib.concatStringsSep "\n" (attrNames haskellPackages));
 
   havePath = n: any (x: x.prefix == n) nixPath;
+
+  reduce-equations =
+    haskellPackages.callPackage
+      (nixFromCabal (toString (if havePath "reduce-equations"
+                                  then <reduce-equations>
+                                  else ../packages/reduce-equations))
+                    null)
+      {
+
+      };
 
   runWeka = callPackage (if havePath "runWeka"
                             then <runWeka>

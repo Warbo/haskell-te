@@ -53,10 +53,6 @@ hsOverride = self: super:
                                        <nix-eval>
                                        ../packages/nix-eval;
 
-        reduce-equations  = cabalCheck "reduce-equations"
-                                       <reduce-equations>
-                                       ../packages/reduce-equations;
-
         runtime-arbitrary = cabalCheck "runtime-arbitrary"
                                        <runtime-arbitrary>
                                        ../packages/runtime-arbitrary;

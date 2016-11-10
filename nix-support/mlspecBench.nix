@@ -1,5 +1,5 @@
 { annotate, buildEnv, cluster, ensureVars, explore, format, glibcLocales,
-  haskellPackages, jq, quickspecBench, reduce, runWeka, writeScript }:
+  haskellPackages, jq, quickspecBench, runWeka, writeScript }:
 with builtins;
 
 rec {
@@ -34,7 +34,7 @@ rec {
     export clCount
     export NIX_EVAL_EXTRA_IMPORTS
 
-    ${doExplore} | ${reduce.script}
+    ${doExplore} | reduce-equations
   '';
 
   ourEnv = writeScript "our-env.nix" ''
@@ -43,8 +43,9 @@ rec {
       name  = "mlspecbench-env";
       paths = [
         ((import ${quickspecBench.customHs}).ghcWithPackages (h: [
-          h.tip-benchmark-sig h.reduce-equations h.bench h.mlspec h.ML4HSFE
+          h.tip-benchmark-sig h.bench h.mlspec h.ML4HSFE
         ]))
+        reduce-equations
         runWeka
         jq
       ];
