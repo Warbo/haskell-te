@@ -1,5 +1,5 @@
-{ annotate, buildEnv, cluster, ensureVars, explore, format, glibcLocales,
-  haskellPackages, jq, quickspecBench, runWeka, writeScript }:
+{ cluster, ensureVars, explore, format, glibcLocales, jq, quickspecBench,
+  reduce-equations, runWeka, writeScript }:
 with builtins;
 
 rec {
@@ -7,16 +7,12 @@ rec {
   doExplore = writeScript "doExplore.sh" ''
     #!/usr/bin/env bash
 
-    function doFormat {
-      export SIMPLE=1
-      ${writeScript "format" format.script}
-    }
-
+    export SIMPLE=1
     while read -r CLS
     do
       echo "Exploring '$CLS'" 1>&2
       ${explore.explore-theories} < "$CLS" | jq -c '.[]'
-    done < <(doFormat)
+    done < <("${writeScript "format" format.script}")
   '';
 
   inner = writeScript "mlspecBench-inner.sh" ''
@@ -26,7 +22,7 @@ rec {
     clusters="$DIR/clusters.json"
     ${cluster.clusterScript} > "$clusters"
 
-    clCount=$(${jq}/bin/jq 'map(.cluster) | max' < "$clusters")
+    clCount=$("${jq}/bin/jq" 'map(.cluster) | max' < "$clusters")
 
     NIX_EVAL_EXTRA_IMPORTS='[("tip-benchmark-sig", "A")]'
 
@@ -34,7 +30,7 @@ rec {
     export clCount
     export NIX_EVAL_EXTRA_IMPORTS
 
-    ${doExplore} | reduce-equations
+    ${doExplore} | "${reduce-equations}/bin/reduce-equations"
   '';
 
   ourEnv = writeScript "our-env.nix" ''
@@ -45,7 +41,6 @@ rec {
         ((import ${quickspecBench.customHs}).ghcWithPackages (h: [
           h.tip-benchmark-sig h.bench h.mlspec h.ML4HSFE
         ]))
-        reduce-equations
         runWeka
         jq
       ];

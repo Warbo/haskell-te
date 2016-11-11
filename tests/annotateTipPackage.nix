@@ -43,7 +43,7 @@ ranTypes = drvFromScript (env // { outputs = [ "stdout" "stderr" "code" ];
              "${runTypesScript {
                   inherit pkg;
                   pkgSrc = pkg.src;
-              }}" < "$asts" > stdout 2> stderr
+              }}" < "$asts" > stdout 2> >(tee stderr >&2)
              CODE="$?"
 
              echo "$CODE" > "$code"

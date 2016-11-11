@@ -1,7 +1,7 @@
 { annotate, buildPackage, callPackage, cluster, defaultClusters, drvFromScript,
   dumpPackage, explore, extractTarball, format, haskellPackages, lib,
   nixedHsPkg, nixFromCabal, pkgName, reduce, runScript, stdenv, storeResult,
-  timeCalc, writeScript }:
+  writeScript }:
 with builtins;
 with lib;
 
@@ -108,15 +108,6 @@ processPkg = { clusters, quick, sampleSize ? null }: givenName: givenPkg: rec {
                                      jq -s 'length' < "$f" > "$out"
                                    '')
                             equations;
-
-  # Total benchmark times (split up according to clusters)
-  inherit (timeCalc.pkgTimes {
-            dumpTime     = rawDump.time;
-            annotateTime = rawAnnotated.time;
-            clusterTimes = mapAttrs (_:      v: v.time)  rawClustered.results;
-            exploreTimes = mapAttrs (_: map (c: c.time)) rawExplored.results;
-          })
-          dynamicTimes staticTime totalTimes;
 };
 
 checkProcessed = p:

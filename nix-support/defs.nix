@@ -34,6 +34,7 @@ rec {
 
   annotate           = callPackage ./annotate.nix           {};
   annotateAstsScript = callPackage ./annotateAstsScript.nix {};
+  callHackage        = callPackage ./callHackage.nix        {};
   cluster            = callPackage ./cluster.nix            {};
   drvFromScript      = callPackage ./drvFromScript.nix      {};
   dumpPackage        = callPackage ./dumpPackage.nix        {};
@@ -54,7 +55,6 @@ rec {
   runTypes           = callPackage ./runTypes.nix           {};
   runTypesScript     = callPackage ./runTypesScript.nix     {};
   tagAstsScript      = callPackage ./tagAstsScript.nix      {};
-  timeCalc           = callPackage ./timeCalc.nix           {};
   tipBenchmarks      = callPackage ./tipBenchmarks.nix      {};
 
   buildPackage    = callPackage ./buildPackage.nix
@@ -175,15 +175,17 @@ rec {
 
   havePath = n: any (x: x.prefix == n) nixPath;
 
+  hseNew = callHackage "haskell-src-exts" "1.19.0" {
+    pretty-show = callHackage "pretty-show" "1.6.12" {};
+  };
+
   reduce-equations =
     haskellPackages.callPackage
       (nixFromCabal (toString (if havePath "reduce-equations"
                                   then <reduce-equations>
                                   else ../packages/reduce-equations))
                     null)
-      {
-
-      };
+      { haskell-src-exts = hseNew; };
 
   runWeka = callPackage (if havePath "runWeka"
                             then <runWeka>

@@ -15,9 +15,8 @@ let checkVar = var: ''
 in mapAttrs go {
 
   failOnGarbage = ''
-    if echo '!"£$%^&*()' | quickspecBench 1> stdout 2> stderr
+    if echo '!"£$%^&*()' | quickspecBench > >(tee stdout) 2> >(tee stderr >&2)
     then
-      cat stderr stdout 1>&2
       exit 1
     fi
     exit 0

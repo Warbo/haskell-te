@@ -245,7 +245,7 @@ rec {
          # Measure time with 'time'
          echo "$INPUT" |
            "${time}/bin/time" -f '%e' -o time \
-             "${cmd}" ${argStr} 1> stdout 2> stderr
+             "${cmd}" ${argStr} 1> stdout 2> >(tee stderr >&2)
          CODE="$?"
 
          ${cacheOutputs}
