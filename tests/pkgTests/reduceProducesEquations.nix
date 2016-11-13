@@ -6,12 +6,15 @@ join = x: addErrorContext "joining ${toJSON x}"
             (concatStringsSep " " (map (e: ''"${e}"'') x));
 
 inScript = n: ''
-  cat ${join pkg.explored.${n}} | jq -s '.' > out
+  for F in ${toString pkg.explored.${n}}
+  do
+    jq '.[]' < "$F"
+  done | jq -s '.' > out
   "${storeResult}" out
 '';
 
 outScript = input: ''
-  reduce-equations < "${input}" > out
+  "${reduce-equations}/bin/reduce-equations" < "${input}" > out
   "${storeResult}" out
 '';
 
@@ -22,9 +25,7 @@ checkReduce = n:
                                 (runScript {} iScript);
       output  = addErrorContext "oScript: ${oScript} "
                                 (runScript {
-                                    buildInputs = explore.extractedEnv {
-                                      extraHs = [ "reduce-equations" ];
-                                    };
+                                    buildInputs = explore.extractedEnv {};
                                   }
                                   oScript);
       dbg     = toJSON { inherit iScript oScript input output; };
