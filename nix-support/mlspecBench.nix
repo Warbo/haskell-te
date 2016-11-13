@@ -8,11 +8,7 @@ rec {
     #!/usr/bin/env bash
 
     export SIMPLE=1
-    while read -r CLS
-    do
-      echo "Exploring '$CLS'" 1>&2
-      ${explore.explore-theories} < "$CLS" | jq -c '.[]'
-    done < <("${writeScript "format" format.script}")
+    "${writeScript "format" format.script}" | "${explore.explore-theories}"
   '';
 
   inner = writeScript "mlspecBench-inner.sh" ''
@@ -30,7 +26,7 @@ rec {
     export clCount
     export NIX_EVAL_EXTRA_IMPORTS
 
-    ${doExplore} | "${reduce-equations}/bin/reduce-equations"
+    ${doExplore} | tee >(cat >&2) | "${reduce-equations}/bin/reduce-equations"
   '';
 
   ourEnv = writeScript "our-env.nix" ''
@@ -71,6 +67,7 @@ rec {
     [[ -n "$DIR" ]] || {
       OUR_DIR=$(mktemp -d --tmpdir "mlspecBenchXXXXX")
       DIR="$OUR_DIR"
+      echo "Creating temp dir '$OUR_DIR'" 1>&2
     }
     export TEMPDIR="$DIR"
 
@@ -78,9 +75,10 @@ rec {
     ${quickspecBench.mkPkgInner}
     ${ensureVars ["OUT_DIR"]}
 
-    STORED=$(nix-store --add "$OUT_DIR")
-      EXPR="with import ${./..}/nix-support {}; annotated \"$STORED\""
-         F=$(nix-build --show-trace -E "$EXPR")
+    EXPR="with import ${./..}/nix-support {}; annotated \"$OUT_DIR\""
+
+    echo "Annotating, via '$EXPR'" 1>&2
+    F=$(nix-build --show-trace -E "$EXPR")
 
     "${quickspecBench.filterSample}" < "$F" > "$DIR/filtered.json"
 

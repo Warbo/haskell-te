@@ -154,10 +154,12 @@ mkPkgInner = ''
   OUT_DIR="$DIR/hsPkg"
   export OUT_DIR
 
+  echo "Creating Haskell package" 1>&2
   mkdir -p "$OUT_DIR"
   pushd "${tipBenchmarks.te-benchmark}/lib" > /dev/null
   ./full_haskell_package.sh
   popd > /dev/null
+  echo "Created Haskell package" 1>&2
 
   OUT_DIR=$(nix-store --add "$OUT_DIR")
 '';
