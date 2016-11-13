@@ -15,12 +15,11 @@ let
                         pkgSrc = if pkg ? srcNixed
                                     then pkg.srcNixed
                                     else pkgSrc; }}" |
-      "${annotateAstsScript}"                                  |
+      "${annotateAstsScript}"                        |
       "${getDepsScript}"
   '';
 
-  annotate =
-    let env = if haskellPackages ? pkg.name
+  env = if haskellPackages ? pkg.name
                  then { extraHs    = [ "GetDeps" pkg.name ];
                         standalone = null; }
                  else { extraHs    = [ "GetDeps" ];
@@ -28,19 +27,18 @@ let
                                         then pkg.srcNixed
                                         else pkgSrc; };
 
-    in drvFromScript
-         {
-           buildInputs = explore.extractedEnv (env // { f = asts; });
-           outputs     = stdParts;
-           inherit asts;
-         }
-         ''
-           set -e
-           O=$("${benchmark {
-                  inherit quick;
-                  cmd = annotateDb;
-                }}" < "$asts")
+in drvFromScript
+     {
+       buildInputs = explore.extractedEnv (env // { f = asts; });
+       outputs     = stdParts;
+       inherit asts;
+     }
+     ''
+       set -e
+       O=$("${benchmark {
+                inherit quick;
+                cmd = annotateDb;
+            }}" < "$asts")
 
-           ${storeParts}
-         '';
- in annotate
+       ${storeParts}
+     ''
