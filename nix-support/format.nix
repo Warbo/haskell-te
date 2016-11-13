@@ -20,21 +20,29 @@ rec {
       jq -c --argjson cls "$1" "$FILTER" < "$clusters"
     }
 
+    function postProcess {
+      if [[ -n "$SIMPLE" ]]
+      then
+        jq -s '.'
+      else
+        cat
+      fi
+    }
+
     for CLUSTER in $(seq 1 "$clCount")
     do
       # Work out the relevant output path; we use "$out1" "$out2", etc. to avoid
       # clashing with bash's argument names "$1", "$2", etc.
       if [[ -n "$SIMPLE" ]]
       then
-        clusterContent "$CLUSTER" > "$DIR/formatted.$CLUSTER.json"
-        echo "$DIR/formatted.$CLUSTER.json"
+        clusterContent "$CLUSTER"
       else
         outPath=$(eval echo "\$out$CLUSTER")
 
         # Store the cluster's content at this path
         clusterContent "$CLUSTER" > "$outPath"
       fi
-    done
+    done | postProcess
   '';
 
   format = clusterCount: clusters:

@@ -11,8 +11,8 @@ preamble = ''
   function getEqs {
     for F in $inputs
     do
-      jq -c '.[]' < "$F"
-    done
+      jq '.[]' < "$F"
+    done | jq -s '.'
   }
 '';
 
