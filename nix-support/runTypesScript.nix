@@ -110,13 +110,21 @@ writeScript "runTypes" ''
     "${jq}/bin/jq" "$@"
   }
 
-         ASTS=$(cat)
-          CMD=$(echo "$ASTS"     | jq -c '.[]'     | "${typeCommand}")
-       RESULT=$(echo "$CMD"      | "${repl}"       | "${replLines}"  )
-     SCOPECMD=$(echo "$RESULT"   | "${typeScopes}"                   )
-  SCOPERESULT=$(echo "$SCOPECMD" | "${repl}"       | "${replLines}"  )
+  ASTS=$(cat)
 
-  # Output everything as JSON
+  echo "Building type-extraction command" 1>&2
+  CMD=$(echo "$ASTS" | jq -c '.[]' | "${typeCommand}")
+
+  echo "Extracting types" 1>&2
+  RESULT=$(echo "$CMD" | "${repl}" | "${replLines}")
+
+  echo "Building scope-checking command" 1>&2
+  SCOPECMD=$(echo "$RESULT" | "${typeScopes}")
+
+  echo "Checking scope" 1>&2
+  SCOPERESULT=$(echo "$SCOPECMD" | "${repl}" | "${replLines}")
+
+  echo "Outputting JSON" 1>&2
   # shellcheck disable=SC2016
   jq -n --argfile asts        <(echo "$ASTS")                       \
         --argfile cmd         <(echo "$CMD"         | jq -s -R '.') \
