@@ -6,7 +6,7 @@ join = x: addErrorContext "joining ${toJSON x}"
             (concatStringsSep " " (map (e: ''"${e}"'') x));
 
 inScript = n: ''
-  cat ${join pkg.explored.${n}} > out
+  cat ${join pkg.explored.${n}} | jq -s '.' > out
   "${storeResult}" out
 '';
 
