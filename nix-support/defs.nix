@@ -194,6 +194,10 @@ rec {
   stdParts = [ "failed" "out" "stderr" "stdout" "time" ];
 
   storeParts = ''
+    [[ -n "$O" ]] || {
+      echo "storeParts failed: No data given" 1>&2
+      exit 1
+    }
     echo "$O" > "$out"
 
     SO=$(echo "$O" | jq -r ".stdout")
