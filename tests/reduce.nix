@@ -15,6 +15,7 @@ testRun "reduce-equations test suite" null
               h.directory
               h.tasty
               h.tasty-quickcheck
+              (h.callPackage hseNew {})
             ]))
           ];
         }
