@@ -1,7 +1,8 @@
-{ extractTarball, fetchgit, fetchurl, havePath, hseNew, nixFromCabal,
-  superHaskellPackages }:
+{ extractTarball, fetchgit, fetchurl, haskell, havePath, hseNew, lib,
+  nixFromCabal, superHaskellPackages }:
 
 with builtins;
+with lib;
 
 assert let got    = superHaskellPackages.ghc.version;
            should = "7.10.3";
@@ -10,11 +11,15 @@ rec {
 
 hsOverride = self: super:
   # Use nixFromCabal on paths in ../packages
-  let cabalPath  = p: self.callPackage (nixFromCabal (toString p) null);
+  let optimise   = pkg: haskell.lib.overrideCabal pkg (oldAttrs: {
+        configureFlags = [ "--ghc-option=-O2" ];
+      });
+      cabalPath  = p: self.callPackage (nixFromCabal (toString p) null);
       cabalCheck = name: given: fallback: cabalPath (if havePath name
                                                         then given
                                                         else fallback);
-   in { ArbitraryHaskell  = cabalCheck "arbitrary-haskell"
+   in mapAttrs (_: optimise) {
+        ArbitraryHaskell  = cabalCheck "arbitrary-haskell"
                                        <arbitrary-haskell>
                                        ../packages/arbitrary-haskell {};
 
