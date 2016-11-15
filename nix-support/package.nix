@@ -2,13 +2,11 @@
 
 let env = buildEnv {
       name  = "te-env";
-      paths = tipBenchmarks.te-benchmark.propagatedNativeBuildInputs;
+      paths = [ tipBenchmarks.tools ];
     };
  in stdenv.mkDerivation {
-      name = "haskell-te";
-
-      buildInputs           = [ makeWrapper ];
-      propagatedBuildInputs = [ tipBenchmarks.te-benchmark ];
+      name        = "haskell-te";
+      buildInputs = [ makeWrapper ];
 
       buildCommand = ''
         source $stdenv/setup
@@ -18,6 +16,7 @@ let env = buildEnv {
         makeWrapper ${quickspecBench.script} "$out/bin/quickspecBench" \
           --prefix PATH : "${env}/bin"
 
-        cp ${mlspecBench.script} "$out/bin/mlspecBench"
+        makeWrapper ${mlspecBench.script}    "$out/bin/mlspecBench"    \
+          --prefix PATH : "${env}/bin"
       '';
     }

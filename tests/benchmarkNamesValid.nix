@@ -6,7 +6,8 @@ let samples = filter (hasSuffix ".json") (attrNames (readDir ../benchmarks/tip))
 
     asts = (dumpPackage {
       quick = true;
-      src = import (nixedHsPkg "${tipBenchmarks.tip-benchmarks}" null);
+      src   = toString (nixedHsPkg (toString tipBenchmarks.tip-benchmarks-haskell)
+                                   null);
     }).stdout;
 
     testFile = let find = writeScript "find.jq" ''

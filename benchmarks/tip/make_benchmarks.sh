@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 function allNames {
-    nix-shell -p '(import ./nix-support {}).tipBenchmarks.te-benchmark' \
+    nix-shell -p '(import ./nix-support {}).tipBenchmarks.tools' \
               --run "all_names.rkt" < "$TIP" | tr ' ' '\n' | grep -v '^par$'
 }
 

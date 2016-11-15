@@ -4,14 +4,29 @@
 with builtins;
 let path = if any (x: x.prefix == "te-benchmarks") nixPath
               then <te-benchmarks>
-              else runScript {} ''
-                     "${storeResult}" "${../packages/te-benchmark}"
-                   '';
+              else ../packages/te-benchmark;
  in rec {
   inherit (callPackage path {})
-    te-benchmark tip-benchmarks te-benchmark-tests tip-benchmark-smtlib;
+    tip-benchmarks tools tip-benchmark-smtlib;
 
-  pkgDef = nixFromCabal (toString tip-benchmarks) null;
+  # Uses tip-benchmark-smtlib to produce a Haskell package
+  tip-benchmarks-haskell = stdenv.mkDerivation {
+    name         = "tip-benchmarks-haskell";
+    buildInputs  = [ tools ];
+                    SMT_FILE     = tip-benchmark-smtlib;
+    buildCommand = ''
+      source $stdenv/setup
+      set -e
+
+      export OUT_DIR="$out"
+      mkdir -p "$OUT_DIR"
+
+      # Create Haskell package
+      full_haskell_package.rkt < "${tip-benchmark-smtlib}"
+    '';
+  };
+
+  pkgDef = nixFromCabal (toString tip-benchmarks-haskell) null;
 
   pkg = haskellPackages.callPackage pkgDef {};
 
