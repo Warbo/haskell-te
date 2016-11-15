@@ -19,9 +19,7 @@ preamble = ''
 doReduce = quick: clusterCount: inputs:
              drvFromScript { inherit inputs;
                              outputs = stdParts;
-                             buildInputs = explore.extractedEnv {
-                                             extraPkgs = [ reduce-equations ];
-                                           }; } ''
+                             buildInputs = explore.extractedEnv {}; } ''
                set -e
 
                ${preamble}
@@ -29,7 +27,7 @@ doReduce = quick: clusterCount: inputs:
                export CLUSTERS="${clusterCount}"
                O=$(getEqs | "${benchmark {
                                inherit quick inputs;
-                               cmd = "reduce-equations";
+                               cmd = "${reduce-equations}/bin/reduce-equations";
                              }}")
                ${storeParts}
              '';

@@ -35,7 +35,7 @@ rec {
       name  = "mlspecbench-env";
       paths = [
         ((import ${quickspecBench.customHs}).ghcWithPackages (h: [
-          h.tip-benchmark-sig h.bench h.mlspec h.ML4HSFE
+          h.tip-benchmark-sig h.mlspec h.ML4HSFE
         ]))
         runWeka
         jq
@@ -100,7 +100,7 @@ rec {
     if [[ "$DO_BENCH" -eq 1 ]]
     then
       nix-shell --show-trace -p '(import ${ourEnv})' --run \
-        "bench --template json --output '$DIR/time.json' '$DIR/cmd.sh'" 1>&2 || {
+        "${haskellPackages.bench}/bin/bench --template json --output '$DIR/time.json' '$DIR/cmd.sh'" 1>&2 || {
         echo "Failed to benchmark" 1>&2
         exit 1
       }

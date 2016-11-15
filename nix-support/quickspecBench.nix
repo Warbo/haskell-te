@@ -23,10 +23,9 @@ mkSigHs = writeScript "mkSig.hs" ''
     [t]     <- getProjects <$> getContents
     (ts, x) <- renderTheory t
     let f = render ts
-        y = withPkgs ["bench"] x
-    putStrLn . unwords . ("runhaskell":) . flagsOf $ y
-    putStrLn (pkgOf   y)
-    putStrLn (buildInput f y)
+    putStrLn . unwords . ("runhaskell":) . flagsOf $ x
+    putStrLn (pkgOf   x)
+    putStrLn (buildInput f x)
 '';
 
 customHs = writeScript "custom-hs.nix" ''
@@ -103,7 +102,7 @@ mkQuickSpecSig = ''
   ${fileInStore "B" ''
     export LANG='en_US.UTF-8'
     export LOCALE_ARCHIVE=${glibcLocales}/lib/locale/locale-archive
-    bench --template json --output "$TIME_JSON" "$RH" 1>&2
+    "${haskellPackages.bench}/bin/bench" --template json --output "$TIME_JSON" "$RH" 1>&2
   ''}
 
   WRAP="export NIX_EVAL_HASKELL_PKGS='$NIX_EVAL_HASKELL_PKGS'
