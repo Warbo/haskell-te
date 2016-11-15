@@ -60,16 +60,14 @@ nixedHsPkg = dir: f:
           echo "Generating package definition" 1>&2
           cabal2nix ./. > default.nix
           echo "Finished generating" 1>&2
+          popd > /dev/null
 
           echo "Adding to store" 1>&2
-          popd > /dev/null
-          nix-store --add ./source-* > "$out"
+          cp -r ./source-* "$out"
         '';
 
 nixFromCabal = dir: f:
-let nixed = nixedHsPkg dir f;
-
-    result = let path = import "${nixed}"; in import path;
+let result = import (toString (nixedHsPkg dir f));
 
     # Support an "inner-composition" of "f" and "result", which behaves like
     # "args: f (result args)" but has explicit named arguments, to allow

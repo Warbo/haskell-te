@@ -34,13 +34,13 @@ customHs = writeScript "custom-hs.nix" ''
   # to include the package generated from smtlib data
   with import ${./..}/nix-support {};
   with builtins;
-  let hsName = "tip-benchmark-sig";  # The name used by full_haskell_package.sh
+  let hsName = "tip-benchmark-sig";  # The name used by full_haskell_package.rkt
       hsDir  = getEnv "OUT_DIR";
       hsPkgs = haskellPackages.override {
         overrides = self: super:
           # Include existing overrides, along with our new one
           hsOverride self super // {
-            "tip-benchmark-sig" = self.callPackage (import (nixedHsPkg hsDir null)) {};
+            "tip-benchmark-sig" = self.callPackage (toString (nixedHsPkg hsDir null)) {};
           };
       };
       # Echo "true", with our Haskell package as a dependency
