@@ -13,14 +13,16 @@ testRun "reduce-equations test suite" null
               h.bytestring
               h.containers
               h.directory
+              h.MissingH
               h.tasty
               h.tasty-quickcheck
-              (h.callPackage hseNew {})
+              h.reduce-equations
             ]))
           ];
         }
         ''
           export HOME="$PWD"
+          cabal update
           cp -r "$d" ./src
           chmod +w -R ./src
           cd ./src
