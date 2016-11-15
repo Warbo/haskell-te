@@ -1,6 +1,6 @@
 { annotateAstsScript, defaultClusters, drvFromScript, GetDeps, getDepsScript,
-  getTypesScript, lib, ML4HSFE, processPackages, runScript,
-  runTypes, runWeka, storeResult }:
+  getTypesScript, lib, processPackages, runScript, runTypes, runWeka,
+  storeResult }:
 with builtins;
 with lib;
 

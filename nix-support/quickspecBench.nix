@@ -1,4 +1,5 @@
-{ ensureVars, glibcLocales, jq, lib, tipBenchmarks, writeScript }:
+{ ensureVars, glibcLocales, haskellPackages, jq, lib, tipBenchmarks,
+  writeScript }:
 
 # Provide a script which accepts smtlib data, runs it through QuickSpec and
 # outputs the resulting equations along with benchmark times. The script should

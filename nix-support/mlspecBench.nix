@@ -1,5 +1,5 @@
-{ cluster, ensureVars, explore, format, glibcLocales, jq, quickspecBench,
-  reduce-equations, runWeka, writeScript }:
+{ cluster, ensureVars, explore, format, glibcLocales, haskellPackages, jq,
+  quickspecBench, reduce-equations, runWeka, writeScript }:
 with builtins;
 
 rec {
@@ -35,7 +35,7 @@ rec {
       name  = "mlspecbench-env";
       paths = [
         ((import ${quickspecBench.customHs}).ghcWithPackages (h: [
-          h.tip-benchmark-sig h.mlspec h.ML4HSFE
+          h.tip-benchmark-sig h.mlspec
         ]))
         runWeka
         jq

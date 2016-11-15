@@ -10,7 +10,7 @@ clusterScript = writeScript "cluster" ''
   [[ -n "$HEIGHT" ]] || HEIGHT=30
   export WIDTH
   export HEIGHT
-  ml4hsfe-outer-loop
+  "${ML4HSFE}/bin/ml4hsfe-outer-loop"
 '';
 
 cluster = { quick, annotated, clusters }: let
@@ -18,7 +18,6 @@ cluster = { quick, annotated, clusters }: let
   go = c: drvFromScript { buildInputs = explore.extractedEnv {
                                           #f         = annotated;
                                           extraPkgs = [ runWeka   ];
-                                          extraHs   = [ "ML4HSFE" ];
                                         };
                           inherit annotated;
                           outputs = stdParts; } ''
