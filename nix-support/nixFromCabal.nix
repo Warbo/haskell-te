@@ -17,10 +17,9 @@ with builtins; with lib;
 
 rec {
 
-nixedHsPkg = dir: f:
+nixedHsPkg = dir:
 
   assert typeOf dir == "path" || isString dir;
-  assert f == null || isFunction f;
 
   let hsVer   = haskellPackages.ghc.version;
 
@@ -67,7 +66,7 @@ nixedHsPkg = dir: f:
         '';
 
 nixFromCabal = dir: f:
-let result = import (toString (nixedHsPkg dir f));
+let result = import (toString (nixedHsPkg dir));
 
     # Support an "inner-composition" of "f" and "result", which behaves like
     # "args: f (result args)" but has explicit named arguments, to allow
@@ -91,6 +90,7 @@ in
 
 # If we've been given a function "f", compose it with "result" using our
 # special-purpose function
+assert f == null || isFunction f;
 if f == null then result
              else import compose f result;
 

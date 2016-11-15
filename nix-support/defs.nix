@@ -67,7 +67,7 @@ rec {
                       { pkgs = self;                                       };
 
   annotated = pkgDir:
-    let nixed  = toString (nixedHsPkg pkgDir null);
+    let nixed  = toString (nixedHsPkg pkgDir);
         dumped = dumpPackage {
                    quick = true;
                    src   = nixed;

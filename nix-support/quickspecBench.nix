@@ -21,8 +21,8 @@ mkSigHs = writeScript "mkSig.hs" ''
   -- Reads JSON from stdin, outputs a QuickSpec signature and associated shell
   -- and Nix commands for running it
   main = do
-    [t]     <- getProjects <$> getContents
-    (ts, x) <- renderTheory t
+    [t]          <- getProjects <$> getContents
+    Just (ts, x) <- renderTheory t
     let f = render ts
     putStrLn . unwords . ("runhaskell":) . flagsOf $ x
     putStrLn (pkgOf   x)
@@ -40,7 +40,7 @@ customHs = writeScript "custom-hs.nix" ''
         overrides = self: super:
           # Include existing overrides, along with our new one
           hsOverride self super // {
-            "tip-benchmark-sig" = self.callPackage (toString (nixedHsPkg hsDir null)) {};
+            "tip-benchmark-sig" = self.callPackage (toString (nixedHsPkg hsDir)) {};
           };
       };
       # Echo "true", with our Haskell package as a dependency
