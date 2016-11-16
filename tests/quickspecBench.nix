@@ -10,7 +10,9 @@ let checkVar = var: ''
         exit 1
       }
     '';
-    run = script: ''DIR="$PWD" source ${script} < ${./example.smt2} '';
+    run = code: ''
+      DIR="$PWD" source ${writeScript "to-run" code} < ${./example.smt2}
+    '';
     go  = name: testRun name null { buildInputs = [ package ]; };
 in mapAttrs go {
 
@@ -27,7 +29,7 @@ in mapAttrs go {
     export ANNOTATED="${./annotated.json}"
     export       DIR="$PWD"
 
-    ${run (writeScript "mk-quickspec-sig.sh" mkQuickSpecSig)}
+    ${run mkQuickSpecSig}
 
     for F in sig.hs env.nix
     do
@@ -43,22 +45,22 @@ in mapAttrs go {
   '';
 
   runRunSig = ''
-    ${run (writeScript "runSig.sh" runSig)}
+    ${run runSig}
     ${checkVar "RESULT"}
   '';
 
   runMkQuickSpecSig = ''
-    ${run (writeScript "mk-quickspec-sig.sh" mkQuickSpecSig)}
+    ${run mkQuickSpecSig}
     ${checkVar "SIG"}
   '';
 
   runGetAsts = ''
-    ${run (writeScript "getAsts.sh" getAsts)}
+    ${run getAsts}
     ${checkVar "ANNOTATED"}
   '';
 
   runMkPkg = ''
-    ${run (writeScript "mkPkg.sh" mkPkg)}
+    ${run mkPkg}
     ${checkVar "OUT_DIR"}
   '';
 
