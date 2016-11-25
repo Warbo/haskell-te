@@ -97,6 +97,7 @@ rec {
       DIR="$OUR_DIR"
       echo "Creating temp dir '$OUR_DIR'" 1>&2
     }
+    export DIR
     export TEMPDIR="$DIR"
 
     # Initialise all of the data we need
