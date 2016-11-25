@@ -21,8 +21,11 @@ mkSigHs = writeScript "mkSig.hs" ''
   -- Reads JSON from stdin, outputs a QuickSpec signature and associated shell
   -- and Nix commands for running it
   main = do
-    [t]          <- getProjects <$> getContents
-    Just (ts, x) <- renderTheory t
+    [t]      <- getProjects <$> getContents
+    rendered <- renderTheory t
+    let (ts, x) = case rendered of
+                       Nothing      -> error ("Failed to render " ++ show t)
+                       Just (ts, x) -> (ts, x)
     let f = render ts
     putStrLn . unwords . ("runhaskell":) . flagsOf $ x
     putStrLn (pkgOf   x)
