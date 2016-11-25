@@ -1,4 +1,4 @@
-{ extractTarball, fetchgit, fetchurl, haskell, havePath, hseNew, lib,
+{ extractTarball, fetchFromGitHub, fetchgit, fetchurl, haskell, havePath, hseNew, lib,
   nixFromCabal, superHaskellPackages }:
 
 with builtins;
@@ -21,11 +21,22 @@ hsOverride = self: super:
    in mapAttrs (_: optimise) {
         ArbitraryHaskell  = cabalCheck "arbitrary-haskell"
                                        <arbitrary-haskell>
-                                       ../packages/arbitrary-haskell {};
+                                       (fetchFromGitHub {
+                                         owner  = "Warbo";
+                                         repo   = "arbitrary-haskell";
+                                         rev    = "30b8cdac03b6ab7ef902414da52da7dfa76fdc68";
+                                         sha256 = "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b";
+                                       });
 
         AstPlugin         = cabalCheck "ast-plugin"
                                        <ast-plugin>
-                                       ../packages/ast-plugin {};
+                                       (fetchFromGitHub {
+                                         owner  = "Warbo";
+                                         repo   = "ast-plugin";
+                                         rev    = "a04f6fef18bdd6d23d534ea4dd7c7b5b9084ad1c";
+                                         sha256 = "1gmkv4l38vpvhg2h8dwv4gf8dq1d0lr0zxd5j9szi90xb8nl2241";
+                                       })
+                                       {};
 
         bench             = cabalPath (extractTarball (fetchurl {
                               url    = https://github.com/Gabriel439/bench/archive/1.0.1.tar.gz;
@@ -33,40 +44,99 @@ hsOverride = self: super:
                             })) {};
 
         GetDeps           = cabalCheck "get-deps" <get-deps>
-                                       ../packages/get-deps {};
+                                       (fetchFromGitHub {
+                                         owner  = "Warbo";
+                                         repo   = "getDeps";
+                                         rev    = "7c02fbc9b0076f0327d95c3aa05cb607a2f3cf73";
+                                         sha256 = "19g1lyaplclnlyh7y3li08937bqgk58dsblz12hd290crmg999f0";
+                                       })
+                                       {};
 
         HS2AST            = cabalCheck "hs2ast" <hs2ast>
-                                       ../packages/hs2ast {};
+                                       (fetchFromGitHub {
+                                         owner  = "Warbo";
+                                         repo   = "hs2ast";
+                                         rev    = "469d99977a78484159a7f5f77f8fbeeeea2b33a4";
+                                         sha256 = "1x2f12s6caj0gaymaw62bmm62ydim78wm2pn18j18fa2l3p7vqyi";
+                                       })
+                                       {};
 
         ifcxt             = cabalCheck "ifcxt" <ifcxt>
-                                       ../packages/ifcxt {};
+                                       (fetchFromGitHub {
+                                         owner  = "mikeizbicki";
+                                         repo   = "ifcxt";
+                                         rev    = "7f9f876807f33f8fc84d0face54171ebcca57a4a";
+                                         sha256 = "0mzd5h45rkvj81pdi60p68r0j3lc4h9m4z3b4v8m6xacp9sxiic1";
+                                       })
+                                       {};
 
         ML4HSFE           = cabalCheck "ml4hsfe" <ml4hsfe>
-                                       ../packages/ml4hsfe {};
+                                       (fetchFromGitHub {
+                                         owner  = "Warbo";
+                                         repo   = "ml4hsfe";
+                                         rev    = "bcdd93b64ae5503d93f1e56ce9cba44004f2ddaa";
+                                         sha256 = "1ca59xp5mq2bv4kbml32k4xgql03bqi6b4s7pvzdah9fsi76ap6q";
+                                       })
+                                       {};
 
         mlspec            = cabalCheck "mlspec" <mlspec>
-                                       ../packages/mlspec {};
+                                       (fetchFromGitHub {
+                                         owner  = "Warbo";
+                                         repo   = "mlspec";
+                                         rev    = "3a746aa36e48b24c2d66b337512b9d5ac33c69ee";
+                                         sha256 = "12c7x9pabd3ww91rq2riq185n1i1sd658dr3jm65yriql5a23fs4";
+                                       })
+                                       {};
 
         mlspec-bench      = trace "FIXME: Use bench"
                               (cabalCheck "mlspec-bench" <mlspec-bench>
-                                          ../packages/mlspec-bench {});
+                                          (fetchFromGitHub {
+                                            owner  = "Warbo";
+                                            repo   = "mlspec-bench";
+                                            rev    = "0a664ce27278b212a753a0353ce3f218057fc952";
+                                            sha256 = "1gmkv4l38vpvhg2h8dwv4gf8dq1d0lr0zxd5j9szi90xb8nl2241";
+                                          })
+                                          {});
 
         mlspec-helper     = cabalCheck "mlspec-helper"
                                        <mlspec-helper>
-                                       ../packages/mlspec-helper {};
+                                       (fetchFromGitHub {
+                                         owner  = "Warbo";
+                                         repo   = "mlspec-helper";
+                                         rev    = "1bf9c32e3ec0e519237a0af297d6512907e95959";
+                                         sha256 = "1g8jwbfdqa84xdh6gp8ica4v0l51jki880fwmmhs3fcl4vz6i4ax";
+                                       })
+                                       {};
 
         nix-eval          = cabalCheck "nix-eval"
                                        <nix-eval>
-                                       ../packages/nix-eval {};
+                                       (fetchFromGitHub {
+                                         owner  = "Warbo";
+                                         repo   = "nix-eval";
+                                         rev    = "2892a2cf2fbbf7275ffdf722059fb0399fc8ca49";
+                                         sha256 = "1wssn7grrwwg1pl1z6s6w73wkdn70mm1dbz98sr9r5crliwyf585";
+                                       })
+                                       {};
 
         reduce-equations  = cabalCheck "reduce-equations"
                                        <reduce-equations>
-                                       ../packages/reduce-equations
+                                       (fetchFromGitHub {
+                                         owner  = "Warbo";
+                                         repo   = "reduce-equations";
+                                         rev    = "a86199b68e5a3513cc3cf0e579d67ea6cfa311ae";
+                                         sha256 = "1ncy2carn18fcwpfdfch99b90mwq52a7dal8rn5kv1wk3951w5rg";
+                                       })
                                        { haskell-src-exts = hseNew; };
 
         runtime-arbitrary = cabalCheck "runtime-arbitrary"
                                        <runtime-arbitrary>
-                                       ../packages/runtime-arbitrary {};
+                                       (fetchFromGitHub {
+                                         owner  = "Warbo";
+                                         repo   = "runtime-arbitrary";
+                                         rev    = "dc722289226520019307f9bfe000b378630e9d6c";
+                                         sha256 = "001v1k6m56kik18jcccygwa7k5wc49j2gbpk9hj2n7pgrk3nfady";
+                                       })
+                                       {};
 
         weigh             = cabalPath (fetchgit {
                               url    = https://github.com/fpco/weigh.git;
