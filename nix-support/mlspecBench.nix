@@ -1,32 +1,22 @@
-{ cluster, ensureVars, explore, format, glibcLocales, haskellPackages, jq,
+{ bash, cluster, ensureVars, explore, format, glibcLocales, haskellPackages, jq,
   quickspecBench, reduce-equations, runWeka, writeScript }:
 with builtins;
 
 rec {
 
-  doExplore = writeScript "doExplore.sh" ''
-    #!/usr/bin/env bash
-
-    export SIMPLE=1
-    "${writeScript "format" format.script}" | "${explore.explore-theories}"
-  '';
-
   inner = writeScript "mlspecBench-inner.sh" ''
+    #!${bash}/bin/bash
     set -e
     set -o pipefail
 
-    clusters="$DIR/clusters.json"
-    ${cluster.clusterScript} > "$clusters"
-
-    clCount=$("${jq}/bin/jq" 'map(.cluster) | max' < "$clusters")
-
     NIX_EVAL_EXTRA_IMPORTS='[("tip-benchmark-sig", "A")]'
-
-    export clusters
-    export clCount
     export NIX_EVAL_EXTRA_IMPORTS
 
-    ${doExplore} | tee >(cat >&2) | "${reduce-equations}/bin/reduce-equations"
+    export SIMPLE=1
+
+    "${writeScript "format" format.script}" |
+      "${explore.explore-theories}"         |
+      "${reduce-equations}/bin/reduce-equations"
   '';
 
   ourEnv = writeScript "our-env.nix" ''
@@ -43,7 +33,45 @@ rec {
     }
   '';
 
+  inEnvScript = writeScript "mlspecBench-inenvscript" ''
+    #!${bash}/bin/bash
+    set -e
+    set -o pipefail
+
+    # Perform clustering
+
+    clusters="$DIR/clusters.json"
+    ${cluster.clusterScript} < "$DIR/filtered.json" > "$clusters"
+
+    clCount=$("${jq}/bin/jq" 'map(.cluster) | max' < "$clusters")
+
+    export clusters
+    export clCount
+
+    # Run mlspec once to generate equations for our output
+
+    "$DIR/cmd.sh" > "$DIR/eqs.json" || {
+      echo "Failed to get eqs" 1>&2
+      exit 1
+    }
+
+    # Run mlspec over and over to benchmark
+    if [[ "$DO_BENCH" -eq 1 ]]
+    then
+      "${haskellPackages.bench}/bin/bench" --template json \
+                                           --output "$DIR/time.json" \
+                                           "$DIR/cmd.sh" 1>&2 || {
+        echo "Failed to benchmark" 1>&2
+        exit 1
+      }
+    else
+      echo "Not benchmarking. To benchmark, set DO_BENCH env var to 1" 1>&2
+      echo '"Not benchmarked"' > "$DIR/time.json"
+    fi
+  '';
+
   script = writeScript "mlspecBench" ''
+    #!${bash}/bin/bash
     set -e
 
     # Required for Unicode in Haskell and Perl
@@ -82,32 +110,14 @@ rec {
 
     "${quickspecBench.filterSample}" < "$F" > "$DIR/filtered.json"
 
-    echo "DIR='$DIR' ${inner} < '$DIR/filtered.json'" > "$DIR/cmd.sh"
+    echo "DIR='$DIR' ${inner} < '$DIR/clusters.json'" > "$DIR/cmd.sh"
     chmod +x "$DIR/cmd.sh"
 
     # Make sure our generated package is available to Nix
     NIX_EVAL_HASKELL_PKGS="${quickspecBench.customHs}"
     export NIX_EVAL_HASKELL_PKGS
 
-    # Run mlspec once to generate equations
-    nix-shell --show-trace -p '(import ${ourEnv})' \
-              --run "$DIR/cmd.sh" > "$DIR/eqs.json" || {
-      echo "Failed to get eqs" 1>&2
-      exit 1
-    }
-
-    # Run mlspec over and over to benchmark
-    if [[ "$DO_BENCH" -eq 1 ]]
-    then
-      nix-shell --show-trace -p '(import ${ourEnv})' --run \
-        "${haskellPackages.bench}/bin/bench --template json --output '$DIR/time.json' '$DIR/cmd.sh'" 1>&2 || {
-        echo "Failed to benchmark" 1>&2
-        exit 1
-      }
-    else
-      echo "Not benchmarking. To benchmark, set DO_BENCH env var to 1" 1>&2
-      echo '"Not benchmarked"' > "$DIR/time.json"
-    fi
+    nix-shell --show-trace -p '(import ${ourEnv})' --run "${inEnvScript}"
 
     "${jq}/bin/jq" -n --slurpfile time   "$DIR/time.json" \
                       --slurpfile result "$DIR/eqs.json"  \
