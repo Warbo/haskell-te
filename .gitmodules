@@ -1,45 +1,9 @@
-[submodule "packages/mlspec-bench"]
-	path = packages/mlspec-bench
-	url = http://chriswarbo.net/git/mlspec-bench.git
-[submodule "packages/ast-plugin"]
-	path = packages/ast-plugin
-	url = http://chriswarbo.net/git/ast-plugin.git
-[submodule "packages/get-deps"]
-	path = packages/get-deps
-	url = http://chriswarbo.net/git/get-deps.git
-[submodule "packages/mlspec"]
-	path = packages/mlspec
-	url = http://chriswarbo.net/git/mlspec.git
-[submodule "packages/arbitrary-haskell"]
-	path = packages/arbitrary-haskell
-	url = http://chriswarbo.net/git/arbitrary-haskell.git
-[submodule "packages/nix-eval"]
-	path = packages/nix-eval
-	url = http://chriswarbo.net/git/nix-eval.git
-[submodule "packages/mlspec-helper"]
-	path = packages/mlspec-helper
-	url = http://chriswarbo.net/git/mlspec-helper.git
-[submodule "packages/runtime-arbitrary"]
-	path = packages/runtime-arbitrary
-	url = http://chriswarbo.net/git/runtime-arbitrary.git
-[submodule "packages/hs2ast"]
-	path = packages/hs2ast
-	url = http://chriswarbo.net/git/hs2ast.git
-[submodule "packages/ml4hsfe"]
-	path = packages/ml4hsfe
-	url = http://chriswarbo.net/git/ml4hsfe.git/
-[submodule "packages/ifcxt"]
-	path = packages/ifcxt
-	url = http://chriswarbo.net/git/ifcxt.git
 [submodule "packages/runWeka"]
 	path = packages/runWeka
 	url = http://chriswarbo.net/git/run-weka.git
 [submodule "packages/te-benchmark"]
 	path = packages/te-benchmark
 	url = http://chriswarbo.net/git/theory-exploration-benchmarks.git
-[submodule "packages/reduce-equations"]
-	path = packages/reduce-equations
-	url = http://chriswarbo.net/git/reduce-equations.git
 [submodule "packages/timeout"]
 	path = packages/timeout
 	url = https://github.com/pshved/timeout.git
