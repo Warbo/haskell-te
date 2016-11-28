@@ -45,6 +45,8 @@ typeCommand = writeScript "typeCommand" ''
                 echo ":m"
                 grep "^{" | while read -r LINE
                 do
+                  MOD=$(echo "$LINE" | "${jq}/bin/jq" -r '.module')
+                  echo "import $MOD"
                   QNAME=$(echo "$LINE" | "${jq}/bin/jq" -r '.module + "." + .name')
                   "${mkQuery}" "$QNAME"
                 done
