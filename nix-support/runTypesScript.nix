@@ -101,6 +101,19 @@ typeScopes = writeScript "typeScopes" ''
                done
              '';
 
+checkMods = writeScript "checkMods" ''
+  MODS=$(while read -r MOD
+  do
+    echo "import $MOD"
+  done | ${repl} 2>&1)
+
+  if echo "$MODS" | grep "Could not find module"
+  then
+    exit 1
+  fi
+  exit 0
+'';
+
 in
 
 # Runs GHCi to get type information
@@ -113,6 +126,15 @@ writeScript "runTypes" ''
   }
 
   ASTS=$(cat)
+
+  echo "Checking module availability"
+  if echo "$ASTS" | jq -c '.[] | .module' | "${checkMods}"
+  then
+    echo "Found modules" 1>&2
+  else
+    echo "Couldn't find modules, aborting" 1>&2
+    exit 1
+  fi
 
   echo "Building type-extraction command" 1>&2
   CMD=$(echo "$ASTS" | jq -c '.[]' | "${typeCommand}")
