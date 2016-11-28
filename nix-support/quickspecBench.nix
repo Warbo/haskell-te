@@ -70,9 +70,9 @@ fileInStore = var: content: ''
 '';
 
 mkQuickSpecSig = ''
-  [[ -z "$SIG" ]] || return 0
-
-  ${getAsts}
+  [[ -n "$ANNOTATED" ]] || {
+    ${getAsts}
+  }
   ${ensureVars ["DIR" "OUT_DIR" "ANNOTATED"]}
 
   SIG="$DIR"
@@ -145,8 +145,6 @@ in writeScript "filterSample.sh" ''
 '';
 
 mkDir = ''
-  [[ -z "$DIR" ]] || return 0
-
   OUR_DIR=$(mktemp -d --tmpdir "quickspecBenchXXXXX")
   DIR="$OUR_DIR"
 '';
@@ -165,17 +163,17 @@ mkPkgInner = ''
 '';
 
 mkPkg = ''
-  [[ -z "$OUT_DIR" ]] || return 0
-
-  ${mkDir}
+  [[ -n "$DIR" ]] || {
+    ${mkDir}
+  }
   ${mkPkgInner}
 '';
 
 # Use ./.. so all of our dependencies are included
 getAsts = ''
-  [[ -z "$ANNOTATED" ]] || return 0
-
-  ${mkPkg}
+  [[ -n "$OUT_DIR" ]] || {
+    ${mkPkg}
+  }
   ${ensureVars ["DIR" "OUT_DIR"]}
 
   ANNOTATED="$DIR/annotated.json"
@@ -186,9 +184,9 @@ getAsts = ''
 '';
 
 runSig = ''
-  [[ -z "$RESULT" ]] || return 0
-
-  ${mkQuickSpecSig}
+  [[ -n "$SIG" ]] || {
+    ${mkQuickSpecSig}
+  }
   ${ensureVars ["DIR" "BENCH_COMMAND" "RUN_COMMAND"]}
 
   RESULT="$DIR/eqs"
@@ -204,9 +202,9 @@ runSig = ''
 '';
 
 mkJson = ''
-  [[ -z "$JSON_OUT" ]] || return 0
-
-  ${runSig}
+  [[ -n "$RESULT" ]] || {
+    ${runSig}
+  }
   ${ensureVars ["DIR" "TIME_JSON" "RESULT"]}
 
   JSON_OUT="$DIR/out.json"
@@ -232,7 +230,9 @@ script = writeScript "quickspec-bench" ''
   }
   trap cleanup EXIT
 
-  ${mkJson}
+  [[ -n "$JSON_OUT" ]] || {
+    ${mkJson}
+  }
 
   cat "$JSON_OUT"
 '';
