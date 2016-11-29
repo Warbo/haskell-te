@@ -28,4 +28,4 @@ with rec {
   };
 };
 
-name: version: haskellPackages.callPackage (hackage2nix name version)
+hackage2nix

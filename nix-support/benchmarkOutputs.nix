@@ -1,6 +1,6 @@
 { annotate, buildPackage, callPackage, cluster, defaultClusters, drvFromScript,
   dumpPackage, explore, extractTarball, format, haskellPackages, lib,
-  nixedHsPkg, nixFromCabal, pkgName, reduce, runScript, stdenv, storeResult,
+  nixedHsPkg, pkgName, reduce, runScript, stdenv, storeResult,
   writeScript }:
 with builtins;
 with lib;
@@ -120,40 +120,9 @@ processCheck = args: name: pkg: checkProcessed (processPkg args name pkg);
 basic = clusters: quick: sampleSize: mapAttrs (processCheck { inherit clusters quick sampleSize; })
                                   haskellPackages;
 
-bootstraps = clusters: quick: sampleSize: mapAttrs (processCheck { inherit clusters quick sampleSize; })
-                                       bootstrapped;
-
-bootstrapped =
-  let src = extractTarball "${toString haskellPackages.ghc.src}";
-   in {
-     base =
-       let patched = stdenv.mkDerivation {
-             name    = "base-src";
-             builder = writeScript "base-patcher" ''
-               source $stdenv/setup
-               set -e
-               cp -r "${src}/libraries/base" .
-               chmod -R +w base
-
-               patch base/base.cabal << EndOfPatch
-               58c58
-               <     Default: False
-               ---
-               >     Default: True
-               EndOfPatch
-
-               cp -r base "$out"
-             '';
-           };
-           p = haskellPackages.callPackage
-                 (nixFromCabal "${patched}" null)
-                 {};
-        in p // { name = "base"; pkg = p; };
-  };
-
 in {
   processPackage  = { clusters ? defaultClusters, quick, sampleSize ? null }:
                         processCheck { inherit clusters quick sampleSize; };
   processPackages = { clusters ? defaultClusters, quick, sampleSize ? null }:
-                      basic clusters quick sampleSize // bootstraps clusters quick sampleSize;
+                        basic clusters quick sampleSize;
 }

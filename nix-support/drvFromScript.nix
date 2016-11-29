@@ -1,5 +1,5 @@
-{ bash, coreutils, explore, haskellPackages, jq, lib, nix, perl, procps,
-  runCommand, utillinux, writeScript }:
+{ bash, coreutils, jq, lib, nix, perl, procps, runCommand, utillinux,
+  writeScript }:
 with builtins;
 
 let commonDeps = [ bash coreutils jq nix perl procps utillinux ];

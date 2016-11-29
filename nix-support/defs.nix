@@ -1,18 +1,50 @@
-# Custom definitions; most functions, values, etc. are imported here and passed
-# to their users via 'callPackage'
-self: super:
+# Custom definitions, mixed in with inherited utility packages
+nixpkgs:
 
-with builtins; with super.lib;
+# We define things in stages, to avoid everything depending on everything else
 
-rec {
+# Built-in nixpkgs stuff, used as-is
+
+with builtins; with nixpkgs.lib;
+
+with { inherit (nixpkgs) writeScript; };
+
+# External dependencies, and the helpers needed to load them
+
+with {
+  inherit (nixpkgs.callPackage ./nixFromCabal.nix {})
+    nixFromCabal nixedHsPkg;
+};
+
+with rec {
+  drvFromScript  = nixpkgs.callPackage ./drvFromScript.nix  {};
+
+  extractTarball = nixpkgs.callPackage ./extractTarball.nix {
+    inherit drvFromScript;
+  };
+
+  havePath = n: any (x: x.prefix == n) nixPath;
+};
+
+with (nixpkgs.callPackage ./haskellPackages.nix {
+       inherit extractTarball havePath nixFromCabal;
+       callHackage          = nixpkgs.callPackage ./callHackage.nix {};
+       superHaskellPackages = nixpkgs.haskellPackages;
+     });
+
+with rec {
+
+};
+
+# Inherit from the result, so that haskellPackages.override works on the
+# available packages, rather than the arguments to this callPackage invocation
+
+let pkgs = rec {
   inherit (callPackage ./runBenchmark.nix {})
           benchmark checkHsEnv lastEntry withCriterion withTime;
 
   inherit (callPackage ./benchmarkOutputs.nix {})
           processPackage processPackages;
-
-  inherit (callPackage ./nixFromCabal.nix {})
-          nixFromCabal nixedHsPkg;
 
   inherit (callPackage ./test-defs.nix {})
           runTestInDrv testAll testDbg testDrvString testFiles testMsg
@@ -21,26 +53,18 @@ rec {
   inherit (callPackage ./timeout.nix {})
           timeLimSecs memLimKb timeout;
 
-  # Inherit from the result, so that haskellPackages.override works on the
-  # available packages, rather than the arguments to this callPackage invocation
-  inherit (callPackage ./haskellPackages.nix {
-            superHaskellPackages = super.haskellPackages;
-          })
-          haskellPackages hsOverride;
-
   # These provide executables
   inherit (haskellPackages)
           AstPlugin GetDeps ML4HSFE mlspec mlspec-bench reduce-equations;
 
+  inherit drvFromScript haskellPackages hsOverride;
+
   annotate           = callPackage ./annotate.nix           {};
   annotateAstsScript = callPackage ./annotateAstsScript.nix {};
-  callHackage        = callPackage ./callHackage.nix        {};
   cluster            = callPackage ./cluster.nix            {};
-  drvFromScript      = callPackage ./drvFromScript.nix      {};
   dumpPackage        = callPackage ./dumpPackage.nix        {};
   dumpToNix          = callPackage ./dumpToNix.nix          {};
   explore            = callPackage ./explore.nix            {};
-  extractTarball     = callPackage ./extractTarball.nix     {};
   format             = callPackage ./format.nix             {};
   getAritiesScript   = callPackage ./getAritiesScript.nix   {};
   getTypesScript     = callPackage ./getTypesScript.nix     {};
@@ -55,7 +79,7 @@ rec {
   runTypes           = callPackage ./runTypes.nix           {};
   runTypesScript     = callPackage ./runTypesScript.nix     {};
   tagAstsScript      = callPackage ./tagAstsScript.nix      {};
-  tipBenchmarks      = callPackage ./tipBenchmarks.nix      {};
+  tipBenchmarks      = callPackage ./tipBenchmarks.nix      { inherit nixFromCabal; };
 
   buildPackage    = callPackage ./buildPackage.nix
                       { inherit (haskellPackages) cabal2nix cabal-install; };
@@ -64,7 +88,7 @@ rec {
   getDepsScript   = callPackage ./getDepsScript.nix
                       { inherit (haskellPackages) GetDeps;                 };
   tests           = callPackage ./tests.nix
-                      { pkgs = self;                                       };
+                      { inherit pkgs;                                      };
 
   annotated = pkgDir:
     let nixed  = toString (nixedHsPkg pkgDir);
@@ -110,7 +134,7 @@ rec {
              cat "$ann" > "$out"
           '';
 
-  callPackage = super.newScope self;
+  callPackage = nixpkgs.newScope pkgs;
 
   checkFailures = type: results:
     assert type == "any" || type == "all";
@@ -169,15 +193,9 @@ rec {
                                 '')
                             vars);
 
-  haskellPackageNames = self.writeScript
+  haskellPackageNames = writeScript
                           "haskell-names"
-                          (self.lib.concatStringsSep "\n" (attrNames haskellPackages));
-
-  havePath = n: any (x: x.prefix == n) nixPath;
-
-  hseNew = callHackage "haskell-src-exts" "1.19.0" {
-    pretty-show = callHackage "pretty-show" "1.6.12" {};
-  };
+                          (concatStringsSep "\n" (attrNames haskellPackages));
 
   runWeka = callPackage (if havePath "runWeka"
                             then <runWeka>
@@ -203,7 +221,7 @@ rec {
     echo "$O" | jq -r ".failed" > "$failed"
   '';
 
-  storeResult = self.writeScript "store-result" ''
+  storeResult = writeScript "store-result" ''
     set -e
     RESULT=$(nix-store --add "$1")
     printf '%s' "$RESULT" > "$out"
@@ -214,4 +232,6 @@ rec {
               in if unsuf == s
                     then s
                     else strip unsuf;
-}
+};
+
+in { inherit (pkgs) package; }

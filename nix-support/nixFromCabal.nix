@@ -1,4 +1,4 @@
-{ drvFromScript, haskellPackages, lib, stdenv }:
+{ haskellPackages, lib, runCommand, stdenv }:
 with builtins; with lib;
 
 # Make a Nix package definition from a Cabal project. The result is a function,
@@ -35,7 +35,7 @@ nixedHsPkg = dir:
 
       pkgName = unsafeDiscardStringContext (getField "Name:");
       pkgV    = unsafeDiscardStringContext (getField "Version:");
-   in drvFromScript {
+   in runCommand "nixedHsPkg" {
         inherit dir;
         name         = "nixFromCabal-${hsVer}-${pkgName}-${pkgV}";
         buildInputs  = [ haskellPackages.cabal2nix ];

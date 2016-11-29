@@ -1,5 +1,5 @@
-{ extractTarball, fetchFromGitHub, fetchgit, fetchurl, haskell, havePath, hseNew, lib,
-  nixFromCabal, superHaskellPackages }:
+{ callHackage, extractTarball, fetchFromGitHub, fetchgit, fetchurl, haskell,
+  havePath, lib, nixFromCabal, superHaskellPackages }:
 
 with builtins;
 with lib;
@@ -126,7 +126,11 @@ hsOverride = self: super:
                                          rev    = "a86199b68e5a3513cc3cf0e579d67ea6cfa311ae";
                                          sha256 = "1ncy2carn18fcwpfdfch99b90mwq52a7dal8rn5kv1wk3951w5rg";
                                        })
-                                       { haskell-src-exts = hseNew; };
+                                       {
+                                         haskell-src-exts = self.callPackage (callHackage "haskell-src-exts" "1.19.0") {
+                                           pretty-show    = self.callPackage (callHackage "pretty-show"      "1.6.12") {};
+                                         };
+                                       };
 
         runtime-arbitrary = cabalCheck "runtime-arbitrary"
                                        <runtime-arbitrary>

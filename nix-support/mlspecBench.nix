@@ -1,6 +1,7 @@
 { bash, cluster, ensureVars, explore, format, glibcLocales, haskellPackages, jq,
-  quickspecBench, reduce-equations, runWeka, writeScript }:
+  lib, quickspecBench, reduce-equations, runWeka, writeScript }:
 with builtins;
+with lib;
 
 rec {
 
@@ -33,6 +34,19 @@ rec {
     }
   '';
 
+  assertNumeric = var: msg:
+    assert hasPrefix "$" var || abort (toString {
+      function = "assertNumeric";
+      error    = "Argument 'var' should be bash variable with '$'";
+      inherit var msg;
+    });
+    ''
+      [[ "${var}" =~ "^[0-9]+\$" ]] || {
+        echo 'Error, ${var}' "(${var})" 'is not numeric: ${msg}' 1>&2
+        exit 1
+      }
+    '';
+
   inEnvScript = writeScript "mlspecBench-inenvscript" ''
     #!${bash}/bin/bash
     set -e
@@ -44,6 +58,7 @@ rec {
     ${cluster.clusterScript} < "$DIR/filtered.json" > "$clusters"
 
     clCount=$("${jq}/bin/jq" 'map(.cluster) | max' < "$clusters")
+    ${assertNumeric "$clCount" "clCount should contain number of clusters"}
 
     export clusters
     export clCount
