@@ -1,4 +1,4 @@
-{ benchmark, drvFromScript, explore, haskellPackages, lib, runScript,
+{ runCmd, drvFromScript, explore, haskellPackages, lib, runScript,
   writeScript }:
 with builtins;
 with lib;
@@ -95,7 +95,7 @@ in drvFromScript
     cabal configure --package-db="$GHC_PKG" 1>&2
 
     OPTIONS="-package-db=$GHC_PKG -package AstPlugin -fplugin=AstPlugin.Plugin" \
-      "${benchmark {
+      "${runCmd {
            inherit quick;
            cmd = runAstPlugin;
        }}" > "$out"

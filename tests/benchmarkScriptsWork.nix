@@ -72,19 +72,19 @@ let result = script: input: drvFromScript {
     };
 
     checkInput = args:
-      let shouldFail = testRun "'benchmark' should abort when packages missing"
+      let shouldFail = testRun "'runCmd' should abort when packages missing"
                                { inherit allArgs; }
                                { inherit dbg;
                                  buildInputs = explore.extractedEnv {}; }
                                ''
-                                 if "${benchmark allArgs}" < "${inputPkgs}"
+                                 if "${runCmd allArgs}" < "${inputPkgs}"
                                  then
-                                   echo "'benchmark' didn't spot error" 1>&2
+                                   echo "'runCmd' didn't spot error" 1>&2
                                    echo "$dbg"                          1>&2
                                    exit 1
                                  fi
                                '';
-          shouldSucceed = testRun "'benchmark' works when packages found"
+          shouldSucceed = testRun "'runCmd' works when packages found"
                                   { inherit allArgs; }
                                   {
                                     inherit dbg;
@@ -93,8 +93,8 @@ let result = script: input: drvFromScript {
                                     };
                                   }
                                   ''
-                                    "${benchmark allArgs}" < "${inputPkgs}" || {
-                                      echo "Benchmark didn't work" 1>&2
+                                    "${runCmd allArgs}" < "${inputPkgs}" || {
+                                      echo "RunCmd didn't work" 1>&2
                                       echo "$dbg"                  1>&2
                                       exit 1
                                     }

@@ -1,4 +1,4 @@
-{ coreutils, explore, lib, mlspec-bench, runScript, strip, time, writeScript }:
+{ bash, coreutils, explore, lib, mlspec-bench, runScript, strip, time, writeScript }:
 
 with builtins; with lib;
 
@@ -16,6 +16,7 @@ rec {
   '';
 
   checkStderr = writeScript "check-stderr" ''
+    #!${bash}/bin/bash
     set -e
     if grep -f "${knownErrors}" < "$1" 1>&2
     then
@@ -23,27 +24,6 @@ rec {
       exit 2
     fi
     exit
-  '';
-
-  # When running commands over and over to get more reliable statistics, we end
-  # up with duplicate output. This script will get just the last run.
-  lastEntry = writeScript "last-entry" ''
-    #!/usr/bin/env bash
-
-    # Get everything following last occurrence of -----
-    function upToDashes {
-      while read -r LINE
-      do
-        if [[ "x$LINE" = "x-----" ]]
-        then
-          break
-        else
-          echo "$LINE"
-        fi
-      done
-    }
-
-    "${coreutils}/bin/tac" "$1" | upToDashes | "${coreutils}/bin/tac"
   '';
 
   # Check that the required Haskell packages are found in the environment
@@ -96,184 +76,75 @@ rec {
           exit 0
         '';
 
-  # Snippets of code which are common to both withTime and withCriterion
+  # Run commands with extra info for debugging and reproducability:
+  #  - Store the given command, arguments, stdin, stdout and stderr
+  #  - Force an error if stderr matches some known error pattern
+  #  - Optionally, benchmark the command
 
-  checkEnv = inputs:
-    let pkgNames      = map strip maybePkgNames;
-        maybePkgNames = if inputs == [] then []
-                                        else splitString "\n" (runScript {} ''
-          cat ${concatStringsSep " " (map (x: "'${x}'") inputs)} |
-            grep '[a-zA-Z_]'                                     |
-            "${explore.findHsPkgReferences}" > "$out"
-        '');
-     in ''
-          echo "$INPUT" | "${checkHsEnv []}" || {
-            echo "checkHsEnv failed" 1>&2
-            exit 1
-          }
-        '';
-
-  cacheOutputs = ''
-    # Cache results in the store, so we make better use of the cache and avoid
-    # sending huge strings into Nix
-    echo "$INPUT" > stdin
-     STDIN=$(nix-store --add stdin)
-    STDOUT=$(nix-store --add stdout)
-    STDERR=$(nix-store --add stderr)
-  '';
-
-  checkResult = { cmd, args, stdout, stderr, time }: ''
-    if [[ "$CODE" -ne 0 ]]
-    then
-      echo "Failed to time '${cmd}' with '${args}'" 1>&2
-
-      echo "Contents of stdin:" 1>&2
-      cat  stdin                1>&2 || true
-      echo "End of stdin"       1>&2
-
-
-      echo "Contents of stderr:" 1>&2
-      cat  ${stderr}             1>&2 || true
-      echo "End of stderr"       1>&2
-
-      echo "Contents of stdout:" 1>&2
-      cat  ${stdout}             1>&2 || true
-      echo "End of stdout"       1>&2
-
-      FAILED=true
-    elif ! "${checkStderr}" "$STDERR"
-    then
-      echo "Errors found in '$STDERR' for '${cmd}'" 1>&2
-      FAILED=true
-    else
-      DURATION=$(cat "${time}")
-      echo "Benchmarked '${cmd}', took:" 1>&2
-      cat "${time}"                      1>&2
-    fi
-  '';
-
-  mkReport = { cmd, args, inFields, outFields }: ''
-    jq -n ${inFields} --arg     cmd    '${cmd}'         \
-                      --argjson args   '${toJSON args}' \
-                      --arg     stdin  "$STDIN"         \
-                      --arg     stdout "$STDOUT"        \
-                      --arg     stderr "$STDERR"        \
-                      --argjson failed "$FAILED"        \
-       '{"failed"   : $failed,
-         "cmd"      : $cmd,
-         "args"     : $args,
-         "stdin"    : $stdin,
-         "stdout"   : $stdout,
-         "stderr"   : $stderr,
-         ${outFields} }'
-  '';
-
-  # A thorough benchmark, which performs multiple runs using Criterion
-  withCriterion = { quick, cmd, args ? [], inputs ? []}:
-    writeScript "with-criterion" ''
-      #!/usr/bin/env bash
-      set -e
-
-      INPUT=$(cat)
-      ${checkEnv inputs}
-
-      echo "Setting up environment for mlspec-bench" 1>&2
-
-      # Stop Perl (i.e. Nix) complaining about unset locale variables
-      export LOCALE_ARCHIVE=/run/current-system/sw/lib/locale/locale-archive
-
-      # Force Haskell to use UTF-8, or else we get I/O errors
-      export LANG="en_US.UTF-8"
-
-      mkdir -p outputs
-      export BENCH_DIR="$PWD"
-      export BENCHMARK_COMMAND="${cmd}"
-      export BENCHMARK_ARGS='${toJSON args}'
-
-      echo "$INPUT" | "${mlspec-bench}/bin/mlspec-bench"           \
-                        --template json                            \
-                        --output report.json 1>       bench.stdout \
-                                             2> >(tee bench.stderr >&2)
-      CODE="$?"
-
-      FAILED=false
-      for F in stdout stderr
-      do
-        FOUND=0
-        while read -r FILE
-        do
-          FOUND=1
-          "${lastEntry}" "$FILE" > "./$F"
-        done < <(find ./outputs -name "*.$F")
-        [[ "$FOUND" -eq 1 ]] || {
-          echo "Got no $F from mlspec-bench" 1>&2
-          FAILED=true
-        }
-      done
-
-      ${cacheOutputs}
-
-      TIME=$(nix-store --add report.json)
-
-      ${checkResult {
-          inherit cmd;
-          args   = toJSON args;
-          stdout = "bench.stdout";
-          stderr = "bench.stderr";
-          time   = "$TIME";
-      }}
-
-      ${mkReport {
-          inherit cmd args;
-          inFields = ''
-            --slurpfile report report.json \
-          '';
-          outFields = ''
-            "time" : {"mean"   : ($report[0][0].reportAnalysis.anMean),
-                      "stddev" : ($report[0][0].reportAnalysis.anStdDev)}
-          '';
-      }}
-    '';
-
-  # A fast benchmark, which only performs one run
-  withTime = { quick, cmd, args ? [], inputs ? []}:
+  runCmd = { cmd, args ? [], inputs ? []}:
    let shellArgs = map escapeShellArg args;
        argStr    = concatStringsSep " " shellArgs;
-    in writeScript "with-time" ''
-         INPUT=$(cat)
-         ${checkEnv inputs}
+    in trace "FIXME: Add DO_BENCH to runCmd" writeScript "run-cmd-${cmd}" ''
+         #!${bash}/bin/bash
 
-         # Measure time with 'time'
-         echo "$INPUT" |
-           "${time}/bin/time" -f '%e' -o time \
-             "${cmd}" ${argStr} 1> stdout 2> >(tee stderr >&2)
+         # Store our input
+         cat > stdin
+
+         # Check that all Haskell packages references in our input are available
+         # to GHC
+         "${checkHsEnv []}" < stdin || {
+           echo "checkHsEnv failed" 1>&2
+           exit 1
+         }
+
+         # Run the given command; we tee stderr so the user can still see it
+         "${cmd}" ${argStr} < stdin 1> stdout 2> >(tee stderr >&2)
          CODE="$?"
 
-         ${cacheOutputs}
-
-         TIME=$(nix-store --add time)
+         # Put results in the Nix store, so we make better use of the cache and
+         # avoid sending huge strings into Nix
+          STDIN=$(nix-store --add stdin)
+         STDOUT=$(nix-store --add stdout)
+         STDERR=$(nix-store --add stderr)
 
          FAILED=false
-         ${checkResult {
-             inherit cmd;
-             args   = argStr;
-             stdout = "stdout";
-             stderr = "stderr";
-             time   = "time";
-         }}
+         if [[ "$CODE" -ne 0 ]]
+         then
+           echo "Failed to run '${cmd}' with '${argStr}'" 1>&2
 
-         ${mkReport {
-             inherit cmd args;
-             inFields = ''
-               --arg time     "$(grep "^[0-9][0-9.]*$" < time)" \
-               --arg timefile "$TIME"                           \
-             '';
-             outFields = ''
-               "timefile" : $timefile,
-               "time"     : {"mean" : {"estPoint" : $time}}
-             '';
-         }}
+           echo "Contents of stdin:"  1>&2
+           cat  stdin                 1>&2 || true
+           echo "End of stdin"        1>&2
+
+           echo "Contents of stderr:" 1>&2
+           cat  stderr                1>&2 || true
+           echo "End of stderr"       1>&2
+
+           echo "Contents of stdout:" 1>&2
+           cat  stdout                1>&2 || true
+           echo "End of stdout"       1>&2
+
+           FAILED=true
+         elif ! "${checkStderr}" "$STDERR"
+         then
+           echo "Errors found in '$STDERR' for '${cmd}'" 1>&2
+           FAILED=true
+         else
+           echo "Finished running '${cmd}'" 1>&2
+         fi
+
+         # Make report
+         jq -n --arg     cmd    '${cmd}'         \
+               --argjson args   '${toJSON args}' \
+               --arg     stdin  "$STDIN"         \
+               --arg     stdout "$STDOUT"        \
+               --arg     stderr "$STDERR"        \
+               --argjson failed "$FAILED"        \
+               '{"failed"   : $failed,
+                 "cmd"      : $cmd,
+                 "args"     : $args,
+                 "stdin"    : $stdin,
+                 "stdout"   : $stdout,
+                 "stderr"   : $stderr}'
        '';
-
-  benchmark = args: (if args.quick then withTime else withCriterion) args;
 }

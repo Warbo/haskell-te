@@ -1,4 +1,4 @@
-{ benchmark, checkFailures, drvFromScript, explore, ML4HSFE, runWeka, stdParts,
+{ runCmd, checkFailures, drvFromScript, explore, ML4HSFE, runWeka, stdParts,
   storeParts, writeScript }:
 with builtins;
 
@@ -23,7 +23,7 @@ cluster = { quick, annotated, clusters }: let
                           outputs = stdParts; } ''
               set -e
               export CLUSTERS="${toString c}"
-              O=$("${benchmark {
+              O=$("${runCmd {
                        inherit quick;
                        cmd    = clusterScript;
                        #inputs = [annotated];

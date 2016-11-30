@@ -1,4 +1,4 @@
-{ benchmark, checkFailures, drvFromScript, explore, haskellPackages, lib,
+{ runCmd, checkFailures, drvFromScript, explore, haskellPackages, lib,
   reduce-equations, stdParts, storeParts, writeScript }:
 with builtins;
 with lib;
@@ -25,7 +25,7 @@ doReduce = quick: clusterCount: inputs:
                ${preamble}
 
                export CLUSTERS="${clusterCount}"
-               O=$(getEqs | "${benchmark {
+               O=$(getEqs | "${runCmd {
                                inherit quick inputs;
                                cmd = "${reduce-equations}/bin/reduce-equations";
                              }}")

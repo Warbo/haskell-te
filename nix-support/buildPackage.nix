@@ -1,4 +1,4 @@
-{ benchmark, cabal2nix, cabal-install, drvFromScript, explore, stdParts,
+{ runCmd, cabal2nix, cabal-install, drvFromScript, explore, stdParts,
   storeParts, writeScript }:
 
 { src, quick, hsEnv }:
@@ -20,7 +20,7 @@ drvFromScript { buildInputs = explore.extractedEnv {
     exit 0
   }
 
-  O=$("${benchmark {
+  O=$("${runCmd {
            inherit quick;
            cmd  = "cabal";
            args = ["build"];

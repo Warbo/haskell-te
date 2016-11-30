@@ -1,4 +1,4 @@
-{ benchmark, checkFailures, checkHsEnv, drvFromScript, haskellPackageNames,
+{ runCmd, checkFailures, checkHsEnv, drvFromScript, haskellPackageNames,
   haskellPackages, jq, lib, mlspec, pkgName, stdParts, storeParts,
   timeout, writeScript }:
 with builtins;
@@ -165,7 +165,7 @@ doExplore = standalone: quick: clusterCount: f:
       script = ''
         set -e
         export CLUSTERS="${clusterCount}"
-        O=$("${benchmark {
+        O=$("${runCmd {
                  inherit quick cmd;
                  #inputs = [f];
              }}" < "$f")

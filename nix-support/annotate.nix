@@ -1,11 +1,11 @@
-{ bash, benchmark, drvFromScript, explore, getDepsScript, haskellPackages,
-  runTypesScript, stdParts, storeParts, writeScript }:
+{ bash, runCmd, drvFromScript, explore, getDepsScript, haskellPackages, jq,
+  runTypesScript, stdParts, storeParts, withDeps, writeScript }:
 
 with builtins;
 
 { asts, pkg, pkgSrc ? null, quick }:
 
-with {
+with rec {
 
 getAritiesScript = withDeps "getArities" [ jq ] ''
   #!${bash}/bin/bash
@@ -168,7 +168,7 @@ drvFromScript
    }
    ''
      set -e
-     O=$("${benchmark {
+     O=$("${runCmd {
               inherit quick;
               cmd = annotateDb;
           }}" < "$asts")
