@@ -2,6 +2,5 @@ defs: with defs; pkg:
 with builtins;
 with lib;
 
-let v = pkg.rawClustered.results;
- in testMsg (isString v.time.mean.estPoint)
-            "${pkg.name} has mean time"
+testMsg (!(parseJSON (readFile (toString pkg.rawClustered.failed))))
+        "${pkg.name} clustering didn't fail"
