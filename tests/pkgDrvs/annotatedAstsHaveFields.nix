@@ -1,9 +1,9 @@
 defs: with defs; pkg:
 with builtins;
 
-let checkField = f: drvFromScript { inherit (pkg) preAnnotated; } ''
+let checkField = f: drvFromScript { inherit (pkg) annotated; } ''
       set -e
-      R=$(jq 'map(has("${f}")) | all' < "$preAnnotated")
+      R=$(jq 'map(has("${f}")) | all' < "$annotated")
 
       if [[ "x$R" = "xtrue" ]]
       then
@@ -11,7 +11,7 @@ let checkField = f: drvFromScript { inherit (pkg) preAnnotated; } ''
         exit 0
       fi
 
-      echo "Got '$R' from '$preAnnotated'" 1>&2
+      echo "Got '$R' from '$annotated'" 1>&2
       exit 1
     '';
 

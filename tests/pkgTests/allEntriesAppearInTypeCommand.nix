@@ -2,7 +2,7 @@ defs: with defs; pkg: with pkg;
 
 drvFromScript { buildInputs = [ jq ]; } ''
   set -e
-  jq -c -r '.[] | .module + "." + .name' < "${preAnnotated}" |
+  jq -c -r '.[] | .module + "." + .name' < "${annotated}" |
   while read -r LINE
   do
     "${jq}/bin/jq" -r '.cmd' < "${pkg.ranTypes}" |

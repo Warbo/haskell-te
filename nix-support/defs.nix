@@ -62,7 +62,6 @@ let pkgs = rec {
           timeLimSecs memLimKb timeout;
 
   annotate           = callPackage ./annotate.nix           {};
-  annotateAstsScript = callPackage ./annotateAstsScript.nix {};
   cluster            = callPackage ./cluster.nix            {};
   dumpPackage        = callPackage ./dumpPackage.nix        {};
   dumpToNix          = callPackage ./dumpToNix.nix          {};

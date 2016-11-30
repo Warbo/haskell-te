@@ -1,6 +1,5 @@
-{ annotateAstsScript, defaultClusters, drvFromScript, GetDeps, getDepsScript,
-  lib, processPackages, runScript, runTypes, runWeka,
-  storeResult }:
+{ defaultClusters, drvFromScript, GetDeps, getDepsScript, lib, processPackages,
+  runScript, runTypes, runWeka, storeResult }:
 with builtins;
 with lib;
 
@@ -17,18 +16,7 @@ let clusters         = listToAttrs (map (c: {
     processedPackages = processPackages { quick = true; };
 
     extend            = pkg: with pkg; pkg // rec {
-      ranTypes  = runTypes dump pkg {};
-
-      preAnnotated = drvFromScript
-        {
-          inherit ranTypes;
-          buildInputs = [ GetDeps ];
-        }
-        ''
-          set -e
-          cat "$ranTypes" 1>&2
-          "${annotateAstsScript}" < "$ranTypes" > "$out"
-        '';
+      ranTypes = runTypes dump pkg {};
 
       scopeResults = runScript {} ''
         set -e

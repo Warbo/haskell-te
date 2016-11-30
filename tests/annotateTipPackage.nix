@@ -69,29 +69,6 @@ canRunTypes = let err = readFile ranTypes.stderr;
                     val
                   ];
 
-annotatedAsts = drvFromScript (env // { inherit (ranTypes) stdout; }) ''
-                  set -e
-                  "${annotateAstsScript}" < "$stdout" > out
-                  "${storeResult}" out
-                '';
-
-canAnnotateAsts = testRun "Can run annotateAstsScript on tip module" null
-                          { inherit annotatedAsts; } ''
-                            O=$(cat "$annotatedAsts")
-                            [[ -n "$O" ]] || exit 1
-                          '';
-
-gotDeps = drvFromScript (env // { inherit annotatedAsts; }) ''
-            "${getDepsScript}" < "$annotatedAsts" > out
-            "${storeResult}" out
-          '';
-
-canGetDeps = testRun "Can run getDepsScript on tip module" null
-                     { inherit gotDeps; } ''
-                       O=$(cat "$gotDeps")
-                       [[ -n "$O" ]] || exit 1
-                     '';
-
 # Try the 'annotate' function, which combines the above pieces
 annotated = annotate { inherit asts pkg;
                        pkgSrc = pkg.src; };
@@ -112,6 +89,5 @@ tipAnnotated = testRun "Tip benchmarks annotated" null
                        '';
 
 in {
-  inherit haveSrc haveDump canRunTypes canAnnotateAsts canGetDeps rawAnnotated
-          tipAnnotated;
+  inherit haveSrc haveDump canRunTypes rawAnnotated tipAnnotated;
 }
