@@ -135,6 +135,14 @@ withDeps "runTypes" [ jq ] ''
     exit 1
   fi
 
+  echo '
+    WARNING: We are about to gather information about Haskell definitions by
+    trying a bunch of commands in GHCi and seeing what comes out. This will
+    produce a bunch of error messages beginning with "<interactive>"; this is
+    perfectly normal behaviour, which you can ignore if everything else works.
+    If you are experiencing problems elsewhere, some of these messages may be
+    helpful.' 1>&2
+
   echo "Building type-extraction command" 1>&2
   CMD=$(echo "$ASTS" | jq -c '.[]' | "${typeCommand}")
 
@@ -146,6 +154,10 @@ withDeps "runTypes" [ jq ] ''
 
   echo "Checking scope" 1>&2
   SCOPERESULT=$(echo "$SCOPECMD" | "${repl}" | "${replLines}")
+
+  echo '
+    WARNING: This is the end of our GHCi abuse. Take heed of any error messages
+    you see from this point on!' 1>&2
 
   echo "Outputting JSON" 1>&2
   # shellcheck disable=SC2016
