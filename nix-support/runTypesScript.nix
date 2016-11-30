@@ -20,8 +20,8 @@ replLines = writeScript "replLines" ''
 
 repl = let cmd = "nix-shell --run 'ghci -v0 -XTemplateHaskell'";
            msg = "No default.nix found " + toJSON { inherit pkgSrc; };
-           given = assert isString pkgSrc ||
-                          abort "runTypesScript: pkgSrc should be a string, given ${typeOf pkgSrc}'";
+           given = assert isString pkgSrc || typeOf pkgSrc == "path" ||
+                          abort "runTypesScript: pkgSrc should be string or path, given ${typeOf pkgSrc}'";
                    assert isString (runScript { inherit pkgSrc; } ''
                             printf "%s" "$pkgSrc" > "$out"
                           '');
