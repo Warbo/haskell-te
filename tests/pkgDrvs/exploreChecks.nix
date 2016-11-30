@@ -34,8 +34,4 @@ with lib;
   exploredStdout = mapAttrs (n: v: testMsg (all (x: x ? stdout) v)
                                            "explored values have stdout")
                             pkg.rawExplored.results;
-
-  exploredTimes  = mapAttrs (n: v: testMsg (all (x: x ? time) v)
-                                           "explored values have time")
-                            pkg.rawExplored.results;
 }
