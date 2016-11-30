@@ -49,7 +49,7 @@ let pkgs = rec {
     AstPlugin GetDeps ML4HSFE mlspec reduce-equations;
 
   inherit (callPackage ./runBenchmark.nix {})
-          runCmd checkHsEnv lastEntry withCriterion withTime;
+          runCmd checkHsEnv;
 
   inherit (callPackage ./benchmarkOutputs.nix {})
           processPackage processPackages;
