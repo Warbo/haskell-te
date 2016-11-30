@@ -12,22 +12,12 @@ let result = script: input: drvFromScript {
                        echo "$input" | "$scriptPath" > "$out"
                      '';
 
-    timeResult      = result (withTime      { quick = true;
-                                              cmd   = "echo";
-                                              args  = ["hello" "world"]; })
-                             "";
-    criterionResult = result (withCriterion { quick = false;
-                                              cmd   = "echo";
-                                              args  = ["hello" "world"]; })
-                             "";
+    runResult = result (runCmd  { cmd   = "echo";
+                                   args  = ["hello" "world"]; })
+                        "";
 
-    timeCat      = result (withTime { quick = true;
-                                      cmd   = "cat"; })
-                          "hello world";
-
-    criterionCat = result (withCriterion { quick = false;
-                                           cmd   = "cat"; })
-                          "hello world";
+    runCat = result (runCmd { cmd = "cat"; })
+                     "hello world";
 
     checkCat = found: testFieldFile found "stdout" "hello world";
 
@@ -60,15 +50,6 @@ let result = script: input: drvFromScript {
       args   = testField     found "args"   ''["hello","world"]'';
       stderr = testFieldFile found "stderr" "";
       stdout = testFieldFile found "stdout" "hello world";
-
-      time   = testRun "Got mean time" null { inherit found; } ''
-                 echo "Looking for mean time in $found" 1>&2
-                 T=$(jq -r '.time.mean.estPoint | type' < "$found")
-                 echo "Got '$T'" 1>&2
-                 [[ "x$T" = "xstring" ]] && exit 0
-                 [[ "x$T" = "xnumber" ]] && exit 0
-                 exit 1
-               '';
     };
 
     checkInput = args:
@@ -111,23 +92,8 @@ let result = script: input: drvFromScript {
           dbg     = toJSON { inherit allArgs; };
        in { inherit shouldFail shouldSucceed; };
 
-    hasStdDev = testRun "Criterion gives standard deviation" null
-                        { inherit criterionResult; } ''
-                          T=$(jq -r '.time.stddev.estPoint | type' < "$criterionResult")
-                          [[ "x$T" = "xnumber" ]] || exit 1
-                        '';
-
  in {
-  inherit hasStdDev;
-
-  quick = {
-    echo  = check timeResult;
-    input = checkInput { quick = true; };
-    cat   = checkCat timeCat;
-  };
-  slow  = {
-    echo  = check criterionResult;
-    input = checkInput { quick = false; };
-    cat   = checkCat criterionCat;
-  };
-}
+      echo  = check runResult;
+      input = checkInput {};
+      cat   = checkCat runCat;
+    }
