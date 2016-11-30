@@ -1,7 +1,7 @@
 { drvFromScript, runTypesScript, GetDeps }:
-asts: pkg: { pkgSrc ? null }:
+asts: { pkgSrc }:
 
 drvFromScript { inherit asts; } ''
     set -e
-    "${runTypesScript { inherit pkg pkgSrc; }}" < "$asts" > "$out"
+    "${runTypesScript { inherit pkgSrc; }}" < "$asts" > "$out"
   ''

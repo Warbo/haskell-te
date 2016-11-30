@@ -1,6 +1,6 @@
 { bash, haskellPackages, jq, runScript, withDeps, writeScript }:
 
-{ pkg, pkgSrc }:
+{ pkgSrc }:
 
 with builtins;
 let
@@ -19,26 +19,15 @@ replLines = writeScript "replLines" ''
             '';
 
 repl = let cmd = "nix-shell --run 'ghci -v0 -XTemplateHaskell'";
-           msg = "No default.nix found " + toJSON {
-                   inherit pkgSrc;
-                   inherit (pkg) name;
-                   srcNixed = if pkg ? srcNixed
-                                 then { inherit (pkg) srcNixed; }
-                                 else {};
-                 };
-           given = if pkgSrc == null
-                      then if haskellPackages ? "${pkg.name}"
-                              then "x.${pkg.name}"
-                              else abort "haskellPackages doesn't contain '${pkg.name}'"
-                      else assert isString (runScript { inherit pkgSrc; } ''
-                                    printf "%s" "$pkgSrc" > "$out"
-                                  '');
-                           if pathExists (unsafeDiscardStringContext "${pkgSrc}/default.nix")
-                              then ''(x.callPackage "${pkgSrc}" {})''
-                              else if pkg ? srcNixed &&
-                                      pathExists "${pkg.srcNixed}/default.nix"
-                                      then ''(x.callPackage "${pkg.srcNixed}" {})''
-                                      else abort msg;
+           msg = "No default.nix found " + toJSON { inherit pkgSrc; };
+           given = assert isString pkgSrc ||
+                          abort "runTypesScript: pkgSrc should be a string, given ${typeOf pkgSrc}'";
+                   assert isString (runScript { inherit pkgSrc; } ''
+                            printf "%s" "$pkgSrc" > "$out"
+                          '');
+                   assert pathExists (unsafeDiscardStringContext "${pkgSrc}/default.nix") ||
+                             abort "Couldn't find '${pkgSrc}/default.nix'";
+                   ''(x.callPackage "${pkgSrc}" {})'';
            hsPkgs = "[x.QuickCheck x.quickspec ${given}]";
         in writeScript "repl" ''
              ${cmd} -p "haskellPackages.ghcWithPackages (x: ${hsPkgs})"
@@ -46,6 +35,12 @@ repl = let cmd = "nix-shell --run 'ghci -v0 -XTemplateHaskell'";
 
 typeCommand = writeScript "typeCommand" ''
                 echo ":m"
+
+                while read -r MOD
+                do
+                  echo "import $MOD"
+                done < <(echo "$MODS")
+
                 grep "^{" | while read -r LINE
                 do
                   MOD=$(echo "$LINE" | "${jq}/bin/jq" -r '.module')
@@ -95,6 +90,12 @@ mkQuery = writeScript "mkQuery" ''
 # they're not off in some hidden package)
 typeScopes = writeScript "typeScopes" ''
                echo ":m"
+
+               while read -r MOD
+               do
+                 echo "import $MOD"
+               done < <(echo "$MODS")
+
                grep "in f[ ]*::" |
                while IFS= read -r LINE
                do
@@ -105,12 +106,14 @@ typeScopes = writeScript "typeScopes" ''
              '';
 
 checkMods = writeScript "checkMods" ''
-  MODS=$(while read -r MOD
-  do
-    echo "import $MOD"
-  done | ${repl} 2>&1)
+  IMPORTS=$(echo "$MODS" |
+            while read -r MOD
+            do
+              echo "import $MOD"
+            done |
+            ${repl} 2>&1)
 
-  if echo "$MODS" | grep "Could not find module"
+  if echo "$IMPORTS" | grep "Could not find module"
   then
     exit 1
   fi
@@ -126,8 +129,11 @@ withDeps "runTypes" [ jq ] ''
 
   ASTS=$(cat)
 
+  MODS=$(echo "$ASTS" | jq -r '.[] | .module')
+  export MODS
+
   echo "Checking module availability" 1>&2
-  if echo "$ASTS" | jq -c '.[] | .module' | "${checkMods}"
+  if "${checkMods}"
   then
     echo "Found modules" 1>&2
   else

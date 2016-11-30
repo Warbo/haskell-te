@@ -142,8 +142,7 @@ annotateDb = writeScript "annotateDb" ''
   # Turns output from dump-package or dump-hackage into a form suitable for
   # clustering
 
-  "${runTypesScript { inherit pkg;
-                      pkgSrc = if pkg ? srcNixed
+  "${runTypesScript { pkgSrc = if pkg ? srcNixed
                                   then pkg.srcNixed
                                   else pkgSrc; }}" |
     "${annotateAstsScript}"                        |
