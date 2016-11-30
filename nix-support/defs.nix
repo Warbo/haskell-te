@@ -142,28 +142,10 @@ let pkgs = rec {
      in if all isBool fails
            then bFunc id fails
            else drvFromScript { inherit type; inherit fails; } ''
-                  COUNT=0
-                  FAILS=0
                   for FAIL in $fails
                   do
-                    COUNT=$(( COUNT + 1 ))
-                    R=$(cat "$FAIL")
-                    [[ "x$R" = "xtrue" ]] || FAILS=$(( FAILS + 1 ))
-                  done
-
-                  if [[ "x$type" = "xany" ]] && [[ "$FAILS" -gt 0 ]]
-                  then
-                    echo "true " > "$out"
-                    exit
-                  fi
-
-                  if [[ "x$type" = "xall" ]] && [[ "$FAILS" -ge "$COUNT" ]]
-                  then
-                    echo "true" > "$out"
-                    exit
-                  fi
-
-                  echo "false" > "$out"
+                    cat "$FAIL"
+                  done | grep '^.' | jq -s '. | ${type}' > "$out"
                 '';
 
   # Use 'dbug foo bar' in place of 'bar' when 'bar' is fragile, tricky, etc. The
@@ -196,7 +178,7 @@ let pkgs = rec {
                             then <runWeka>
                             else ../packages/runWeka) {};
 
-  stdParts = [ "failed" "out" "stderr" "stdout" "time" ];
+  stdParts = [ "failed" "out" "stderr" "stdout" ];
 
   storeParts = ''
     function fail {
@@ -212,8 +194,6 @@ let pkgs = rec {
 
     SE=$(echo "$O" | jq -r ".stderr") || fail "Failed to get .stderr"
     cp "$SE" "$stderr"
-
-    echo "$O" | jq -r ".time" > "$time" || fail "Failed to get .time"
 
     echo "$O" | jq -r ".failed" > "$failed" || fail "Failed to get .failed"
   '';
