@@ -5,8 +5,7 @@ let samples = filter (hasSuffix ".json") (attrNames (readDir ../benchmarks/tip))
                                samples);
 
     asts = (dumpPackage {
-      quick = true;
-      src   = toString (nixedHsPkg (toString tipBenchmarks.tip-benchmarks-haskell));
+      src = toString (nixedHsPkg (toString tipBenchmarks.tip-benchmarks-haskell));
     }).stdout;
 
     testFile = let find = writeScript "find.jq" ''
