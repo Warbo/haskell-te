@@ -7,8 +7,8 @@ let pkgs = import ./nix-support {};
   package = import ./.;
 
   inherit (pkgs.haskellPackages)
-    ArbitraryHaskell runtime-arbitrary nix-eval mlspec-helper ifcxt AstPlugin
-    GetDeps HS2AST ML4HSFE;
+    runtime-arbitrary nix-eval mlspec-helper ifcxt AstPlugin GetDeps HS2AST
+    ML4HSFE;
 
   inherit (pkgs)
     mlspec reduce-equations runWeka;

@@ -19,15 +19,6 @@ hsOverride = self: super:
                                                         then given
                                                         else fallback);
    in mapAttrs (_: optimise) {
-        ArbitraryHaskell  = cabalCheck "arbitrary-haskell"
-                                       <arbitrary-haskell>
-                                       (fetchFromGitHub {
-                                         owner  = "Warbo";
-                                         repo   = "arbitrary-haskell";
-                                         rev    = "30b8cdac03b6ab7ef902414da52da7dfa76fdc68";
-                                         sha256 = "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b";
-                                       });
-
         AstPlugin         = cabalCheck "ast-plugin"
                                        <ast-plugin>
                                        (fetchFromGitHub {

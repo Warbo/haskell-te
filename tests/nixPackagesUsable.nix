@@ -3,7 +3,6 @@ with builtins;
 
 let deps = [
       mlspec
-      haskellPackages.ArbitraryHaskell
       haskellPackages.bench
       haskellPackages.ifcxt
       haskellPackages.mlspec
