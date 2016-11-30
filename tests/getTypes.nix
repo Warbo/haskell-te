@@ -17,5 +17,5 @@ testRun "Have types for ASTs" { inherit annotations nixed; }
     buildInputs = [ jq ];
   }
   ''
-    jq -e 'map(has(type) and .type != null) | all' < "$annotations"
+    jq -e 'map(has("type") and .type != null) | all' < "$annotations"
   ''
