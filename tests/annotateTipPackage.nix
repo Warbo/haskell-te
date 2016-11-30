@@ -11,9 +11,7 @@ haveSrc = testRun "Tip module source exists" null { buildInputs = [ pkg ]; }
             '';
 
 # Make sure we can dump the ASTs
-quick = true;
-
-dump = dumpPackage { inherit quick; inherit (pkg) src; };
+dump = dumpPackage { inherit (pkg) src; };
 
 haveDump = {
   dumpSuccess = testRun "Tip module dump succeeded" null
@@ -95,7 +93,7 @@ canGetDeps = testRun "Can run getDepsScript on tip module" null
                      '';
 
 # Try the 'annotate' function, which combines the above pieces
-annotated = annotate { inherit quick asts pkg;
+annotated = annotate { inherit asts pkg;
                        pkgSrc = pkg.src; };
 
 rawAnnotated = testRun "Tip module annotation succeeded" null
@@ -105,7 +103,7 @@ rawAnnotated = testRun "Tip module annotation succeeded" null
                        '';
 
 # Just to make sure, also check the encapsulated version we actually use
-processed = tipBenchmarks.process { inherit quick; };
+processed = tipBenchmarks.process {};
 
 tipAnnotated = testRun "Tip benchmarks annotated" null
                        { inherit (processed.rawAnnotated) failed; } ''

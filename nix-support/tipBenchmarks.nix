@@ -30,7 +30,7 @@ let path = if any (x: x.prefix == "te-benchmarks") nixPath
 
   pkg = haskellPackages.callPackage pkgDef {};
 
-  process = { clusters ? defaultClusters, quick ? true, sampleSize ? null }:
-              processPackage { inherit clusters quick sampleSize; }
+  process = { clusters ? defaultClusters, sampleSize ? null }:
+              processPackage { inherit clusters sampleSize; }
                              pkg.name pkg;
 }

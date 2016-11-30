@@ -9,7 +9,7 @@ let
 
 sum = fold (x: y: x + y) 0;
 
-processPkg = { clusters, quick, sampleSize ? null }: givenName: givenPkg: rec {
+processPkg = { clusters, sampleSize ? null }: givenName: givenPkg: rec {
   # Original Haskell fields
   pkg  = givenPkg // { inherit name; };
   name = pkgName givenName;
@@ -25,25 +25,25 @@ processPkg = { clusters, quick, sampleSize ? null }: givenName: givenPkg: rec {
                 else toString (nixedHsPkg "${src}");
 
   # Building with regular GHC
-  build = buildPackage { inherit src quick; hsEnv = pkg.env; };
+  build = buildPackage { inherit src; hsEnv = pkg.env; };
 
-  rawDump = dumpPackage { inherit quick src; };
+  rawDump = dumpPackage { inherit src; };
 
-  rawAnnotated = annotate { inherit quick pkg;
+  rawAnnotated = annotate { inherit pkg;
                             asts   = dump;
                             pkgSrc = srcNixed; };
 
-  rawClustered = cluster.cluster { inherit annotated clusters quick; };
+  rawClustered = cluster.cluster { inherit annotated clusters; };
 
   # Simple format change; don't benchmark
   formatted = mapAttrs format.format clustered;
 
   rawExplored = explore.explore {
-                  inherit formatted quick;
+                  inherit formatted;
                   standalone = srcNixed;
                 };
 
-  rawReduced = reduce.reduce { inherit explored quick; };
+  rawReduced = reduce.reduce { inherit explored; };
 
   failed =
     let toDrv = x: if isBool x
@@ -80,7 +80,6 @@ processPkg = { clusters, quick, sampleSize ? null }: givenName: givenPkg: rec {
        exit 0
      '';
 
-  # Stick to the quick output, so testing is faster
   dump = if sampleSize == null
             then rawDump.stdout
             else runScript {} ''
@@ -117,12 +116,12 @@ checkProcessed = p:
 
 processCheck = args: name: pkg: checkProcessed (processPkg args name pkg);
 
-basic = clusters: quick: sampleSize: mapAttrs (processCheck { inherit clusters quick sampleSize; })
-                                  haskellPackages;
+basic = clusters: sampleSize: mapAttrs (processCheck { inherit clusters sampleSize; })
+                                       haskellPackages;
 
 in {
-  processPackage  = { clusters ? defaultClusters, quick, sampleSize ? null }:
-                        processCheck { inherit clusters quick sampleSize; };
-  processPackages = { clusters ? defaultClusters, quick, sampleSize ? null }:
-                        basic clusters quick sampleSize;
+  processPackage  = { clusters ? defaultClusters, sampleSize ? null }:
+                        processCheck { inherit clusters sampleSize; };
+  processPackages = { clusters ? defaultClusters, sampleSize ? null }:
+                        basic clusters sampleSize;
 }
