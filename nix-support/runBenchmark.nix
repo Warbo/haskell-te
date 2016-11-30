@@ -1,4 +1,4 @@
-{ bash, coreutils, explore, lib, mlspec-bench, runScript, strip, time, writeScript }:
+{ bash, coreutils, explore, lib, runScript, strip, time, writeScript }:
 
 with builtins; with lib;
 

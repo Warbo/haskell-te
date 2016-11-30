@@ -11,5 +11,5 @@ let pkgs = import ./nix-support {};
     GetDeps HS2AST ML4HSFE;
 
   inherit (pkgs)
-    mlspec mlspec-bench reduce-equations runWeka;
+    mlspec reduce-equations runWeka;
 }

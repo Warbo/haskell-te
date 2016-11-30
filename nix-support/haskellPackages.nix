@@ -88,16 +88,6 @@ hsOverride = self: super:
                                        })
                                        {};
 
-        mlspec-bench      = trace "FIXME: Use bench"
-                              (cabalCheck "mlspec-bench" <mlspec-bench>
-                                          (fetchFromGitHub {
-                                            owner  = "Warbo";
-                                            repo   = "mlspec-bench";
-                                            rev    = "0a664ce27278b212a753a0353ce3f218057fc952";
-                                            sha256 = "1gmkv4l38vpvhg2h8dwv4gf8dq1d0lr0zxd5j9szi90xb8nl2241";
-                                          })
-                                          {});
-
         mlspec-helper     = cabalCheck "mlspec-helper"
                                        <mlspec-helper>
                                        (fetchFromGitHub {

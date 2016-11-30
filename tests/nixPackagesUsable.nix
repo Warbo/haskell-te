@@ -3,12 +3,10 @@ with builtins;
 
 let deps = [
       mlspec
-      mlspec-bench
       haskellPackages.ArbitraryHaskell
       haskellPackages.bench
       haskellPackages.ifcxt
       haskellPackages.mlspec
-      haskellPackages.mlspec-bench
       haskellPackages.mlspec-helper
       haskellPackages.nix-eval
       haskellPackages.runtime-arbitrary

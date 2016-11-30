@@ -11,13 +11,11 @@ let hasAttr = set: name: testWrap [(testMsg (set ? "${name}")
 
     tests = map (hasAttr defs) [
               "mlspec"
-              "mlspec-bench"
             ] ++
             map (hasAttr haskellPackages) [
               "ArbitraryHaskell"
               "bench"
               "mlspec"
-              "mlspec-bench"
               "mlspec-helper"
               "nix-eval"
               "runtime-arbitrary"

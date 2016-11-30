@@ -46,7 +46,7 @@ let pkgs = rec {
 
   # These provide executables
   inherit (haskellPackages)
-    AstPlugin GetDeps ML4HSFE mlspec mlspec-bench reduce-equations;
+    AstPlugin GetDeps ML4HSFE mlspec reduce-equations;
 
   inherit (callPackage ./runBenchmark.nix {})
           runCmd checkHsEnv lastEntry withCriterion withTime;
