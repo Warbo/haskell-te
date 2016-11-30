@@ -20,11 +20,7 @@ let result = asts: field:
     check = asts: listToAttrs (map (n: { name = n; value = result asts n; })
                                    ["package" "module" "name" "ast"]);
 
-    slow    = processPackages { quick = false; };
-    slowPkg = slow."${pkg.name}";
  in testRec {
-   pkgDump        = check     pkg.dump;
-   pkgRawDump     = check     pkg.rawDump.stdout;
-   slowPkgDump    = check slowPkg.dump;
-   slowPkgRawDump = check slowPkg.rawDump.stdout;
+   pkgDump    = check pkg.dump;
+   pkgRawDump = check pkg.rawDump.stdout;
  }

@@ -13,7 +13,7 @@ clusterScript = writeScript "cluster" ''
   "${ML4HSFE}/bin/ml4hsfe-outer-loop"
 '';
 
-cluster = { quick, annotated, clusters }: let
+cluster = { annotated, clusters }: let
 
   go = c: drvFromScript { buildInputs = explore.extractedEnv {
                                           #f         = annotated;
@@ -24,9 +24,7 @@ cluster = { quick, annotated, clusters }: let
               set -e
               export CLUSTERS="${toString c}"
               O=$("${runCmd {
-                       inherit quick;
                        cmd    = clusterScript;
-                       #inputs = [annotated];
                    }}" < "$annotated")
 
               ${storeParts}

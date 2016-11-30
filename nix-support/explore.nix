@@ -160,14 +160,13 @@ mkGhcPkg = writeScript "mkGhcPkg" ''
   echo "]))"
 '';
 
-doExplore = standalone: quick: clusterCount: f:
+doExplore = standalone: clusterCount: f:
   let cmd    = toString explore-theories;
       script = ''
         set -e
         export CLUSTERS="${clusterCount}"
         O=$("${runCmd {
-                 inherit quick cmd;
-                 #inputs = [f];
+                 inherit cmd;
              }}" < "$f")
 
         ${storeParts}
@@ -177,11 +176,11 @@ doExplore = standalone: quick: clusterCount: f:
                  outputs     = stdParts; };
    in drvFromScript env script;
 
-go = { quick, standalone }: clusterCount: clusters:
-       map (doExplore standalone quick clusterCount) clusters;
+go = { standalone }: clusterCount: clusters:
+       map (doExplore standalone clusterCount) clusters;
 
-checkAndExplore = { quick, formatted, standalone ? null }:
-  let results = mapAttrs (go { inherit quick standalone; }) formatted;
+checkAndExplore = { formatted, standalone ? null }:
+  let results = mapAttrs (go { inherit standalone; }) formatted;
       failed  = checkFailures "all" results;
       result  = { inherit results failed; };
    in result;

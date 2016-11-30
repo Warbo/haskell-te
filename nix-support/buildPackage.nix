@@ -1,7 +1,7 @@
 { runCmd, cabal2nix, cabal-install, drvFromScript, explore, stdParts,
   storeParts, writeScript }:
 
-{ src, quick, hsEnv }:
+{ src, hsEnv }:
 
 drvFromScript { buildInputs = explore.extractedEnv {
                   extraPkgs = [ cabal2nix cabal-install ];
@@ -21,7 +21,6 @@ drvFromScript { buildInputs = explore.extractedEnv {
   }
 
   O=$("${runCmd {
-           inherit quick;
            cmd  = "cabal";
            args = ["build"];
        }}")

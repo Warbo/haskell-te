@@ -13,7 +13,7 @@ let clusters         = listToAttrs (map (c: {
 
     testPackageNames  = [ "list-extras" ];
 
-    processedPackages = processPackages { quick = true; };
+    processedPackages = processPackages {};
 
     extend            = pkg: with pkg; pkg // rec {
       ranTypes = runTypes dump pkg {};

@@ -25,10 +25,6 @@ let haveMean   = result: testRun
         [[ "x$T" = "xnumber" ]] && exit 0
         exit 1
       '';
-    slow    = processPackages { quick = false; };
-    slowPkg = slow."${pkg.name}";
  in {
    quickMean  = haveMean   pkg.rawDump.time;
-   slowMean   = haveMean   slowPkg.rawDump.time;
-   slowStdDev = haveStdDev slowPkg.rawDump.time;
  }

@@ -16,7 +16,7 @@ preamble = ''
   }
 '';
 
-doReduce = quick: clusterCount: inputs:
+doReduce = clusterCount: inputs:
              drvFromScript { inherit inputs;
                              outputs = stdParts;
                              buildInputs = explore.extractedEnv {}; } ''
@@ -26,14 +26,14 @@ doReduce = quick: clusterCount: inputs:
 
                export CLUSTERS="${clusterCount}"
                O=$(getEqs | "${runCmd {
-                               inherit quick inputs;
+                               inherit inputs;
                                cmd = "${reduce-equations}/bin/reduce-equations";
                              }}")
                ${storeParts}
              '';
 
-reduce = { quick, explored }:
-  let results = mapAttrs (doReduce quick) explored;
+reduce = { explored }:
+  let results = mapAttrs doReduce explored;
       failed  = checkFailures "any" results;
       result  = { inherit results failed; };
    in result;
