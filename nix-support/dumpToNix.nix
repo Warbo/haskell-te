@@ -4,7 +4,7 @@ with builtins;
 with lib;
 
 # Extract ASTs from a Cabal package
-{ quick, pkgDir }:
+{ pkgDir }:
 
 let
 
@@ -95,8 +95,5 @@ in drvFromScript
     cabal configure --package-db="$GHC_PKG" 1>&2
 
     OPTIONS="-package-db=$GHC_PKG -package AstPlugin -fplugin=AstPlugin.Plugin" \
-      "${runCmd {
-           inherit quick;
-           cmd = runAstPlugin;
-       }}" > "$out"
+      "${runCmd { cmd = runAstPlugin; }}" > "$out"
   ''

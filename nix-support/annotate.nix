@@ -3,7 +3,7 @@
 
 with builtins;
 
-{ asts, pkg, pkgSrc ? null, quick }:
+{ asts, pkg, pkgSrc ? null }:
 
 with rec {
 
@@ -169,7 +169,6 @@ drvFromScript
    ''
      set -e
      O=$("${runCmd {
-              inherit quick;
               cmd = annotateDb;
           }}" < "$asts")
 

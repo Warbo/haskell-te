@@ -1,12 +1,12 @@
 { drvFromScript, dumpToNix, lib, stdParts, storeParts }:
 with builtins; with lib;
 
-{ quick, src }:
+{ src }:
   drvFromScript
     {
       outputs = stdParts;
     }
     ''
-      O=$(cat "${dumpToNix { inherit quick; pkgDir = "${src}"; }}")
+      O=$(cat "${dumpToNix { pkgDir = "${src}"; }}")
       ${storeParts}
     ''

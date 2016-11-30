@@ -91,13 +91,9 @@ let pkgs = rec {
 
   annotated = pkgDir:
     let nixed  = toString (nixedHsPkg pkgDir);
-        dumped = dumpPackage {
-                   quick = true;
-                   src   = nixed;
-                 };
+        dumped = dumpPackage { src = nixed; };
         ann    = annotate {
                    pkg    = { name = "dummy"; };
-                   quick  = true;
                    asts   = dumped.stdout;
                    pkgSrc = nixed;
                  };

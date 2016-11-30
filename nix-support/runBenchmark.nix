@@ -84,7 +84,8 @@ rec {
   runCmd = { cmd, args ? [], inputs ? []}:
    let shellArgs = map escapeShellArg args;
        argStr    = concatStringsSep " " shellArgs;
-    in trace "FIXME: Add DO_BENCH to runCmd" writeScript "run-cmd-${cmd}" ''
+       name      = unsafeDiscardStringContext (baseNameOf cmd);
+    in trace "FIXME: Move DO_BENCH into here" writeScript "run-cmd-${name}" ''
          #!${bash}/bin/bash
 
          # Store our input
