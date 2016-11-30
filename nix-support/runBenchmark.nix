@@ -11,6 +11,7 @@ rec {
     syntax error
     Argument list too long
     out of memory
+    parse error:
     ^error:
   '';
 

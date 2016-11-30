@@ -41,7 +41,7 @@ rec {
       inherit var msg;
     });
     ''
-      [[ "${var}" =~ "^[0-9]+\$" ]] || {
+      echo "${var}" | grep -o "^[0-9][0-9]*\$" > /dev/null || {
         echo 'Error, ${var}' "(${var})" 'is not numeric: ${msg}' 1>&2
         exit 1
       }

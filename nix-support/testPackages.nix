@@ -1,5 +1,5 @@
 { annotateAstsScript, defaultClusters, drvFromScript, GetDeps, getDepsScript,
-  getTypesScript, lib, processPackages, runScript, runTypes, runWeka,
+  lib, processPackages, runScript, runTypes, runWeka,
   storeResult }:
 with builtins;
 with lib;
@@ -35,12 +35,6 @@ let clusters         = listToAttrs (map (c: {
         jq -r '.scoperesult' < "${ranTypes}" \
                              > scopeResults.json
         "${storeResult}" scopeResults.json "$out"
-      '';
-
-      gotTypes = runScript { buildInputs = [ GetDeps ]; } ''
-        set -e
-        "${getTypesScript}" < "${scopeResults}" > types.json
-        "${storeResult}" types.json "$out"
       '';
 
       typeResults = runScript {} ''

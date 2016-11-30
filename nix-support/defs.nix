@@ -40,6 +40,13 @@ with rec {
 # available packages, rather than the arguments to this callPackage invocation
 
 let pkgs = rec {
+  # Include the above definitions
+  inherit drvFromScript haskellPackages hsOverride nixedHsPkg nixFromCabal;
+
+  # These provide executables
+  inherit (haskellPackages)
+    AstPlugin GetDeps ML4HSFE mlspec mlspec-bench reduce-equations;
+
   inherit (callPackage ./runBenchmark.nix {})
           benchmark checkHsEnv lastEntry withCriterion withTime;
 
@@ -53,12 +60,6 @@ let pkgs = rec {
   inherit (callPackage ./timeout.nix {})
           timeLimSecs memLimKb timeout;
 
-  # These provide executables
-  inherit (haskellPackages)
-          AstPlugin GetDeps ML4HSFE mlspec mlspec-bench reduce-equations;
-
-  inherit drvFromScript haskellPackages hsOverride;
-
   annotate           = callPackage ./annotate.nix           {};
   annotateAstsScript = callPackage ./annotateAstsScript.nix {};
   cluster            = callPackage ./cluster.nix            {};
@@ -66,8 +67,6 @@ let pkgs = rec {
   dumpToNix          = callPackage ./dumpToNix.nix          {};
   explore            = callPackage ./explore.nix            {};
   format             = callPackage ./format.nix             {};
-  getAritiesScript   = callPackage ./getAritiesScript.nix   {};
-  getTypesScript     = callPackage ./getTypesScript.nix     {};
   importDir          = callPackage ./importDir.nix          {};
   mlspecBench        = callPackage ./mlspecBench.nix        {};
   package            = callPackage ./package.nix            {};
@@ -78,8 +77,8 @@ let pkgs = rec {
   runScript          = callPackage ./runScript.nix          {};
   runTypes           = callPackage ./runTypes.nix           {};
   runTypesScript     = callPackage ./runTypesScript.nix     {};
-  tagAstsScript      = callPackage ./tagAstsScript.nix      {};
-  tipBenchmarks      = callPackage ./tipBenchmarks.nix      { inherit nixFromCabal; };
+  tipBenchmarks      = callPackage ./tipBenchmarks.nix      {};
+  withDeps           = callPackage ./withDeps.nix           {};
 
   buildPackage    = callPackage ./buildPackage.nix
                       { inherit (haskellPackages) cabal2nix cabal-install; };
@@ -131,7 +130,7 @@ let pkgs = rec {
             ann = ann.stdout;
           }
           ''
-             cat "$ann" > "$out"
+             cp "$ann" "$out"
           '';
 
   callPackage = nixpkgs.newScope pkgs;
@@ -204,21 +203,23 @@ let pkgs = rec {
   stdParts = [ "failed" "out" "stderr" "stdout" "time" ];
 
   storeParts = ''
-    [[ -n "$O" ]] || {
-      echo "storeParts failed: No data given" 1>&2
+    function fail {
+      echo "$1" 1>&2
       exit 1
     }
+
+    [[ -n "$O" ]] || fail "storeParts failed: No data given"
     echo "$O" > "$out"
 
-    SO=$(echo "$O" | jq -r ".stdout")
+    SO=$(echo "$O" | jq -r ".stdout") || fail "Failed to get .stdout"
     cp "$SO" "$stdout"
 
-    SE=$(echo "$O" | jq -r ".stderr")
+    SE=$(echo "$O" | jq -r ".stderr") || fail "Failed to get .stderr"
     cp "$SE" "$stderr"
 
-    echo "$O" | jq -r ".time" > "$time"
+    echo "$O" | jq -r ".time" > "$time" || fail "Failed to get .time"
 
-    echo "$O" | jq -r ".failed" > "$failed"
+    echo "$O" | jq -r ".failed" > "$failed" || fail "Failed to get .failed"
   '';
 
   storeResult = writeScript "store-result" ''
@@ -234,4 +235,4 @@ let pkgs = rec {
                     else strip unsuf;
 };
 
-in { inherit (pkgs) package; }
+in nixpkgs // pkgs

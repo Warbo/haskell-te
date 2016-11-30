@@ -19,7 +19,8 @@ rec {
 
 nixedHsPkg = dir:
 
-  assert typeOf dir == "path" || isString dir;
+  assert typeOf dir == "path" || isString dir ||
+         abort "nixedHsPkg: dir should be string, given '${typeOf dir}'";
 
   let hsVer   = haskellPackages.ghc.version;
 
@@ -90,7 +91,9 @@ in
 
 # If we've been given a function "f", compose it with "result" using our
 # special-purpose function
-assert f == null || isFunction f;
+assert f == null || isFunction f ||
+       abort "nixFromCabal: f should be null or function, given '${typeOf f}'";
+
 if f == null then result
              else import compose f result;
 

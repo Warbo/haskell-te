@@ -85,7 +85,12 @@ mkQuickSpecSig = ''
 
   OUTPUT=$(nix-shell \
     -p '(haskellPackages.ghcWithPackages (h: [ h.mlspec h.nix-eval ]))' \
-    --show-trace --run 'runhaskell ${mkSigHs}' < "$ANNOTATED")
+    --show-trace --run 'runhaskell ${mkSigHs}' < "$ANNOTATED" | tee mkSigHs.stdout)
+
+  [[ -n "$OUTPUT" ]] || {
+    echo "Failed to make signature"
+    exit 1
+  }
 
   echo "$OUTPUT" | head -n2 | tail -n1 > env.nix
   E=$(nix-store --add env.nix)

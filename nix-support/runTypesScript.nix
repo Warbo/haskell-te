@@ -1,4 +1,7 @@
-{ haskellPackages, jq, runScript, writeScript }: { pkg, pkgSrc }:
+{ bash, haskellPackages, jq, runScript, withDeps, writeScript }:
+
+{ pkg, pkgSrc }:
+
 with builtins;
 let
 
@@ -117,17 +120,13 @@ checkMods = writeScript "checkMods" ''
 in
 
 # Runs GHCi to get type information
-writeScript "runTypes" ''
-  #!/usr/bin/env bash
+withDeps "runTypes" [ jq ] ''
+  #!${bash}/bin/bash
   set -e
-
-  function jq {
-    "${jq}/bin/jq" "$@"
-  }
 
   ASTS=$(cat)
 
-  echo "Checking module availability"
+  echo "Checking module availability" 1>&2
   if echo "$ASTS" | jq -c '.[] | .module' | "${checkMods}"
   then
     echo "Found modules" 1>&2
@@ -156,4 +155,5 @@ writeScript "runTypes" ''
         --argfile scopecmd    <(echo "$SCOPECMD"    | jq -s -R '.') \
         --argfile scoperesult <(echo "$SCOPERESULT" | jq -s -R '.') \
         '{asts: $asts, cmd: $cmd, result: $result, scopecmd: $scopecmd, scoperesult: $scoperesult}'
+  echo "Finished output" 1>&2
 ''
