@@ -41,7 +41,8 @@ with rec {
 
 let pkgs = rec {
   # Include the above definitions
-  inherit drvFromScript haskellPackages hsOverride nixedHsPkg nixFromCabal;
+  inherit drvFromScript extractTarball haskellPackages hsOverride nixedHsPkg
+          nixFromCabal;
 
   # These provide executables
   inherit (haskellPackages)
