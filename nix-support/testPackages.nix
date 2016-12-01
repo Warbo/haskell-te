@@ -16,7 +16,7 @@ let clusters         = listToAttrs (map (c: {
     processedPackages = processPackages {};
 
     extend            = pkg: with pkg; pkg // rec {
-      ranTypes = runTypes dump pkg {};
+      ranTypes = runTypes dump { pkgSrc = pkg.srcNixed; };
 
       scopeResults = runScript {} ''
         set -e

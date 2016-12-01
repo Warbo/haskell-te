@@ -123,7 +123,7 @@ checkMods = writeScript "checkMods" ''
 in
 
 # Runs GHCi to get type information
-withDeps "runTypes" [ jq ] ''
+withDeps "runTypesScript" [ jq ] ''
   #!${bash}/bin/bash
   set -e
 
