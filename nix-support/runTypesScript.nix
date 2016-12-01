@@ -144,7 +144,7 @@ withDeps "runTypesScript" [ jq ] ''
   echo '
     WARNING: We are about to gather information about Haskell definitions by
     trying a bunch of commands in GHCi and seeing what comes out. This will
-    produce a bunch of error messages beginning with "<interactive>"; this is
+    produce a bunch of messages beginning with "<interactive>"; this is
     perfectly normal behaviour, which you can ignore if everything else works.
     If you are experiencing problems elsewhere, some of these messages may be
     helpful.' 1>&2
@@ -162,7 +162,7 @@ withDeps "runTypesScript" [ jq ] ''
   SCOPERESULT=$(echo "$SCOPECMD" | "${repl}" | "${replLines}")
 
   echo '
-    WARNING: This is the end of our GHCi abuse. Take heed of any error messages
+    WARNING: This is the end of our GHCi abuse. Take heed of any GHC messages
     you see from this point on!' 1>&2
 
   echo "Outputting JSON" 1>&2
