@@ -1,10 +1,16 @@
-{ bash, callPackage, defaultClusters, fetchurl, haskellPackages, nixFromCabal,
-  processPackage, python, racket, runScript, stdenv, storeResult, writeScript }:
+{ bash, callPackage, defaultClusters, fetchgit, fetchurl,
+  haskellPackages, nixFromCabal, processPackage, python, racket, runScript,
+  stdenv, storeResult, writeScript }:
 
 with builtins;
 let path = if any (x: x.prefix == "te-benchmarks") nixPath
               then <te-benchmarks>
-              else ../packages/te-benchmark;
+              else fetchgit {
+                     url    = "https://github.com/Warbo/theory-exploration-benchmarks.git";
+                     rev    = "460377e";
+                     sha256 = "0za27fndi5m46i37jcypsix85fq0hwz81wwkyhb8a2fgrc0dhi2g";
+                     fetchSubmodules = true;
+                   };
  in rec {
   inherit (callPackage path {})
     tip-benchmarks tools tip-benchmark-smtlib;
