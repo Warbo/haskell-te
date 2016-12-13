@@ -1,10 +1,6 @@
 ; Natural numbers
 (declare-datatypes () ((Nat (Z) (S (p Nat)))))
 
-; Since we don't explore constructors, define a function for each
-(define-fun cZ () Nat Z)
-(define-fun cS ((x Nat)) Nat (S x))
-
 ; Arithmetic functions
 (define-fun-rec
   plus

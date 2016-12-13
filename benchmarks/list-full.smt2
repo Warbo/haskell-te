@@ -3,18 +3,7 @@
 (declare-datatypes (a)
   ((List (Nil) (Cons (head a) (tail (List a))))))
 (declare-datatypes () ((Nat (Z) (S (p Nat)))))
-; Define functions to be used in lieu of the constructors
-(define-fun
-  (par (a)
-    (cNil () (List a)
-      (as Nil (List a)))))
-(define-fun
-  (par (a)
-    (cCons ((x a) (xs (List a))) (List a)
-      (as (Cons x xs) (List a)))))
-(define-fun cZ () Nat Z)
-(define-fun cS ((x Nat)) Nat (S x))
-; Non-constructor functions
+
 (define-fun-rec
   (par (a)
     (append
