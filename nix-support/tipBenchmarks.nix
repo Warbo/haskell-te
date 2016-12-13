@@ -7,8 +7,8 @@ let path = if any (x: x.prefix == "te-benchmarks") nixPath
               then <te-benchmarks>
               else fetchgit {
                      url    = "https://github.com/Warbo/theory-exploration-benchmarks.git";
-                     rev    = "40bccd9";
-                     sha256 = "188q7hqa83kan0ycndmzz8clswjync9404049scjsxd2vgg9yw23";
+                     rev    = "5c9ecd0";
+                     sha256 = "0a5317ih09cv2rc9zg4ir8q4hg1z9wf0j4yyyr2fya9cdflvs1mi";
                      fetchSubmodules = true;
                    };
  in rec {
