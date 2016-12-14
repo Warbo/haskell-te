@@ -1,5 +1,5 @@
 # Back-ported from newer nixpkgs
-{ cabal2nix, fetchFromGitHub, glibcLocales, haskellPackages, lib, stdenv }:
+{ cabal2nix, fetchFromGitHub, glibcLocales, lib, stdenv }:
 
 with lib;
 with rec {
@@ -22,7 +22,6 @@ with rec {
       export HOME="$TMP"
       mkdir $out
       hash=$(sed -e 's/.*"SHA256":"//' -e 's/".*$//' ${all-cabal-hashes}/${name}/${version}/${name}.json)
-      #cabal2nix --compiler=${haskellPackages.ghc.name} --system=${stdenv.system} --sha256=$hash ${all-cabal-hashes}/${name}/${version}/${name}.cabal >$out/default.nix
       cabal2nix --sha256=$hash ${all-cabal-hashes}/${name}/${version}/${name}.cabal >$out/default.nix
     '';
   };
