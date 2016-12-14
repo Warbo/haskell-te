@@ -6,9 +6,8 @@ let path = if any (x: x.prefix == "te-benchmarks") nixPath
               then <te-benchmarks>
               else fetchgit {
                      url    = "https://github.com/Warbo/theory-exploration-benchmarks.git";
-                     rev    = "5c9ecd0";
-                     sha256 = "0a5317ih09cv2rc9zg4ir8q4hg1z9wf0j4yyyr2fya9cdflvs1mi";
-                     fetchSubmodules = true;
+                     rev    = "f87d8ca";
+                     sha256 = "0jj5143a8fa2xh53xl2vd08q4pbhhllkfdca1gr8k41bm354dr1y";
                    };
  in rec {
   inherit (callPackage path {
