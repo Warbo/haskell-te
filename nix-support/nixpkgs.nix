@@ -24,13 +24,20 @@ path    = if any (p: p.prefix == "real") nixPath
                  then <real>
                  else <nixpkgs>;
 
-fetch   = (import path {}).fetchFromGitHub;
+fetch   = rev: sha256: import ((import path {}).fetchFromGitHub {
+            inherit rev sha256;
+            owner = "NixOS";
+            repo  = "nixpkgs";
+          });
 
-nixpkgs = fetch {
-            owner  = "NixOS";
-            repo   = "nixpkgs";
-            rev    = "f22817d"; # 16.09
-            sha256 = "1cx5cfsp4iiwq8921c15chn1mhjgzydvhdcmrvjmqzinxyz71bzh";
-          };
+in args: {
+  nixpkgs-2016-03 = fetch
+    "16.03"
+    "0m2b5ignccc5i5cyydhgcgbyl8bqip4dz32gw0c6761pd4kgw56v"
+    args;
 
-in import nixpkgs
+  nixpkgs-2016-09 = fetch
+    "16.09"
+    "1cx5cfsp4iiwq8921c15chn1mhjgzydvhdcmrvjmqzinxyz71bzh"
+    args;
+}

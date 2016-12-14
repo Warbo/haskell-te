@@ -1,5 +1,11 @@
 # Custom definitions, mixed in with inherited utility packages
-nixpkgs:
+args:
+
+# Fetch known revisions of nixpkgs, so we're not at the mercy of system updates
+with rec {
+  inherit (import ./nixpkgs.nix args) nixpkgs-2016-03 nixpkgs-2016-09;
+  nixpkgs = nixpkgs-2016-03;
+};
 
 # We define things in stages, to avoid everything depending on everything else
 
@@ -29,12 +35,8 @@ with rec {
 with (nixpkgs.callPackage ./haskellPackages.nix {
        inherit extractTarball havePath nixFromCabal;
        callHackage          = nixpkgs.callPackage ./callHackage.nix {};
-       superHaskellPackages = nixpkgs.haskell.packages.ghc7103;
+       superHaskellPackages = nixpkgs.haskellPackages;
      });
-
-with rec {
-
-};
 
 # Inherit from the result, so that haskellPackages.override works on the
 # available packages, rather than the arguments to this callPackage invocation
@@ -43,6 +45,10 @@ let pkgs = rec {
   # Include the above definitions
   inherit drvFromScript extractTarball haskellPackages hsOverride nixedHsPkg
           nixFromCabal;
+
+  # Use newer Racket for contract definitions
+  inherit (nixpkgs-2016-09)
+    racket;
 
   # These provide executables
   inherit (haskellPackages)
@@ -77,7 +83,9 @@ let pkgs = rec {
   runScript          = callPackage ./runScript.nix          {};
   runTypes           = callPackage ./runTypes.nix           {};
   runTypesScript     = callPackage ./runTypesScript.nix     {};
-  tipBenchmarks      = callPackage ./tipBenchmarks.nix      {};
+  tipBenchmarks      = callPackage ./tipBenchmarks.nix      {
+    pkgs = nixpkgs-2016-09;
+  };
   withDeps           = callPackage ./withDeps.nix           {};
 
   buildPackage    = callPackage ./buildPackage.nix

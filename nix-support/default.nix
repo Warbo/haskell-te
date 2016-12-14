@@ -5,4 +5,4 @@ args:
 # definitions. We override that path (see 'withNix') to point at this file, so
 # that the same versions are used everywhere.
 
-import ./defs.nix (import ./nixpkgs.nix ({ config = {}; } // args))
+import ./defs.nix ({ config = {}; } // args)
