@@ -36,7 +36,7 @@
 
 (define-fun destructor-p ((local-x Nat)) Nat
   (match local-x
-    (case (S local-p) p)))
+    (case (S local-p) (as local-p Nat))))
 
 ; Other functions
 (define-fun-rec
