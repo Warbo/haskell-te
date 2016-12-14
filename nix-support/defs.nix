@@ -29,7 +29,7 @@ with rec {
 with (nixpkgs.callPackage ./haskellPackages.nix {
        inherit extractTarball havePath nixFromCabal;
        callHackage          = nixpkgs.callPackage ./callHackage.nix {};
-       superHaskellPackages = nixpkgs.haskellPackages;
+       superHaskellPackages = nixpkgs.haskell.packages.ghc7103;
      });
 
 with rec {

@@ -29,8 +29,8 @@ fetch   = (import path {}).fetchFromGitHub;
 nixpkgs = fetch {
             owner  = "NixOS";
             repo   = "nixpkgs";
-            rev    = "16.03";
-            sha256 = "0m2b5ignccc5i5cyydhgcgbyl8bqip4dz32gw0c6761pd4kgw56v";
+            rev    = "f22817d"; # 16.09
+            sha256 = "1cx5cfsp4iiwq8921c15chn1mhjgzydvhdcmrvjmqzinxyz71bzh";
           };
 
 in import nixpkgs
