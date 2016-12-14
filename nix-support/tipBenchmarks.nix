@@ -1,6 +1,5 @@
-{ bash, callPackage, defaultClusters, fetchgit, fetchurl,
-  haskellPackages, nixFromCabal, processPackage, python, racket, runScript,
-  stdenv, storeResult, writeScript }:
+{ bash, callPackage, defaultClusters, fetchgit, fetchurl, haskellPackages,
+  nixFromCabal, pkgs, processPackage, runScript, stdenv, writeScript }:
 
 with builtins;
 let path = if any (x: x.prefix == "te-benchmarks") nixPath
@@ -12,7 +11,9 @@ let path = if any (x: x.prefix == "te-benchmarks") nixPath
                      fetchSubmodules = true;
                    };
  in rec {
-  inherit (callPackage path {})
+  inherit (callPackage path {
+            inherit haskellPackages pkgs;
+          })
     tip-benchmarks tools tip-benchmark-smtlib;
 
   # Uses tip-benchmark-smtlib to produce a Haskell package
