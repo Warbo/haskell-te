@@ -26,17 +26,17 @@
   (par (a)
     (destructor-head ((local-x (List a))) a
       (match local-x
-        (case (Cons local-head local-tail) (as local-head a))))))
+        (case (Cons local-head local-tail) local-head)))))
 
 (define-fun
   (par (a)
     (destructor-tail ((local-x (List a))) (List a)
       (match local-x
-        (case (Cons local-head local-tail) (as local-tail (List a)))))))
+        (case (Cons local-head local-tail) local-tail)))))
 
 (define-fun destructor-p ((local-x Nat)) Nat
   (match local-x
-    (case (S local-p) (as local-p Nat))))
+    (case (S local-p) local-p)))
 
 ; Other functions
 (define-fun-rec

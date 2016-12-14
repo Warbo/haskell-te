@@ -11,7 +11,7 @@
 ; Functions equivalent to the destructors
 (define-fun destructor-p ((local-x Nat)) Nat
   (match local-x
-    (case (S local-p) (as local-p Nat))))
+    (case (S local-p) local-p)))
 
 ; Arithmetic functions
 (define-fun-rec
