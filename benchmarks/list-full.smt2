@@ -4,6 +4,41 @@
   ((List (Nil) (Cons (head a) (tail (List a))))))
 (declare-datatypes () ((Nat (Z) (S (p Nat)))))
 
+; Functions equivalent to the constructors
+(define-fun
+  (par (a)
+    (constructor-Nil () (List a)
+      (as Nil (List a)))))
+
+(define-fun
+  (par (a)
+    (constructor-Cons ((local-head a) (local-tail (List a))) (List a)
+      (as (Cons local-head local-tail) (List a)))))
+
+(define-fun constructor-Z () Nat
+  (as Z Nat))
+
+(define-fun constructor-S ((local-p Nat)) Nat
+  (as (S local-p) Nat))
+
+; Functions equivalent to the destructors
+(define-fun
+  (par (a)
+    (destructor-head ((local-x (List a))) a
+      (match local-x
+        (case (Cons local-head local-tail) (as local-head a))))))
+
+(define-fun
+  (par (a)
+    (destructor-tail ((local-x (List a))) (List a)
+      (match local-x
+        (case (Cons local-head local-tail) (as local-tail (List a)))))))
+
+(define-fun destructor-p ((local-x Nat)) Nat
+  (match local-x
+    (case (S local-p) p)))
+
+; Other functions
 (define-fun-rec
   (par (a)
     (append
