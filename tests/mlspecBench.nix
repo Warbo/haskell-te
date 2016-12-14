@@ -32,15 +32,15 @@ mapAttrs (name: testRun name null { buildInputs = [ package ]; }) {
   '';
 
   filterSamples = let keepers = [
-    { name = "append"; module = "A"; package = "tip-benchmark-sig"; }
-    { name = "cNil";   module = "A"; package = "tip-benchmark-sig"; }
-    { name = "cCons";  module = "A"; package = "tip-benchmark-sig"; }
+    { name = "append";          module = "A"; package = "tip-benchmark-sig"; }
+    { name = "constructorNil";  module = "A"; package = "tip-benchmark-sig"; }
+    { name = "constructorCons"; module = "A"; package = "tip-benchmark-sig"; }
   ];
   in ''
     set -e
     export BENCH_FILTER_KEEPERS='${toJSON keepers}'
     BENCH_OUT=$(CLUSTERS=1 "${cmd}" < ${../benchmarks/list-full.smt2})
-    for S in append cNil cCons
+    for S in append constructorNil constructorCons
     do
       echo "$BENCH_OUT" | jq '.result' | grep "$S" > /dev/null || {
         echo "No equations for '$S'" 1>&2
