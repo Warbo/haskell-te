@@ -1,13 +1,14 @@
-{ bash, callPackage, defaultClusters, fetchgit, fetchurl, haskellPackages,
+{ bash, callPackage, defaultClusters, fetchFromGitHub, haskellPackages,
   nixFromCabal, pkgs, processPackage, runScript, stdenv, writeScript }:
 
 with builtins;
 let path = if any (x: x.prefix == "te-benchmarks") nixPath
               then <te-benchmarks>
-              else fetchgit {
-                     url    = "https://github.com/Warbo/theory-exploration-benchmarks.git";
-                     rev    = "f87d8ca";
-                     sha256 = "1d4l42mf2g6s4aahpmi04vgb1w0yvj3ash74qyrzwa71n72crpqk";
+              else fetchFromGitHub {
+                     owner  = "Warbo";
+                     repo   = "theory-exploration-benchmarks";
+                     rev    = "d569ec3";
+                     sha256 = "0kv7z2xwb872myzsq89s9yybd7vwf1yyx5vpbj0q2w0js3wxhf2n";
                    };
  in rec {
   inherit (callPackage path {
