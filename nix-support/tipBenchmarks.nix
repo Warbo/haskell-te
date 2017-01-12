@@ -14,26 +14,9 @@ let path = if any (x: x.prefix == "te-benchmarks") nixPath
   inherit (callPackage path {
             inherit haskellPackages pkgs;
           })
-    tip-benchmarks tools tip-benchmark-smtlib;
+    tip-benchmarks tools tip-benchmark-smtlib tip-benchmark-haskell;
 
-  # Uses tip-benchmark-smtlib to produce a Haskell package
-  tip-benchmarks-haskell = stdenv.mkDerivation {
-    name         = "tip-benchmarks-haskell";
-    buildInputs  = [ tools ];
-    SMT_FILE     = tip-benchmark-smtlib;
-    buildCommand = ''
-      source $stdenv/setup
-      set -e
-
-      export OUT_DIR="$out"
-      mkdir -p "$OUT_DIR"
-
-      # Create Haskell package
-      full_haskell_package < "${tip-benchmark-smtlib}"
-    '';
-  };
-
-  pkgDef = nixFromCabal (toString tip-benchmarks-haskell) null;
+  pkgDef = nixFromCabal (toString tip-benchmark-haskell) null;
 
   pkg = haskellPackages.callPackage pkgDef {};
 
