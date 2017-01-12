@@ -4,7 +4,7 @@ with rec {
   hsPkg = runCommand "hsPkg" {} ''
     mkdir hsPkg
     export OUT_DIR="$PWD/hsPkg"
-    "${tipBenchmarks.tools}/bin/full_haskell_package.rkt" < ${../benchmarks/nat-simple.smt2}
+    "${tipBenchmarks.tools}/bin/full_haskell_package" < ${../benchmarks/nat-simple.smt2}
     cp -r hsPkg "$out"
   '';
   nixed       = nixedHsPkg "${hsPkg}";

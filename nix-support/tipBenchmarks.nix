@@ -20,7 +20,7 @@ let path = if any (x: x.prefix == "te-benchmarks") nixPath
   tip-benchmarks-haskell = stdenv.mkDerivation {
     name         = "tip-benchmarks-haskell";
     buildInputs  = [ tools ];
-                    SMT_FILE     = tip-benchmark-smtlib;
+    SMT_FILE     = tip-benchmark-smtlib;
     buildCommand = ''
       source $stdenv/setup
       set -e
@@ -29,7 +29,7 @@ let path = if any (x: x.prefix == "te-benchmarks") nixPath
       mkdir -p "$OUT_DIR"
 
       # Create Haskell package
-      full_haskell_package.rkt < "${tip-benchmark-smtlib}"
+      full_haskell_package < "${tip-benchmark-smtlib}"
     '';
   };
 

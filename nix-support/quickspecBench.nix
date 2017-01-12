@@ -37,7 +37,7 @@ customHs = writeScript "custom-hs.nix" ''
   # to include the package generated from smtlib data
   with import ${./..}/nix-support {};
   with builtins;
-  let hsName = "tip-benchmark-sig";  # The name used by full_haskell_package.rkt
+  let hsName = "tip-benchmark-sig";  # The name used by full_haskell_package
       hsDir  = getEnv "OUT_DIR";
       hsPkgs = haskellPackages.override {
         overrides = self: super:
@@ -161,7 +161,7 @@ mkPkgInner = ''
   mkdir -p "$OUT_DIR"
 
   echo "Creating Haskell package" 1>&2
-  "${tipBenchmarks.tools}/bin/full_haskell_package.rkt"
+  "${tipBenchmarks.tools}/bin/full_haskell_package"
   echo "Created Haskell package" 1>&2
 
   OUT_DIR=$(nix-store --add "$OUT_DIR")
