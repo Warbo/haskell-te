@@ -16,7 +16,7 @@ drvFromScript { inherit pkgName; buildInputs = [ cabal-install ]; } ''
 
   export HOME="$TMPDIR"
   cabal update
-  cabal get "$pkgName" || exit 1
+  cabal get -v "$pkgName" || exit 1
   for D in ./*
   # */
   do
