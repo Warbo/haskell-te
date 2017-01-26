@@ -250,11 +250,23 @@ env = buildEnv {
 
 qs = stdenv.mkDerivation {
   name = "quickspecBench";
-  inherit script;
-  buildInputs  = [ makeWrapper ];
-  buildCommand = ''
+  src  = script;
+  buildInputs  = [ env makeWrapper ];
+  unpackPhase  = "true";  # Nothing to do
+
+  doCheck    = true;
+  checkPhase = ''
+    echo "Checking garbage input is rejected" 1>&2
+    if echo '!"£$%^&*()' | "$src"
+    then
+      exit 1
+    fi
+
+  '';
+
+  installPhase = ''
     mkdir -p "$out/bin"
-    makeWrapper "$script" "$out/bin/quickspecBench" \
+    makeWrapper "$src" "$out/bin/quickspecBench" \
       --prefix PATH : "${env}/bin"
   '';
 };

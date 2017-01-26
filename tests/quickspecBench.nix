@@ -16,14 +16,6 @@ let checkVar = var: ''
     go  = name: testRun name null { buildInputs = [ package ]; };
 in mapAttrs go {
 
-  failOnGarbage = ''
-    if echo '!"£$%^&*()' | quickspecBench > >(tee stdout) 2> >(tee stderr >&2)
-    then
-      exit 1
-    fi
-    exit 0
-  '';
-
   genSig = ''
     export   OUT_DIR="${./testPackage}"
     export ANNOTATED="${./annotated.json}"
