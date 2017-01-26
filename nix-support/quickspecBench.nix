@@ -1,5 +1,5 @@
-{ ensureVars, glibcLocales, haskellPackages, jq, lib, tipBenchmarks,
-  writeScript }:
+{ buildEnv, ensureVars, glibcLocales, haskellPackages, jq, lib, makeWrapper,
+  stdenv, tipBenchmarks, writeScript }:
 
 # Provide a script which accepts smtlib data, runs it through QuickSpec and
 # outputs the resulting equations along with benchmark times. The script should
@@ -59,7 +59,8 @@ customHs = writeScript "custom-hs.nix" ''
 '';
 
 # Write 'content' to a file, splicing in any shell variables. Add that file to
-# the Nix store and put the resulting path in the shell variable 'var'
+# the Nix store and put the resulting path in the shell variable 'var'. Like a
+# build-time alternative to writeScript.
 fileInStore = var: content: ''
   cat << EOF > filed
   ${content}
@@ -144,7 +145,7 @@ in writeScript "filterSample.sh" ''
   then
     cat
   else
-    # If an AST doesn't appear in BENCH_FILTER_KEEPERS, mark it as not quickspecable
+    # If an AST's not in BENCH_FILTER_KEEPERS, mark it as not quickspecable
     "${jq}/bin/jq" --argjson keepers "$BENCH_FILTER_KEEPERS" -f "${filter}"
   fi
 '';
@@ -241,5 +242,21 @@ script = writeScript "quickspec-bench" ''
 
   cat "$JSON_OUT"
 '';
+
+env = buildEnv {
+  name  = "te-env";
+  paths = [ tipBenchmarks.tools ];
+};
+
+qs = stdenv.mkDerivation {
+  name = "quickspecBench";
+  inherit script;
+  buildInputs  = [ makeWrapper ];
+  buildCommand = ''
+    mkdir -p "$out/bin"
+    makeWrapper "$script" "$out/bin/quickspecBench" \
+      --prefix PATH : "${env}/bin"
+  '';
+};
 
 }

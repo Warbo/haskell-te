@@ -1,5 +1,6 @@
-{ bash, cluster, ensureVars, explore, format, glibcLocales, haskellPackages, jq,
-  lib, quickspecBench, reduce-equations, runWeka, writeScript }:
+{ bash, buildEnv, cluster, ensureVars, explore, format, glibcLocales,
+  haskellPackages, jq, lib, makeWrapper, quickspecBench, reduce-equations,
+  runWeka, stdenv, writeScript }:
 with builtins;
 with lib;
 
@@ -139,4 +140,15 @@ rec {
                       --slurpfile result "$DIR/eqs.json"  \
                       '{"time": $time, "result": $result}'
   '';
+
+  mls = stdenv.mkDerivation {
+    name = "quickspecBench";
+    inherit script;
+    buildInputs  = [ makeWrapper ];
+    buildCommand = ''
+      mkdir -p "$out/bin"
+      makeWrapper "$script" "$out/bin/mlspecBench" \
+        --prefix PATH : "${quickspecBench.env}/bin"
+    '';
+  };
 }
