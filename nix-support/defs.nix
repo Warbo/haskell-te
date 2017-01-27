@@ -87,6 +87,7 @@ let pkgs = rec {
     pkgs = nixpkgs-2016-09;
   };
   withDeps           = callPackage ./withDeps.nix           {};
+  withNix            = callPackage ./withNix.nix            {};
 
   buildPackage    = callPackage ./buildPackage.nix
                       { inherit (haskellPackages) cabal2nix cabal-install; };
