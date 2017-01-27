@@ -1,9 +1,10 @@
 { buildEnv, ensureVars, glibcLocales, haskellPackages, jq, lib, makeWrapper,
   stdenv, tipBenchmarks, withNix, writeScript }:
 
-# Provide a script which accepts smtlib data, runs it through QuickSpec and
-# outputs the resulting equations along with benchmark times. The script should
-# be runnable from the commandline, as long as the haskell-te package is in PATH
+# Provides a script which accepts smtlib data, runs it through QuickSpec and
+# outputs the resulting equations along with benchmark times.
+
+# Note that we use "./.." so that all of our dependencies get included
 
 with builtins; with lib;
 
@@ -72,7 +73,16 @@ fileInStore = var: content: ''
 
 mkQuickSpecSig = ''
   [[ -n "$ANNOTATED" ]] || {
-    ${getAsts}
+    [[ -n "$OUT_DIR" ]] || {
+      ${mkPkg}
+    }
+    ${ensureVars ["DIR" "OUT_DIR"]}
+
+    ANNOTATED="$DIR/annotated.json"
+       STORED=$(nix-store --add "$OUT_DIR")
+         EXPR="with import ${./..}/nix-support {}; annotated \"$STORED\""
+            F=$(nix-build --show-trace -E "$EXPR")
+    "${filterSample}" < "$F" | jq 'map(select(.quickspecable))' > "$ANNOTATED"
   }
   ${ensureVars ["DIR" "OUT_DIR" "ANNOTATED"]}
 
@@ -146,7 +156,7 @@ in writeScript "filterSample.sh" ''
     cat
   else
     # If an AST's not in BENCH_FILTER_KEEPERS, mark it as not quickspecable
-    "${jq}/bin/jq" --argjson keepers "$BENCH_FILTER_KEEPERS" -f "${filter}"
+    jq --argjson keepers "$BENCH_FILTER_KEEPERS" -f "${filter}"
   fi
 '';
 
@@ -175,38 +185,6 @@ mkPkg = ''
   ${mkPkgInner}
 '';
 
-# Use ./.. so all of our dependencies are included
-getAsts = ''
-  [[ -n "$OUT_DIR" ]] || {
-    ${mkPkg}
-  }
-  ${ensureVars ["DIR" "OUT_DIR"]}
-
-  ANNOTATED="$DIR/annotated.json"
-  STORED=$(nix-store --add "$OUT_DIR")
-    EXPR="with import ${./..}/nix-support {}; annotated \"$STORED\""
-       F=$(nix-build --show-trace -E "$EXPR")
-  "${filterSample}" < "$F" | "${jq}/bin/jq" 'map(select(.quickspecable))' > "$ANNOTATED"
-'';
-
-runSig = ''
-  [[ -n "$SIG" ]] || {
-    ${mkQuickSpecSig}
-  }
-  ${ensureVars ["DIR" "BENCH_COMMAND" "RUN_COMMAND"]}
-
-  RESULT="$DIR/eqs"
-  "$RUN_COMMAND" | grep -v '^Depth' | "${jq}/bin/jq" -s '.' > "$RESULT"
-
-  if [[ "$DO_BENCH" -eq 1 ]]
-  then
-    "$BENCH_COMMAND"
-  else
-    echo "Not benchmarking. To benchmark, set DO_BENCH env var to 1" 1>&2
-    echo '"Not benchmarked"' > "$TIME_JSON"
-  fi
-'';
-
 script = writeScript "quickspec-bench" ''
   #!/usr/bin/env bash
   set -e
@@ -219,29 +197,37 @@ script = writeScript "quickspec-bench" ''
   }
   trap cleanup EXIT
 
-  [[ -n "$JSON_OUT" ]] || {
-    [[ -n "$RESULT" ]] || {
-      ${runSig}
+  [[ -n "$RESULT" ]] || {
+    [[ -n "$SIG" ]] || {
+      ${mkQuickSpecSig}
     }
-    ${ensureVars ["DIR" "TIME_JSON" "RESULT"]}
+    ${ensureVars ["DIR" "BENCH_COMMAND" "RUN_COMMAND"]}
 
-    JSON_OUT="$DIR/out.json"
+    RESULT="$DIR/eqs"
+    "$RUN_COMMAND" | grep -v '^Depth' | jq -s '.' > "$RESULT"
 
-    "${jq}/bin/jq" -n --slurpfile time   "$TIME_JSON" \
-                      --slurpfile result "$RESULT"    \
-                   '{"time": $time, "result": $result}' > "$JSON_OUT" || {
-      echo -e "START TIME_JSON\n$(cat "$TIME_JSON")\nEND TIME_JSON" 1>&2
-      echo -e "START RESULT   \n$(cat "$RESULT")   \nEND RESULT"    1>&2
-      exit 1
-    }
+    if [[ "$DO_BENCH" -eq 1 ]]
+    then
+      "$BENCH_COMMAND"
+    else
+      echo "Not benchmarking. To benchmark, set DO_BENCH env var to 1" 1>&2
+      echo '"Not benchmarked"' > "$TIME_JSON"
+    fi
   }
+  ${ensureVars ["DIR" "TIME_JSON" "RESULT"]}
 
-  cat "$JSON_OUT"
+  jq -n --slurpfile time   "$TIME_JSON" \
+        --slurpfile result "$RESULT"    \
+        '{"time": $time, "result": $result}' || {
+    echo -e "START TIME_JSON\n$(cat "$TIME_JSON")\nEND TIME_JSON" 1>&2
+    echo -e "START RESULT   \n$(cat "$RESULT")   \nEND RESULT"    1>&2
+    exit 1
+  }
 '';
 
 env = buildEnv {
   name  = "te-env";
-  paths = [ tipBenchmarks.tools ];
+  paths = [ jq tipBenchmarks.tools ];
 };
 
 qs = stdenv.mkDerivation (withNix {
