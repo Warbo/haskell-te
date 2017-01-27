@@ -207,23 +207,6 @@ runSig = ''
   fi
 '';
 
-mkJson = ''
-  [[ -n "$RESULT" ]] || {
-    ${runSig}
-  }
-  ${ensureVars ["DIR" "TIME_JSON" "RESULT"]}
-
-  JSON_OUT="$DIR/out.json"
-
-  "${jq}/bin/jq" -n --slurpfile time   "$TIME_JSON" \
-                    --slurpfile result "$RESULT"    \
-                    '{"time": $time, "result": $result}' > "$JSON_OUT" || {
-    echo -e "START TIME_JSON\n$(cat "$TIME_JSON")\nEND TIME_JSON" 1>&2
-    echo -e "START RESULT   \n$(cat "$RESULT")   \nEND RESULT"    1>&2
-    exit 1
-  }
-'';
-
 script = writeScript "quickspec-bench" ''
   #!/usr/bin/env bash
   set -e
@@ -237,7 +220,20 @@ script = writeScript "quickspec-bench" ''
   trap cleanup EXIT
 
   [[ -n "$JSON_OUT" ]] || {
-    ${mkJson}
+    [[ -n "$RESULT" ]] || {
+      ${runSig}
+    }
+    ${ensureVars ["DIR" "TIME_JSON" "RESULT"]}
+
+    JSON_OUT="$DIR/out.json"
+
+    "${jq}/bin/jq" -n --slurpfile time   "$TIME_JSON" \
+                      --slurpfile result "$RESULT"    \
+                   '{"time": $time, "result": $result}' > "$JSON_OUT" || {
+      echo -e "START TIME_JSON\n$(cat "$TIME_JSON")\nEND TIME_JSON" 1>&2
+      echo -e "START RESULT   \n$(cat "$RESULT")   \nEND RESULT"    1>&2
+      exit 1
+    }
   }
 
   cat "$JSON_OUT"
@@ -263,16 +259,6 @@ qs = stdenv.mkDerivation (withNix {
       }
     '';
     fail = msg: ''{ echo -e "${msg}" 1>&2; exit 1; }'';
-    checkVar = var: ''
-      [[ -n "${"$" + var}" ]] || {
-        echo "No ${var}" 1>&2
-        exit 1
-      }
-      [[ -e "${"$" + var}" ]] || {
-        echo "${var} '${"$" + var}' doesn't exist" 1>&2
-        exit 1
-      }
-    '';
   }; ''
     ${test "check-garbage" ''
       if echo '!"£$%^&*()' | "$src" 1>/dev/null 2>/dev/null
@@ -281,26 +267,13 @@ qs = stdenv.mkDerivation (withNix {
       fi
     ''}
     ${test "can-run-quickspecbench" ''
-      DIR="$PWD" "$src" < ${../tests/example.smt2} > /dev/null || exit 1
+      BENCH_OUT=$(DIR="$PWD" "$src" < "${../tests/example.smt2}") || exit 1
 
       [[ -e ./eqs            ]] || ${fail "No eqs found"           }
       [[ -e ./env.nix        ]] || ${fail "No env.nix found"       }
+      [[ -e ./sig.hs         ]] || ${fail "No sig.hs found"        }
       [[ -e ./annotated.json ]] || ${fail "No annotated.json found"}
       [[ -d ./hsPkg          ]] || ${fail "No hsPkg found"         }
-    ''}
-    ${test "generate-signature" ''
-      export   OUT_DIR="${../tests/testPackage}"
-      export ANNOTATED="${../tests/annotated.json}"
-      export       DIR="$PWD"
-      "$src" < ${../tests/example.smt2}
-
-      for F in sig.hs env.nix
-      do
-        [[ -e "$F" ]] || ${fail "Couldn't find '$F'"}
-      done
-    ''}
-    ${test "get-json-output" ''
-      BENCH_OUT=$("$src" < "${../tests/example.smt2}") || exit 1
 
       TYPE=$(echo "$BENCH_OUT" | jq -r 'type') ||
         ${fail "START BENCH_OUT\n\n$BENCH_OUT\n\nEND BENCH_OUT"}
