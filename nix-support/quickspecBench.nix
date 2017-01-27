@@ -71,75 +71,6 @@ fileInStore = var: content: ''
   rm -f filed
 '';
 
-mkQuickSpecSig = ''
-  [[ -n "$ANNOTATED" ]] || {
-    [[ -n "$OUT_DIR" ]] || {
-      ${mkPkg}
-    }
-    ${ensureVars ["DIR" "OUT_DIR"]}
-
-    ANNOTATED="$DIR/annotated.json"
-       STORED=$(nix-store --add "$OUT_DIR")
-         EXPR="with import ${./..}/nix-support {}; annotated \"$STORED\""
-            F=$(nix-build --show-trace -E "$EXPR")
-    "${filterSample}" < "$F" | jq 'map(select(.quickspecable))' > "$ANNOTATED"
-  }
-  ${ensureVars ["DIR" "OUT_DIR" "ANNOTATED"]}
-
-  SIG="$DIR"
-  export SIG
-  mkdir -p "$SIG"
-  pushd "$SIG" > /dev/null
-
-  NIX_EVAL_HASKELL_PKGS="${customHs}"
-  export NIX_EVAL_HASKELL_PKGS
-
-  OUTPUT=$(nix-shell \
-    -p '(haskellPackages.ghcWithPackages (h: [ h.mlspec h.nix-eval ]))' \
-    --show-trace --run 'runhaskell ${mkSigHs}' < "$ANNOTATED" | tee mkSigHs.stdout)
-
-  [[ -n "$OUTPUT" ]] || {
-    echo "Failed to make signature"
-    exit 1
-  }
-
-  echo "$OUTPUT" | head -n2 | tail -n1 > env.nix
-  E=$(nix-store --add env.nix)
-
-  echo "$OUTPUT" | tail -n +3 > sig.hs
-  HS=$(nix-store --add sig.hs)
-
-  TIME_JSON="$DIR/time.json"
-
-  CMD=$(echo "$OUTPUT" | head -n1 | tr -d '\n')
-
-  ${fileInStore "RH" ''
-    export LANG='en_US.UTF-8'
-    export LOCALE_ARCHIVE='${glibcLocales}/lib/locale/locale-archive'
-    $CMD < $HS
-  ''}
-
-  ${fileInStore "B" ''
-    export LANG='en_US.UTF-8'
-    export LOCALE_ARCHIVE=${glibcLocales}/lib/locale/locale-archive
-    "${haskellPackages.bench}/bin/bench" --template json --output "$TIME_JSON" "$RH" 1>&2
-  ''}
-
-  WRAP="export NIX_EVAL_HASKELL_PKGS='$NIX_EVAL_HASKELL_PKGS'
-  export OUT_DIR='$OUT_DIR'
-  nix-shell --show-trace -p '(import $E)' --run"
-
-  ${fileInStore "BENCH_COMMAND" ''
-     $WRAP "$B"
-  ''}
-
-  ${fileInStore "RUN_COMMAND" ''
-     $WRAP "$RH"
-  ''}
-
-  popd > /dev/null
-'';
-
 filterSample = let filter = writeScript "filter.jq" ''
     def mkId: {"name": .name, "package": .package, "module": .module};
 
@@ -198,8 +129,73 @@ script = writeScript "quickspec-bench" ''
   trap cleanup EXIT
 
   [[ -n "$RESULT" ]] || {
-    [[ -n "$SIG" ]] || {
-      ${mkQuickSpecSig}
+    [[ -n "$SIG"  ]] || {
+      [[ -n "$ANNOTATED" ]] || {
+        [[ -n "$OUT_DIR" ]] || {
+          ${mkPkg}
+        }
+        ${ensureVars ["DIR" "OUT_DIR"]}
+
+        ANNOTATED="$DIR/annotated.json"
+           STORED=$(nix-store --add "$OUT_DIR")
+             EXPR="with import ${./..}/nix-support {}; annotated \"$STORED\""
+                F=$(nix-build --show-trace -E "$EXPR")
+        "${filterSample}" < "$F" | jq 'map(select(.quickspecable))' > "$ANNOTATED"
+      }
+      ${ensureVars ["DIR" "OUT_DIR" "ANNOTATED"]}
+
+      SIG="$DIR"
+      export SIG
+      mkdir -p "$SIG"
+      pushd "$SIG" > /dev/null
+
+      NIX_EVAL_HASKELL_PKGS="${customHs}"
+      export NIX_EVAL_HASKELL_PKGS
+
+      OUTPUT=$(nix-shell \
+        -p '(haskellPackages.ghcWithPackages (h: [ h.mlspec h.nix-eval ]))' \
+        --show-trace --run 'runhaskell ${mkSigHs}' < "$ANNOTATED" | tee mkSigHs.stdout)
+
+      [[ -n "$OUTPUT" ]] || {
+        echo "Failed to make signature"
+        exit 1
+      }
+
+      echo "$OUTPUT" | head -n2 | tail -n1 > env.nix
+      E=$(nix-store --add env.nix)
+
+      echo "$OUTPUT" | tail -n +3 > sig.hs
+      HS=$(nix-store --add sig.hs)
+
+      TIME_JSON="$DIR/time.json"
+
+      CMD=$(echo "$OUTPUT" | head -n1 | tr -d '\n')
+
+      ${fileInStore "RH" ''
+        export LANG='en_US.UTF-8'
+        export LOCALE_ARCHIVE='${glibcLocales}/lib/locale/locale-archive'
+        $CMD < $HS
+      ''}
+
+      ${fileInStore "B" ''
+        export LANG='en_US.UTF-8'
+        export LOCALE_ARCHIVE=${glibcLocales}/lib/locale/locale-archive
+        "${haskellPackages.bench}/bin/bench" --template json --output "$TIME_JSON" "$RH" 1>&2
+      ''}
+
+      WRAP="export NIX_EVAL_HASKELL_PKGS='$NIX_EVAL_HASKELL_PKGS'
+      export OUT_DIR='$OUT_DIR'
+      nix-shell --show-trace -p '(import $E)' --run"
+
+      ${fileInStore "BENCH_COMMAND" ''
+        $WRAP "$B"
+      ''}
+
+      ${fileInStore "RUN_COMMAND" ''
+        $WRAP "$RH"
+      ''}
+
+      popd > /dev/null
     }
     ${ensureVars ["DIR" "BENCH_COMMAND" "RUN_COMMAND"]}
 
