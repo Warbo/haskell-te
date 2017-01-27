@@ -162,7 +162,6 @@ mkPkgInner = ''
   mkdir -p "$OUT_DIR"
 
   echo "Creating Haskell package" 1>&2
-  env
   full_haskell_package || exit 1
   echo "Created Haskell package" 1>&2
 
@@ -257,15 +256,13 @@ qs = stdenv.mkDerivation (withNix {
 
   doCheck    = true;
   checkPhase = with rec {
-    #run = code: ''
-    #  DIR="$PWD" source ${writeScript "to-run" code} < ${../tests/example.smt2}
-    #'';
     test = name: code: ''
       bash "${writeScript "quickspec-${name}-test" code}" || {
         echo "Test ${name} failed" 1>&2
         exit 1
       }
     '';
+    fail = msg: ''{ echo -e "${msg}" 1>&2; exit 1; }'';
     checkVar = var: ''
       [[ -n "${"$" + var}" ]] || {
         echo "No ${var}" 1>&2
@@ -280,16 +277,16 @@ qs = stdenv.mkDerivation (withNix {
     ${test "check-garbage" ''
       if echo '!"£$%^&*()' | "$src" 1>/dev/null 2>/dev/null
       then
-        exit 1
+        ${fail "Shouldn't have accepted garbage"}
       fi
     ''}
     ${test "can-run-quickspecbench" ''
-      "$src" < ${./example.smt2} > /dev/null || exit 1
-      ${checkVar "RESULT"}
-      ${checkVar "SIG"}
-      ${checkVar "ANNOTATED"}
-      ${checkVar "OUT_DIR"}
-      ${checkVar "DIR"}
+      DIR="$PWD" "$src" < ${../tests/example.smt2} > /dev/null || exit 1
+
+      [[ -e ./eqs            ]] || ${fail "No eqs found"           }
+      [[ -e ./env.nix        ]] || ${fail "No env.nix found"       }
+      [[ -e ./annotated.json ]] || ${fail "No annotated.json found"}
+      [[ -d ./hsPkg          ]] || ${fail "No hsPkg found"         }
     ''}
     ${test "generate-signature" ''
       export   OUT_DIR="${../tests/testPackage}"
@@ -299,47 +296,37 @@ qs = stdenv.mkDerivation (withNix {
 
       for F in sig.hs env.nix
       do
-        [[ -e "$F" ]] || {
-          echo "Couldn't find '$F'" 1>&2
-          exit 1
-        }
+        [[ -e "$F" ]] || ${fail "Couldn't find '$F'"}
       done
     ''}
     ${test "get-json-output" ''
-      BENCH_OUT=$("$src" < "${./example.smt2}") || exit 1
+      BENCH_OUT=$("$src" < "${../tests/example.smt2}") || exit 1
 
-      TYPE=$(echo "$BENCH_OUT" | jq -r 'type') || {
-        echo -e "START BENCH_OUT\n\n$BENCH_OUT\n\nEND BENCH_OUT" 1>&2
-        exit 1
-      }
+      TYPE=$(echo "$BENCH_OUT" | jq -r 'type') ||
+        ${fail "START BENCH_OUT\n\n$BENCH_OUT\n\nEND BENCH_OUT"}
 
-      [[ "x$TYPE" = "xobject" ]] || {
-        echo -e "START BENCH_OUT\n\n$BENCH_OUT\n\nEND BENCH_OUT" 1>&2
-        echo "'$TYPE' is not object" 1>&2
-        exit 1
-      }
+      [[ "x$TYPE" = "xobject" ]] ||
+        ${fail ''START BENCH_OUT\n\n$BENCH_OUT\n\nEND BENCH_OUT
+                 '$TYPE' is not object''}
     ''}
-    ${test "filter-samples" (let keepers = [
-      { name = "append";          module = "A"; package = "tip-benchmark-sig"; }
-      { name = "constructorNil";  module = "A"; package = "tip-benchmark-sig"; }
-      { name = "constructorCons"; module = "A"; package = "tip-benchmark-sig"; }
-    ]; in ''
+    ${test "filter-samples" ''
       set -e
-      export BENCH_FILTER_KEEPERS='${toJSON keepers}'
-      BENCH_OUT=$(quickspecBench < ${../benchmarks/list-full.smt2})
+      export BENCH_FILTER_KEEPERS='${toJSON [
+        { name = "append";          module = "A"; package = "tip-benchmark-sig"; }
+        { name = "constructorNil";  module = "A"; package = "tip-benchmark-sig"; }
+        { name = "constructorCons"; module = "A"; package = "tip-benchmark-sig"; }
+      ]}'
+      BENCH_OUT=$("$src" < ${../benchmarks/list-full.smt2})
       for S in append constructorNil constructorCons
       do
-        echo "$BENCH_OUT" | jq '.result' | grep "$S" > /dev/null || {
-          echo "No equations for '$S'" 1>&2
-          exit 1
-        }
+        echo "$BENCH_OUT" | jq '.result' | grep "$S" > /dev/null ||
+          ${fail "No equations for '$S'"}
       done
       for S in map foldl foldr length reverse
       do
         if echo "$BENCH_OUT" | jq '.result' | grep "$S" > /dev/null
         then
-          echo "Found equation with forbidden symbol '$S'" 1>&2
-          exit 1
+          ${fail "Found equation with forbidden symbol '$S'"}
         fi
       done
     ''}
