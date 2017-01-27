@@ -10,6 +10,8 @@ with builtins; with lib;
 
 rec {
 
+fail = msg: ''{ echo -e "${msg}" 1>&2; exit 1; }'';
+
 mkSigHs = writeScript "mkSig.hs" ''
   {-# LANGUAGE OverloadedStrings #-}
   import MLSpec.Theory
@@ -103,7 +105,7 @@ mkPkgInner = ''
   mkdir -p "$OUT_DIR"
 
   echo "Creating Haskell package" 1>&2
-  full_haskell_package || exit 1
+  full_haskell_package || ${fail "Failed to create Haskell package"}
   echo "Created Haskell package" 1>&2
 
   OUT_DIR=$(nix-store --add "$OUT_DIR")
@@ -128,95 +130,76 @@ script = writeScript "quickspec-bench" ''
   }
   trap cleanup EXIT
 
-  [[ -n "$RESULT" ]] || {
-    [[ -n "$SIG"  ]] || {
-      [[ -n "$ANNOTATED" ]] || {
-        [[ -n "$OUT_DIR" ]] || {
-          ${mkPkg}
-        }
-        ${ensureVars ["DIR" "OUT_DIR"]}
-
-        ANNOTATED="$DIR/annotated.json"
-           STORED=$(nix-store --add "$OUT_DIR")
-             EXPR="with import ${./..}/nix-support {}; annotated \"$STORED\""
-                F=$(nix-build --show-trace -E "$EXPR")
-        "${filterSample}" < "$F" | jq 'map(select(.quickspecable))' > "$ANNOTATED"
-      }
-      ${ensureVars ["DIR" "OUT_DIR" "ANNOTATED"]}
-
-      SIG="$DIR"
-      export SIG
-      mkdir -p "$SIG"
-      pushd "$SIG" > /dev/null
-
-      NIX_EVAL_HASKELL_PKGS="${customHs}"
-      export NIX_EVAL_HASKELL_PKGS
-
-      OUTPUT=$(nix-shell \
-        -p '(haskellPackages.ghcWithPackages (h: [ h.mlspec h.nix-eval ]))' \
-        --show-trace --run 'runhaskell ${mkSigHs}' < "$ANNOTATED" | tee mkSigHs.stdout)
-
-      [[ -n "$OUTPUT" ]] || {
-        echo "Failed to make signature"
-        exit 1
-      }
-
-      echo "$OUTPUT" | head -n2 | tail -n1 > env.nix
-      E=$(nix-store --add env.nix)
-
-      echo "$OUTPUT" | tail -n +3 > sig.hs
-      HS=$(nix-store --add sig.hs)
-
-      TIME_JSON="$DIR/time.json"
-
-      CMD=$(echo "$OUTPUT" | head -n1 | tr -d '\n')
-
-      ${fileInStore "RH" ''
-        export LANG='en_US.UTF-8'
-        export LOCALE_ARCHIVE='${glibcLocales}/lib/locale/locale-archive'
-        $CMD < $HS
-      ''}
-
-      ${fileInStore "B" ''
-        export LANG='en_US.UTF-8'
-        export LOCALE_ARCHIVE=${glibcLocales}/lib/locale/locale-archive
-        "${haskellPackages.bench}/bin/bench" --template json --output "$TIME_JSON" "$RH" 1>&2
-      ''}
-
-      WRAP="export NIX_EVAL_HASKELL_PKGS='$NIX_EVAL_HASKELL_PKGS'
-      export OUT_DIR='$OUT_DIR'
-      nix-shell --show-trace -p '(import $E)' --run"
-
-      ${fileInStore "BENCH_COMMAND" ''
-        $WRAP "$B"
-      ''}
-
-      ${fileInStore "RUN_COMMAND" ''
-        $WRAP "$RH"
-      ''}
-
-      popd > /dev/null
-    }
-    ${ensureVars ["DIR" "BENCH_COMMAND" "RUN_COMMAND"]}
-
-    RESULT="$DIR/eqs"
-    "$RUN_COMMAND" | grep -v '^Depth' | jq -s '.' > "$RESULT"
-
-    if [[ "$DO_BENCH" -eq 1 ]]
-    then
-      "$BENCH_COMMAND"
-    else
-      echo "Not benchmarking. To benchmark, set DO_BENCH env var to 1" 1>&2
-      echo '"Not benchmarked"' > "$TIME_JSON"
-    fi
+  [[ -n "$OUT_DIR" ]] || {
+    ${mkPkg}
   }
-  ${ensureVars ["DIR" "TIME_JSON" "RESULT"]}
+  ${ensureVars ["DIR" "OUT_DIR"]}
 
-  jq -n --slurpfile time   "$TIME_JSON" \
-        --slurpfile result "$RESULT"    \
+  ANNOTATED="$DIR/annotated.json"
+     STORED=$(nix-store --add "$OUT_DIR")
+       EXPR="with import ${./..}/nix-support {}; annotated \"$STORED\""
+          F=$(nix-build --show-trace -E "$EXPR")
+  "${filterSample}" < "$F" | jq 'map(select(.quickspecable))' > "$ANNOTATED"
+
+  SIG="$DIR"
+  export SIG
+  mkdir -p "$SIG"
+  pushd "$SIG" > /dev/null
+
+  NIX_EVAL_HASKELL_PKGS="${customHs}"
+  export NIX_EVAL_HASKELL_PKGS
+
+  OUTPUT=$(nix-shell \
+    -p '(haskellPackages.ghcWithPackages (h: [ h.mlspec h.nix-eval ]))' \
+    --show-trace --run 'runhaskell ${mkSigHs}' < "$ANNOTATED" | tee mkSigHs.stdout)
+
+  [[ -n "$OUTPUT" ]] || {
+    echo "Failed to make signature"
+    exit 1
+  }
+
+  echo "$OUTPUT" | head -n2 | tail -n1 > env.nix
+  E=$(nix-store --add env.nix)
+
+  echo "$OUTPUT" | tail -n +3 > "$DIR/sig.hs"
+
+  TIME_JSON="$DIR/time.json"
+
+  CMD=$(echo "$OUTPUT" | head -n1 | tr -d '\n')
+  export CMD
+
+  popd > /dev/null
+
+  ${ensureVars ["DIR" "CMD"]}
+
+  cat << EOF > command.sh
+  #!/usr/bin/env bash
+  $CMD < "$DIR/sig.hs"
+  EOF
+
+  chmod +x command.sh
+
+  export OUT_DIR
+  export NIX_EVAL_HASKELL_PKGS
+  export LANG='en_US.UTF-8'
+  export LOCALE_ARCHIVE='${glibcLocales}/lib/locale/locale-archive'
+  export DIR
+
+  echo "FIXME: sampling and looping should go here somewhere" 1>&2
+  nix-shell --show-trace -p "(import $E)" \
+            --run '{ time ./command.sh 1> stdout 2> stderr; } 2> time.json'
+  [[ -e time.json ]] || ${fail "No time.json file found"}
+  [[ -e stdout    ]] || ${fail "No stdout file found"   }
+  [[ -e stderr    ]] || ${fail "No stderr file found"   }
+
+  echo "Extracting equations from output" 1>&2
+  grep -v '^Depth' < stdout | jq -s '.' > "$DIR/eqs"
+
+  jq -n --slurpfile time   <(echo '{}'; echo "FIXME: store times" 1>&2) \
+        --slurpfile result "$DIR/eqs"   \
         '{"time": $time, "result": $result}' || {
     echo -e "START TIME_JSON\n$(cat "$TIME_JSON")\nEND TIME_JSON" 1>&2
-    echo -e "START RESULT   \n$(cat "$RESULT")   \nEND RESULT"    1>&2
+    echo -e "START RESULT   \n$(cat "$DIR/eqs")   \nEND RESULT"    1>&2
     exit 1
   }
 '';
@@ -240,7 +223,7 @@ qs = stdenv.mkDerivation (withNix {
         exit 1
       }
     '';
-    fail = msg: ''{ echo -e "${msg}" 1>&2; exit 1; }'';
+
   }; ''
     ${test "check-garbage" ''
       if echo '!"£$%^&*()' | "$src" 1>/dev/null 2>/dev/null
