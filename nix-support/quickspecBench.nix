@@ -1,5 +1,5 @@
 { buildEnv, ensureVars, glibcLocales, haskellPackages, jq, lib, makeWrapper,
-  stdenv, tipBenchmarks, withNix, writeScript }:
+  stdenv, time, tipBenchmarks, withNix, writeScript }:
 
 # Provides a script which accepts smtlib data, runs it through QuickSpec and
 # outputs the resulting equations along with benchmark times.
@@ -93,53 +93,106 @@ in writeScript "filterSample.sh" ''
   fi
 '';
 
-mkDir = ''
-  OUR_DIR=$(mktemp -d --tmpdir "quickspecBenchXXXXX")
-  DIR="$OUR_DIR"
-'';
-
 mkPkgInner = ''
   ${ensureVars ["DIR"]}
   set -e
   export OUT_DIR="$DIR/hsPkg"
+  if [[ -d "$OUT_DIR" ]]
+  then
+    echo "Haskell output directory $OUT_DIR exists; aborting" 1>&2
+    exit 1
+  fi
+
   mkdir -p "$OUT_DIR"
 
   echo "Creating Haskell package" 1>&2
-  full_haskell_package || ${fail "Failed to create Haskell package"}
+  full_haskell_package < "$INPUT_TIP" ||
+    ${fail "Failed to create Haskell package"}
   echo "Created Haskell package" 1>&2
-
   OUT_DIR=$(nix-store --add "$OUT_DIR")
-'';
-
-mkPkg = ''
-  [[ -n "$DIR" ]] || {
-    ${mkDir}
-  }
-  ${mkPkgInner}
 '';
 
 script = writeScript "quickspec-bench" ''
   #!/usr/bin/env bash
   set -e
 
-  function cleanup {
-    if [[ -n "$OUR_DIR" ]] && [[ -d "$OUR_DIR" ]]
+  [[ -n "$DIR" ]] || {
+    echo "No DIR given to work in, using current directory $PWD" 1>&2
+    DIR="$PWD"
+  }
+
+  echo "Checking for input" 1>&2
+  if [[ -t 0 || -p /dev/stdin ]]
+  then
+    echo "stdin is a tty; assuming we have no input" 1>&2
+    GIVEN_INPUT=0
+  else
+    # Shell is non-interactive; it's safe to try cat
+    cat > "$DIR/stdin"
+    if [[ -s "$DIR/stdin" ]]
     then
-      rm -rf "$OUR_DIR"
+      echo "Input found on stdin" 1>&2
+      GIVEN_INPUT=1
+      INPUT_TIP=$(nix-store --add "$DIR/stdin")
+      echo "Input stored at '$INPUT_TIP'" 1>&2
+    else
+      echo "No input found on stdin" 1>&2
+      rm "$DIR/stdin"
+      GIVEN_INPUT=0
     fi
-  }
-  trap cleanup EXIT
+  fi
 
-  [[ -n "$OUT_DIR" ]] || {
-    ${mkPkg}
-  }
-  ${ensureVars ["DIR" "OUT_DIR"]}
+  if [[ "$GIVEN_INPUT" -eq 0 ]]
+  then
+    echo "Preparing to use TIP benchmarks"
+    OUT_DIR="${tipBenchmarks.tip-benchmark-haskell}"
+  else
+    ${mkPkgInner}
+  fi
 
-  ANNOTATED="$DIR/annotated.json"
-     STORED=$(nix-store --add "$OUT_DIR")
-       EXPR="with import ${./..}/nix-support {}; annotated \"$STORED\""
-          F=$(nix-build --show-trace -E "$EXPR")
-  "${filterSample}" < "$F" | jq 'map(select(.quickspecable))' > "$ANNOTATED"
+  # By adding things to the Nix store, we get content-based caching; nix-build
+  # will check whether these ASTs have already been annotated and use that if so
+  STORED=$(nix-store --add "$OUT_DIR")
+    EXPR="with import ${./..}/nix-support {}; annotated \"$STORED\""
+       F=$(nix-build --show-trace -E "$EXPR")
+
+  # Check for incompatible options
+  if [[ -n "$SAMPLE_SIZE" ]] && [[ "$GIVEN_INPUT" -eq 1 ]]
+  then
+    {
+      echo "Error: data given on stdin, and asked to draw samples. These"
+      echo "options are incompatible: sampling will only work for the TIP"
+      echo "benchmarks. Either avoid the SAMPLE_SIZE option, to use all of"
+      echo "the given input; otherwise avoid giving data on stdin, to use the"
+      echo "TIP benchmarks for sampling."
+    } 1>&2
+    exit 1
+  fi
+  if [[ -n "$BENCH_FILTER_KEEPERS" ]] && [[ -n "$SAMPLE_SIZE" ]]
+  then
+    echo "Can't use BENCH_FILTER_KEEPERS and SAMPLE_SIZE at the same time" 1>&2
+    exit 1
+  fi
+
+  # Impose any restrictions to our annotated ASTs
+  if [[ -n "$BENCH_FILTER_KEEPERS" ]]
+  then
+    echo "Limiting to the given subset of symbols" 1>&2
+    ANNOTATED="$DIR/annotated.given_sample.json"
+    "${filterSample}" < "$F" | jq 'map(select(.quickspecable))' > "$ANNOTATED"
+  elif [[ -n "$SAMPLE_SIZE" ]]
+  then
+    echo "Limiting to a sample size of '$SAMPLE_SIZE'" 1>&2
+    echo "FIXME: Different annotations for different samples" 1>&2
+    choose_sample "$SAMPLE_SIZE" 0 1>&2
+    exit 1
+    ANNOTATED="$DIR/annotated.$SAMPLE_SIZE.json"
+    "${filterSample}" < "$F" | jq 'map(select(.quickspecable))' > "$ANNOTATED"
+  else
+    echo "No sample size given, using whole signature" 1>&2
+    ANNOTATED="$DIR/annotated.json"
+    jq 'map(select(.quickspecable))' > "$ANNOTATED" < "$F" > "$ANNOTATED"
+  fi
 
   SIG="$DIR"
   export SIG
@@ -187,16 +240,20 @@ script = writeScript "quickspec-bench" ''
 
   echo "FIXME: sampling and looping should go here somewhere" 1>&2
   nix-shell --show-trace -p "(import $E)" \
-            --run '{ time ./command.sh 1> stdout 2> stderr; } 2> time.json'
-  [[ -e time.json ]] || ${fail "No time.json file found"}
-  [[ -e stdout    ]] || ${fail "No stdout file found"   }
-  [[ -e stderr    ]] || ${fail "No stderr file found"   }
+            --run '${time}/bin/time -o time -f "%e" \
+                     ./command.sh 1> stdout 2> >(tee stderr 1>&2)'
+  [[ -e time   ]] || ${fail "No time file found"  }
+  [[ -e stdout ]] || ${fail "No stdout file found"}
+  [[ -e stderr ]] || ${fail "No stderr file found"}
 
   echo "Extracting equations from output" 1>&2
   grep -v '^Depth' < stdout | jq -s '.' > "$DIR/eqs"
 
-  jq -n --slurpfile time   <(echo '{}'; echo "FIXME: store times" 1>&2) \
-        --slurpfile result "$DIR/eqs"   \
+  echo "Extracting times" 1>&2
+  cat < time > "$DIR/time.json"
+
+  jq -n --slurpfile time   "$DIR/time.json" \
+        --slurpfile result "$DIR/eqs"       \
         '{"time": $time, "result": $result}' || {
     echo -e "START TIME_JSON\n$(cat "$TIME_JSON")\nEND TIME_JSON" 1>&2
     echo -e "START RESULT   \n$(cat "$DIR/eqs")   \nEND RESULT"    1>&2
@@ -222,6 +279,7 @@ qs = stdenv.mkDerivation (withNix {
         echo "Test ${name} failed" 1>&2
         exit 1
       }
+      if [[ -d ./hsPkg ]]; then rm -r ./hsPkg; fi
     '';
 
   }; ''
@@ -264,6 +322,7 @@ qs = stdenv.mkDerivation (withNix {
       do
         if echo "$BENCH_OUT" | jq '.result' | grep "$S" > /dev/null
         then
+          echo -e "BENCH_OUT:\n$BENCH_OUT\nEND_BENCH_OUT" 1>&2
           ${fail "Found equation with forbidden symbol '$S'"}
         fi
       done
