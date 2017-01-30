@@ -94,22 +94,22 @@ in writeScript "filterSample.sh" ''
 '';
 
 mkPkgInner = ''
-  ${ensureVars ["DIR"]}
   set -e
-  export OUT_DIR="$DIR/hsPkg"
-  if [[ -d "$OUT_DIR" ]]
-  then
-    echo "Haskell output directory $OUT_DIR exists; aborting" 1>&2
-    exit 1
-  fi
-
-  mkdir -p "$OUT_DIR"
-
   echo "Creating Haskell package" 1>&2
-  full_haskell_package < "$INPUT_TIP" ||
+  OUT_DIR=$(nix-build --argstr "input" "$INPUT_TIP" \
+                      -E 'with import <nixpkgs> {};
+                          { input }:
+                          stdenv.mkDerivation {
+                            inherit input;
+                            name         = "generated-haskell-package";
+                            buildInputs  = [ tipBenchmarks.tools ];
+                            buildCommand = "
+                              mkdir -p \"$out\"
+                              OUT_DIR=\"$out\" full_haskell_package < \"$input\"
+                            ";
+                          }') ||
     ${fail "Failed to create Haskell package"}
   echo "Created Haskell package" 1>&2
-  OUT_DIR=$(nix-store --add "$OUT_DIR")
 '';
 
 script = writeScript "quickspec-bench" ''
@@ -122,7 +122,7 @@ script = writeScript "quickspec-bench" ''
   }
 
   echo "Checking for input" 1>&2
-  if [[ -t 0 || -p /dev/stdin ]]
+  if [ -t 0 ]
   then
     echo "stdin is a tty; assuming we have no input" 1>&2
     GIVEN_INPUT=0
@@ -149,6 +149,7 @@ script = writeScript "quickspec-bench" ''
   else
     ${mkPkgInner}
   fi
+  export OUT_DIR
 
   # By adding things to the Nix store, we get content-based caching; nix-build
   # will check whether these ASTs have already been annotated and use that if so
@@ -275,17 +276,19 @@ qs = stdenv.mkDerivation (withNix {
   doCheck    = true;
   checkPhase = with rec {
     test = name: code: ''
+      echo "Testing ${name}" 1>&2
       bash "${writeScript "quickspec-${name}-test" code}" || {
         echo "Test ${name} failed" 1>&2
         exit 1
       }
-      if [[ -d ./hsPkg ]]; then rm -r ./hsPkg; fi
+      echo "Passed ${name}" 1>&2
     '';
 
   }; ''
     ${test "check-garbage" ''
-      if echo '!"£$%^&*()' | "$src" 1>/dev/null 2>/dev/null
+      if echo '!"£$%^&*()' | "$src" 1> /dev/null 2> garbage.err
       then
+        cat garbage.err 1>&2
         ${fail "Shouldn't have accepted garbage"}
       fi
     ''}
@@ -296,7 +299,6 @@ qs = stdenv.mkDerivation (withNix {
       [[ -e ./env.nix        ]] || ${fail "No env.nix found"       }
       [[ -e ./sig.hs         ]] || ${fail "No sig.hs found"        }
       [[ -e ./annotated.json ]] || ${fail "No annotated.json found"}
-      [[ -d ./hsPkg          ]] || ${fail "No hsPkg found"         }
 
       TYPE=$(echo "$BENCH_OUT" | jq -r 'type') ||
         ${fail "START BENCH_OUT\n\n$BENCH_OUT\n\nEND BENCH_OUT"}
