@@ -125,7 +125,7 @@ rec {
     echo "Annotating, via '$EXPR'" 1>&2
     F=$(nix-build --show-trace -E "$EXPR")
 
-    "${quickspecBench.filterSample}" < "$F" > "$DIR/filtered.json"
+    "$ { quickspecBench.filterSample}" < "$F" > "$DIR/filtered.json"
 
     echo "DIR='$DIR' ${inner} < '$DIR/clusters.json'" > "$DIR/cmd.sh"
     chmod +x "$DIR/cmd.sh"

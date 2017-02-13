@@ -141,16 +141,17 @@ withDeps "runTypesScript" [ jq ] ''
     exit 1
   fi
 
+  ERR=$(mktemp "haskell-te-runTypesScript-XXXXX.stderr")
   echo '
     WARNING: We are about to gather information about Haskell definitions by
     trying a bunch of commands in GHCi and seeing what comes out. This will
     produce a bunch of messages beginning with "<interactive>"; this is
     perfectly normal behaviour, which you can ignore if everything else works.
     If you are experiencing problems elsewhere, some of these messages may be
-    helpful.' 1>&2
+    helpful.' > "$ERR"
 
   echo "Building type-extraction command" 1>&2
-  CMD=$(echo "$ASTS" | jq -c '.[]' | "${typeCommand}")
+  CMD=$(echo "$ASTS" | jq -c '.[]' | "${typeCommand}") 2> "$ERR"
 
   echo "Extracting types" 1>&2
   RESULT=$(echo "$CMD" | "${repl}" | "${replLines}")

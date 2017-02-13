@@ -72,6 +72,7 @@ let pkgs = rec {
           timeLimSecs memLimKb timeout;
 
   annotate           = callPackage ./annotate.nix           {};
+  benchmark          = callPackage ./benchmark.nix          { inherit havePath; };
   cluster            = callPackage ./cluster.nix            {};
   dumpPackage        = callPackage ./dumpPackage.nix        {};
   dumpToNix          = callPackage ./dumpToNix.nix          {};
@@ -189,6 +190,13 @@ let pkgs = rec {
   runWeka = callPackage (if havePath "runWeka"
                             then <runWeka>
                             else ../packages/runWeka) {};
+
+  # Strips non-alphanumeric characters from a string; e.g. for use in a name
+  sanitise = stringAsChars (c: if elem c (upperChars ++
+                                          lowerChars ++
+                                          stringToCharacters "0123456789")
+                                  then c
+                                  else "");
 
   stdParts = [ "failed" "out" "stderr" "stdout" ];
 

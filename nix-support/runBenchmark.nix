@@ -1,4 +1,5 @@
-{ bash, coreutils, explore, lib, runScript, strip, time, writeScript }:
+{ bash, coreutils, explore, lib, runScript, sanitise, strip, time, timeout,
+  writeScript }:
 
 with builtins; with lib;
 
@@ -79,27 +80,35 @@ rec {
   # Run commands with extra info for debugging and reproducability:
   #  - Store the given command, arguments, stdin, stdout and stderr
   #  - Force an error if stderr matches some known error pattern
-  #  - Optionally, benchmark the command
+  #  - Benchmark the command
 
   runCmd = { cmd, args ? [], inputs ? []}:
    let shellArgs = map escapeShellArg args;
        argStr    = concatStringsSep " " shellArgs;
        name      = unsafeDiscardStringContext (baseNameOf cmd);
-    in trace "FIXME: Move DO_BENCH into here" writeScript "run-cmd-${name}" ''
+       checkInput = if inputs == []
+                       then ""
+                       else ''
+                         # Check that all Haskell packages references in our
+                         # input are available to GHC
+                         "${checkHsEnv []}" < stdin || {
+                           echo "checkHsEnv failed" 1>&2
+                           exit 1
+                         }
+                       '';
+    in writeScript "run-cmd-${sanitise name}" ''
          #!${bash}/bin/bash
 
          # Store our input
          cat > stdin
+         ${checkInput}
 
-         # Check that all Haskell packages references in our input are available
-         # to GHC
-         "${checkHsEnv []}" < stdin || {
-           echo "checkHsEnv failed" 1>&2
-           exit 1
-         }
-
-         # Run the given command; we tee stderr so the user can still see it
-         "${cmd}" ${argStr} < stdin 1> stdout 2> >(tee stderr >&2)
+         # Run the given command, benchmarking with 'time' and enforcing
+         # time/space limits with 'timeout'. We tee stderr so the user can see
+         # it in real time.
+         "${time}/bin/time" -o time -f '%e' \
+           "${timeout}" \
+             "${cmd}" ${argStr} < stdin 1> stdout 2> >(tee stderr >&2)
          CODE="$?"
 
          # Put results in the Nix store, so we make better use of the cache and
@@ -140,8 +149,10 @@ rec {
                --arg     stdin  "$STDIN"         \
                --arg     stdout "$STDOUT"        \
                --arg     stderr "$STDERR"        \
+               --arg     time   $(cat time)      \
                --argjson failed "$FAILED"        \
                '{"failed"   : $failed,
+                 "time"     : $time,
                  "cmd"      : $cmd,
                  "args"     : $args,
                  "stdin"    : $stdin,

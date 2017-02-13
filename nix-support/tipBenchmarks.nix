@@ -7,8 +7,8 @@ let path = if any (x: x.prefix == "te-benchmarks") nixPath
               else fetchFromGitHub {
                      owner  = "Warbo";
                      repo   = "theory-exploration-benchmarks";
-                     rev    = "da44ffde9dfbb9931c9713783212c4b4cf7e648d";
-                     sha256 = "1z8382nywm56k9ciy605bnljdmq6pyfwwr2whkdmf9x2ld2bdwnz";
+                     rev    = "e2d8eaca9dd2cbe077018818cc864f74dd3d1574";
+                     sha256 = "0z1wbv842fn04v3xpipmy7fq4wwggkwfvnplgwvm99zs7j8ncz30";
                    };
  in rec {
   inherit (callPackage path {

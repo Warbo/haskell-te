@@ -1,5 +1,6 @@
-{ buildEnv, ensureVars, glibcLocales, haskellPackages, jq, lib, makeWrapper,
-  stdenv, time, tipBenchmarks, withNix, writeScript }:
+{ annotated, benchmark, buildEnv, ensureVars, glibcLocales, haskellPackages, jq,
+  lib, makeWrapper, runCmd, stdenv, time, timeout, tipBenchmarks, withNix,
+  writeScript }:
 
 # Provides a script which accepts smtlib data, runs it through QuickSpec and
 # outputs the resulting equations along with benchmark times.
@@ -12,10 +13,12 @@ rec {
 
 fail = msg: ''{ echo -e "${msg}" 1>&2; exit 1; }'';
 
-mkSigHs = writeScript "mkSig.hs" ''
+getCmd = writeScript "getCmd.hs" ''
   {-# LANGUAGE OverloadedStrings #-}
-  import MLSpec.Theory
-  import Language.Eval.Internal
+  import           Data.Aeson
+  import qualified Data.ByteString.Lazy.Char8 as BS
+  import           MLSpec.Theory
+  import           Language.Eval.Internal
 
   render ts x = "main = do { eqs <- quickSpecAndSimplify (" ++
                   withoutUndef' (renderWithVariables x ts)  ++
@@ -24,15 +27,21 @@ mkSigHs = writeScript "mkSig.hs" ''
   -- Reads JSON from stdin, outputs a QuickSpec signature and associated shell
   -- and Nix commands for running it
   main = do
-    [t]      <- getProjects <$> getContents
+    projects <- getProjects <$> getContents
+    let t = case projects of
+                 [t] -> t
+                 _   -> error ("Got " ++ show (length projects) ++ " projects")
+
     rendered <- renderTheory t
     let (ts, x) = case rendered of
                        Nothing      -> error ("Failed to render " ++ show t)
                        Just (ts, x) -> (ts, x)
-    let f = render ts
-    putStrLn . unwords . ("runhaskell":) . flagsOf $ x
-    putStrLn (pkgOf   x)
-    putStrLn (buildInput f x)
+
+    BS.putStrLn (encode (object [
+        "runner" .= unwords ("runhaskell" : flagsOf x),
+        "env"    .= pkgOf x,
+        "code"   .= buildInput (render ts) x
+      ]))
 '';
 
 customHs = writeScript "custom-hs.nix" ''
@@ -73,24 +82,51 @@ fileInStore = var: content: ''
   rm -f filed
 '';
 
-filterSample = let filter = writeScript "filter.jq" ''
-    def mkId: {"name": .name, "package": .package, "module": .module};
+mkGenInput =
+  let filter = writeScript "filter.jq" ''
+        def mkId: {"name": .name, "package": .package, "module": .module};
 
-    def keep($id): $keepers | map(. == $id) | any;
+        def keep($id): $keepers | map(. == $id) | any;
 
-    def setQS: . + {"quickspecable": (.quickspecable and keep(mkId))};
+        def setQS: . + {"quickspecable": (.quickspecable and keep(mkId))};
 
-    map(setQS)
-  '';
-in writeScript "filterSample.sh" ''
+        map(setQS)
+      '';
+
+   in writeScript "gen-input" ''
+        #!/usr/bin/env bash
+
+        # Sample some names, give the default module and package, then slurp
+        # into an array
+        echo "Running 'choose_sample $1 $2'" 1>&2
+        KEEPERS=$(choose_sample "$1" "$2" |
+                  jq -R '{"name"    : .,
+                          "module"  : "A",
+                          "package" : "tip-benchmark-sig"}' |
+                  jq -s '.')
+
+        # The whole annotated signature
+        export   OUT_DIR="${tipBenchmarks.tip-benchmark-haskell}"
+        export ANNOTATED="${annotated
+                              (toString tipBenchmarks.tip-benchmark-haskell)}"
+
+        # Filters the signature to only those sampled in KEEPERS
+        jq --argjson keepers "$KEEPERS" -f "${filter}" < "$ANNOTATED" |
+          "${genSig2}"
+      '';
+
+genSig2 = writeScript "gen-sig2" ''
   #!/usr/bin/env bash
-  if [[ -z "$BENCH_FILTER_KEEPERS" ]]
-  then
-    cat
-  else
-    # If an AST's not in BENCH_FILTER_KEEPERS, mark it as not quickspecable
-    jq --argjson keepers "$BENCH_FILTER_KEEPERS" -f "${filter}"
-  fi
+
+  jq 'map(select(.quickspecable))' > chosen
+  CHOSEN=$(nix-store --add chosen)
+  rm chosen
+
+  export NIX_EVAL_HASKELL_PKGS="${customHs}"
+  nix-shell -p '(haskellPackages.ghcWithPackages
+                  (h: [ h.mlspec h.nix-eval ]))' \
+            --show-trace --run 'runhaskell ${getCmd}' < "$CHOSEN" |
+    jq --arg chosen "$CHOSEN" '. + { "chosen": $chosen }'
 '';
 
 mkPkgInner = ''
@@ -110,6 +146,10 @@ mkPkgInner = ''
                           }') ||
     ${fail "Failed to create Haskell package"}
   echo "Created Haskell package" 1>&2
+'';
+
+runSigCmd = ''
+  ${runCmd { cmd = "$CMD"; }}
 '';
 
 script = writeScript "quickspec-bench" ''
@@ -142,129 +182,75 @@ script = writeScript "quickspec-bench" ''
     fi
   fi
 
+  # Check for incompatible options
+  if [[ -n "$SAMPLE_SIZES" ]] && [[ "$GIVEN_INPUT" -eq 1 ]]
+  then
+    {
+      echo "Error: data given on stdin, and asked to draw samples. These"
+      echo "options are incompatible: sampling will only work for the TIP"
+      echo "benchmarks. Either avoid the SAMPLE_SIZES option, to use all of"
+      echo "the given input; otherwise avoid giving data on stdin, to use the"
+      echo "TIP benchmarks for sampling."
+    } 1>&2
+    exit 1
+  fi
+
   if [[ "$GIVEN_INPUT" -eq 0 ]]
   then
-    echo "Preparing to use TIP benchmarks"
+    echo "Preparing to use TIP benchmarks" 1>&2
     OUT_DIR="${tipBenchmarks.tip-benchmark-haskell}"
   else
     ${mkPkgInner}
   fi
   export OUT_DIR
 
-  # By adding things to the Nix store, we get content-based caching; nix-build
-  # will check whether these ASTs have already been annotated and use that if so
-  STORED=$(nix-store --add "$OUT_DIR")
-    EXPR="with import ${./..}/nix-support {}; annotated \"$STORED\""
-       F=$(nix-build --show-trace -E "$EXPR")
+  # Extract ASTs from the Haskell package, annotate and add to the Nix store. By
+  # doing this in nix-build, we get content-based caching for free.
+     STORED=$(nix-store --add "$OUT_DIR")
+       EXPR="with import <nixpkgs> {}; annotated \"$STORED\""
+  ANNOTATED=$(nix-build --show-trace -E "$EXPR")
 
-  # Check for incompatible options
-  if [[ -n "$SAMPLE_SIZE" ]] && [[ "$GIVEN_INPUT" -eq 1 ]]
+  # Explore
+  export NIX_EVAL_HASKELL_PKGS="${customHs}"
+  if [[ -n "$SAMPLE_SIZES" ]]
   then
-    {
-      echo "Error: data given on stdin, and asked to draw samples. These"
-      echo "options are incompatible: sampling will only work for the TIP"
-      echo "benchmarks. Either avoid the SAMPLE_SIZE option, to use all of"
-      echo "the given input; otherwise avoid giving data on stdin, to use the"
-      echo "TIP benchmarks for sampling."
-    } 1>&2
-    exit 1
-  fi
-  if [[ -n "$BENCH_FILTER_KEEPERS" ]] && [[ -n "$SAMPLE_SIZE" ]]
-  then
-    echo "Can't use BENCH_FILTER_KEEPERS and SAMPLE_SIZE at the same time" 1>&2
-    exit 1
-  fi
+    # The numeric arguments are arbitrary
+    echo "Running sampler to obtain environment" 1>&2
+    export NIXENV=$("${mkGenInput}" 5 1 | jq -r '.env')
 
-  # Impose any restrictions to our annotated ASTs
-  if [[ -n "$BENCH_FILTER_KEEPERS" ]]
-  then
-    echo "Limiting to the given subset of symbols" 1>&2
-    ANNOTATED="$DIR/annotated.given_sample.json"
-    "${filterSample}" < "$F" | jq 'map(select(.quickspecable))' > "$ANNOTATED"
-  elif [[ -n "$SAMPLE_SIZE" ]]
-  then
-    echo "Limiting to a sample size of '$SAMPLE_SIZE'" 1>&2
-    echo "FIXME: Different annotations for different samples" 1>&2
-    choose_sample "$SAMPLE_SIZE" 0 1>&2
-    exit 1
-    ANNOTATED="$DIR/annotated.$SAMPLE_SIZE.json"
-    "${filterSample}" < "$F" | jq 'map(select(.quickspecable))' > "$ANNOTATED"
+    echo "Looping through sample sizes" 1>&2
+    for SAMPLE_SIZE in $SAMPLE_SIZES
+    do
+      echo "Limiting to a sample size of '$SAMPLE_SIZE'" 1>&2
+
+      export      INFO="$SAMPLE_SIZE"
+      export GEN_INPUT="${mkGenInput}"
+      export       CMD="${writeScript "run-cmd" ''
+                            #!/usr/bin/env bash
+                             INPUT=$(cat)
+                            RUNNER=$(echo "$INPUT" | jq -r '.runner')
+                              CODE=$(echo "$INPUT" | jq -r '.code')
+                            echo "$CODE" | $RUNNER
+                          ''}"
+
+      REPS=1 benchmark
+    done
   else
     echo "No sample size given, using whole signature" 1>&2
-    ANNOTATED="$DIR/annotated.json"
-    jq 'map(select(.quickspecable))' > "$ANNOTATED" < "$F" > "$ANNOTATED"
+    OUTPUT=$("${genSig2}" < "$ANNOTATED")
+
+    export       CMD=$(echo "$OUTPUT" | jq -r '.runner')
+    export      CODE=$(echo "$OUTPUT" | jq -r '.code')
+    export GEN_INPUT="${writeScript "run-code" ''echo "$CODE"''}"
+
+    export NIXENV=$(echo "$OUTPUT" | jq -r '.env')
+    INFO="" REPS=1 benchmark
   fi
-
-  SIG="$DIR"
-  export SIG
-  mkdir -p "$SIG"
-  pushd "$SIG" > /dev/null
-
-  NIX_EVAL_HASKELL_PKGS="${customHs}"
-  export NIX_EVAL_HASKELL_PKGS
-
-  OUTPUT=$(nix-shell \
-    -p '(haskellPackages.ghcWithPackages (h: [ h.mlspec h.nix-eval ]))' \
-    --show-trace --run 'runhaskell ${mkSigHs}' < "$ANNOTATED" | tee mkSigHs.stdout)
-
-  [[ -n "$OUTPUT" ]] || {
-    echo "Failed to make signature"
-    exit 1
-  }
-
-  echo "$OUTPUT" | head -n2 | tail -n1 > env.nix
-  E=$(nix-store --add env.nix)
-
-  echo "$OUTPUT" | tail -n +3 > "$DIR/sig.hs"
-
-  TIME_JSON="$DIR/time.json"
-
-  CMD=$(echo "$OUTPUT" | head -n1 | tr -d '\n')
-  export CMD
-
-  popd > /dev/null
-
-  ${ensureVars ["DIR" "CMD"]}
-
-  cat << EOF > command.sh
-  #!/usr/bin/env bash
-  $CMD < "$DIR/sig.hs"
-  EOF
-
-  chmod +x command.sh
-
-  export OUT_DIR
-  export NIX_EVAL_HASKELL_PKGS
-  export LANG='en_US.UTF-8'
-  export LOCALE_ARCHIVE='${glibcLocales}/lib/locale/locale-archive'
-  export DIR
-
-  echo "FIXME: sampling and looping should go here somewhere" 1>&2
-  nix-shell --show-trace -p "(import $E)" \
-            --run '${time}/bin/time -o time -f "%e" \
-                     ./command.sh 1> stdout 2> >(tee stderr 1>&2)'
-  [[ -e time   ]] || ${fail "No time file found"  }
-  [[ -e stdout ]] || ${fail "No stdout file found"}
-  [[ -e stderr ]] || ${fail "No stderr file found"}
-
-  echo "Extracting equations from output" 1>&2
-  grep -v '^Depth' < stdout | jq -s '.' > "$DIR/eqs"
-
-  echo "Extracting times" 1>&2
-  cat < time > "$DIR/time.json"
-
-  jq -n --slurpfile time   "$DIR/time.json" \
-        --slurpfile result "$DIR/eqs"       \
-        '{"time": $time, "result": $result}' || {
-    echo -e "START TIME_JSON\n$(cat "$TIME_JSON")\nEND TIME_JSON" 1>&2
-    echo -e "START RESULT   \n$(cat "$DIR/eqs")   \nEND RESULT"    1>&2
-    exit 1
-  }
 '';
 
 env = buildEnv {
   name  = "te-env";
-  paths = [ jq tipBenchmarks.tools ];
+  paths = [ benchmark jq tipBenchmarks.tools ];
 };
 
 qs = stdenv.mkDerivation (withNix {
@@ -285,6 +271,13 @@ qs = stdenv.mkDerivation (withNix {
     '';
 
   }; ''
+    ${test "gen-input" ''
+      P=$(${mkGenInput} 4 2) || ${fail "Couldn't run gen-input"}
+    ''}
+    ${test "gen-haskell" ''
+      C=$(${mkGenInput} 4 2 | jq 'has("code")') || ${fail "Failed to gen"}
+      [[ "$C" = "true" ]] || ${fail "Didn't gen Haskell ($C)"}
+    ''}
     ${test "check-garbage" ''
       if echo '!"£$%^&*()' | "$src" 1> /dev/null 2> garbage.err
       then
@@ -293,48 +286,76 @@ qs = stdenv.mkDerivation (withNix {
       fi
     ''}
     ${test "can-run-quickspecbench" ''
-      BENCH_OUT=$(DIR="$PWD" "$src" < "${../tests/example.smt2}") || exit 1
+      BENCH_OUT=$(DIR="$PWD" "$src" < "${../tests/example.smt2}") ||
+        ${fail "Failed to run.\n$BENCH_OUT"}
 
-      [[ -e ./eqs            ]] || ${fail "No eqs found"           }
-      [[ -e ./env.nix        ]] || ${fail "No env.nix found"       }
-      [[ -e ./sig.hs         ]] || ${fail "No sig.hs found"        }
-      [[ -e ./annotated.json ]] || ${fail "No annotated.json found"}
+      RESULTS=$(echo "$BENCH_OUT" | jq '.results | length') ||
+        ${fail "No results"}
 
-      TYPE=$(echo "$BENCH_OUT" | jq -r 'type') ||
-        ${fail "START BENCH_OUT\n\n$BENCH_OUT\n\nEND BENCH_OUT"}
+      [[ "$RESULTS" -gt 0 ]] || ${fail "Empty results"}
 
-      [[ "x$TYPE" = "xobject" ]] ||
-        ${fail ''START BENCH_OUT\n\n$BENCH_OUT\n\nEND BENCH_OUT
-                 '$TYPE' is not object''}
+      NOFAILS=$(echo "$BENCH_OUT" |
+                jq '.results | map(.failure == null) | all') ||
+        ${fail "Couldn't check for failures"}
+
+      [[ "$NOFAILS" = "true" ]] || ${fail "Encountered failures"}
+
+      while read -r F
+      do
+        [[ -e "$F" ]] || ${fail "Couldn't find stdout file"}
+
+        EQS=$(grep -v "^Depth" < "$F" | jq -s '. | length') ||
+          ${fail "Couldn't get equations from stdout"}
+
+        [[ "$EQS" -gt 0 ]] || ${fail "Found no equations"}
+      done < <(echo "$BENCH_OUT" | jq -r '.results | .[] | .stdout')
     ''}
-    ${test "filter-samples" ''
+    ${test "sample-tip" ''
       set -e
-      export BENCH_FILTER_KEEPERS='${toJSON [
-        { name = "append";          module = "A"; package = "tip-benchmark-sig"; }
-        { name = "constructorNil";  module = "A"; package = "tip-benchmark-sig"; }
-        { name = "constructorCons"; module = "A"; package = "tip-benchmark-sig"; }
-      ]}'
-      BENCH_OUT=$("$src" < ${../benchmarks/list-full.smt2})
-      for S in append constructorNil constructorCons
+      BENCH_OUT=$(SAMPLE_SIZES="5" "$src")
+
+      # Get all the constant symbols in all equations
+      STDOUTS=$(echo "$BENCH_OUT" | jq -r '.results | .[] | .stdout') ||
+        ${fail "Couldn't get stdouts\n\n$BENCH_OUT"}
+
+      OUTPUTS=$(while read -r F
+                do
+                  cat "$F"
+                done < <(echo "$STDOUTS")) ||
+        ${fail "Couldn't concat stdouts\n\n$BENCH_OUT\n\n$STDOUTS"}
+
+      EQS=$(echo "$OUTPUTS" | grep -v '^Depth') ||
+        ${fail "Couldn't get eqs\n\n$BENCH_OUT\n\n$OUTPUTS"}
+
+      NAMES=$(echo "$EQS" |
+              jq -r 'getpath(paths(type == "object" and .role == "constant")) |
+                     .symbol' |
+              sort -u) || ${fail "Couldn't get names\n\n$BENCH_OUT\n\n$EQS"}
+      SAMPLE=$(choose_sample 5 1)
+
+      # Remove any names which appear in the sample
+      while read -r NAME
       do
-        echo "$BENCH_OUT" | jq '.result' | grep "$S" > /dev/null ||
-          ${fail "No equations for '$S'"}
-      done
-      for S in map foldl foldr length reverse
-      do
-        if echo "$BENCH_OUT" | jq '.result' | grep "$S" > /dev/null
-        then
-          echo -e "BENCH_OUT:\n$BENCH_OUT\nEND_BENCH_OUT" 1>&2
-          ${fail "Found equation with forbidden symbol '$S'"}
-        fi
-      done
+        NAMES=$(echo "$NAMES" | grep -vFx "$NAME") || true
+      done < <(echo "$SAMPLE")
+
+      # If there are any names remaining, they weren't in the sample
+      if echo "$NAMES" | grep '^.' > /dev/null
+      then
+        echo "Found names which aren't in sample" 1>&2
+        echo -e "NAMES:\n$NAMES\n\nOUTPUT:\n$BENCH_OUT\nSAMPLE:\n$SAMPLE" 1>&2
+        exit 1
+      fi
+      exit 0
     ''}
   '';
 
   installPhase = ''
     mkdir -p "$out/bin"
     makeWrapper "$src" "$out/bin/quickspecBench" \
-      --prefix PATH : "${env}/bin"
+      --prefix PATH : "${env}/bin"               \
+      --set    LANG           'en_US.UTF-8'      \
+      --set    LOCALE_ARCHIVE '${glibcLocales}/lib/locale/locale-archive'
   '';
 });
 
