@@ -103,12 +103,8 @@ rec {
          cat > stdin
          ${checkInput}
 
-         # Run the given command, benchmarking with 'time' and enforcing
-         # time/space limits with 'timeout'. We tee stderr so the user can see
-         # it in real time.
-         "${time}/bin/time" -o time -f '%e' \
-           "${timeout}" \
-             "${cmd}" ${argStr} < stdin 1> stdout 2> >(tee stderr >&2)
+         # Run the given command; tee stderr so the user sees it in real time.
+         "${cmd}" ${argStr} < stdin 1> stdout 2> >(tee stderr >&2)
          CODE="$?"
 
          # Put results in the Nix store, so we make better use of the cache and
@@ -149,10 +145,8 @@ rec {
                --arg     stdin  "$STDIN"         \
                --arg     stdout "$STDOUT"        \
                --arg     stderr "$STDERR"        \
-               --arg     time   $(cat time)      \
                --argjson failed "$FAILED"        \
                '{"failed"   : $failed,
-                 "time"     : $time,
                  "cmd"      : $cmd,
                  "args"     : $args,
                  "stdin"    : $stdin,
