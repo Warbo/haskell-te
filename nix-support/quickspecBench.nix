@@ -207,6 +207,11 @@ getInput = ''
     exit 1
   fi
 
+  [[ -n "$REPS" ]] || {
+    echo "No REPS given; only running once" 1>&2
+    export REPS=1
+  }
+
   # Initialise all of the data we need
   if [[ "$GIVEN_INPUT" -eq 0 ]]
   then
@@ -255,7 +260,7 @@ rawScript = writeScript "quickspec-bench" ''
                             echo "$CODE" | $RUNNER
                           ''}"
 
-      REPS=1 benchmark
+      benchmark
     done
   else
     echo "No sample size given, using whole signature" 1>&2
@@ -266,7 +271,7 @@ rawScript = writeScript "quickspec-bench" ''
     export GEN_INPUT="${writeScript "run-code" ''echo "$CODE"''}"
 
     export NIXENV=$(echo "$OUTPUT" | jq -r '.env')
-    INFO="" REPS=1 benchmark
+    INFO="" benchmark
   fi
 '';
 

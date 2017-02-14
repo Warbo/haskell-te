@@ -117,12 +117,12 @@ rec {
       do
         echo "Limiting to a sample size of '$SAMPLE_SIZE'" 1>&2
         export GEN_INPUT="${mlGenInput}"
-        INFO="$SAMPLE_SIZE" REPS=1 benchmark
+        INFO="$SAMPLE_SIZE" benchmark
       done
     else
       echo "No sample size given, using whole signature" 1>&2
       export GEN_INPUT="${mlAllInput}"
-      INFO="" REPS=1 benchmark
+      INFO="" benchmark
     fi
   '';
 
