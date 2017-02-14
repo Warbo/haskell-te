@@ -9,6 +9,7 @@ mapAttrs (name: testRun name null { buildInputs = [ package ]; }) {
   '';
 
   outputIsJson = ''
+    set -e
     OUTPUT=$(mlspecBench < ${./example.smt2}) || exit 1
     TYPE=$(echo "$OUTPUT" | jq -r 'type') || {
       echo -e "START OUTPUT\n$OUTPUT\nEND OUTPUT" 1>&2
@@ -22,6 +23,7 @@ mapAttrs (name: testRun name null { buildInputs = [ package ]; }) {
   '';
 
   haveEquations = ''
+    set -e
     OUTPUT=$(mlspecBench < ${./example.smt2})   || exit 1
      CHECK=$(echo "$OUTPUT" | jq 'has("results")') || exit 1
     [[ "x$CHECK" = "xtrue" ]] || {
