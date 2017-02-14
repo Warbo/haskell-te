@@ -1,6 +1,6 @@
 { annotated, benchmark, buildEnv, ensureVars, glibcLocales, haskellPackages, jq,
-  lib, makeWrapper, runCmd, stdenv, time, timeout, tipBenchmarks, withNix,
-  writeScript }:
+  lib, makeWrapper, nix, runCmd, runCommand, stdenv, time, timeout,
+  tipBenchmarks, withNix, writeScript }:
 
 # Provides a script which accepts smtlib data, runs it through QuickSpec and
 # outputs the resulting equations along with benchmark times.
@@ -132,7 +132,7 @@ genSig2 = writeScript "gen-sig2" ''
 mkPkgInner = ''
   set -e
   echo "Creating Haskell package" 1>&2
-  OUT_DIR=$(nix-build --argstr "input" "$INPUT_TIP" \
+  OUT_DIR=$(nix-build --show-trace --argstr "input" "$INPUT_TIP" \
                       -E 'with import <nixpkgs> {};
                           { input }:
                           stdenv.mkDerivation {
@@ -152,7 +152,13 @@ runSigCmd = ''
   ${runCmd { cmd = "$CMD"; }}
 '';
 
-script = writeScript "quickspec-bench" ''
+script = runCommand "quickspecBench" { buildInputs = [ makeWrapper ]; } ''
+  makeWrapper "${rawScript}" "$out" \
+    --set    NIX_REMOTE '${getEnv "NIX_REMOTE"}'  \
+    --set    NIX_PATH   'real=${toString <nixpkgs>}:nixpkgs=${toString ../nix-support}'
+'';
+
+rawScript = writeScript "quickspec-bench" ''
   #!/usr/bin/env bash
   set -e
 
@@ -250,7 +256,7 @@ script = writeScript "quickspec-bench" ''
 
 env = buildEnv {
   name  = "te-env";
-  paths = [ benchmark jq tipBenchmarks.tools ];
+  paths = [ benchmark jq nix tipBenchmarks.tools ];
 };
 
 qs = stdenv.mkDerivation (withNix {
@@ -352,9 +358,9 @@ qs = stdenv.mkDerivation (withNix {
 
   installPhase = ''
     mkdir -p "$out/bin"
-    makeWrapper "$src" "$out/bin/quickspecBench" \
-      --prefix PATH : "${env}/bin"               \
-      --set    LANG           'en_US.UTF-8'      \
+    makeWrapper "$src" "$out/bin/quickspecBench"        \
+      --prefix PATH : "${env}/bin"                      \
+      --set    LANG           'en_US.UTF-8'             \
       --set    LOCALE_ARCHIVE '${glibcLocales}/lib/locale/locale-archive'
   '';
 });
