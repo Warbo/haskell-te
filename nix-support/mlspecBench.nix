@@ -1,6 +1,6 @@
 { bash, buildEnv, cluster, ensureVars, explore, format, glibcLocales,
-  haskellPackages, jq, lib, makeWrapper, quickspecBench, reduce-equations,
-  runWeka, stdenv, writeScript }:
+  haskellPackages, jq, lib, makeWrapper, nixEnv, quickspecBench,
+  reduce-equations, runCommand, runWeka, stdenv, writeScript }:
 with builtins;
 with lib;
 
@@ -64,91 +64,64 @@ rec {
     export clusters
     export clCount
 
-    # Run mlspec once to generate equations for our output
-
-    "$DIR/cmd.sh" > "$DIR/eqs.json" || {
-      echo "Failed to get eqs" 1>&2
-      exit 1
-    }
-
-    # Run mlspec over and over to benchmark
-    if [[ "$DO_BENCH" -eq 1 ]]
-    then
-      "${haskellPackages.bench}/bin/bench" --template json \
-                                           --output "$DIR/time.json" \
-                                           "$DIR/cmd.sh" 1>&2 || {
-        echo "Failed to benchmark" 1>&2
-        exit 1
-      }
-    else
-      echo "Not benchmarking. To benchmark, set DO_BENCH env var to 1" 1>&2
-      echo '"Not benchmarked"' > "$DIR/time.json"
-    fi
+    ${inner} < "$DIR/clusters.json"
   '';
 
-  script = writeScript "mlspecBench" ''
+  script = runCommand "mlspecBench" { buildInputs = [ makeWrapper ]; } ''
+    makeWrapper "${rawScript}" "$out"                                     \
+      --prefix PATH :         "${quickspecBench.env}/bin"                 \
+      --set    LANG           'en_US.UTF-8'                               \
+      --set    LOCALE_ARCHIVE '${glibcLocales}/lib/locale/locale-archive' \
+      --set    NIX_EVAL_HASKELL_PKGS "${quickspecBench.customHs}"         \
+      --set    NIX_REMOTE     '${nixEnv.nixRemote}'                       \
+      --set    NIX_PATH       'real=${toString <nixpkgs>}:nixpkgs=${toString ../nix-support}'
+  '';
+
+  mlGenInput = quickspecBench.mkGenInput (writeScript "gen-sig-ml" ''
+    #!/usr/bin/env bash
+    jq 'map(select(.quickspecable))'
+  '');
+
+  rawScript = writeScript "mlspecBench" ''
     #!${bash}/bin/bash
     set -e
 
-    # Required for Unicode in Haskell and Perl
-    export LANG='en_US.UTF-8'
-    export LOCALE_ARCHIVE='${glibcLocales}/lib/locale/locale-archive'
-
-    # Make a temp dir if we've not got one, and remove it on exit
-    [[ -z "$OUR_DIR" ]] || {
-      echo "OUR_DIR must be empty, since we delete it on exit" 1>&2
-      exit 1
-    }
-
-    function cleanup {
-      if [[ -n "$OUR_DIR" ]] && [[ -d "$OUR_DIR" ]]
-      then
-        rm -rf "$OUR_DIR"
-      fi
-    }
-    trap cleanup EXIT
-
-    [[ -n "$DIR" ]] || {
-      OUR_DIR=$(mktemp -d --tmpdir "mlspecBenchXXXXX")
-      DIR="$OUR_DIR"
-      echo "Creating temp dir '$OUR_DIR'" 1>&2
-    }
-    export DIR
+    ${quickspecBench.setUpDir}
     export TEMPDIR="$DIR"
+    ${quickspecBench.getInput}
 
-    # Initialise all of the data we need
-    ${quickspecBench.mkPkgInner}
-    ${ensureVars ["OUT_DIR"]}
+    # Explore
+    export    NIXENV="import ${ourEnv}"
+    export       CMD="${inEnvScript}"
+    export GEN_INPUT="${mlGenInput}"
 
-    EXPR="with import ${./..}/nix-support {}; annotated \"$OUT_DIR\""
-
-    echo "Annotating, via '$EXPR'" 1>&2
-    F=$(nix-build --show-trace -E "$EXPR")
-
-    "$ { quickspecBench.filterSample}" < "$F" > "$DIR/filtered.json"
-
-    echo "DIR='$DIR' ${inner} < '$DIR/clusters.json'" > "$DIR/cmd.sh"
-    chmod +x "$DIR/cmd.sh"
-
-    # Make sure our generated package is available to Nix
-    NIX_EVAL_HASKELL_PKGS="${quickspecBench.customHs}"
-    export NIX_EVAL_HASKELL_PKGS
-
-    nix-shell --show-trace -p '(import ${ourEnv})' --run "${inEnvScript}"
-
-    "${jq}/bin/jq" -n --slurpfile time   "$DIR/time.json" \
-                      --slurpfile result "$DIR/eqs.json"  \
-                      '{"time": $time, "result": $result}'
+    if [[ -n "$SAMPLE_SIZES" ]]
+    then
+      echo "Looping through sample sizes" 1>&2
+      for SAMPLE_SIZE in $SAMPLE_SIZES
+      do
+        echo "Limiting to a sample size of '$SAMPLE_SIZE'" 1>&2
+        INFO="$SAMPLE_SIZE" REPS=1 benchmark
+      done
+    else
+      echo "No sample size given, using whole signature" 1>&2
+      INFO="" REPS=1 benchmark
+    fi
   '';
 
   mls = stdenv.mkDerivation {
-    name = "quickspecBench";
-    inherit script;
-    buildInputs  = [ makeWrapper ];
-    buildCommand = ''
+    name = "mlspecBench";
+    src  = script;
+    buildInputs  = [ quickspecBench.env ];
+    unpackPhase  = "true";  # Nothing to do
+
+    doCheck      = true;
+    checkPhase   = ''
+      true
+    '';
+    installPhase = ''
       mkdir -p "$out/bin"
-      makeWrapper "$script" "$out/bin/mlspecBench" \
-        --prefix PATH : "${quickspecBench.env}/bin"
+      cp "$src" "$out/bin/mlspecBench"
     '';
   };
 }

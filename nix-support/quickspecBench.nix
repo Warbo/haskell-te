@@ -82,7 +82,9 @@ fileInStore = var: content: ''
   rm -f filed
 '';
 
-mkGenInput =
+qsGenInput = mkGenInput genSig2;
+
+mkGenInput = after:
   let filter = writeScript "filter.jq" ''
         def mkId: {"name": .name, "package": .package, "module": .module};
 
@@ -112,7 +114,7 @@ mkGenInput =
 
         # Filters the signature to only those sampled in KEEPERS
         jq --argjson keepers "$KEEPERS" -f "${filter}" < "$ANNOTATED" |
-          "${genSig2}"
+          "${after}"
       '';
 
 genSig2 = writeScript "gen-sig2" ''
@@ -153,20 +155,23 @@ runSigCmd = ''
 '';
 
 script = runCommand "quickspecBench" { buildInputs = [ makeWrapper ]; } ''
-  makeWrapper "${rawScript}" "$out" \
-    --set    NIX_REMOTE '${nixEnv.nixRemote}' \
-    --set    NIX_PATH   'real=${toString <nixpkgs>}:nixpkgs=${toString ../nix-support}'
+  makeWrapper "${rawScript}" "$out"                                     \
+    --prefix PATH :         "${env}/bin"                                \
+    --set    LANG           'en_US.UTF-8'                               \
+    --set    LOCALE_ARCHIVE '${glibcLocales}/lib/locale/locale-archive' \
+    --set    NIX_EVAL_HASKELL_PKGS "${customHs}"                        \
+    --set    NIX_REMOTE     '${nixEnv.nixRemote}'                       \
+    --set    NIX_PATH       'real=${toString <nixpkgs>}:nixpkgs=${toString ../nix-support}'
 '';
 
-rawScript = writeScript "quickspec-bench" ''
-  #!/usr/bin/env bash
-  set -e
-
+setUpDir = ''
   [[ -n "$DIR" ]] || {
     echo "No DIR given to work in, using current directory $PWD" 1>&2
     DIR="$PWD"
   }
+'';
 
+getInput = ''
   echo "Checking for input" 1>&2
   if [ -t 0 ]
   then
@@ -201,6 +206,7 @@ rawScript = writeScript "quickspec-bench" ''
     exit 1
   fi
 
+  # Initialise all of the data we need
   if [[ "$GIVEN_INPUT" -eq 0 ]]
   then
     echo "Preparing to use TIP benchmarks" 1>&2
@@ -215,14 +221,21 @@ rawScript = writeScript "quickspec-bench" ''
      STORED=$(nix-store --add "$OUT_DIR")
        EXPR="with import <nixpkgs> {}; annotated \"$STORED\""
   ANNOTATED=$(nix-build --show-trace -E "$EXPR")
+'';
+
+rawScript = writeScript "quickspec-bench" ''
+  #!/usr/bin/env bash
+  set -e
+
+  ${setUpDir}
+  ${getInput}
 
   # Explore
-  export NIX_EVAL_HASKELL_PKGS="${customHs}"
   if [[ -n "$SAMPLE_SIZES" ]]
   then
     # The numeric arguments are arbitrary
     echo "Running sampler to obtain environment" 1>&2
-    export NIXENV=$("${mkGenInput}" 5 1 | jq -r '.env')
+    export NIXENV=$("${qsGenInput}" 5 1 | jq -r '.env')
 
     echo "Looping through sample sizes" 1>&2
     for SAMPLE_SIZE in $SAMPLE_SIZES
@@ -230,7 +243,7 @@ rawScript = writeScript "quickspec-bench" ''
       echo "Limiting to a sample size of '$SAMPLE_SIZE'" 1>&2
 
       export      INFO="$SAMPLE_SIZE"
-      export GEN_INPUT="${mkGenInput}"
+      export GEN_INPUT="${qsGenInput}"
       export       CMD="${writeScript "run-cmd" ''
                             #!/usr/bin/env bash
                              INPUT=$(cat)
@@ -278,10 +291,10 @@ qs = stdenv.mkDerivation (withNix {
 
   }; ''
     ${test "gen-input" ''
-      P=$(${mkGenInput} 4 2) || ${fail "Couldn't run gen-input"}
+      P=$(${qsGenInput} 4 2) || ${fail "Couldn't run gen-input"}
     ''}
     ${test "gen-haskell" ''
-      C=$(${mkGenInput} 4 2 | jq 'has("code")') || ${fail "Failed to gen"}
+      C=$(${qsGenInput} 4 2 | jq 'has("code")') || ${fail "Failed to gen"}
       [[ "$C" = "true" ]] || ${fail "Didn't gen Haskell ($C)"}
     ''}
     ${test "check-garbage" ''
@@ -358,10 +371,7 @@ qs = stdenv.mkDerivation (withNix {
 
   installPhase = ''
     mkdir -p "$out/bin"
-    makeWrapper "$src" "$out/bin/quickspecBench"        \
-      --prefix PATH : "${env}/bin"                      \
-      --set    LANG           'en_US.UTF-8'             \
-      --set    LOCALE_ARCHIVE '${glibcLocales}/lib/locale/locale-archive'
+    cp "$src" "$out/bin/quickspecBench"
   '';
 });
 
