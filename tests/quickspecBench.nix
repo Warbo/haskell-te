@@ -34,7 +34,7 @@ with {
   nat-full   = testFile "nat-full"   ../benchmarks/nat-full.smt2;
   nat-simple = testFile "nat-simple" ../benchmarks/nat-simple.smt2;
 
-  sample-tip = runCommand "sample-tip" { buildInputs = [ package ]; }''
+  sample-tip = runCommand "sample-tip" { buildInputs = [ jq package ]; }''
     #!/usr/bin/env bash
     set -e
     BENCH_OUT=$(SAMPLE_SIZES="5" quickspecBench)
