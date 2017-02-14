@@ -1,5 +1,8 @@
 defs: with defs; with lib; with builtins;
 
+with {
+  fail = msg: ''{ echo -e "${msg}" 1>&2; exit 1; }'';
+};
 mapAttrs (name: testRun name null { buildInputs = [ package ]; }) {
   canRun = ''
     mlspecBench < ${./example.smt2} || exit 1
@@ -20,9 +23,9 @@ mapAttrs (name: testRun name null { buildInputs = [ package ]; }) {
 
   haveEquations = ''
     OUTPUT=$(mlspecBench < ${./example.smt2})   || exit 1
-     CHECK=$(echo "$OUTPUT" | jq 'has("result")') || exit 1
+     CHECK=$(echo "$OUTPUT" | jq 'has("results")') || exit 1
     [[ "x$CHECK" = "xtrue" ]] || {
-      echo -e "Didn't find 'result' in\n$OUTPUT" 1>&2
+      echo -e "Didn't find 'results' in\n$OUTPUT" 1>&2
       exit 1
     }
   '';
@@ -33,23 +36,42 @@ mapAttrs (name: testRun name null { buildInputs = [ package ]; }) {
     { name = "constructorCons"; module = "A"; package = "tip-benchmark-sig"; }
   ];
   in ''
-    set -e
-    export BENCH_FILTER_KEEPERS='${toJSON keepers}'
-    BENCH_OUT=$(CLUSTERS=1 mlspecBench < ${../benchmarks/list-full.smt2})
-    for S in append constructorNil constructorCons
-    do
-      echo "$BENCH_OUT" | jq '.result' | grep "$S" > /dev/null || {
-        echo "No equations for '$S'" 1>&2
-        exit 1
-      }
-    done
-    for S in map foldl foldr length reverse
-    do
-      if echo "$BENCH_OUT" | jq '.result' | grep "$S" > /dev/null
-      then
-        echo "Found equation with forbidden symbol '$S'" 1>&2
-        exit 1
-      fi
-    done
+       set -e
+       BENCH_OUT=$(CLUSTERS=1 SAMPLE_SIZES="5" mlspecBench)
+
+       # Get all the constant symbols in all equations
+       STDOUTS=$(echo "$BENCH_OUT" | jq -r '.results | .[] | .stdout') ||
+         ${fail "Couldn't get stdouts\n\n$BENCH_OUT"}
+
+       OUTPUTS=$(while read -r F
+                 do
+                   cat "$F"
+                 done < <(echo "$STDOUTS")) ||
+         ${fail "Couldn't concat stdouts\n\n$BENCH_OUT\n\n$STDOUTS"}
+
+       EQS=$(echo "$OUTPUTS" | grep -v '^Depth') ||
+         ${fail "Couldn't get eqs\n\n$BENCH_OUT\n\n$OUTPUTS"}
+
+       NAMES=$(echo "$EQS" |
+               jq -r 'getpath(paths(type == "object" and .role == "constant")) |
+                      .symbol' |
+               sort -u) || ${fail "Couldn't get names\n\n$BENCH_OUT\n\n$EQS"}
+       SAMPLE=$(choose_sample 5 1)
+
+       # Remove any names which appear in the sample
+       while read -r NAME
+       do
+         NAMES=$(echo "$NAMES" | grep -vFx "$NAME") || true
+       done < <(echo "$SAMPLE")
+
+       # If there are any names remaining, they weren't in the sample
+       if echo "$NAMES" | grep '^.' > /dev/null
+       then
+         echo "Found names which aren't in sample" 1>&2
+         echo -e "NAMES:\n$NAMES\n\nOUTPUT:\n$BENCH_OUT\nSAMPLE:\n$SAMPLE" 1>&2
+         exit 1
+       fi
+
+       echo "Passed" > "$out"
   '';
 }
