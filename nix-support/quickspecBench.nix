@@ -1,5 +1,5 @@
 { annotated, benchmark, buildEnv, ensureVars, glibcLocales, haskellPackages, jq,
-  lib, makeWrapper, nix, runCmd, runCommand, stdenv, time, timeout,
+  lib, makeWrapper, nix, nixEnv, runCmd, runCommand, stdenv, time, timeout,
   tipBenchmarks, withNix, writeScript }:
 
 # Provides a script which accepts smtlib data, runs it through QuickSpec and
@@ -154,7 +154,7 @@ runSigCmd = ''
 
 script = runCommand "quickspecBench" { buildInputs = [ makeWrapper ]; } ''
   makeWrapper "${rawScript}" "$out" \
-    --set    NIX_REMOTE '${getEnv "NIX_REMOTE"}'  \
+    --set    NIX_REMOTE '${nixEnv.nixRemote}' \
     --set    NIX_PATH   'real=${toString <nixpkgs>}:nixpkgs=${toString ../nix-support}'
 '';
 

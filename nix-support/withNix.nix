@@ -1,23 +1,8 @@
-{ bash, coreutils, jq, lib, nix, perl, procps, runCommand, utillinux }:
+{ bash, coreutils, jq, lib, nix, nixEnv, perl, procps, runCommand, utillinux }:
 with builtins;
+with nixEnv;
 with rec {
   commonDeps = [ bash coreutils jq nix perl procps utillinux ];
-
-  # Ensure we can write to the Nix store (or ask a builders to do so for us)
-  nixRemote  =
-    let given  = getEnv "NIX_REMOTE";
-        force  = readFile result;
-        result = runCommand "get-nix-remote" { buildInputs = [ nix ]; } ''
-          if nix-instantiate --eval -E null 2> /dev/null
-          then
-            printf "$NIX_REMOTE" > "$out"
-          else
-            printf "daemon"      > "$out"
-          fi
-        '';
-     in if given == ""
-           then force   # Nix is writable, or we need to force 'daemon'
-           else given;  # Propagate the existing value
 };
 
 env:

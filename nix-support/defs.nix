@@ -23,7 +23,10 @@ with {
 };
 
 with rec {
-  withNix        = nixpkgs.callPackage ./withNix.nix        {};
+  nixEnv         = nixpkgs.callPackage ./nixEnv.nix         {};
+  withNix        = nixpkgs.callPackage ./withNix.nix        {
+    inherit nixEnv;
+  };
 
   drvFromScript  = nixpkgs.callPackage ./drvFromScript.nix  {
     inherit withNix;
@@ -48,7 +51,7 @@ with (nixpkgs.callPackage ./haskellPackages.nix {
 let pkgs = rec {
   # Include the above definitions
   inherit drvFromScript extractTarball haskellPackages hsOverride nixedHsPkg
-          nixFromCabal withNix;
+          nixEnv nixFromCabal withNix;
 
   # Use newer Racket for contract definitions
   inherit (nixpkgs-2016-09)
