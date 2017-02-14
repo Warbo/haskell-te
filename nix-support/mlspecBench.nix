@@ -8,17 +8,7 @@ rec {
 
   inner = writeScript "mlspecBench-inner.sh" ''
     #!${bash}/bin/bash
-    set -e
-    set -o pipefail
 
-    NIX_EVAL_EXTRA_IMPORTS='[("tip-benchmark-sig", "A")]'
-    export NIX_EVAL_EXTRA_IMPORTS
-
-    export SIMPLE=1
-
-    "${writeScript "format" format.script}" |
-      "${explore.explore-theories}"         |
-      "${reduce-equations}/bin/reduce-equations"
   '';
 
   ourEnv = writeScript "our-env.nix" ''
@@ -53,18 +43,31 @@ rec {
     set -e
     set -o pipefail
 
+    function finish {
+      rm "$DIR/clusters.json"
+    }
+    trap finish EXIT
+
     # Perform clustering
-
     clusters="$DIR/clusters.json"
-    ${cluster.clusterScript} < "$DIR/filtered.json" > "$clusters"
+    export clusters
 
-    clCount=$("${jq}/bin/jq" 'map(.cluster) | max' < "$clusters")
+    ${cluster.clusterScript} > "$clusters"
+
+    clCount=$("${jq}/bin/jq" 'map(.cluster) | max' < "$DIR/clusters.json")
     ${assertNumeric "$clCount" "clCount should contain number of clusters"}
 
     export clusters
     export clCount
 
-    ${inner} < "$DIR/clusters.json"
+    NIX_EVAL_EXTRA_IMPORTS='[("tip-benchmark-sig", "A")]'
+    export NIX_EVAL_EXTRA_IMPORTS
+
+    export SIMPLE=1
+
+    "${writeScript "format" format.script}" < "$DIR/clusters.json" |
+      "${explore.explore-theories}"                                |
+      "${reduce-equations}/bin/reduce-equations"
   '';
 
   script = runCommand "mlspecBench" { buildInputs = [ makeWrapper ]; } ''
@@ -82,6 +85,19 @@ rec {
     jq 'map(select(.quickspecable))'
   '');
 
+  mlAllInput = writeScript "all-input" ''
+    [[ -f "$ANNOTATED" ]] || {
+      echo "Got no ANNOTATED" 1>&2
+      exit 1
+    }
+    [[ -d "$OUT_DIR" ]] || {
+      echo "Got no OUT_DIR" 1>&2
+      exit 1
+    }
+
+    cat "$ANNOTATED"
+  '';
+
   rawScript = writeScript "mlspecBench" ''
     #!${bash}/bin/bash
     set -e
@@ -93,7 +109,6 @@ rec {
     # Explore
     export    NIXENV="import ${ourEnv}"
     export       CMD="${inEnvScript}"
-    export GEN_INPUT="${mlGenInput}"
 
     if [[ -n "$SAMPLE_SIZES" ]]
     then
@@ -101,17 +116,19 @@ rec {
       for SAMPLE_SIZE in $SAMPLE_SIZES
       do
         echo "Limiting to a sample size of '$SAMPLE_SIZE'" 1>&2
+        export GEN_INPUT="${mlGenInput}"
         INFO="$SAMPLE_SIZE" REPS=1 benchmark
       done
     else
       echo "No sample size given, using whole signature" 1>&2
+      export GEN_INPUT="${mlAllInput}"
       INFO="" REPS=1 benchmark
     fi
   '';
 
   mls = stdenv.mkDerivation {
-    name = "mlspecBench";
-    src  = script;
+    name         = "mlspecBench";
+    src          = script;
     buildInputs  = [ quickspecBench.env ];
     unpackPhase  = "true";  # Nothing to do
 

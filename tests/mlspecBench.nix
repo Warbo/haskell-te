@@ -1,16 +1,12 @@
 defs: with defs; with lib; with builtins;
 
-with {
-  cmd = "${package}/bin/mlspecBench";
-};
-
 mapAttrs (name: testRun name null { buildInputs = [ package ]; }) {
   canRun = ''
-    "${cmd}" < ${./example.smt2} || exit 1
+    mlspecBench < ${./example.smt2} || exit 1
   '';
 
   outputIsJson = ''
-    OUTPUT=$("${cmd}" < ${./example.smt2}) || exit 1
+    OUTPUT=$(mlspecBench < ${./example.smt2}) || exit 1
     TYPE=$(echo "$OUTPUT" | jq -r 'type') || {
       echo -e "START OUTPUT\n$OUTPUT\nEND OUTPUT" 1>&2
       exit 1
@@ -23,7 +19,7 @@ mapAttrs (name: testRun name null { buildInputs = [ package ]; }) {
   '';
 
   haveEquations = ''
-    OUTPUT=$("${cmd}" < ${./example.smt2})   || exit 1
+    OUTPUT=$(mlspecBench < ${./example.smt2})   || exit 1
      CHECK=$(echo "$OUTPUT" | jq 'has("result")') || exit 1
     [[ "x$CHECK" = "xtrue" ]] || {
       echo -e "Didn't find 'result' in\n$OUTPUT" 1>&2
@@ -39,7 +35,7 @@ mapAttrs (name: testRun name null { buildInputs = [ package ]; }) {
   in ''
     set -e
     export BENCH_FILTER_KEEPERS='${toJSON keepers}'
-    BENCH_OUT=$(CLUSTERS=1 "${cmd}" < ${../benchmarks/list-full.smt2})
+    BENCH_OUT=$(CLUSTERS=1 mlspecBench < ${../benchmarks/list-full.smt2})
     for S in append constructorNil constructorCons
     do
       echo "$BENCH_OUT" | jq '.result' | grep "$S" > /dev/null || {
