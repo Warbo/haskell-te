@@ -1,15 +1,15 @@
 defs: with defs;
 
-{
-  nat-simple = runCommand "qs-nat-simple"
+with {
+  testFile = name: path: runCommand "qs-${name}"
     {
-      buildInputs = [ package ];
+      buildInputs = [ jq package ];
     }
     ''
       #!${bash}/bin/bash
-      echo "Running nat-simple through quickspecBench" 1>&2
-      OUTPUT=$(quickspecBench < "${../benchmarks/nat-simple.smt2}") || {
-        echo "Couldn't explore nat-simple" 1>&2
+      echo "Running ${name} through quickspecBench" 1>&2
+      OUTPUT=$(quickspecBench < "${path}") || {
+        echo "Couldn't explore ${name}" 1>&2
         exit 1
       }
 
@@ -26,4 +26,9 @@ defs: with defs;
 
       echo "Pass" > "$out"
     '';
+};
+{
+  list-full  = testFile "list-full"  ../benchmarks/list-full.smt2;
+  nat-full   = testFile "nat-full"   ../benchmarks/nat-full.smt2;
+  nat-simple = testFile "nat-simple" ../benchmarks/nat-simple.smt2;
 }
