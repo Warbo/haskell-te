@@ -34,10 +34,10 @@ with {
   nat-full   = testFile "nat-full"   ../benchmarks/nat-full.smt2;
   nat-simple = testFile "nat-simple" ../benchmarks/nat-simple.smt2;
 
-  sample-tip = runCommand "sample-tip" ''
+  sample-tip = runCommand "sample-tip" { buildInputs = [ package ]; }''
     #!/usr/bin/env bash
     set -e
-    BENCH_OUT=$(SAMPLE_SIZES="5" "$src")
+    BENCH_OUT=$(SAMPLE_SIZES="5" quickspecBench)
 
     # Get all the constant symbols in all equations
     STDOUTS=$(echo "$BENCH_OUT" | jq -r '.results | .[] | .stdout') ||
