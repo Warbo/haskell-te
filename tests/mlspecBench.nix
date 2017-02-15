@@ -3,7 +3,9 @@ defs: with defs; with lib; with builtins;
 with {
   fail = msg: ''{ echo -e "${msg}" 1>&2; exit 1; }'';
 };
-mapAttrs (name: testRun name null { buildInputs = [ package ]; }) {
+mapAttrs (name: testRun name null {
+                  buildInputs = [ package tipBenchmarks.tools ];
+                }) {
   canRun = ''
     mlspecBench < ${./example.smt2} || exit 1
   '';

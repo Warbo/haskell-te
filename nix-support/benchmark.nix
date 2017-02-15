@@ -7,8 +7,8 @@ with {
            else import (toString (fetchFromGitHub {
                   owner  = "Warbo";
                   repo   = "sample-bench";
-                  rev    = "50c2342";
-                  sha256 = "0rzjvm20pvar3rwn31h3g7jv3yl5a1xd24dz9wik231n3q48mm2y";
+                  rev    = "8d31ac4";
+                  sha256 = "1byl395hm6xf57m0wy1352267cl3br5xl5bxdiz9v4gfwwhkny9s";
                 }));
 };
 src { inherit pkgs; }
