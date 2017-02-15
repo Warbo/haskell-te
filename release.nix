@@ -5,6 +5,4 @@ let pkgs = import ./nix-support {};
   tests = import ./nix-support/tests.nix {};
 
   package = import ./.;
-
-  stabilisePlot = import ./nix-support/stabilisePlot.nix;
 }
