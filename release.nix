@@ -6,10 +6,5 @@ let pkgs = import ./nix-support {};
 
   package = import ./.;
 
-  inherit (pkgs.haskellPackages)
-    runtime-arbitrary nix-eval mlspec-helper ifcxt AstPlugin GetDeps HS2AST
-    ML4HSFE;
-
-  inherit (pkgs)
-    mlspec reduce-equations runWeka;
+  stabilisePlot = import ./stabilisePlot.nix;
 }
