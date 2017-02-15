@@ -1,6 +1,3 @@
 [submodule "packages/runWeka"]
 	path = packages/runWeka
 	url = http://chriswarbo.net/git/run-weka.git
-[submodule "packages/timeout"]
-	path = packages/timeout
-	url = https://github.com/pshved/timeout.git

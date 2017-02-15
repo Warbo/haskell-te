@@ -16,8 +16,9 @@ explore-theories = writeScript "explore-theories" ''
   }
 
   # limit time/memory using 'timeout'
-  ${timeout} MLSpec "$@" 1> "$TEMPDIR/explore-stdout" \
-                         2> >(tee "$TEMPDIR/explore-stderr" >&2)
+  "${timeout}/bin/withTimeout" \
+    MLSpec "$@" 1> "$TEMPDIR/explore-stdout" \
+                2> >(tee "$TEMPDIR/explore-stderr" >&2)
 
   if grep "No instance for" < "$TEMPDIR/explore-stderr" > /dev/null
   then

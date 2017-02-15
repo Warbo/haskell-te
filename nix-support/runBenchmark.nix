@@ -1,5 +1,4 @@
-{ bash, coreutils, explore, lib, runScript, sanitise, strip, time, timeout,
-  writeScript }:
+{ bash, coreutils, explore, lib, runScript, sanitise, strip, time, writeScript }:
 
 with builtins; with lib;
 

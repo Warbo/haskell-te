@@ -1,5 +1,5 @@
 { annotated, benchmark, buildEnv, ensureVars, glibcLocales, haskellPackages, jq,
-  lib, makeWrapper, nix, nixEnv, runCmd, runCommand, stdenv, time, timeout,
+  lib, makeWrapper, nix, nixEnv, runCmd, runCommand, stdenv, time,
   tipBenchmarks, withNix, writeScript }:
 
 # Provides a script which accepts smtlib data, runs it through QuickSpec and
