@@ -188,9 +188,7 @@ let pkgs = rec {
                           "haskell-names"
                           (concatStringsSep "\n" (attrNames haskellPackages));
 
-  runWeka = callPackage (if havePath "runWeka"
-                            then <runWeka>
-                            else ../packages/runWeka) {};
+  runWeka = callPackage ./runWeka.nix { inherit havePath; };
 
   # Strips non-alphanumeric characters from a string; e.g. for use in a name
   sanitise = stringAsChars (c: if elem c (upperChars ++
