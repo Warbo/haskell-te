@@ -2,8 +2,39 @@ defs: with defs; with lib; with builtins;
 
 with {
   fail = msg: ''{ echo -e "${msg}" 1>&2; exit 1; }'';
+
+  testFile = name: path: runCommand "qs-${name}"
+    {
+      buildInputs = [ jq package ];
+    }
+    ''
+      #!${bash}/bin/bash
+      echo "Running ${name} through mlspecBench" 1>&2
+      OUTPUT=$(mlspecBench < "${path}") || {
+        echo "Couldn't explore ${name}" 1>&2
+        exit 1
+      }
+
+      T=$(echo "$OUTPUT" |
+          jq 'has("cmd") and has("info") and has("results")') || {
+        echo -e "Couldn't parse output\nSTART\n$OUTPUT\nEND" 1>&2
+        exit 1
+      }
+
+      [[ "x$T" = "xtrue" ]] || {
+        echo -e "Required fields missing:\n$OUTPUT" 1>&2
+        exit 1
+      }
+
+      echo "Pass" > "$out"
+    '';
 };
-mapAttrs (name: testRun name null {
+
+{
+  list-full  = testFile "list-full"  ../benchmarks/list-full.smt2;
+  nat-full   = testFile "nat-full"   ../benchmarks/nat-full.smt2;
+  nat-simple = testFile "nat-simple" ../benchmarks/nat-simple.smt2;
+} // mapAttrs (name: testRun name null {
                   buildInputs = [ package tipBenchmarks.tools ];
                 }) {
   canRun = ''
