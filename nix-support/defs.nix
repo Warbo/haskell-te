@@ -71,9 +71,6 @@ let pkgs = rec {
           runTestInDrv testAll testDbg testDrvString testFiles testMsg
           testPackages testRec testRun testWrap;
 
-  inherit (callPackage ./timeout.nix {})
-          timeLimSecs memLimKb timeout;
-
   annotate           = callPackage ./annotate.nix           {};
   benchmark          = callPackage ./benchmark.nix          { inherit havePath; };
   cluster            = callPackage ./cluster.nix            {};
@@ -91,6 +88,7 @@ let pkgs = rec {
   runScript          = callPackage ./runScript.nix          {};
   runTypes           = callPackage ./runTypes.nix           {};
   runTypesScript     = callPackage ./runTypesScript.nix     {};
+  timeout            = callPackage ./timeout.nix            {};
   tipBenchmarks      = callPackage ./tipBenchmarks.nix      {
     pkgs = nixpkgs-2016-09;
   };
