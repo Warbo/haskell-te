@@ -7,6 +7,7 @@ with rec {
     buildCommand = ''
       SAMPLE_SIZES="5 10 15" REPS=30 ${cmd} > "$out"
     '';
+  };
 };
 {
   quickSpec = rec {
@@ -14,4 +15,5 @@ with rec {
   };
   mlSpec = rec {
     data = getData "mlspecBench";
+  };
 }
