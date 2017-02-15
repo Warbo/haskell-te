@@ -6,5 +6,5 @@ let pkgs = import ./nix-support {};
 
   package = import ./.;
 
-  stabilisePlot = import ./stabilisePlot.nix;
+  stabilisePlot = import ./nix-support/stabilisePlot.nix;
 }
