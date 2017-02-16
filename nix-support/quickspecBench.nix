@@ -258,7 +258,11 @@ rawScript = writeScript "quickspec-bench" ''
                             RUNNER=$(echo "$INPUT" | jq -r '.runner')
                               CODE=$(echo "$INPUT" | jq -r '.code')
 
-                            export MAX_KB=2000000
+                            if [[ -n "$EXPLORATION_MEM" ]]
+                            then
+                              echo "Limiting memory to '$EXPLORATION_MEM'" 1>&2
+                              export MAX_KB="$EXPLORATION_MEM"
+                            fi
                             echo "$CODE" | "${timeout}/bin/withTimeout" $RUNNER
                           ''}"
 

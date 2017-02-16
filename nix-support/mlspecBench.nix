@@ -64,7 +64,12 @@ rec {
     export NIX_EVAL_EXTRA_IMPORTS
 
     export SIMPLE=1
-    export MAX_KB=2000000
+
+    if [[ -n "$EXPLORATION_MEM" ]]
+    then
+      echo "Limiting memory to '$EXPLORATION_MEM'" 1>&2
+      export MAX_KB="$EXPLORATION_MEM"
+    fi
 
     "${writeScript "format" format.script}" < "$DIR/clusters.json" |
       "${timeout}/bin/withTimeout" "${explore.explore-theories}"   |
