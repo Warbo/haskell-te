@@ -7,8 +7,8 @@ rec {
            else toString (fetchFromGitHub {
                   owner  = "Warbo";
                   repo   = "sample-bench";
-                  rev    = "f16bbba";
-                  sha256 = "0szjv1whg9cxkqkpj7h96y909kzpd35ipr0hj0fdwcgxfvdfyfvm";
+                  rev    = "d71e333";
+                  sha256 = "1hgdnh4lqgl1gdniggriqql9l2vhr63fg33vs9dqfs2m3zhaj18a";
                 });
 
   benchmark = import src { inherit pkgs; };
