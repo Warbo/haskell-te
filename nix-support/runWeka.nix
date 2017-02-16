@@ -5,7 +5,7 @@ callPackage (if havePath "runWeka"
                 else fetchFromGitHub {
                        owner  = "Warbo";
                        repo   = "run-weka";
-                       rev    = "520a2a8";
-                       sha256 = "1325yglg2kdj1bhglhl0947a50apa9pl48wc4va6yca2dbcjf3sr";
+                       rev    = "a22cd2c";
+                       sha256 = "153k060k3wzqqir4amv0f5viwm8g419abk46hh61s4psb7cascka";
                      })
             {}
