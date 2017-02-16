@@ -1,14 +1,17 @@
 { fetchFromGitHub, havePath, pkgs }:
 
 with builtins;
-with {
+rec {
   src = if havePath "sample-bench"
-           then import <sample-bench>
-           else import (toString (fetchFromGitHub {
+           then <sample-bench>
+           else toString (fetchFromGitHub {
                   owner  = "Warbo";
                   repo   = "sample-bench";
-                  rev    = "8d31ac4";
-                  sha256 = "1byl395hm6xf57m0wy1352267cl3br5xl5bxdiz9v4gfwwhkny9s";
-                }));
-};
-src { inherit pkgs; }
+                  rev    = "f16bbba";
+                  sha256 = "0szjv1whg9cxkqkpj7h96y909kzpd35ipr0hj0fdwcgxfvdfyfvm";
+                });
+
+  benchmark = import src { inherit pkgs; };
+
+  timeout = pkgs.callPackage "${src}/timeout.nix" {};
+}

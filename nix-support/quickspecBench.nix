@@ -257,7 +257,9 @@ rawScript = writeScript "quickspec-bench" ''
                              INPUT=$(cat)
                             RUNNER=$(echo "$INPUT" | jq -r '.runner')
                               CODE=$(echo "$INPUT" | jq -r '.code')
-                            echo "$CODE" | $RUNNER
+
+                            export MAX_KB=2000000
+                            echo "$CODE" | withTimeout timeout $RUNNER
                           ''}"
 
       benchmark
