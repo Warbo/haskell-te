@@ -1,6 +1,6 @@
 { bash, buildEnv, cluster, ensureVars, explore, format, glibcLocales,
   haskellPackages, jq, lib, makeWrapper, nixEnv, quickspecBench,
-  reduce-equations, runCommand, runWeka, stdenv, writeScript }:
+  reduce-equations, runCommand, runWeka, stdenv, timeout, writeScript }:
 with builtins;
 with lib;
 
@@ -64,9 +64,10 @@ rec {
     export NIX_EVAL_EXTRA_IMPORTS
 
     export SIMPLE=1
+    export MAX_KB=2000000
 
     "${writeScript "format" format.script}" < "$DIR/clusters.json" |
-      "${explore.explore-theories}"                                |
+      "${timeout}/bin/withTimeout" "${explore.explore-theories}"   |
       "${reduce-equations}/bin/reduce-equations"
   '';
 

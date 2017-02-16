@@ -1,5 +1,5 @@
 { annotated, benchmark, buildEnv, ensureVars, glibcLocales, haskellPackages, jq,
-  lib, makeWrapper, nix, nixEnv, runCmd, runCommand, stdenv, time,
+  lib, makeWrapper, nix, nixEnv, runCmd, runCommand, stdenv, time, timeout,
   tipBenchmarks, withNix, writeScript }:
 
 # Provides a script which accepts smtlib data, runs it through QuickSpec and
@@ -259,7 +259,7 @@ rawScript = writeScript "quickspec-bench" ''
                               CODE=$(echo "$INPUT" | jq -r '.code')
 
                             export MAX_KB=2000000
-                            echo "$CODE" | withTimeout timeout $RUNNER
+                            echo "$CODE" | "${timeout}/bin/withTimeout" $RUNNER
                           ''}"
 
       benchmark
