@@ -8,7 +8,7 @@ let path = if any (x: x.prefix == "te-benchmarks") nixPath
                      owner  = "Warbo";
                      repo   = "theory-exploration-benchmarks";
                      rev    = "a45c3ec";
-                     sha256 = "1jdag0hllibv67jhlik32xr2l1p567x3nciz2c53cg0fjqbfqdss";
+                     sha256 = "1i7ssmf1glrcs9ix413nj1zk1yad36qfmqzy7448sacachixkz1l";
                    };
  in rec {
   inherit (callPackage path {
