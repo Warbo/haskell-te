@@ -18,7 +18,9 @@ replLines = writeScript "replLines" ''
               done
             '';
 
-# Run GHCi with all relevant packages available
+# Run GHCi with all relevant packages available. We need "--pure" to avoid
+# multiple GHCs appearing in $PATH, since we may end up calling one with the
+# wrong package database.
 repl = let cmd = "nix-shell --run 'ghci -v0 -XTemplateHaskell'";
            msg = "No default.nix found " + toJSON { inherit pkgSrc; };
            given = assert isString pkgSrc || typeOf pkgSrc == "path" ||
@@ -29,9 +31,9 @@ repl = let cmd = "nix-shell --run 'ghci -v0 -XTemplateHaskell'";
                    assert pathExists (unsafeDiscardStringContext "${pkgSrc}/default.nix") ||
                              abort "Couldn't find '${pkgSrc}/default.nix'";
                    ''(x.callPackage "${pkgSrc}" {})'';
-           hsPkgs = "[x.QuickCheck x.quickspec x.hashable ${given}]";
+           hsPkgs = "[x.QuickCheck x.quickspec x.cereal x.murmur-hash ${given}]";
         in writeScript "repl" ''
-             ${cmd} -p "haskellPackages.ghcWithPackages (x: ${hsPkgs})"
+             ${cmd} --pure -p "haskellPackages.ghcWithPackages (x: ${hsPkgs})"
            '';
 
 # Writes GHCi commands to stdout, which we use to test the types of terms
@@ -39,7 +41,8 @@ typeCommand = writeScript "typeCommand" ''
                 echo ":m"
 
                 # Used for hashing values, to reduce memory usage.
-                echo "import Data.Hashable"
+                echo "import qualified Data.Serialize"
+                echo "import qualified Data.Digest.Murmur32"
 
                 while read -r MOD
                 do
@@ -88,7 +91,7 @@ mkQuery = writeScript "mkQuery" ''
             #    compare (or store) their outputs. We then add a hash function
             #    to the signature using `observer1`; whenever our function
             #    generates an output (or any other value of that type is
-            #    produced) they're hashed into an `Int` for storage and
+            #    produced) they're hashed into an `Word32` for storage and
             #    comparison.
             #
             # We prefer the indirect method, to keep down memory usage.
@@ -127,13 +130,13 @@ mkQuery = writeScript "mkQuery" ''
             for NUM in 5 4 3 2 1 0
             do
               # We try calling our value as a function with $NUM arguments, then
-              # send the result through `Data.Hashable.hash`.
+              # send the result through cereal and murmur-hash.
               CALL="f"
               for ARG in $(seq 1 "$NUM")
               do
                 CALL="$CALL undefined"
               done
-              CALL="Data.Hashable.hash ($CALL)"
+              CALL="(Data.Digest.Murmur32.asWord32 (Data.Digest.Murmur32.hash32 (Data.Serialize.runPut (Data.Serialize.put ($CALL)))))"
 
               # We don't need the result of the hash call, so we put it in an
               # unused let/in variable; the result we want is a call to `blind`
@@ -170,7 +173,8 @@ typeScopes = writeScript "typeScopes" ''
 
 # Makes sure that the modules we've been given can be imported.
 checkMods = writeScript "checkMods" ''
-  IMPORTS=$(echo "$MODS" |
+  ALL_MODS=$(echo -e "$MODS\nData.Serialize\nData.Digest.Murmur32")
+  IMPORTS=$(echo "$ALL_MODS" |
             while read -r MOD
             do
               echo "import $MOD"

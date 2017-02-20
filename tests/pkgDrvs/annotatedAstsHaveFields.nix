@@ -15,6 +15,7 @@ let checkField = f: drvFromScript { inherit (pkg) annotated; } ''
       exit 1
     '';
 
-    fields = [ "package" "module" "name" "ast" "type" "arity" "quickspecable" ];
+    fields = [ "package" "module" "name" "ast" "type" "arity" "quickspecable"
+               "hashable" ];
 
  in listToAttrs (map (f: { name = f; value = checkField f; }) fields)

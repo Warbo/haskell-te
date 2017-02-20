@@ -22,9 +22,17 @@ getAritiesScript = withDeps "getArities" [ jq ] ''
   # shellcheck disable=SC2016
   MOD='$bits[1:] | reverse | join(".")'
 
+  # Keep lines which look like JSON objects
+  # Extract the name and module from the qname of each
+  # "Slurp" these objects into an array. There may be duplicates: one which is
+  # hashed and one which isn't. We prefer to be hashed if possible, so we update
+  # each objects' "hashable" field to true if the array contains a hashable
+  # object with the same qname. Any duplicates will now be identical, including
+  # their "hashable" field, so we can dedupe using "unique".
   grep '^{' |
-    jq -c -M "$INPUT | . + {name: $NAME, module: $MOD} | del(.qname)" |
-    jq -s -M '.'
+    jq -c -M "$INPUT | . + {name: $NAME, module: $MOD}" |
+    jq -s -M '. as $all | map(.qname as $qn | . + {"hashable": ($all | map(select(.qname == $qn)) | any)})' |
+    jq       '. | unique | map(del(.qname))'
 '';
 
 getTypesScript = withDeps "getTypes" [ jq ] ''
@@ -112,7 +120,7 @@ annotateAstsScript = withDeps "annotateAsts" [ jq ] ''
   }
 
   function tagArities {
-    "${tagAstsScript ''{"arity":null,"quickspecable":false}''}" <(echo "$RAWTYPES" | "${getAritiesScript}")
+    "${tagAstsScript ''{"arity":null,"quickspecable":false,"hashable":false}''}" <(echo "$RAWTYPES" | "${getAritiesScript}")
   }
 
      INPUT=$(cat)
