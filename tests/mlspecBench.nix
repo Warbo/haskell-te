@@ -1,14 +1,18 @@
 defs: with defs; with lib; with builtins;
 
 with {
+  maxSecs = 300;
+
   fail = msg: ''{ echo -e "${msg}" 1>&2; exit 1; }'';
 
-  testFile = name: path: runCommand "qs-${name}"
+  testFile = name: path: runCommand "mls-${name}"
     {
       buildInputs = [ jq package ];
     }
     ''
       #!${bash}/bin/bash
+      export MAX_SECS="${maxSecs}"
+
       echo "Running ${name} through mlspecBench" 1>&2
       OUTPUT=$(mlspecBench < "${path}") || {
         echo "Couldn't explore ${name}" 1>&2
@@ -38,11 +42,13 @@ with {
                   buildInputs = [ package tipBenchmarks.tools ];
                 }) {
   canRun = ''
+    export MAX_SECS="${maxSecs}"
     mlspecBench < ${./example.smt2} || exit 1
   '';
 
   outputIsJson = ''
     set -e
+    export MAX_SECS="${maxSecs}"
     OUTPUT=$(mlspecBench < ${./example.smt2}) || exit 1
     TYPE=$(echo "$OUTPUT" | jq -r 'type') || {
       echo -e "START OUTPUT\n$OUTPUT\nEND OUTPUT" 1>&2
@@ -57,6 +63,7 @@ with {
 
   haveEquations = ''
     set -e
+    export MAX_SECS="${maxSecs}"
     OUTPUT=$(mlspecBench < ${./example.smt2})   || exit 1
      CHECK=$(echo "$OUTPUT" | jq 'has("results")') || exit 1
     [[ "x$CHECK" = "xtrue" ]] || {
@@ -72,6 +79,8 @@ with {
   ];
   in ''
        set -e
+       export MAX_SECS="${maxSecs}"
+
        BENCH_OUT=$(CLUSTERS=1 SAMPLE_SIZES="5" mlspecBench)
 
        # Get all the constant symbols in all equations

@@ -1,6 +1,8 @@
 defs: with defs;
 
 with {
+  maxSecs = 300;
+
   fail = msg: ''{ echo -e "${msg}" 1>&2; exit 1; }'';
 
   testFile = name: path: runCommand "qs-${name}"
@@ -9,6 +11,8 @@ with {
     }
     ''
       #!${bash}/bin/bash
+      export MAX_SECS="${maxSecs}"
+
       echo "Running ${name} through quickspecBench" 1>&2
       OUTPUT=$(quickspecBench < "${path}") || {
         echo "Couldn't explore ${name}" 1>&2
@@ -41,6 +45,8 @@ with {
     ''
       #!/usr/bin/env bash
       set -e
+      export MAX_SECS="${maxSecs}"
+
       BENCH_OUT=$(SAMPLE_SIZES="5" quickspecBench)
 
       # Get all the constant symbols in all equations
