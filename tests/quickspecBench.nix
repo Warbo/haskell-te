@@ -1,7 +1,7 @@
 defs: with defs;
 
 with rec {
-  maxSecs = 300;
+  maxSecs = "300";
 
   fail = msg: ''{ echo -e "${msg}" 1>&2; exit 1; }'';
 
