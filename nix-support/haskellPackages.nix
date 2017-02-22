@@ -123,6 +123,13 @@ hsOverride = self: super:
                                        })
                                        {};
 
+        spoon             = cabalPath (fetchFromGitHub {
+                              owner  = "Warbo";
+                              repo   = "spoon";
+                              rev    = "4424f9a";
+                              sha256 = "14mn6ygr0wqy4css8wrbxd6b4qvp951xgc206x79fjfva3q6n12g";
+                            }) {};
+
         weigh             = cabalPath (fetchgit {
                               url    = https://github.com/fpco/weigh.git;
                               rev    = "26f8e3e";
