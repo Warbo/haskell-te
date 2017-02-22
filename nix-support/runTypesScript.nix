@@ -194,6 +194,14 @@ in
 withDeps "runTypesScript" [ jq ] ''
   #!${bash}/bin/bash
   set -e
+  set -o pipefail
+
+  ERR=$(mktemp "/tmp/haskell-te-runTypesScript-XXXXX.stderr")
+
+  function finish {
+    cat "$ERR" 1>&2
+  }
+  trap finish EXIT
 
   ASTS=$(cat)
 
@@ -209,30 +217,23 @@ withDeps "runTypesScript" [ jq ] ''
     exit 1
   fi
 
-  ERR=$(mktemp "haskell-te-runTypesScript-XXXXX.stderr")
-  echo '
-    WARNING: We are about to gather information about Haskell definitions by
-    trying a bunch of commands in GHCi and seeing what comes out. This will
-    produce a bunch of messages beginning with "<interactive>"; this is
-    perfectly normal behaviour, which you can ignore if everything else works.
-    If you are experiencing problems elsewhere, some of these messages may be
-    helpful.' > "$ERR"
-
   echo "Building type-extraction command" 1>&2
-  CMD=$(echo "$ASTS" | jq -c '.[]' | "${typeCommand}") 2> "$ERR"
+  CMD=$(echo "$ASTS" | jq -c '.[]' | "${typeCommand}") 2> "$ERR"  || {
+    echo "Error building type extraction command" 1>&2
+    exit 1
+  }
 
   echo "Extracting types" 1>&2
-  RESULT=$(echo "$CMD" | "${repl}" | "${replLines}")
+  RESULT=$(echo "$CMD" | "${repl}" 2>> "$ERR" | "${replLines}") || {
+    echo "Error extracting types" 1>&2
+    exit 1
+  }
 
   echo "Building scope-checking command" 1>&2
   SCOPECMD=$(echo "$RESULT" | "${typeScopes}")
 
   echo "Checking scope" 1>&2
   SCOPERESULT=$(echo "$SCOPECMD" | "${repl}" | "${replLines}")
-
-  echo '
-    WARNING: This is the end of our GHCi abuse. Take heed of any GHC messages
-    you see from this point on!' 1>&2
 
   echo "Outputting JSON" 1>&2
   # shellcheck disable=SC2016
@@ -243,4 +244,6 @@ withDeps "runTypesScript" [ jq ] ''
         --argfile scoperesult <(echo "$SCOPERESULT" | jq -s -R '.') \
         '{asts: $asts, cmd: $cmd, result: $result, scopecmd: $scopecmd, scoperesult: $scoperesult}'
   echo "Finished output" 1>&2
+
+  echo "" > "$ERR"
 ''
