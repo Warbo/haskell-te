@@ -81,6 +81,7 @@ let pkgs = rec {
   dumpToNix          = callPackage ./dumpToNix.nix          {};
   explore            = callPackage ./explore.nix            {};
   format             = callPackage ./format.nix             {};
+  hashspecBench      = callPackage ./hashspecBench.nix      {};
   importDir          = callPackage ./importDir.nix          {};
   mlspecBench        = callPackage ./mlspecBench.nix        {};
   package            = callPackage ./package.nix            {};

@@ -1,59 +1,44 @@
-{ bash, buildEnv, cluster, ensureVars, explore, format, glibcLocales,
-  haskellPackages, jq, lib, makeWrapper, nixEnv, quickspecBench,
-  reduce-equations, runCommand, runWeka, stdenv, timeout, writeScript }:
-with builtins;
-with lib;
+{ bash, bc, explore, format, glibcLocales, makeWrapper, mlspecBench, nixEnv,
+  quickspecBench, reduce-equations, runCommand, stdenv, timeout, writeScript }:
 
 rec {
-
-  ourEnv = writeScript "our-env.nix" ''
-    with import ${./..}/nix-support {};
-    buildEnv {
-      name  = "mlspecbench-env";
-      paths = [
-        ((import ${quickspecBench.customHs}).ghcWithPackages (h: [
-          h.tip-benchmark-sig h.mlspec
-        ]))
-        runWeka
-        jq
-      ];
-    }
-  '';
-
-  assertNumeric = var: msg:
-    assert hasPrefix "$" var || abort (toString {
-      function = "assertNumeric";
-      error    = "Argument 'var' should be bash variable with '$'";
-      inherit var msg;
-    });
-    ''
-      echo "${var}" | grep -o "^[0-9][0-9]*\$" > /dev/null || {
-        echo 'Error, ${var}' "(${var})" 'is not numeric: ${msg}' 1>&2
-        exit 1
-      }
-    '';
 
   inEnvScript = writeScript "mlspecBench-inenvscript" ''
     #!${bash}/bin/bash
     set -e
     set -o pipefail
 
-    function finish {
-      rm "$DIR/clusters.json"
-    }
-    trap finish EXIT
-
     # Perform clustering
     clusters="$DIR/clusters.json"
     export clusters
 
-    ${cluster.clusterScript} > "$clusters"
+    INPUT=$(cat)
+    [[ -n "$CLUSTERS" ]] || {
+      CLUSTERS=$(echo "$INPUT" | jq -s '. | length | sqrt | . + 0.5 | floor')
+      export CLUSTERS
 
-    clCount=$("${jq}/bin/jq" 'map(.cluster) | max' < "$DIR/clusters.json")
-    ${assertNumeric "$clCount" "clCount should contain number of clusters"}
-
-    export clusters
+      echo "No cluster count given; using $CLUSTERS (sqrt of sample size)" 1>&2
+    }
+    ${mlspecBench.assertNumeric "$CLUSTERS"
+                                "CLUSTERS should contain number of clusters"}
+    clCount="$CLUSTERS"
     export clCount
+
+    echo "Calculating SHA256 checksums of names" 1>&2
+    while read -r ENTRY
+    do
+      SHA=$(echo "$ENTRY" | jq -r '.name' | sha256sum | cut -d ' ' -f1 |
+            tr '[:lower:]' '[:upper:]')
+
+      # Convert hex to decimal. Use large BC_LINE_LENGTH to avoid line-breaking.
+      SHADEC=$(echo "ibase=16; $SHA" | BC_LINE_LENGTH=5000 bc)
+
+      # Calculate modulo, now that both numbers are in decimal
+      NUM=$(echo "$SHADEC % $CLUSTERS" | BC_LINE_LENGTH=5000 bc)
+
+      # Cluster numbers start from 1
+      echo "$ENTRY" | jq --argjson num "$NUM" '. + {"cluster": ($num + 1)}'
+    done < <(echo "$INPUT" | jq -c '.[]') | jq -s '.' > "$clusters"
 
     NIX_EVAL_EXTRA_IMPORTS='[("tip-benchmark-sig", "A")]'
     export NIX_EVAL_EXTRA_IMPORTS
@@ -66,14 +51,16 @@ rec {
       export MAX_KB="$EXPLORATION_MEM"
     fi
 
+    echo "Exploring" 1>&2
     "${writeScript "format" format.script}" < "$clusters"        |
       "${timeout}/bin/withTimeout" "${explore.explore-theories}" |
       "${reduce-equations}/bin/reduce-equations"
   '';
 
-  script = runCommand "mlspecBench" { buildInputs = [ makeWrapper ]; } ''
+  script = runCommand "hashspecBench" { buildInputs = [ makeWrapper ]; } ''
     makeWrapper "${rawScript}" "$out"                                     \
       --prefix PATH :         "${quickspecBench.env}/bin"                 \
+      --prefix PATH :         "${bc}/bin"                                 \
       --set    LANG           'en_US.UTF-8'                               \
       --set    LOCALE_ARCHIVE '${glibcLocales}/lib/locale/locale-archive' \
       --set    NIX_EVAL_HASKELL_PKGS "${quickspecBench.customHs}"         \
@@ -81,25 +68,7 @@ rec {
       --set    NIX_PATH       'real=${toString <nixpkgs>}:nixpkgs=${toString ../nix-support}'
   '';
 
-  mlGenInput = quickspecBench.mkGenInput (writeScript "gen-sig-ml" ''
-    #!/usr/bin/env bash
-    jq 'map(select(.quickspecable))'
-  '');
-
-  mlAllInput = writeScript "all-input" ''
-    [[ -f "$ANNOTATED" ]] || {
-      echo "Got no ANNOTATED" 1>&2
-      exit 1
-    }
-    [[ -d "$OUT_DIR" ]] || {
-      echo "Got no OUT_DIR" 1>&2
-      exit 1
-    }
-
-    cat "$ANNOTATED"
-  '';
-
-  rawScript = writeScript "mlspecBench" ''
+  rawScript = writeScript "hashspecBench" ''
     #!${bash}/bin/bash
     set -e
 
@@ -108,7 +77,7 @@ rec {
     ${quickspecBench.getInput}
 
     # Explore
-    export    NIXENV="import ${ourEnv}"
+    export    NIXENV="import ${mlspecBench.ourEnv}"
     export       CMD="${inEnvScript}"
 
     if [[ -n "$SAMPLE_SIZES" ]]
@@ -117,18 +86,18 @@ rec {
       for SAMPLE_SIZE in $SAMPLE_SIZES
       do
         echo "Limiting to a sample size of '$SAMPLE_SIZE'" 1>&2
-        export GEN_INPUT="${mlGenInput}"
+        export GEN_INPUT="${mlspecBench.mlGenInput}"
         INFO="$SAMPLE_SIZE" benchmark
       done
     else
       echo "No sample size given, using whole signature" 1>&2
-      export GEN_INPUT="${mlAllInput}"
+      export GEN_INPUT="${mlspecBench.mlAllInput}"
       INFO="" benchmark
     fi
   '';
 
-  mls = stdenv.mkDerivation {
-    name         = "mlspecBench";
+  hs = stdenv.mkDerivation {
+    name         = "hashspecBench";
     src          = script;
     buildInputs  = [ quickspecBench.env ];
     unpackPhase  = "true";  # Nothing to do
@@ -137,9 +106,10 @@ rec {
     checkPhase   = ''
       true
     '';
+
     installPhase = ''
       mkdir -p "$out/bin"
-      cp "$src" "$out/bin/mlspecBench"
+      cp "$src" "$out/bin/hashspecBench"
     '';
   };
 }
