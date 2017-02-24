@@ -35,13 +35,4 @@
       (case  Z     (S Z))
       (case (S y2) (times x (exp x y)))))
 
-(define-fun-rec
-  max
-    ((x Nat) (y Nat)) Nat
-    (match x
-      (case  Z     y)
-      (case (S x2) (match y
-         (case  Z     (S x2))
-         (case (S y2) (S (max x2 y2)))))))
-
 (check-sat)
