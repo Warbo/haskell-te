@@ -5,18 +5,12 @@
 with builtins;
 let path = if any (x: x.prefix == "te-benchmarks") nixPath
               then <te-benchmarks>
-              else let commit = {
-                         rev    = "d405195";
-                         sha256 = "0xxm7bak1jkl8h2impz6c2xlgzafkqpb21b56ardd5zijbgfs57h";
-                       };
-                    in if getEnv "OFFLINE" == ""
-                          then fetchFromGitHub (commit // {
-                            owner  = "Warbo";
-                            repo   = "theory-exploration-benchmarks";
-                          })
-                          else fetchgit (commit // {
-                            url = /home/chris/Programming/TheoryExplorationBenchmark;
-                          });
+              else fetchFromGitHub {
+                     owner  = "Warbo";
+                     repo   = "theory-exploration-benchmarks";
+                     rev    = "d405195";
+                     sha256 = "0jjv4pdmhazcx86gb3yq28zq7nhbgp5cqiplv4ypnzw5kjb6wnxz";
+                   };
  in rec {
   inherit (callPackage path {
             inherit haskellPackages pkgs;
