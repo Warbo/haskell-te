@@ -254,16 +254,16 @@ rawScript = writeScript "quickspec-bench" ''
       export GEN_INPUT="${qsGenInput}"
       export       CMD="${writeScript "run-cmd" ''
                             #!/usr/bin/env bash
-                             INPUT=$(cat)
+                            INPUT=$(cat)
                             RUNNER=$(echo "$INPUT" | jq -r '.runner')
-                              CODE=$(echo "$INPUT" | jq -r '.code')
+                            HASKELL_PROGRAM_CODE=$(echo "$INPUT" | jq -r '.code')
 
                             if [[ -n "$EXPLORATION_MEM" ]]
                             then
                               echo "Limiting memory to '$EXPLORATION_MEM'" 1>&2
                               export MAX_KB="$EXPLORATION_MEM"
                             fi
-                            echo "$CODE" | "${timeout}/bin/withTimeout" $RUNNER
+                            echo "$HASKELL_PROGRAM_CODE" | "${timeout}/bin/withTimeout" $RUNNER
                           ''}"
 
       benchmark
@@ -272,9 +272,9 @@ rawScript = writeScript "quickspec-bench" ''
     echo "No sample size given, using whole signature" 1>&2
     OUTPUT=$("${genSig2}" < "$ANNOTATED")
 
-    export       CMD=$(echo "$OUTPUT" | jq -r '.runner')
-    export      CODE=$(echo "$OUTPUT" | jq -r '.code')
-    export GEN_INPUT="${writeScript "run-code" ''echo "$CODE"''}"
+    export CMD=$(echo "$OUTPUT" | jq -r '.runner')
+    export HASKELL_PROGRAM_CODE=$(echo "$OUTPUT" | jq -r '.code')
+    export GEN_INPUT="${writeScript "run-code" ''echo "$HASKELL_PROGRAM_CODE"''}"
 
     export NIXENV=$(echo "$OUTPUT" | jq -r '.env')
     INFO="" benchmark
