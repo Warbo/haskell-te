@@ -75,7 +75,7 @@ let pkgs = rec {
           benchmark timeout;
 
   annotate           = callPackage ./annotate.nix           {};
-
+  buckets            = callPackage ./buckets.nix            {};
   cluster            = callPackage ./cluster.nix            {};
   dumpPackage        = callPackage ./dumpPackage.nix        {};
   dumpToNix          = callPackage ./dumpToNix.nix          {};

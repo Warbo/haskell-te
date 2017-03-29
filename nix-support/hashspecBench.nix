@@ -3,59 +3,30 @@
 
 rec {
 
-  inEnvScript = writeScript "mlspecBench-inenvscript" ''
-    #!${bash}/bin/bash
-    set -e
-    set -o pipefail
+  inEnvScript = runCommand "hashspecBench-inenvscript"
+    {
+      raw = writeScript "hashspecBench-inenvscript-raw" ''
+        #!/usr/bin/env bash
 
-    # Perform clustering
-    clusters="$DIR/clusters.json"
-    export clusters
+        NIX_EVAL_EXTRA_IMPORTS='[("tip-benchmark-sig", "A")]'
+        export NIX_EVAL_EXTRA_IMPORTS
 
-    INPUT=$(cat)
-    [[ -n "$CLUSTERS" ]] || {
-      CLUSTERS=$(echo "$INPUT" | jq -s '. | length | sqrt | . + 0.5 | floor')
-      export CLUSTERS
+        if [[ -n "$EXPLORATION_MEM" ]]
+        then
+          echo "Limiting memory to '$EXPLORATION_MEM'" 1>&2
+          export MAX_KB="$EXPLORATION_MEM"
+        fi
 
-      echo "No cluster count given; using $CLUSTERS (sqrt of sample size)" 1>&2
+        echo "Exploring" 1>&2
+        hashBucket | withTimeout "${explore.explore-theories}" | reduce-equations
+      '';
+      buildInputs = [ makeWrapper ];
     }
-    ${mlspecBench.assertNumeric "$CLUSTERS"
-                                "CLUSTERS should contain number of clusters"}
-    clCount="$CLUSTERS"
-    export clCount
-
-    echo "Calculating SHA256 checksums of names" 1>&2
-    while read -r ENTRY
-    do
-      SHA=$(echo "$ENTRY" | jq -r '.name' | sha256sum | cut -d ' ' -f1 |
-            tr '[:lower:]' '[:upper:]')
-
-      # Convert hex to decimal. Use large BC_LINE_LENGTH to avoid line-breaking.
-      SHADEC=$(echo "ibase=16; $SHA" | BC_LINE_LENGTH=5000 bc)
-
-      # Calculate modulo, now that both numbers are in decimal
-      NUM=$(echo "$SHADEC % $CLUSTERS" | BC_LINE_LENGTH=5000 bc)
-
-      # Cluster numbers start from 1
-      echo "$ENTRY" | jq --argjson num "$NUM" '. + {"cluster": ($num + 1)}'
-    done < <(echo "$INPUT" | jq -c '.[]') | jq -s '.' > "$clusters"
-
-    NIX_EVAL_EXTRA_IMPORTS='[("tip-benchmark-sig", "A")]'
-    export NIX_EVAL_EXTRA_IMPORTS
-
-    export SIMPLE=1
-
-    if [[ -n "$EXPLORATION_MEM" ]]
-    then
-      echo "Limiting memory to '$EXPLORATION_MEM'" 1>&2
-      export MAX_KB="$EXPLORATION_MEM"
-    fi
-
-    echo "Exploring" 1>&2
-    "${writeScript "format" format.script}" < "$clusters"        |
-      "${timeout}/bin/withTimeout" "${explore.explore-theories}" |
-      "${reduce-equations}/bin/reduce-equations"
-  '';
+    ''
+      makeWrapper "$raw" "$out" --prefix PATH : "${reduce-equations}/bin" \
+                                --prefix PATH : "${timeout}/bin"          \
+                                --prefix PATH : "${buckets.hashes}/bin"
+    '';
 
   script = runCommand "hashspecBench" { buildInputs = [ makeWrapper ]; } ''
     makeWrapper "${rawScript}" "$out"                                     \

@@ -1,23 +1,26 @@
-{ drvFromScript, ensureVars, lib }:
+{ drvFromScript, ensureVars, lib, writeScript }:
 with builtins;
 with lib;
 
 rec {
   script = ''
-    set -e
-
-    ${ensureVars [ "clusters" "clCount" ]}
-
     [[ -f "$clusters" ]] || {
       echo "Given cluster file '$clusters' doesn't exist" 1>&2
       exit 2
     }
+    "${fromStdin}" < "$clusters"
+  '';
 
-    # Select entries which have a "cluster" attribute matching the given number, a
-    # non-null "type" attribute and a true "quickspecable" attribute.
+  fromStdin = writeScript "format-stdin" ''
+    set -e
+
+    INPUT=$(cat)
+
+    # Select entries which have a "cluster" attribute matching the given number,
+    # a non-null "type" attribute and a true "quickspecable" attribute.
     FILTER='map(select(.cluster == $cls and .type != null and .quickspecable))'
     function clusterContent {
-      jq -c --argjson cls "$1" "$FILTER" < "$clusters"
+      echo "$INPUT" | jq -c --argjson cls "$1" "$FILTER"
     }
 
     function postProcess {
