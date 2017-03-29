@@ -1,12 +1,13 @@
-{ bash, bc, explore, format, glibcLocales, makeWrapper, mlspecBench, nixEnv,
-  quickspecBench, reduce-equations, runCommand, stdenv, timeout, writeScript }:
+{ bash, buckets, explore, format, glibcLocales, makeWrapper, mlspecBench,
+  nixEnv, quickspecBench, reduce-equations, runCommand, stdenv, timeout,
+  writeScript }:
 
 rec {
 
   inEnvScript = runCommand "hashspecBench-inenvscript"
     {
       raw = writeScript "hashspecBench-inenvscript-raw" ''
-        #!/usr/bin/env bash
+        #!${bash}/bin/bash
 
         NIX_EVAL_EXTRA_IMPORTS='[("tip-benchmark-sig", "A")]'
         export NIX_EVAL_EXTRA_IMPORTS
@@ -31,7 +32,6 @@ rec {
   script = runCommand "hashspecBench" { buildInputs = [ makeWrapper ]; } ''
     makeWrapper "${rawScript}" "$out"                                     \
       --prefix PATH :         "${quickspecBench.env}/bin"                 \
-      --prefix PATH :         "${bc}/bin"                                 \
       --set    LANG           'en_US.UTF-8'                               \
       --set    LOCALE_ARCHIVE '${glibcLocales}/lib/locale/locale-archive' \
       --set    NIX_EVAL_HASKELL_PKGS "${quickspecBench.customHs}"         \

@@ -62,7 +62,7 @@ rec {
         jq -e --argjson o "$O" '. == [[$o + {"cluster":1}]]'
     '';
     installPhase = ''
-      mkdir "$out/bin"
+      mkdir -p "$out/bin"
       makeWrapper "$raw" "$out/bin/hashBucket" --prefix PATH : "${jq}/bin" \
                                                --prefix PATH : "${bc}/bin"
     '';
