@@ -13,7 +13,7 @@ with rec {
 
 with builtins; with nixpkgs.lib;
 
-with { inherit (nixpkgs) writeScript; };
+with { inherit (nixpkgs) buildEnv writeScript; };
 
 # External dependencies, and the helpers needed to load them
 
@@ -104,7 +104,12 @@ let pkgs = rec {
   getDepsScript   = callPackage ./getDepsScript.nix
                       { inherit (haskellPackages) GetDeps;                 };
   tests           = callPackage ./tests.nix
-                      { inherit pkgs;                                      };
+                      { pkgs = nixpkgs // pkgs;                            };
+
+  testSuite       = buildEnv {
+    name  = "haskell-te-tests";
+    paths = collect isDerivation tests;
+  };
 
   annotated = pkgDir:
     let nixed  = toString (nixedHsPkg pkgDir);
