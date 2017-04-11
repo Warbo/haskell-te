@@ -107,10 +107,9 @@ let pkgs = rec {
   tests           = callPackage ./tests.nix
                       { pkgs = nixpkgs // pkgs;                            };
 
-  testSuite       = buildEnv {
-    name  = "haskell-te-tests";
-    paths = collect isDerivation tests;
-  };
+  testSuite       = runCommand "haskell-te-tests"
+                      { deps = collect isDerivation tests; }
+                      ''echo "true" > "$out"'';
 
   annotated = pkgDir:
     let nixed  = toString (nixedHsPkg pkgDir);
