@@ -241,7 +241,7 @@ let pkgs = rec {
   # Remove cruft, like "override" and "overrideDerivation"
   stripOverrides = as:
     if isAttrs as
-       then mapAttrs (n: strip)
+       then mapAttrs (n: stripOverrides)
                      (filterAttrs (n: v: !(elem n ["override"
                                                    "overrideDerivation"]))
                                   as)
