@@ -14,8 +14,14 @@ rec {
 
       INPUT=$(cat)
 
+      # Wrap up raw objects into an array
+      if echo "$INPUT" | jq -r 'type' | grep 'object' > /dev/null
+      then
+        INPUT=$(echo "$INPUT" | jq -s '.')
+      fi
+
       [[ -n "$CLUSTERS" ]] || {
-        CLUSTERS=$(echo "$INPUT" | jq -s '. | length | sqrt | . + 0.5 | floor')
+        CLUSTERS=$(echo "$INPUT" | jq 'length | sqrt | . + 0.5 | floor')
         export CLUSTERS
 
         echo "No cluster count given; using $CLUSTERS (sqrt of sample size)" 1>&2
@@ -30,7 +36,7 @@ rec {
         do
           NAME=$(echo "$ENTRY" | jq -r '.name')
 
-          SHA=$(echo "clusters-$clCount-name-$NAME-input-$INPUT" |
+          SHA=$(echo "clusters-$clCount-name-$NAME-entropy-input-$INPUT" |
                 sha256sum | cut -d ' ' -f1 | tr '[:lower:]' '[:upper:]')
 
           # Convert hex to decimal. Use large BC_LINE_LENGTH to avoid line-
@@ -63,7 +69,7 @@ rec {
     '';
     installPhase = ''
       mkdir -p "$out/bin"
-      makeWrapper "$raw" "$out/bin/hashBucket" --prefix PATH : "${jq}/bin" \
+      makeWrapper "$src" "$out/bin/hashBucket" --prefix PATH : "${jq}/bin" \
                                                --prefix PATH : "${bc}/bin"
     '';
   };
