@@ -92,6 +92,7 @@ let pkgs = rec {
   runScript          = callPackage ./runScript.nix          {};
   runTypes           = callPackage ./runTypes.nix           {};
   runTypesScript     = callPackage ./runTypesScript.nix     {};
+  sampling           = callPackage ./sampling.nix           {};
   tipBenchmarks      = callPackage ./tipBenchmarks.nix      {
     pkgs = nixpkgs-2016-09;
   };
@@ -183,50 +184,6 @@ let pkgs = rec {
 
   defaultClusters = [ 1 2 4 ];
 
-  sampleNames = sizes: reps:
-    genAttrs (map toString sizes) (size:
-      map (rep: runCommand "sample-size-${size}-rep-${rep}"
-                  {
-                    buildInputs = [ tipBenchmarks.tools ];
-                  }
-                  ''
-                    choose_sample "${size}" "${rep}" > "$out"
-                  '')
-          (map toString (range 1 reps)));
-
-  drawSamples = sizes: reps:
-    with rec {
-      allAnnotated  = annotated (toString tipBenchmarks.tip-benchmark-haskell);
-
-      jqFilter      = writeScript "filter.jq" ''
-        map(select(.quickspecable)) | map(select(.name as $name | $keepers | map($name == .) | any))
-      '';
-
-      filterToNames = names: runCommand "annotated-samples"
-        {
-          inherit allAnnotated names;
-          buildInputs = [ jq ];
-        }
-        ''
-          KEEPERS=$(jq -R '.' < "$names" | jq -s '.')
-          jq --argjson keepers "$KEEPERS" -f "${jqFilter}" < "$allAnnotated" \
-                                                           > "$out"
-        '';
-    };
-    mapAttrs (_: map filterToNames) (sampleNames sizes reps);
-
-  bucketSamples = mapAttrs (_: map (sample: {
-    hashSpec = runCommand "hash-bucketed-sample"
-                 {
-                   inherit sample;
-                   buildInputs = [ buckets.hashes ];
-                 }
-                 ''
-                   hashBucket < "$sample" > "$out"
-                 '';
-    mlSpec   = error "mlSpec bucketing not implemented";
-  }));
-
   ensureVars = vars: concatStringsSep "\n"
                        (map (v: ''
                                   [[ -n "${"$" + v}" ]] || {
@@ -280,6 +237,15 @@ let pkgs = rec {
               in if unsuf == s
                     then s
                     else strip unsuf;
+
+  # Remove cruft, like "override" and "overrideDerivation"
+  stripOverrides = as:
+    if isAttrs as
+       then mapAttrs (n: strip)
+                     (filterAttrs (n: v: !(elem n ["override"
+                                                   "overrideDerivation"]))
+                                  as)
+       else as;
 };
 
 in nixpkgs // pkgs
