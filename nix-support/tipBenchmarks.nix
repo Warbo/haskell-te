@@ -1,4 +1,4 @@
-{ bash, callPackage, defaultClusters, fetchFromGitHub, fetchgit,
+{ annotated, bash, callPackage, defaultClusters, fetchFromGitHub, fetchgit,
   haskellPackages, nixFromCabal, pkgs, processPackage, runScript, stdenv,
   writeScript }:
 
@@ -24,4 +24,6 @@ let path = if any (x: x.prefix == "te-benchmarks") nixPath
   process = { clusters ? defaultClusters, sampleSize ? null }:
               processPackage { inherit clusters sampleSize; }
                              pkg.name pkg;
+
+  annotatedAsts = annotated (toString tip-benchmark-haskell);
 }
