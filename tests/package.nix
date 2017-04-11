@@ -1,3 +1,3 @@
 defs: with defs;
 
-testRun "Can build package" null { buildInputs = [ (import ./..) ]; } "exit 0"
+testRun "Can build package" null { buildInputs = [ package ]; } "exit 0"
