@@ -72,7 +72,7 @@ let pkgs = rec {
           testPackages testRec testRun testWrap;
 
   inherit (callPackage ./benchmark.nix { inherit havePath; })
-          benchmark timeout;
+          benchmark simpleBench timeout;
 
   annotate           = callPackage ./annotate.nix           {};
   buckets            = callPackage ./buckets.nix            {};

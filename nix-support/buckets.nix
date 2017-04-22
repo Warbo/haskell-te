@@ -1,12 +1,13 @@
 # Commands which split their input into various "buckets", e.g. based on
 # clustering. We don't do any exploration or reduction, we just look at the
 # resulting buckets.
-{ bash, bc, format, jq, makeWrapper, stdenv, writeScript }:
+{ bash, bc, cluster, format, jq, makeWrapper, ghc, runWeka, stdenv,
+  writeScript }:
 
 rec {
   hashes = stdenv.mkDerivation {
     name        = "hashBuckets";
-    buildInputs = [ bc jq makeWrapper ];
+    buildInputs = [ bc ghc jq makeWrapper ];
     src         = writeScript "hashBuckets-raw" ''
       #!${bash}/bin/bash
       set -e
@@ -18,6 +19,18 @@ rec {
       if echo "$INPUT" | jq -r 'type' | grep 'object' > /dev/null
       then
         INPUT=$(echo "$INPUT" | jq -s '.')
+      fi
+
+      if [[ -n "$CLUSTER_SIZE" ]]
+      then
+        echo "Using cluster size of $CLUSTER_SIZE" 1>&2
+        LENGTH=$(echo "$INPUT" | jq 'length')
+        [[ -n "$LENGTH" ]] || LENGTH=0
+
+        PROG=$(echo "main = print (ceiling (($LENGTH :: Float) / $CLUSTER_SIZE) :: Int)")
+        CLUSTERS=$(echo "$PROG" | runhaskell)
+
+        echo "Using $CLUSTERS clusters of length $CLUSTER_SIZE" 1>&2
       fi
 
       [[ -n "$CLUSTERS" ]] || {
@@ -60,19 +73,46 @@ rec {
     checkPhase   = ''
       set -e
       echo "Testing empty input" 1>&2
-      echo "" | "$src" 1 1 | jq -e 'length | . == 0'
+      echo "" | CLUSTER_SIZE=10 "$src" 1 1 | jq -e 'length | . == 0'
 
       echo "Testing single input" 1>&2
       O='{"name":"foo", "type": "T", "quickspecable": true}'
-      echo "[$O]" | "$src" 1 1 |
+      echo "[$O]" | CLUSTER_SIZE=10 "$src" 1 1 |
         jq -e --argjson o "$O" '. == [[$o + {"cluster":1}]]'
     '';
     installPhase = ''
       mkdir -p "$out/bin"
       makeWrapper "$src" "$out/bin/hashBucket" --prefix PATH : "${jq}/bin" \
-                                               --prefix PATH : "${bc}/bin"
+                                               --prefix PATH : "${bc}/bin" \
+                                               --prefix PATH : "${ghc}/bin"
     '';
   };
 
-  recurrent = abort "FIXME: Not implemented";
+  recurrent = stdenv.mkDerivation rec {
+    inherit jq runWeka;
+    name        = "recurrent-clustering-bucketing";
+    buildInputs = [ makeWrapper ];
+    src         = writeScript "recurrent-clustering-raw" ''
+      #!/usr/bin/env bash
+      set -e
+      set -o pipefail
+
+      # Perform clustering
+      CLUSTERED=$(${cluster.clusterScript})
+
+      clCount=$(echo "$CLUSTERED" | jq 'map(.cluster) | max')
+      export clCount
+
+      export SIMPLE=1
+      echo "$CLUSTERED" | "${format.fromStdin}"
+    '';
+
+    unpackPhase  = "true";  # Nothing to unpack
+    installPhase = ''
+      mkdir -p "$out/bin"
+      makeWrapper "$src" "$out/bin/recurrentBucket" \
+        --prefix PATH : "$jq/bin" \
+        --prefix PATH : "$runWeka/bin"
+    '';
+  };
 }

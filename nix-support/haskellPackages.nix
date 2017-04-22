@@ -94,8 +94,8 @@ hsOverride = self: super:
                                        (fetchFromGitHub {
                                          owner  = "Warbo";
                                          repo   = "nix-eval";
-                                         rev    = "2892a2cf2fbbf7275ffdf722059fb0399fc8ca49";
-                                         sha256 = "1wssn7grrwwg1pl1z6s6w73wkdn70mm1dbz98sr9r5crliwyf585";
+                                         rev    = "53d18a2";
+                                         sha256 = "0rplpygiqn6f9aqi09dr67xidb1bks9xnxxrpzi3bq67bdvjzvh1";
                                        })
                                        {};
 

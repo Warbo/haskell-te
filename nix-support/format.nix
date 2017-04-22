@@ -20,7 +20,7 @@ rec {
     # a non-null "type" attribute and a true "quickspecable" attribute.
     FILTER='map(select(.cluster == $cls and .type != null and .quickspecable))'
     function clusterContent {
-      echo "$INPUT" | jq -c --argjson cls "$1" "$FILTER"
+      echo "$INPUT" | jq -c --argjson cls "$1" "$FILTER | map(del(.features))"
     }
 
     function postProcess {

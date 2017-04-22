@@ -45,12 +45,18 @@ getCmd = writeScript "getCmd.hs" ''
 '';
 
 customHs = writeScript "custom-hs.nix" ''
-  # Provides a set of Haskell packages for use by nix-eval. Uses OUT_DIR env var
-  # to include the package generated from smtlib data
+    # Uses OUT_DIR env var to include the package generated from smtlib data
+    (import <nixpkgs> {}).callPackage "${augmentedHs}" {
+      hsDir = builtins.getEnv "OUT_DIR";
+    }
+  '';
+
+augmentedHs = writeScript "augmented-hs.nix" ''
+  # Provides a set of Haskell packages for use by nix-eval.
+  { hsDir }:
   with import ${./..}/nix-support {};
   with builtins;
   let hsName = "tip-benchmark-sig";  # The name used by full_haskell_package
-      hsDir  = getEnv "OUT_DIR";
       hsPkgs = haskellPackages.override {
         overrides = self: super:
           # Include existing overrides, along with our new one

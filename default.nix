@@ -14,5 +14,8 @@ with {
 
   # Our stable API
   inherit (allDefs)
-    buckets drawSamples package testSuite tipBenchmarks;
+    buckets package testSuite tipBenchmarks;
+
+  inherit (allDefs.sampling)
+    drawSamples;
 }
