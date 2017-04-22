@@ -93,6 +93,7 @@ let pkgs = rec {
   runTypes           = callPackage ./runTypes.nix           {};
   runTypesScript     = callPackage ./runTypesScript.nix     {};
   sampling           = callPackage ./sampling.nix           {};
+  sta                = callPackage ./sta.nix                {};
   tipBenchmarks      = callPackage ./tipBenchmarks.nix      {
     pkgs = nixpkgs-2016-09;
   };

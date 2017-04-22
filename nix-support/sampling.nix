@@ -1,6 +1,6 @@
 # Sampling from tipBenchmarks, bucketing, etc.
 { buckets, haskellPackages, jq, lib, pythonPackages, quickspecBench, runCommand,
-  simpleBench, tipBenchmarks, withNix, writeScript }:
+  simpleBench, sta, tipBenchmarks, withNix, writeScript }:
 
 with builtins;
 with lib;
@@ -112,6 +112,45 @@ rec {
                                              };
                                              mean = mkMean fractions;
                                            })));
+
+  sampleTimes = mapAttrs (_: reps: with rec {
+                             names = attrNames (head reps).runtimes;
+                           };
+                           genAttrs names
+                                    (name: map (rep: rep.runtimes."${name}")
+                                               reps));
+
+  averageTimes = samples:
+    mapAttrs (size: mapAttrs (type: results:
+                                runCommand "averages-${size}-${type}"
+                                  {
+                                    inherit results;
+                                    buildInputs = [ jq sta ];
+                                  }
+                                  ''
+                                    function times() {
+                                      for R in $results
+                                      do
+                                        jq -r '.time' < "$R"
+                                      done
+                                    }
+
+                                    function collect() {
+                                      jq -s 'reduce .[] as $x ({}; . + $x)'
+                                    }
+
+                                    times                 |
+                                      sta --q --transpose |
+                                      while read -r ENTRY
+                                      do
+                                        NAME=$(echo "$ENTRY" | cut -f1)
+                                         VAL=$(echo "$ENTRY" | cut -f2)
+                                        jq -n --arg name "$NAME" \
+                                              --arg val  "$VAL"  \
+                                              '{($name) : $val}'
+                                      done | collect > "$out"
+                                  ''))
+             (sampleTimes samples);
 
   drawSamples = { sizes, reps ? 1, bucketSizes ? [] }:
     genAttrs (map toString sizes) (size:
