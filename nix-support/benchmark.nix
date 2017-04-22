@@ -28,7 +28,7 @@ rec {
       import tempfile
 
       def msg(s):
-        sys.stdout.write(s + "\n")
+        sys.stderr.write(s + "\n")
 
       def containsErrors(s):
         for snippet in ["jq: error", "MLSpec: Failed", "syntax error",
