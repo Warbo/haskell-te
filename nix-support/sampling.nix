@@ -6,6 +6,64 @@ with builtins;
 with lib;
 
 rec {
+  sampleNames = size: rep:
+    runCommand "sample-size-${size}-rep-${rep}"
+      {
+        buildInputs = [ tipBenchmarks.tools ];
+      }
+      ''
+        choose_sample "${size}" "${rep}" > "$out"
+      '';
+
+  quickspecSample = size: rep: asts:
+    with rec {
+      # These environment variables are used by nix-eval, so we
+      # can tell it where to find the benchmarks package
+      env = {
+        NIX_EVAL_HASKELL_PKGS = quickspecBench.customHs;
+        OUT_DIR = tipBenchmarks.tip-benchmark-haskell;
+      };
+
+      sig = runCommand "sig-for-quickspec"
+              (withNix (env // {
+                inherit asts;
+                buildInputs = [ (haskellPackages.ghcWithPackages
+                                  (h: [ h.mlspec h.nix-eval ])) ];
+              }))
+              ''
+                DATA=$(runhaskell "${quickspecBench.getCmd}" < "$asts")
+
+                # Running this Haskell code (with no input) will explore the
+                # functions given in our sampled ASTs
+                mkdir "$out"
+                echo "$DATA" | jq -r '.code' > "$out/code.hs"
+
+                # This script will run GHC with all of the relevant options
+                RUNNER=$(echo "$DATA" | jq -r '.runner')
+                printf '#!/usr/bin/env bash\n%s < "%s"' "$RUNNER"      \
+                                                        "$out/code.hs" \
+                                                > "$out/runner.sh"
+                chmod +x "$out/runner.sh"
+
+                # This provides an environment for running the above
+                echo "$DATA" | jq -r '.env' > "$out/env.nix"
+              '';
+    };
+    runCommand "quickSpec-size-${size}-rep-${rep}"
+      (env // {
+        buildInputs = [
+          ((import "${sig}/env.nix").override (old: {
+            hsPkgs = import "${quickspecBench.augmentedHs}" {
+              hsDir = "${tipBenchmarks.tip-benchmark-haskell}";
+            };
+          }))
+        ];
+        inherit sig;
+      })
+      ''
+        "${simpleBench}" "$sig/runner.sh" > "$out"
+      '';
+
   bucketLosses = { sampleSizes, bucketSizes, reps }:
     with rec {
       data = drawSamples {
@@ -113,116 +171,59 @@ rec {
                                              mean = mkMean fractions;
                                            })));
 
-  sampleTimes = mapAttrs (_: reps: with rec {
-                             names = attrNames (head reps).runtimes;
-                           };
-                           genAttrs names
-                                    (name: map (rep: rep.runtimes."${name}")
-                                               reps));
+  averageCollated = results: runCommand "time-averages"
+    {
+      inherit results;
+      buildInputs = [ jq sta ];
+    }
+    ''
+      function stats() {
+        for R in $results
+        do
+          jq -r '.time' < "$R"
+        done | sta --q --transpose
+      }
 
-  averageTimes = samples:
-    mapAttrs (size: mapAttrs (type: results:
-                                runCommand "averages-${size}-${type}"
-                                  {
-                                    inherit results;
-                                    buildInputs = [ jq sta ];
-                                  }
-                                  ''
-                                    function times() {
-                                      for R in $results
-                                      do
-                                        jq -r '.time' < "$R"
-                                      done
-                                    }
+      function staToJson() {
+        while read -r ENTRY
+        do
+          NAME=$(echo "$ENTRY" | cut -f1)
+           VAL=$(echo "$ENTRY" | cut -f2)
+          jq -n --arg name "$NAME" \
+                --arg val  "$VAL"  \
+                '{($name) : $val}'
+        done |  jq -s 'reduce .[] as $x ({}; . + $x)'
+      }
 
-                                    function collect() {
-                                      jq -s 'reduce .[] as $x ({}; . + $x)'
-                                    }
-
-                                    times                 |
-                                      sta --q --transpose |
-                                      while read -r ENTRY
-                                      do
-                                        NAME=$(echo "$ENTRY" | cut -f1)
-                                         VAL=$(echo "$ENTRY" | cut -f2)
-                                        jq -n --arg name "$NAME" \
-                                              --arg val  "$VAL"  \
-                                              '{($name) : $val}'
-                                      done | collect > "$out"
-                                  ''))
-             (sampleTimes samples);
+      stats | staToJson > "$out"
+    '';
 
   drawSamples = { sizes, reps ? 1, bucketSizes ? [] }:
-    genAttrs (map toString sizes) (size:
-      map (rep: rec {
-            runtimes = {
-              quickSpec = with rec {
-                # These environment variables are used by nix-eval, so we
-                # can tell it where to find the benchmarks package
-                env = {
-                  NIX_EVAL_HASKELL_PKGS = quickspecBench.customHs;
-                  OUT_DIR = tipBenchmarks.tip-benchmark-haskell;
-                };
+    genAttrs (map toString sizes) (size: rec {
 
-                sig = runCommand "sig-for-quickspec"
-                  (withNix (env // {
-                    inherit asts;
-                    buildInputs = [ (haskellPackages.ghcWithPackages
-                                      (h: [ h.mlspec h.nix-eval ])) ];
-                  }))
-                  ''
-                    DATA=$(runhaskell "${quickspecBench.getCmd}" < "$asts")
+      # One iteration for each rep; this is our raw data
+      iterations =
+        map (rep: rec {
+              iterationTimes = { quickSpec = quickspecSample size rep asts; };
 
-                    # Running this Haskell code (with no input) will explore the
-                    # functions given in our sampled ASTs
-                    mkdir "$out"
-                    echo "$DATA" | jq -r '.code' > "$out/code.hs"
+              names = sampleNames size rep;
+              asts  = sampleAsts names;
 
-                    # This script will run GHC with all of the relevant options
-                    RUNNER=$(echo "$DATA" | jq -r '.runner')
-                    printf '#!/usr/bin/env bash\n%s < "%s"' "$RUNNER"      \
-                                                            "$out/code.hs" \
-                                                          > "$out/runner.sh"
-                    chmod +x "$out/runner.sh"
-
-                    # This provides an environment for running the above
-                    echo "$DATA" | jq -r '.env' > "$out/env.nix"
-                  '';
+              buckets = bucketSample {
+                inherit asts bucketSizes;
+                inherit (theorems) possible;
               };
-              runCommand "quickSpec-size-${size}-rep-${rep}"
-                (env // {
-                  buildInputs = [
-                    ((import "${sig}/env.nix").override (old: {
-                        hsPkgs = import "${quickspecBench.augmentedHs}" {
-                          hsDir = "${tipBenchmarks.tip-benchmark-haskell}";
-                        };
-                    }))
-                  ];
-                  inherit sig;
-                })
-                ''
-                  "${simpleBench}" "$sig/runner.sh" > "$out"
-                '';
-            };
 
-            names    = runCommand "sample-size-${size}-rep-${rep}"
-                         {
-                           buildInputs = [ tipBenchmarks.tools ];
-                         }
-                         ''
-                           choose_sample "${size}" "${rep}" > "$out"
-                         '';
+              theorems = { possible = theoremsForNames names; };
+            })
+            (map toString (range 1 reps));
 
-            asts     = sampleAsts names;
+      collatedTimes = genAttrs (attrNames (head iterations).iterationTimes)
+                               (name: map (rep: rep.iterationTimes."${name}")
+                                          iterations);
 
-            buckets  = bucketSample {
-              inherit asts bucketSizes;
-              inherit (theorems) possible;
-            };
-
-            theorems = { possible = theoremsForNames names; };
-          })
-          (map toString (range 1 reps)));
+      averageTimes = mapAttrs (_: averageCollated) collatedTimes;
+    });
 
   sampleAsts =
     with rec {
