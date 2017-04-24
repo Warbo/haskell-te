@@ -22,7 +22,12 @@ rec {
       env = {
         NIX_EVAL_HASKELL_PKGS = quickspecBench.customHs;
         OUT_DIR = tipBenchmarks.tip-benchmark-haskell;
-      };
+      } // (if getEnv "MAX_SECS" == ""
+              then {}
+              else { MAX_SECS = getEnv "MAX_SECS"; })
+        // (if getEnv "MAX_KB" == ""
+              then {}
+              else { MAX_KB = getEnv "MAX_KB"; });
 
       sig = runCommand "sig-for-quickspec"
               (withNix (env // {
