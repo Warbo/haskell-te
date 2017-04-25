@@ -6,6 +6,40 @@ with builtins;
 with lib;
 
 rec {
+  # These environment variables are used by nix-eval, so we
+  # can tell it where to find the benchmarks package
+  env = {
+    NIX_EVAL_HASKELL_PKGS = quickspecBench.customHs;
+    OUT_DIR = tipBenchmarks.tip-benchmark-haskell;
+  } // (if getEnv "MAX_SECS" == ""
+           then {}
+           else { MAX_SECS = getEnv "MAX_SECS"; })
+    // (if getEnv "MAX_KB" == ""
+           then {}
+           else { MAX_KB = getEnv "MAX_KB"; });
+
+  qsEnv =
+    with {
+      extractedEnv = runCommand "quickspec-env.nix"
+        (withNix (env // {
+          asts = tipBenchmarks.annotatedAsts;
+          buildInputs = [ (haskellPackages.ghcWithPackages
+                            (h: [ h.mlspec h.nix-eval ])) ];
+        }))
+        ''
+          # This provides an environment for running QuickSpec, without needing
+          # to compile while running (which would mess up any benchmarking)
+          jq 'map(select(.quickspecable))' < "$asts" |
+            runhaskell "${quickspecBench.getCmd}"    |
+            jq -r '.env'                             > "$out"
+        '';
+    };
+    ((import "${extractedEnv}").override (old: {
+      hsPkgs = import "${quickspecBench.augmentedHs}" {
+        hsDir = "${tipBenchmarks.tip-benchmark-haskell}";
+      };
+    }));
+
   sampleNames = size: rep:
     runCommand "sample-size-${size}-rep-${rep}"
       {
@@ -17,18 +51,6 @@ rec {
 
   quickspecSample = size: rep: asts:
     with rec {
-      # These environment variables are used by nix-eval, so we
-      # can tell it where to find the benchmarks package
-      env = {
-        NIX_EVAL_HASKELL_PKGS = quickspecBench.customHs;
-        OUT_DIR = tipBenchmarks.tip-benchmark-haskell;
-      } // (if getEnv "MAX_SECS" == ""
-              then {}
-              else { MAX_SECS = getEnv "MAX_SECS"; })
-        // (if getEnv "MAX_KB" == ""
-              then {}
-              else { MAX_KB = getEnv "MAX_KB"; });
-
       sig = runCommand "sig-for-quickspec"
               (withNix (env // {
                 inherit asts;
@@ -49,20 +71,11 @@ rec {
                                                         "$out/code.hs" \
                                                 > "$out/runner.sh"
                 chmod +x "$out/runner.sh"
-
-                # This provides an environment for running the above
-                echo "$DATA" | jq -r '.env' > "$out/env.nix"
               '';
     };
     runCommand "quickSpec-size-${size}-rep-${rep}"
       (env // {
-        buildInputs = [
-          ((import "${sig}/env.nix").override (old: {
-            hsPkgs = import "${quickspecBench.augmentedHs}" {
-              hsDir = "${tipBenchmarks.tip-benchmark-haskell}";
-            };
-          }))
-        ];
+        buildInputs = [ qsEnv ];
         inherit sig;
       })
       ''
