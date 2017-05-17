@@ -97,72 +97,6 @@ rec {
 
       bucketStrs = map toString bucketSizes;
 
-      /*
-      mcNemar = { possible, foundA, foundB }:
-        runCommand "mcnemar"
-        {
-          inherit possible foundA foundB;
-          buildInputs = [ pythonPackages.statsmodels pythonPackages.python ];
-          tester = writeScript "mcnemar.py" ''
-            #!/usr/bin/env python
-            import os
-            import numpy                                as np
-            import statsmodels.stats.contingency_tables as ctables
-
-            env   = os.environ
-            table = np.asarray([[env['A'], env['B']],
-                                [env['C'], env['D']]])
-
-            print repr(ctables.mcnemar(table, exact=True))
-          '';
-        }
-        ''
-          A=0  # Both found
-          B=0  # A found, not B
-          C=0  # B found, not A
-          D=0  # Neither found
-
-          while read -r THM
-          do
-            GOTA=N
-            GOTB=N
-
-            if grep -Fx "$THM" < "$foundA" > /dev/null
-            then
-              GOTA=Y
-            fi
-
-            if grep -Fx "$THM" < "$foundB" > /dev/null
-            then
-              GOTB=Y
-            fi
-
-            case "$GOTA$GOTB" in
-              YY)
-                A=$(( A + 1 ))
-                ;;
-              YN)
-                B=$(( B + 1 ))
-                ;;
-              NY)
-                C=$(( C + 1 ))
-                ;;
-              NN)
-                D=$(( D + 1 ))
-                ;;
-              *)
-                echo "Error: Unexpected table entry: '$GOTA' '$GOTB'" 1>&2
-                exit 1
-                ;;
-            esac
-
-          done < "$possible"
-
-          export A B C D
-          "$tester"
-        '';
-        */
-
       mkMean = iterations: runCommand "mean"
         {
           inherit iterations;
@@ -216,32 +150,51 @@ rec {
       stats | staToJson > "$out"
     '';
 
-  drawSamples = { sizes, reps ? 1, bucketSizes ? [] }:
-    genAttrs (map toString sizes) (size: rec {
+  resultsFor = args: analyseData (drawSamples args);
 
+  analyseData = given:
+    with rec {
+      # Store all of the given data, to make a "checkpoint" so reproducing our
+      # analysis is easier. Note this will force everything in 'given'.
+      rawData = writeScript "data-for-analysis.json" (toJSON given);
+
+      # Use data from the JSON file, to force its creation
+      storedData = trace "Analysing data from ${rawData}"
+                         (fromJSON (readFile "${rawData}"));
+    };
+    rec {
+      inherit rawData;
+      inherit (storedData) sizes reps bucketSizes iterations;
+
+      # Transpose data from size[rep].system to size.system[rep]
+      collatedTimes = if sizes == [] || reps == 0 then {} else
+        with {
+          aSample = head (head (attrValues iterations));
+        };
+        mapAttrs (sys: _: mapAttrs (size: map (rep: rep.outputs."${sys}"))
+                                   iterations)
+                 aSample.outputs;
+
+      averageTimes = mapAttrs (sys: mapAttrs (size: averageCollated))
+                              collatedTimes;
+    };
+
+  drawSamples = { sizes, reps ? 1, bucketSizes ? [] }: {
+    inherit sizes reps bucketSizes;
+    iterations = genAttrs (map toString sizes) (size:
       # One iteration for each rep; this is our raw data
-      iterations =
-        map (rep: rec {
-              iterationTimes = { quickSpec = quickspecSample size rep asts; };
-
-              names = sampleNames size rep;
-              asts  = sampleAsts names;
-
-              buckets = bucketSample {
-                inherit asts bucketSizes;
-                inherit (theorems) possible;
-              };
-
-              theorems = { possible = theoremsForNames names; };
-            })
-            (map toString (range 1 reps));
-
-      collatedTimes = genAttrs (attrNames (head iterations).iterationTimes)
-                               (name: map (rep: rep.iterationTimes."${name}")
-                                          iterations);
-
-      averageTimes = mapAttrs (_: averageCollated) collatedTimes;
-    });
+      map (repInt: rec {
+            rep     = toString repInt;
+            names   = sampleNames size rep;
+            asts    = sampleAsts names;
+            outputs = { quickSpec = quickspecSample size rep asts; };
+            buckets = bucketSample {
+              inherit asts bucketSizes possibleTheorems;
+            };
+            possibleTheorems = theoremsForNames names;
+          })
+          (range 1 reps));
+  };
 
   sampleAsts =
     with rec {
@@ -277,7 +230,7 @@ rec {
         jq -n --argjson F "$L_F" --argjson P "$L_P" '$F / $P' > "$out"
       '';
 
-  bucketSample = { asts, bucketSizes, possible }:
+  bucketSample = { asts, bucketSizes, possibleTheorems }:
     with rec {
       bkts  = buckets;
 
@@ -295,7 +248,7 @@ rec {
 
           theorems = rec {
             found    = theoremsForBuckets buckets;
-            fraction = theoremFraction { inherit found possible; };
+            fraction = theoremFraction { inherit found possibleTheorems; };
           };
         };
 
@@ -314,7 +267,7 @@ rec {
 
           theorems = rec {
             found    = theoremsForBuckets buckets;
-            fraction = theoremFraction { inherit found possible; };
+            fraction = theoremFraction { inherit found possibleTheorems; };
           };
         };
       };
