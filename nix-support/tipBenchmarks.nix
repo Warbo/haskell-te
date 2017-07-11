@@ -3,19 +3,20 @@
   writeScript }:
 
 with builtins;
-let path = if any (x: x.prefix == "te-benchmarks") nixPath
-              then <te-benchmarks>
-              else fetchFromGitHub {
-                     owner  = "Warbo";
-                     repo   = "theory-exploration-benchmarks";
-                     rev    = "b1051b4";
-                     sha256 = "07frjppdaq16jfybnbhs244yszb660yfmxf4mwmasx4a6gyxyy61";
-                   };
- in rec {
+rec {
+  path = if any (x: x.prefix == "te-benchmarks") nixPath
+            then <te-benchmarks>
+            else fetchFromGitHub {
+                   owner  = "Warbo";
+                   repo   = "theory-exploration-benchmarks";
+                   rev    = "2285111";
+                   sha256 = "0s4arrrvihzbh471zvrwj9x6j6fv500pv9q8vpbgvgj7zdd6np09";
+                 };
+
   inherit (callPackage path {
             inherit haskellPackages pkgs;
           })
-    tip-benchmarks tools tip-benchmark-smtlib tip-benchmark-haskell;
+    tip-benchmarks cache env tools tip-benchmark-smtlib tip-benchmark-haskell;
 
   pkgDef = nixFromCabal (toString tip-benchmark-haskell) null;
 
