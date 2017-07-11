@@ -123,25 +123,33 @@ mkGenInput = after:
           "${after}"
       '';
 
-genSig2 = writeScript "gen-sig2" ''
-  #!/usr/bin/env bash
+genSig2 = runCommand "gen-sig2-wrapped"
+  {
+    raw = writeScript "gen-sig2" ''
+      #!/usr/bin/env bash
 
-  jq 'map(select(.quickspecable))' > chosen
-  CHOSEN=$(nix-store --add chosen)
-  rm chosen
+      jq 'map(select(.quickspecable))' > chosen
+      CHOSEN=$(nix-store --add chosen)
+      rm chosen
 
-  export NIX_EVAL_HASKELL_PKGS="${customHs}"
-  nix-shell -p '(haskellPackages.ghcWithPackages
-                  (h: [ h.mlspec h.nix-eval ]))' \
-            --show-trace --run 'runhaskell ${getCmd}' < "$CHOSEN" |
-    jq --arg chosen "$CHOSEN" '. + { "chosen": $chosen }'
-'';
+      export NIX_EVAL_HASKELL_PKGS="${customHs}"
+      nix-shell -p '(import <support> {}).haskellPackages.ghcWithPackages
+                      (h: [ h.mlspec h.nix-eval ])' \
+                --show-trace --run 'runhaskell ${getCmd}' < "$CHOSEN" |
+        jq --arg chosen "$CHOSEN" '. + { "chosen": $chosen }'
+    '';
+    buildInputs = [ makeWrapper ];
+  }
+  ''
+    makeWrapper "$raw" "$out" \
+      --set NIX_PATH '${mkNixPath newNixPath}'
+  '';
 
 mkPkgInner = ''
   set -e
   echo "Creating Haskell package" 1>&2
   OUT_DIR=$(nix-build --show-trace --argstr "input" "$INPUT_TIP" \
-                      -E 'with import <nixpkgs> {};
+                      -E 'with import <support> {};
                           { input }:
                           stdenv.mkDerivation {
                             inherit input;
@@ -160,6 +168,21 @@ runSigCmd = ''
   ${runCmd { cmd = "$CMD"; }}
 '';
 
+mkNixPath = paths:
+  with builtins;
+  concatStringsSep ":" (map ({ path, prefix }:
+                             with {
+                               pre = if prefix == ""
+                                        then ""
+                                        else "${prefix}=";
+                             };
+                              "${pre}${path}")
+                            paths);
+
+newNixPath = builtins.nixPath ++ [
+  { prefix = "support"; path = toString ../nix-support; }
+];
+
 script = runCommand "quickspecBench" { buildInputs = [ makeWrapper ]; } ''
   makeWrapper "${rawScript}" "$out"                                     \
     --prefix PATH :         "${env}/bin"                                \
@@ -167,7 +190,7 @@ script = runCommand "quickspecBench" { buildInputs = [ makeWrapper ]; } ''
     --set    LOCALE_ARCHIVE '${glibcLocales}/lib/locale/locale-archive' \
     --set    NIX_EVAL_HASKELL_PKGS "${customHs}"                        \
     --set    NIX_REMOTE     '${nixEnv.nixRemote}'                       \
-    --set    NIX_PATH       'real=${toString <nixpkgs>}:nixpkgs=${toString ../nix-support}'
+    --set    NIX_PATH       '${mkNixPath newNixPath}'
 '';
 
 setUpDir = ''
@@ -231,7 +254,7 @@ getInput = ''
   # Extract ASTs from the Haskell package, annotate and add to the Nix store. By
   # doing this in nix-build, we get content-based caching for free.
      STORED=$(nix-store --add "$OUT_DIR")
-       EXPR="with import <nixpkgs> {}; annotated \"$STORED\""
+       EXPR="with import <support> {}; annotated \"$STORED\""
   ANNOTATED=$(nix-build --show-trace -E "$EXPR")
 
   export ANNOTATED
