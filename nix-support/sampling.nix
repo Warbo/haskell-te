@@ -125,7 +125,7 @@ rec {
 
   averageCollated = results: runCommand "time-averages"
     {
-      inherit results;
+      results     = map (result: writeScript "result" (toJSON result)) results;
       buildInputs = [ jq sta ];
     }
     ''
@@ -179,22 +179,49 @@ rec {
                               collatedTimes;
     };
 
-  drawSamples = { sizes, reps ? 1, bucketSizes ? [] }: {
-    inherit sizes reps bucketSizes;
-    iterations = genAttrs (map toString sizes) (size:
-      # One iteration for each rep; this is our raw data
-      map (repInt: rec {
-            rep     = toString repInt;
-            names   = sampleNames size rep;
-            asts    = sampleAsts names;
-            outputs = { quickSpec = quickspecSample size rep asts; };
-            buckets = bucketSample {
-              inherit asts bucketSizes possibleTheorems;
-            };
-            possibleTheorems = theoremsForNames names;
-          })
-          (range 1 reps));
-  };
+  drawSamples = { sizes, reps ? 1, bucketSizes ? [] }:
+    with rec {
+      data = {
+        inherit sizes reps bucketSizes;
+        iterations = genAttrs (map toString sizes) (size:
+          # One iteration for each rep; this is our raw data
+          map (rep:
+                with rec {
+                  repS    = toString rep;
+                  names   = sampleNames size repS;
+                  asts    = sampleAsts names;
+                  outputs = { quickSpec = quickspecSample size repS asts; };
+                  buckets = bucketSample {
+                    inherit asts bucketSizes possibleTheorems;
+                  };
+                  possibleTheorems = theoremsForNames names;
+                };
+                # The data above passes around lots of data using external files
+                # which makes archiving and sharing data more difficult. We want
+                # our output to be self-contained so we now read in those files.
+                {
+                  inherit rep;
+                  names   = readFile names;
+                  asts    = readFile asts;
+                  outputs = mapAttrs (_: f:
+                                       with {
+                                         x = fromJSON (readFile f);
+                                       };
+                                       x // {
+                                         stderr = readFile x.stderr;
+                                         stdin  = readFile x.stdin;
+                                         stdout = readFile x.stdout;
+                                       })
+                                     outputs;
+                  buckets = trace "FIXME: Read filenames from buckets" buckets;
+                  possibleTheorems = readFile possibleTheorems;
+                })
+              (range 1 reps));
+      };
+
+      stored = writeScript "drawn-samples.json" (toJSON data);
+    };
+    trace "Data saved to ${stored}" data;
 
   sampleAsts =
     with rec {
