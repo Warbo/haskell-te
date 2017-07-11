@@ -1,0 +1,8 @@
+From: Chris Warburton
+Date: Wed, 05 Jul 2017 15:39:11 +0100
+State: new
+Subject: Make an ASV environment
+Message-Id: <d73b4f549d2855df-0-artemis@nixos>
+
+We should benchmark with Airspeed Velocity, since it gives us JSON data
+to store, allows benchmarks to be tracked over git commits, etc.
