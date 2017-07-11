@@ -71,15 +71,7 @@ rec {
       "${reduce-equations}/bin/reduce-equations"
   '';
 
-  script = runCommand "mlspecBench" { buildInputs = [ makeWrapper ]; } ''
-    makeWrapper "${rawScript}" "$out"                                     \
-      --prefix PATH :         "${quickspecBench.env}/bin"                 \
-      --set    LANG           'en_US.UTF-8'                               \
-      --set    LOCALE_ARCHIVE '${glibcLocales}/lib/locale/locale-archive' \
-      --set    NIX_EVAL_HASKELL_PKGS "${quickspecBench.customHs}"         \
-      --set    NIX_REMOTE     '${nixEnv.nixRemote}'                       \
-      --set    NIX_PATH       'real=${toString <nixpkgs>}:nixpkgs=${toString ../nix-support}'
-  '';
+  script = quickspecBench.wrapScript "mlspecBench" rawScript;
 
   mlGenInput = quickspecBench.mkGenInput (writeScript "gen-sig-ml" ''
     #!/usr/bin/env bash

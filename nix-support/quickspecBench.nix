@@ -142,8 +142,18 @@ genSig2 = runCommand "gen-sig2-wrapped"
   }
   ''
     makeWrapper "$raw" "$out" \
-      --set NIX_PATH '${mkNixPath newNixPath}'
+      --set NIX_PATH '${innerNixPath}'
   '';
+
+wrapScript = name: script: runCommand name { buildInputs = [ makeWrapper ]; } ''
+  makeWrapper "${script}" "$out"                                     \
+    --prefix PATH :         "${env}/bin"                 \
+    --set    LANG           'en_US.UTF-8'                               \
+    --set    LOCALE_ARCHIVE '${glibcLocales}/lib/locale/locale-archive' \
+    --set    NIX_EVAL_HASKELL_PKGS "${customHs}"         \
+    --set    NIX_REMOTE     '${nixEnv.nixRemote}'                       \
+    --set    NIX_PATH       '${innerNixPath}'
+'';
 
 mkPkgInner = ''
   set -e
@@ -168,30 +178,10 @@ runSigCmd = ''
   ${runCmd { cmd = "$CMD"; }}
 '';
 
-mkNixPath = paths:
-  with builtins;
-  concatStringsSep ":" (map ({ path, prefix }:
-                             with {
-                               pre = if prefix == ""
-                                        then ""
-                                        else "${prefix}=";
-                             };
-                              "${pre}${path}")
-                            paths);
+innerNixPath =
+  "nixpkgs=${toString <nixpkgs>}:support=${toString ../nix-support}";
 
-newNixPath = builtins.nixPath ++ [
-  { prefix = "support"; path = toString ../nix-support; }
-];
-
-script = runCommand "quickspecBench" { buildInputs = [ makeWrapper ]; } ''
-  makeWrapper "${rawScript}" "$out"                                     \
-    --prefix PATH :         "${env}/bin"                                \
-    --set    LANG           'en_US.UTF-8'                               \
-    --set    LOCALE_ARCHIVE '${glibcLocales}/lib/locale/locale-archive' \
-    --set    NIX_EVAL_HASKELL_PKGS "${customHs}"                        \
-    --set    NIX_REMOTE     '${nixEnv.nixRemote}'                       \
-    --set    NIX_PATH       '${mkNixPath newNixPath}'
-'';
+script = wrapScript "quickspecBench" rawScript;
 
 setUpDir = ''
   [[ -n "$DIR" ]] || {

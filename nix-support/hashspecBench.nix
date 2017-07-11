@@ -29,15 +29,7 @@ rec {
                                 --prefix PATH : "${buckets.hashes}/bin"
     '';
 
-  script = runCommand "hashspecBench" { buildInputs = [ makeWrapper ]; } ''
-    makeWrapper "${rawScript}" "$out"                                     \
-      --prefix PATH :         "${quickspecBench.env}/bin"                 \
-      --set    LANG           'en_US.UTF-8'                               \
-      --set    LOCALE_ARCHIVE '${glibcLocales}/lib/locale/locale-archive' \
-      --set    NIX_EVAL_HASKELL_PKGS "${quickspecBench.customHs}"         \
-      --set    NIX_REMOTE     '${nixEnv.nixRemote}'                       \
-      --set    NIX_PATH       'real=${toString <nixpkgs>}:nixpkgs=${toString ../nix-support}'
-  '';
+  script = quickspecBench.wrapScript "hashspecBench" rawScript;
 
   rawScript = writeScript "hashspecBench" ''
     #!${bash}/bin/bash
