@@ -75,6 +75,7 @@ let pkgs = rec {
           benchmark simpleBench timeout;
 
   annotate           = callPackage ./annotate.nix           {};
+  asv-nix            = callPackage ./asv-nix.nix            {};
   buckets            = callPackage ./buckets.nix            {};
   cluster            = callPackage ./cluster.nix            {};
   dumpPackage        = callPackage ./dumpPackage.nix        {};
