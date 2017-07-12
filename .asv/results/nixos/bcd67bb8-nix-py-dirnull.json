@@ -1,0 +1,66 @@
+{
+    "commit_hash": "bcd67bb804c1b80801dd40366aed7642a89e56ff", 
+    "date": 1499864173000, 
+    "ended_at": {
+        "benchmarks.QuickSpec.time_run": 1499872388000, 
+        "benchmarks.QuickSpec.track_precision": 1499872915000
+    }, 
+    "env_name": "nix-py-dirnull", 
+    "params": {
+        "arch": "i686", 
+        "cpu": "Genuine Intel(R) CPU           L2400  @ 1.66GHz", 
+        "dir": "null", 
+        "machine": "nixos", 
+        "os": "Linux 4.4.52", 
+        "python": "", 
+        "ram": "3093764"
+    }, 
+    "profiles": {}, 
+    "python": "", 
+    "requirements": {
+        "dir": "null"
+    }, 
+    "results": {
+        "benchmarks.QuickSpec.time_run": {
+            "params": [
+                [
+                    "1", 
+                    "2"
+                ], 
+                [
+                    "0", 
+                    "1"
+                ]
+            ], 
+            "result": [
+                null, 
+                null, 
+                2.670081853866577, 
+                2.650114059448242
+            ]
+        }, 
+        "benchmarks.QuickSpec.track_precision": {
+            "params": [
+                [
+                    "1", 
+                    "2"
+                ], 
+                [
+                    "0", 
+                    "1"
+                ]
+            ], 
+            "result": [
+                null, 
+                null, 
+                null, 
+                null
+            ]
+        }
+    }, 
+    "started_at": {
+        "benchmarks.QuickSpec.time_run": 1499872237000, 
+        "benchmarks.QuickSpec.track_precision": 1499872764000
+    }, 
+    "version": 1
+}

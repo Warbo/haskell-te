@@ -1,69 +1,51 @@
 {
-    "benchmarks.MemSuite.mem_list": {
-        "code": "def mem_list(self):\n    return [0] * 256\n", 
-        "name": "benchmarks.MemSuite.mem_list", 
-        "param_names": [], 
-        "params": [], 
-        "pretty_name": "benchmarks.MemSuite.mem_list", 
-        "timeout": 60.0, 
-        "type": "memory", 
-        "unit": "bytes"
-    }, 
-    "benchmarks.TimeSuite.time_iterkeys": {
-        "code": "def time_iterkeys(self):\n    for key in self.d.iterkeys():\n        pass\n", 
+    "benchmarks.QuickSpec.time_run": {
+        "code": "def time_run(self, size, rep):\n    '''Run QuickSpec and discard the result, so we can time it.'''\n    self.quickspec()\n", 
         "goal_time": 0.1, 
-        "name": "benchmarks.TimeSuite.time_iterkeys", 
+        "name": "benchmarks.QuickSpec.time_run", 
         "number": 0, 
-        "param_names": [], 
-        "params": [], 
-        "pretty_name": "benchmarks.TimeSuite.time_iterkeys", 
+        "param_names": [
+            "size", 
+            "rep"
+        ], 
+        "params": [
+            [
+                "1", 
+                "2"
+            ], 
+            [
+                "0", 
+                "1"
+            ]
+        ], 
+        "pretty_name": "benchmarks.QuickSpec.time_run", 
         "repeat": 0, 
         "timeout": 60.0, 
         "type": "time", 
         "unit": "seconds", 
         "warmup_time": -1
     }, 
-    "benchmarks.TimeSuite.time_keys": {
-        "code": "def time_keys(self):\n    for key in self.d.keys():\n        pass\n", 
-        "goal_time": 0.1, 
-        "name": "benchmarks.TimeSuite.time_keys", 
-        "number": 0, 
-        "param_names": [], 
-        "params": [], 
-        "pretty_name": "benchmarks.TimeSuite.time_keys", 
-        "repeat": 0, 
+    "benchmarks.QuickSpec.track_precision": {
+        "code": "def track_precision(self, size, rep):\n    '''Run QuickSpec and calculate precision of the result.'''\n    import sys\n    sys.stderr.write(repr(self.quickspec()))\n", 
+        "name": "benchmarks.QuickSpec.track_precision", 
+        "param_names": [
+            "size", 
+            "rep"
+        ], 
+        "params": [
+            [
+                "1", 
+                "2"
+            ], 
+            [
+                "0", 
+                "1"
+            ]
+        ], 
+        "pretty_name": "benchmarks.QuickSpec.track_precision", 
         "timeout": 60.0, 
-        "type": "time", 
-        "unit": "seconds", 
-        "warmup_time": -1
-    }, 
-    "benchmarks.TimeSuite.time_range": {
-        "code": "def time_range(self):\n    d = self.d\n    for key in range(500):\n        x = d[key]\n", 
-        "goal_time": 0.1, 
-        "name": "benchmarks.TimeSuite.time_range", 
-        "number": 0, 
-        "param_names": [], 
-        "params": [], 
-        "pretty_name": "benchmarks.TimeSuite.time_range", 
-        "repeat": 0, 
-        "timeout": 60.0, 
-        "type": "time", 
-        "unit": "seconds", 
-        "warmup_time": -1
-    }, 
-    "benchmarks.TimeSuite.time_xrange": {
-        "code": "def time_xrange(self):\n    d = self.d\n    for key in xrange(500):\n        x = d[key]\n", 
-        "goal_time": 0.1, 
-        "name": "benchmarks.TimeSuite.time_xrange", 
-        "number": 0, 
-        "param_names": [], 
-        "params": [], 
-        "pretty_name": "benchmarks.TimeSuite.time_xrange", 
-        "repeat": 0, 
-        "timeout": 60.0, 
-        "type": "time", 
-        "unit": "seconds", 
-        "warmup_time": -1
+        "type": "track", 
+        "unit": "unit"
     }, 
     "version": 1
 }
