@@ -1,1 +1,2 @@
-{ tipBenchmarks }: null
+{ nix-config }:
+nix-config.asv-nix

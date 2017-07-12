@@ -85,6 +85,7 @@ let pkgs = rec {
   hashspecBench      = callPackage ./hashspecBench.nix      {};
   importDir          = callPackage ./importDir.nix          {};
   mlspecBench        = callPackage ./mlspecBench.nix        {};
+  nix-config         = callPackage ./nix-config.nix         {};
   package            = callPackage ./package.nix            {};
   parseJSON          = callPackage ./parseJSON.nix          {};
   pkgName            = callPackage ./pkgName.nix            {};
