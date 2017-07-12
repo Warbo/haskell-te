@@ -1,0 +1,8 @@
+{
+    "arch": "i686", 
+    "cpu": "Genuine Intel(R) CPU           L2400  @ 1.66GHz", 
+    "machine": "nixos", 
+    "os": "Linux 4.4.52", 
+    "ram": "3093764", 
+    "version": 1
+}

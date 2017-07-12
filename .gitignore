@@ -1,1 +1,5 @@
 result
+*.pyc
+.asv/env
+.asv/html
+!.asv/results

@@ -1,0 +1,121 @@
+{
+    "commit_hash": "b34239c4ff728e3fa4f5c396273390d88d7fefab", 
+    "date": 1499859660000, 
+    "ended_at": {
+        "benchmarks.MemSuite.mem_list": 1499862389000, 
+        "benchmarks.TimeSuite.time_iterkeys": 1499862391000, 
+        "benchmarks.TimeSuite.time_keys": 1499862393000, 
+        "benchmarks.TimeSuite.time_range": 1499862395000, 
+        "benchmarks.TimeSuite.time_xrange": 1499862397000
+    }, 
+    "env_name": "nix-py-dirnull", 
+    "params": {
+        "arch": "i686", 
+        "cpu": "Genuine Intel(R) CPU           L2400  @ 1.66GHz", 
+        "dir": "null", 
+        "machine": "nixos", 
+        "os": "Linux 4.4.52", 
+        "python": "", 
+        "ram": "3093764"
+    }, 
+    "profiles": {}, 
+    "python": "", 
+    "requirements": {
+        "dir": "null"
+    }, 
+    "results": {
+        "benchmarks.MemSuite.mem_list": 1208, 
+        "benchmarks.TimeSuite.time_iterkeys": {
+            "result": [
+                3.094591218441273e-05
+            ], 
+            "stats": [
+                {
+                    "ci_99": [
+                        3.076205790340287e-05, 
+                        3.1218261251372144e-05
+                    ], 
+                    "max": 3.1305974753018704e-05, 
+                    "mean": 3.0978763721185516e-05, 
+                    "min": 3.075139023051595e-05, 
+                    "n": 10, 
+                    "q_25": 3.0925359357848525e-05, 
+                    "q_75": 3.1078348380900086e-05, 
+                    "std": 1.583922162154842e-07, 
+                    "systematic": 0.0
+                }
+            ]
+        }, 
+        "benchmarks.TimeSuite.time_keys": {
+            "result": [
+                3.259869708209695e-05
+            ], 
+            "stats": [
+                {
+                    "ci_99": [
+                        3.251499826904057e-05, 
+                        3.321356800197824e-05
+                    ], 
+                    "max": 3.323849703264095e-05, 
+                    "mean": 3.279476477497528e-05, 
+                    "min": 3.244810583580617e-05, 
+                    "n": 8, 
+                    "q_25": 3.2588768298714166e-05, 
+                    "q_75": 3.313155773986152e-05, 
+                    "std": 3.0350820439434635e-07, 
+                    "systematic": 0.0
+                }
+            ]
+        }, 
+        "benchmarks.TimeSuite.time_range": {
+            "result": [
+                0.00011125888195777353
+            ], 
+            "stats": [
+                {
+                    "ci_99": [
+                        0.00011078261228406919, 
+                        0.00011243889347408833
+                    ], 
+                    "max": 0.0001124706333973129, 
+                    "mean": 0.0001114754700575816, 
+                    "min": 0.00011077821880998092, 
+                    "n": 10, 
+                    "q_25": 0.00011106598320537432, 
+                    "q_75": 0.00011192914971209208, 
+                    "std": 5.965125908784592e-07, 
+                    "systematic": 0.0
+                }
+            ]
+        }, 
+        "benchmarks.TimeSuite.time_xrange": {
+            "result": [
+                0.00010468167527173908
+            ], 
+            "stats": [
+                {
+                    "ci_99": [
+                        0.00010394060054347824, 
+                        0.00010836449456521741
+                    ], 
+                    "max": 0.00011054473641304348, 
+                    "mean": 0.00010543407961956521, 
+                    "min": 0.0001037377119565217, 
+                    "n": 10, 
+                    "q_25": 0.00010419097622282606, 
+                    "q_75": 0.00010606050203804351, 
+                    "std": 1.900886307443232e-06, 
+                    "systematic": 0.0
+                }
+            ]
+        }
+    }, 
+    "started_at": {
+        "benchmarks.MemSuite.mem_list": 1499862388000, 
+        "benchmarks.TimeSuite.time_iterkeys": 1499862389000, 
+        "benchmarks.TimeSuite.time_keys": 1499862391000, 
+        "benchmarks.TimeSuite.time_range": 1499862393000, 
+        "benchmarks.TimeSuite.time_xrange": 1499862395000
+    }, 
+    "version": 1
+}
