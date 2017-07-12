@@ -47,7 +47,7 @@ with rec {
       set -e
       export MAX_SECS="${maxSecs}"
 
-      BENCH_OUT=$(SAMPLE_SIZES="5" quickspecBench)
+      BENCH_OUT=$(SAMPLE_SIZES="10" quickspecBench)
 
       # Get all the constant symbols in all equations
       STDOUTS=$(echo "$BENCH_OUT" | jq -r '.results | .[] | .stdout') ||
