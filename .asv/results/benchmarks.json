@@ -1,48 +1,96 @@
 {
-    "benchmarks.QuickSpec.time_run": {
-        "code": "def time_run(self, size, rep):\n    '''Run QuickSpec and discard the result, so we can time it.'''\n    self.quickspec()\n", 
-        "goal_time": 0.1, 
-        "name": "benchmarks.QuickSpec.time_run", 
-        "number": 0, 
+    "benchmarks.track_precision": {
+        "code": "def track_precision(cache, rep, size):\n    '''Run QuickSpec and calculate precision of the result.'''\n    #cache[size][rep]\n    stderr.write(repr(cache))\n    return 1\n", 
+        "name": "benchmarks.track_precision", 
         "param_names": [
-            "size", 
-            "rep"
+            "rep", 
+            "size"
         ], 
         "params": [
             [
-                "1", 
-                "2"
-            ], 
-            [
                 "0", 
                 "1"
+            ], 
+            [
+                "1", 
+                "2"
             ]
         ], 
-        "pretty_name": "benchmarks.QuickSpec.time_run", 
-        "repeat": 0, 
+        "pretty_name": "benchmarks.track_precision", 
+        "setup_cache_key": "/home/chris/Programming/haskell-te/benchmarks/benchmarks.py:33", 
+        "setup_cache_timeout": 3600, 
         "timeout": 60.0, 
-        "type": "time", 
-        "unit": "seconds", 
-        "warmup_time": -1
+        "type": "track", 
+        "unit": "unit"
     }, 
-    "benchmarks.QuickSpec.track_precision": {
-        "code": "def track_precision(self, size, rep):\n    '''Run QuickSpec and calculate precision of the result.'''\n    import sys\n    sys.stderr.write(repr(self.quickspec()))\n", 
-        "name": "benchmarks.QuickSpec.track_precision", 
+    "benchmarks.track_sample": {
+        "code": "def track_sample(cache, rep, size):\n    return []\n", 
+        "name": "benchmarks.track_sample", 
         "param_names": [
-            "size", 
-            "rep"
+            "rep", 
+            "size"
         ], 
         "params": [
             [
+                "0", 
+                "1"
+            ], 
+            [
                 "1", 
                 "2"
-            ], 
+            ]
+        ], 
+        "pretty_name": "benchmarks.track_sample", 
+        "setup_cache_key": "/home/chris/Programming/haskell-te/benchmarks/benchmarks.py:33", 
+        "setup_cache_timeout": 3600, 
+        "timeout": 60.0, 
+        "type": "track", 
+        "unit": "unit"
+    }, 
+    "benchmarks.track_stdout": {
+        "code": "def track_stdout(cache, rep, size):\n    '''Return the raw stdout, so we can store it in git.'''\n    return cached(cache, size, rep)['stdout']\n", 
+        "name": "benchmarks.track_stdout", 
+        "param_names": [
+            "rep", 
+            "size"
+        ], 
+        "params": [
             [
                 "0", 
                 "1"
+            ], 
+            [
+                "1", 
+                "2"
             ]
         ], 
-        "pretty_name": "benchmarks.QuickSpec.track_precision", 
+        "pretty_name": "benchmarks.track_stdout", 
+        "setup_cache_key": "/home/chris/Programming/haskell-te/benchmarks/benchmarks.py:33", 
+        "setup_cache_timeout": 3600, 
+        "timeout": 60.0, 
+        "type": "track", 
+        "unit": "unit"
+    }, 
+    "benchmarks.track_time": {
+        "code": "def track_time(cache, rep, size):\n    return cached(cache, size, rep)['time']\n", 
+        "name": "benchmarks.track_time", 
+        "param_names": [
+            "rep", 
+            "size"
+        ], 
+        "params": [
+            [
+                "0", 
+                "1"
+            ], 
+            [
+                "1", 
+                "2"
+            ]
+        ], 
+        "pretty_name": "benchmarks.track_time", 
+        "setup_cache_key": "/home/chris/Programming/haskell-te/benchmarks/benchmarks.py:33", 
+        "setup_cache_timeout": 3600, 
         "timeout": 60.0, 
         "type": "track", 
         "unit": "unit"
