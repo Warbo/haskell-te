@@ -5,10 +5,13 @@ from os    import getenv
 from sys   import stderr
 from util  import cached, pipe, sort, timed_run
 
+# Used by our own code
+timeout_secs = 25
+
 # Benchmark parameters. Will appear in alphabetical order as arguments, after
 # 'cache'
 params = {
-    'rep'     :  range(0, 2),
+    'rep'     : range(0, 2),
     'size'    : range(1, 3),
     'timeout' : [timeout_secs]
 }
@@ -23,9 +26,6 @@ attrs = {
     'param_names' : sort(params.keys())
 }
 
-# Used by our own code
-timeout_secs = 20
-
 # Running a TE tool is expensive, so we only want to run each sample once. By
 # returning all of the results from setup_cache, each benchmark can can pick out
 # the values it cares about, without having to re-run anything.
@@ -39,9 +39,10 @@ def setup_cache():
         for rep in params['rep']:
             stdout, _ = pipe([getenv('qsSetup'), str(size), str(rep)])
             data      = loads(stdout)
-            cache[size].append(timed_run([getenv('qsRunner'), data['runner']],
-                                         data['code'],
-                                         timeout_secs))
+            cache[size].append(timed_run(
+                [getenv('qsRunner'), data['runner']],
+                data['code'],
+                timeout_secs))
     return cache
 setup_cache.timeout = 3600
 
