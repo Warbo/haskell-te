@@ -12,8 +12,18 @@ attrsToDirs {
     python = wrap {
       paths = [ tipBenchmarks.tools ];
       vars  = {
-        qsSetup  = qs.sampled.genInput;
-        qsRunner = qs.sampled.runner;
+        qsTipSetup  = qs.sampled.genInput;
+        qsTipRunner = qs.sampled.runner;
+
+        qsStandaloneMkPkg  = qs.standalone.genAnnotatedPkg;
+        qsStandaloneSetup  = qs.standalone.genInput;
+        qsStandaloneRunner = qs.standalone.runner;
+
+        theoryFiles = builtins.toJSON {
+          list-full  = ./list-full.smt2;
+          nat-full   = ./nat-full.smt2;
+          nat-simple = ./nat-simple.smt2;
+        };
       };
       file = "${python}/bin/python";
     };

@@ -1,6 +1,9 @@
 from os         import environ, getpgid, killpg, setsid
+from parameters import repetitions
+from shutil     import rmtree
 from signal     import SIGTERM
 from subprocess import check_output, PIPE, Popen
+from tempfile   import mkdtemp
 from threading  import Thread
 from timeit     import default_timer
 
@@ -84,3 +87,25 @@ def eqs_in(stdout):
         return l.strip() and not l.startswith('Depth')
 
     return map(loads, filter(keep_line, stdout.split('\n')))
+
+def generate_cache(theories, f):
+    '''Call the function 'f' for each repetition of each given theory, return an
+    accumulated dictionary of the results.'''
+    cache = {}
+    for theory in theories:
+        reps          = range(0, repetitions)
+        cache[theory] = [{} for _ in reps]
+        for rep in reps:
+            data = {'rep': rep, 'timeout': timeout_secs}
+            data.update(f(theory, rep))
+            cache[theory][rep] = data
+    return cache
+
+class TempDir(object):
+    '''Context manager for using temp dirs in 'with' statements.'''
+    def __enter__(self):
+        self.name = mkdtemp()
+        return self.name
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        rmtree(self.name)
