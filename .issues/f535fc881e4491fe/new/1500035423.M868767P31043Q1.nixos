@@ -1,0 +1,22 @@
+From: Chris Warburton
+Date: Fri, 14 Jul 2017 13:27:47 +0100
+Subject: Re: Use asv for running benchmarks
+Message-Id: <f535fc881e4491fe-8a4c69db9328e904-artemis@nixos>
+References: <f535fc881e4491fe-0-artemis@nixos>
+In-Reply-To: <f535fc881e4491fe-0-artemis@nixos>
+
+Made benchmarks for QuickSpec on TIP. We're reporting time taken,
+precision, recall, #equations found, #conjectures possible and
+#equations possible.
+
+We also have a "benchmark" which just returns all of the generated data
+(samples, QuickSpec output, analysis, etc) so asv will include it in the
+output and we can commit it to git (for reproducibility, etc.)
+
+Next steps are:
+
+ - Do the same for hashspec and mlspec
+ - Do the same for nat-simple, etc.
+
+Then we can delete the convoluted mix of benchmark stuff we've got
+littering the place.
