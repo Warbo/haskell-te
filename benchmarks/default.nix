@@ -10,7 +10,8 @@ with rec {
 attrsToDirs {
   bin = {
     python = wrap {
-      vars = {
+      paths = [ tipBenchmarks.tools ];
+      vars  = {
         qsSetup  = qs.sampled.genInput;
         qsRunner = qs.sampled.runner;
       };

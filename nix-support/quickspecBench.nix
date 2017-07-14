@@ -70,10 +70,8 @@ benchVars =
         script = ''
           #!/usr/bin/env bash
 
-          # Sample some names, give the default module and package, then slurp
-          # into an array
-          KEEPERS=$(choose_sample "$1" "$2" |
-                    jq -R '{"name"    : .,
+          # Give sampled names a module and package, then slurp into an array
+          KEEPERS=$(jq -R '{"name"    : .,
                             "module"  : "A",
                             "package" : "tip-benchmark-sig"}' |
                     jq -s '.')

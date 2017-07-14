@@ -1,4 +1,4 @@
-from os         import getpgid, killpg, setsid
+from os         import environ, getpgid, killpg, setsid
 from signal     import SIGTERM
 from subprocess import check_output, PIPE, Popen
 from threading  import Thread
@@ -12,13 +12,21 @@ def time(f):
     end    = default_timer()
     return (result, end - start)
 
-def pipe(cmd, stdin=None, timeout=None):
+def pipe(cmd, stdin=None, timeout=None, env=None):
     '''Runs 'stdin' through 'cmd' and returns stdout. Like Popen.communicate()
     but allows a timeout.'''
+
+    # Extend the current environment, if requested
+    extra_env = None
+    if env:
+        extra_env = environ.copy()
+        for var in env:
+            extra_env[var] = env[var]
+
     # setsid puts the subprocess in its own process group, rather than the group
     # containing this Python process
     proc          = Popen(cmd, stdin=PIPE if stdin else None, stdout=PIPE,
-                          preexec_fn=setsid)
+                          preexec_fn=setsid, env=extra_env)
     stdout        = []
     stdout_thread = Thread(target=lambda *_: stdout.append(proc.stdout.read()),
                            args=())
@@ -55,12 +63,24 @@ def timed_run(cmd, stdin, timeout=None):
         'success' : not killed
     }
 
-def cached(cache, size, rep):
+def cached(cache, size, rep, *path):
+    '''Look up the given data from the cache. If this run failed, an exception
+    is thrown (so we avoid looking up data that wasn't generated).'''
     result = cache[size][rep]
     if result['success']:
+        for key in path:
+            result = result[key]
         return result
     raise Exception('Repetition {0} of size {1} failed'.format(rep, size))
 
 def sort(l):
+    '''Built-in sort is in-place; this will return the sorted list too.'''
     l.sort()
     return l
+
+def eqs_in(stdout):
+    '''Extracts any equations present in the given stdout.'''
+    def keep_line(l):
+        return l.strip() and not l.startswith('Depth')
+
+    return map(loads, filter(keep_line, stdout.split('\n')))
