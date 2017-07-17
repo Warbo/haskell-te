@@ -1,0 +1,10 @@
+These theorems are used as the ground truth for precision/recall experiments on
+theories of the Natural numers and lists. They're taken from the following
+sources:
+
+ - Conjecture Synthesis for Inductive Theories by Johansson, Dixon and Bundy,
+   section 10.2 Precision/Recall Analysis.
+
+ - Scheme-based theorem discovery and concept invention, Monato-Rivas,
+   McCasland, Dixon and Bundy, section 7.1.1 Naturals with Addition,
+   Multiplication and Exponentiation, and table D.1
