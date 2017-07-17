@@ -6,7 +6,30 @@ from parameters import repetitions, timeout_secs
 from stat       import S_IRWXU, S_IRWXG, S_IRWXO
 from util       import eqs_in, generate_cache, pipe, TempDir, timed_run
 
-theoryFiles = loads(getenv('theoryFiles'))
+theoryFiles  = {}
+theoryTruths = {}
+
+files  = loads(getenv('theoryFiles'))
+truths = loads(getenv('theoryTruths'))
+
+for theory in files:
+    if theory not in truths:
+        raise Exception('No ground-truth for theory {0}'.format(theory))
+
+    with open(files[theory], 'r') as f:
+        theoryFiles[theory] = f.read()
+
+for theory in theoryTruths:
+    if theory not in files:
+        raise Exception('No theory for ground-truth {0}'.format(theory))
+
+    with open(truths[theory], 'r') as f:
+        theoryTruths[theory] = f.read()
+
+del(files)
+del(truths)
+
+# Sanity check
 
 config = {
     'theory' : theoryFiles.keys()
@@ -15,17 +38,17 @@ config = {
 def theory_params(theory):
     '''Generate environment for exploring the given theory.'''
     # Fetch this theory
-    params = {'theory' : theory}
 
     # TODO: We can speed this up if we use nix-store to add theoryFiles[theory]
     # to the Nix store (which gives us a content-based hash), then use nix-build
     # to make the package (annotation should be fine as-is). This way, it will
     # all be cached, and re-used as long as the theory file and TIP tools remain
     # unchanged.
-    content = ''
-    with open(theoryFiles[theory], 'r') as f:
-        content = f.read()
-    params['content'] = content
+    params = {
+        'theory'      : theory,
+        'content'     : theoryFiles[theory],
+        'conjectures' : theoryTruths[theory]
+    }
 
     # Translate this theory into Haskell and extract type, arity, etc. info
     with TempDir() as out_dir:
@@ -76,3 +99,15 @@ def track_data(cache):
 
 def track_equations(cache, rep, theory):
     return len(eqs_in(cached(cache, theory, rep, 'stdout')))
+
+def track_conjectures(cache, rep, theory):
+    return len(cached(cache, theory, rep, 'conjectures'))
+
+def track_precision(cache, rep, theory):
+    raise Exception('Not implemented')
+
+def track_recall(cache, rep, theory):
+    raise Exception('Not implemented')
+
+def track_time(cache, rep, theory):
+    return cached(cache, theory, rep, time)

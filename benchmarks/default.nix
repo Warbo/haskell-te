@@ -31,6 +31,11 @@ attrsToDirs {
           nat-full   = ./nat-full.smt2;
           nat-simple = ./nat-simple.smt2;
         }}'
+        export theoryTruths='${trace "TODO: Fix quoting in wrap" toJSON {
+          list-full  = ./ground-truth/list-full.smt2;
+          nat-full   = ./ground-truth/nat-full.smt2;
+          nat-simple = ./ground-truth/nat-simple.smt2;
+        }}'
         exec "${python}/bin/python" "$@"
       '';
     };
