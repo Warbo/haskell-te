@@ -67,21 +67,26 @@ def track_conjectures(cache, rep, size):
     return len(cached(cache, size, rep, 'conjectures', 'wanted'))
 
 def track_conjectured_equations(cache, rep, size):
-    '''All of the wanted conjectures which were equations.'''
+    '''All of the wanted conjectures which were equations. QuickSpec can only
+    find equations, so this is our theoretical maximum.'''
     return sum(map(lambda c: len(c['equation']),
                    cached(cache, size, rep, 'conjectures', 'wanted')))
 
 def track_equations(cache, rep, size):
+    '''How many equations we found (in total).'''
     return len(eqs_in(cached(cache, size, rep, 'stdout')))
 
 def track_precision(cache, rep, size):
+    '''Proportion of found equations which were wanted.'''
     prec = cached(cache, rep, size, 'conjectures', 'precision')
     return prec if prec else 0
 
 def track_recall(cache, rep, size):
+    '''Proportion of wanted conjectures which were found.'''
     return cached(cache, rep, size, 'conjectures', 'recall')
 
 def track_time(cache, rep, size):
+    '''Time taken to explore (excludes setup and analysis).'''
     return cached(cache, size, rep, 'time')
 
 # Assign parameters to benchmarks

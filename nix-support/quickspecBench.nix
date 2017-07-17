@@ -98,7 +98,6 @@ benchVars = {
     genAnnotatedPkg = wrap {
       paths = [ nix tipBenchmarks.tools ];
       vars  = {
-        NIX_PATH   = "nixpkgs=${./.}";
         NIX_REMOTE = "daemon";
       };
 
@@ -106,8 +105,8 @@ benchVars = {
         #!/usr/bin/env bash
         full_haskell_package
 
-        nix-build --show-trace --no-out-link -E \
-          'with import <nixpkgs> {}; annotated (builtins.getEnv "OUT_DIR")'
+        nix-build --show-trace --no-out-link        \
+          -E 'with import <nixpkgs> {}; annotated (builtins.getEnv "OUT_DIR")'
       '';
     };
 

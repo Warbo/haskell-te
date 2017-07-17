@@ -1,5 +1,6 @@
+from json       import loads
 from os         import environ, getpgid, killpg, setsid
-from parameters import repetitions
+from parameters import repetitions, timeout_secs
 from shutil     import rmtree
 from signal     import SIGTERM
 from subprocess import check_output, PIPE, Popen
@@ -28,36 +29,41 @@ def pipe(cmd, stdin=None, timeout=None, env=None):
 
     # setsid puts the subprocess in its own process group, rather than the group
     # containing this Python process
-    proc          = Popen(cmd, stdin=PIPE if stdin else None, stdout=PIPE,
-                          preexec_fn=setsid, env=extra_env)
-    stdout        = []
-    stdout_thread = Thread(target=lambda *_: stdout.append(proc.stdout.read()),
-                           args=())
-    stdout_thread.setDaemon(True)
-    stdout_thread.start()
+    killed = None
+    proc   = Popen(cmd, stdin=PIPE if stdin else None, stdout=PIPE,
+                   preexec_fn=setsid, env=extra_env)
+    try:
+        stdout        = []
+        stdout_thread = Thread(target=lambda *_: stdout.append(proc.stdout.read()),
+                               args=())
+        stdout_thread.setDaemon(True)
+        stdout_thread.start()
 
-    if stdin:
-        try:
-            proc.stdin.write(stdin)
-        except IOError as e:
-            if e.errno != errno.EPIPE:
-                raise
-        proc.stdin.close()
+        if stdin:
+            try:
+                proc.stdin.write(stdin)
+            except IOError as e:
+                if e.errno != errno.EPIPE:
+                    raise
+            proc.stdin.close()
 
-    stdout_thread.join(timeout)
-    killed = stdout_thread.isAlive()  # True iff we timed out
-    if killed:
-        # Kill the process group, which will include all children
-        killpg(getpgid(proc.pid), SIGTERM)
+        stdout_thread.join(timeout)
+        killed = stdout_thread.isAlive()  # True iff we timed out
+        if killed:
+            # Kill the process group, which will include all children
+            killpg(getpgid(proc.pid), SIGTERM)
 
-    proc.wait()  # Reaps zombies
+        proc.wait()  # Reaps zombies
 
-    return (stdout[0] if stdout else '', killed)
+        return (stdout[0] if stdout else '', killed)
+    finally:
+        if killed is None:
+            killpg(getpgid(proc.pid), SIGTERM)
 
-def timed_run(cmd, stdin, timeout=None):
+def timed_run(cmd, stdin, timeout=None, env=None):
     '''Run the given command+args, for at most timeout_secs. Returns stdout,
     wall-clock time taken and success/fail depending whether it timed out.'''
-    result, secs   = time(lambda *_: pipe(cmd, stdin, timeout))
+    result, secs   = time(lambda *_: pipe(cmd, stdin, timeout, env=env))
     stdout, killed = result
 
     return {
