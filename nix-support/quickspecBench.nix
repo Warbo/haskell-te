@@ -70,8 +70,8 @@ benchVars = {
       script = ''
         #!/usr/bin/env bash
 
-        [[ -n "$ANNOTATED ]] || ${fail "No ANNOTATED given"}
-        [[ -n "$OUT_DIR"  ]] || ${fail "No OUT_DIR given"}
+        [[ -n "$ANNOTATED" ]] || ${fail "No ANNOTATED given"}
+        [[ -n "$OUT_DIR"   ]] || ${fail "No OUT_DIR given"}
 
         # Give sampled names a module and package, then slurp into an array
         KEEPERS=$(jq -R '{"name"    : .,
