@@ -75,7 +75,7 @@ def timed_run(cmd, stdin, timeout=None, env=None):
 def cached(cache, size, rep, *path):
     '''Look up the given data from the cache. If this run failed, an exception
     is thrown (so we avoid looking up data that wasn't generated).'''
-    result = cache[size][rep]
+    result = cache[size]['reps'][rep]
     if result['success']:
         for key in path:
             result = result[key]
@@ -100,11 +100,11 @@ def generate_cache(theories, f):
     cache = {}
     for theory in theories:
         reps          = range(0, repetitions)
-        cache[theory] = [{} for _ in reps]
+        cache[theory] = {'reps': [{} for _ in reps]}
         for rep in reps:
             data = {'rep': rep, 'timeout': timeout_secs}
             data.update(f(theory, rep))
-            cache[theory][rep] = data
+            cache[theory]['reps'][rep] = data
     return cache
 
 class TempDir(object):
