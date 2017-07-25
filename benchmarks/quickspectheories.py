@@ -42,11 +42,9 @@ def setup_cache():
     # run
     data = {}
     for theory in args['theory']:
-        # TODO: We can speed this up if we use nix-store to add
-        # theoryFiles[theory] to the Nix store (which gives us a content-based
-        # hash), then use nix-build to make the package (annotation should be
-        # fine as-is). That way, it will all be cached, and re-used as long as
-        # the theory file and TIP tools remain unchanged.
+        # TODO: We can speed this up if we use nix-build to make the package
+        # (annotation should be fine as-is). That way, it will all be cached,
+        # and re-used as long as the theory file and TIP tools remain unchanged.
         thy = {
             'theory'      : theory,
             'content'     : readFiles(files )[theory],
