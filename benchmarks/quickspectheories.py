@@ -121,11 +121,12 @@ def track_data(cache):
 
 # Benchmarks
 
+def track_conjectures(cache, theory):
+    sexps = sloads('(\n{0}\n)'.format(cache[theory]['conjectures']))
+    return len(sexps)
+
 def track_equations(cache, rep, theory):
     return len(eqs_in(cached(cache, theory, rep, 'stdout')))
-
-def track_conjectures(cache, rep, theory):
-    return len(cached(cache, theory, rep, 'conjectures'))
 
 def track_precision(cache, rep, theory):
     return cached(cache, theory, rep, 'analysis', 'precision')
@@ -134,4 +135,16 @@ def track_recall(cache, rep, theory):
     return cached(cache, theory, rep, 'analysis', 'recall')
 
 def track_time(cache, rep, theory):
-    return cached(cache, theory, rep, time)
+    return cached(cache, theory, rep, 'time')
+
+# Assign parameters to benchmarks
+
+for f in (track_conjectures, track_equations, track_precision, track_recall,
+          track_time):
+    for attr in attrs:
+        setattr(f, attr, attrs[attr])
+
+# The available conjectures (ground truth) doesn't change across reps, so only
+# track it per theory
+track_conjectures.params      = (args['theory'],)
+track_conjectures.param_names = ['theory']
