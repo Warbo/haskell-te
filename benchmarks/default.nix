@@ -7,6 +7,8 @@ with rec {
   inherit (nix-config) attrsToDirs wrap;
 
   qs = quickspecBench.benchVars;
+
+  py = nixpkgs-2016-09.python.withPackages (p: [ p.sexpdata ]);
 };
 attrsToDirs {
   bin = {
@@ -36,7 +38,7 @@ attrsToDirs {
           nat-full   = ./ground-truth/nat-full.smt2;
           nat-simple = ./ground-truth/nat-simple.smt2;
         }}'
-        exec "${python}/bin/python" "$@"
+        exec "${py}/bin/python" "$@"
       '';
     };
   };
