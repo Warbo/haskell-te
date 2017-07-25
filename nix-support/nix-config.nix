@@ -1,11 +1,24 @@
-{ fetchFromGitHub }:
+{ fetchFromGitHub, fetchgit }:
 
-with {
-  src = fetchFromGitHub {
+with builtins;
+with rec {
+  gh = fetchFromGitHub {
+    inherit rev;
     owner  = "Warbo";
     repo   = "nix-config";
-    rev    = "4f1ce04";
-    sha256 = "07vginvg9nm3ghny7f80j2pdkgv3bddf28v1mskd57d4rqjcc2zc";
+    sha256 = "1kxc6kjcjw4m89rn22dvphbq8cjjvdavdwq5avp7dj91269sqdkw";
   };
+
+  local = fetchgit {
+    inherit rev;
+    url    = "${getEnv "GIT_REPO_DIR"}/nix-config.git";
+    sha256 = "0mlwrdd3g27fjby0dx615b12rakzbnk5fq8j9wdq1h8k4d3bav1i";
+  };
+
+  rev    = "2e25b18";
+
+  chosen = if getEnv "GIT_REPO_DIR" == ""
+              then gh
+              else local;
 };
-import <nixpkgs> { config = import "${src}/config.nix"; }
+import <nixpkgs> { config = import "${chosen}/config.nix"; }

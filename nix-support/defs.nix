@@ -51,7 +51,7 @@ with (nixpkgs.callPackage ./haskellPackages.nix {
 let pkgs = rec {
   # Include the above definitions
   inherit drvFromScript extractTarball haskellPackages hsOverride nixedHsPkg
-          nixEnv nixFromCabal withNix;
+          nixEnv nixFromCabal nixpkgs-2016-09 withNix;
 
   # Use newer Racket for contract definitions
   inherit (nixpkgs-2016-09)
