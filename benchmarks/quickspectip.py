@@ -7,7 +7,7 @@ from util       import cached, eqs_in, generate_cache, pipe, sort, timed_run
 
 # Benchmark parameters. Will appear in alphabetical order as arguments, after
 # 'cache'
-params = {
+args = {
     'rep'     : range(0, repetitions),
     'size'    : range(1, 5),
 }
@@ -17,9 +17,9 @@ attrs = {
     'repeat'      : 1,
     'number'      : 1,
     'params'      : reduce(lambda x, y: x + (y,),
-                           [params[name] for name in sort(params.keys())],
+                           [args[name] for name in sort(args.keys())],
                            ()),
-    'param_names' : sort(params.keys())
+    'param_names' : sort(args.keys())
 }
 
 def setup_cache():
@@ -28,6 +28,8 @@ def setup_cache():
     out the values it cares about, without having to re-run anything.
     The returned value will appear as the first argument to each benchmark.'''
     def gen(size, rep):
+        data = {}
+
         # Choose a sample, and generate QuickSpec code for exploring it
         sample, _      = pipe(['choose_sample', str(size), str(rep)])
         data['sample'] = sample
@@ -44,7 +46,7 @@ def setup_cache():
         results = 'null'
         if data['success']:
             # conjectures_for_sample expects encoded sample but decoded eqs
-            encoded    = eqs_in(cache[size][rep]['stdout'])
+            encoded    = eqs_in(data['stdout'])
             decoded, _ = pipe(['decode'], dumps(encoded))
             results, _ = pipe(['conjectures_for_sample'], decoded,
                               env={'SAMPLED_NAMES' : sample})
@@ -52,8 +54,8 @@ def setup_cache():
         data['conjectures'] = loads(results)
         return data
 
-    return generate_cache(params['size'], gen)
-setup_cache.timeout = timeout_secs * len(params['rep']) * len(params['size'])
+    return generate_cache(args['size'], gen)
+setup_cache.timeout = timeout_secs * len(args['rep']) * len(args['size'])
 
 def track_data(cache):
     '''Store the generated data in our results, so we can inspect it and
