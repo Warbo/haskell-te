@@ -99,14 +99,33 @@ benchVars = {
       paths = [ nix tipBenchmarks.tools ];
       vars  = {
         NIX_REMOTE = "daemon";
+        mkPkg      = wrap {
+          vars = {
+            NIX_PATH = innerNixPath;
+          };
+          script = ''
+            #!/usr/bin/env bash
+            ${mkPkgInner}
+            echo "$OUT_DIR"
+          '';
+        };
       };
 
       script = ''
         #!/usr/bin/env bash
-        full_haskell_package
+        set -e
 
-        nix-build --show-trace --no-out-link        \
-          -E 'with import <nixpkgs> {}; annotated (builtins.getEnv "OUT_DIR")'
+        echo "Generating package" 1>&2
+        OUT_DIR=$(INPUT_TIP="$1" "$mkPkg")
+        export OUT_DIR
+
+        echo "Annotating package" 1>&2
+        ANNOTATED=$(nix-build --show-trace --no-out-link \
+                      --argstr dir "$OUT_DIR"            \
+                      -E '{ dir }: with import <nixpkgs> {}; annotated dir')
+
+        jq -n --arg annotated "$ANNOTATED" --arg dir "$OUT_DIR" \
+           '{"annotated": $annotated, "out_dir": $dir}'
       '';
     };
 

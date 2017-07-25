@@ -52,29 +52,26 @@ def setup_cache():
         }
 
         # Translate this theory into Haskell and extract type, arity, etc. info
-        with TempDir() as out_dir:
-            chmod(out_dir, S_IRWXU | S_IRWXG | S_IRWXO)
-            env        = {'OUT_DIR' : out_dir}
-            ann_out, _ = pipe([getenv('qsStandaloneMkPkg')],
-                              thy['content'],
-                              env=env)
+        ann_out, _ = pipe([getenv('qsStandaloneMkPkg'), files[theory]])
+        pkg        = jloads(ann_out)
 
-            annotated  = None
-            with open(ann_out.strip(), 'r') as f:
-                annotated = jloads(f.read())
+        env        = {'OUT_DIR': pkg['out_dir']}
+        annotated  = None
+        with open(pkg['annotated'], 'r') as f:
+            annotated = jloads(f.read())
 
-                # Make a Haskell program to explore this theory with QuickSpec
-                setup_out, _ = pipe([getenv('qsStandaloneSetup')],
-                                    jdumps(annotated),
-                                    env=env)
-                setup        = jloads(setup_out)
+        # Make a Haskell program to explore this theory with QuickSpec
+        setup_out, _ = pipe([getenv('qsStandaloneSetup')],
+                            jdumps(annotated),
+                            env=env)
+        setup        = jloads(setup_out)
 
-                # Build the environment (GHC with all the right packages)
-                env, _      = pipe(['nix-build', '-E', setup['env']], env=env)
+        # Build the environment (GHC with all the right packages)
+        env, _      = pipe(['nix-build', '-E', setup['env']], env=env)
 
-                thy['env']  = {'PATH' : env.strip() + '/bin:' + getenv('PATH')}
-                thy['cmd']  = [getenv('qsStandaloneRunner'), setup['runner']]
-                thy['code'] = setup['code']
+        thy['env']  = {'PATH' : env.strip() + '/bin:' + getenv('PATH')}
+        thy['cmd']  = [getenv('qsStandaloneRunner'), setup['runner']]
+        thy['code'] = setup['code']
 
         data[theory] = thy
 
