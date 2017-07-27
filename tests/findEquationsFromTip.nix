@@ -20,7 +20,7 @@ with rec {
 
   commDepAsts = sampling.sampleAsts commDeps;
 
-  commEqs = sampling.quickspecSample "none" "none" commDepAsts;
+  commEqs     = sampling.quickspecSample "none" "none" commDepAsts;
 
   commEqsJson = runCommand "comm-deps-eq-count"
     {
@@ -55,19 +55,61 @@ with rec {
     {
       inherit commEqsJson;
       SAMPLED_NAMES = dep;
-      buildInputs = [ tipBenchmarks.tools ];
+      buildInputs   = [ tipBenchmarks.tools ];
     }
     ''
       decode < "$commEqsJson" | conjectures_for_sample > "$out"
     '';
 };
-testRun "Can find commutativity" null
-  {
-    inherit precRec;
-    buildInputs = [ jq ];
-  }
-  ''
-    set -e
-    jq -e '.precision | . > 0' < "$precRec"
-    jq -e '.recall    | . > 0' < "$precRec"
-  ''
+{
+  commutativity = testRun "Can find commutativity" null
+    {
+      inherit precRec;
+      buildInputs = [ jq ];
+    }
+    ''
+      set -e
+      jq -e '.precision | . > 0' < "$precRec"
+      jq -e '.recall    | . > 0' < "$precRec"
+    '';
+
+  parameterisedTypes = testRun "Can find properties of parameterised types" null
+    (withNix {
+      buildInputs  = [ jq tipBenchmarks.tools ];
+
+      inherit (quickspecBench.benchVars.standalone)
+        genAnnotatedPkg genInput runner;
+
+      NIX_EVAL_HASKELL_PKGS = quickspecBench.customHs;
+      GROUND_TRUTH          = ../benchmarks/ground-truth/list-full.smt2;
+      TRUTH_SOURCE          = ../benchmarks/ground-truth/list-full.smt2;
+      theory                = ../benchmarks/list-full.smt2;
+    })
+    ''
+      set -e
+
+      DATA=$("$genAnnotatedPkg" < "$theory")
+
+      ANNOTATED=$(echo "$DATA" | jq -r '.annotated')
+        OUT_DIR=$(echo "$DATA" | jq -r '.out_dir'  )
+
+      export OUT_DIR
+
+      SETUP=$("$genInput" < "$ANNOTATED")
+
+      RUNNER=$(echo "$SETUP" | jq -r '.runner')
+        CODE=$(echo "$SETUP" | jq -r '.code'  )
+         ENV=$(echo "$SETUP" | jq -r '.env'   )
+
+      EQS=$(echo "$CODE" | nix-shell -p "$ENV" --run "$RUNNER" |
+            grep -v '^Depth')
+
+      RESULT=$(echo "$EQS" | jq -s '.' | precision_recall_eqs)
+
+      echo "$RESULT" 1>&2
+
+      echo "$RESULT" | jq -e '.recall | . > 0' 1>&2
+
+      echo "pass" > "$out"
+    '';
+}
