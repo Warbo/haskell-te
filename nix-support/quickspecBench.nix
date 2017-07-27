@@ -96,7 +96,7 @@ benchVars = {
     };
 
     genAnnotatedPkg = wrap {
-      paths = [ nix tipBenchmarks.tools ];
+      paths = [ nix nix-config.pipeToNix tipBenchmarks.tools ];
       vars  = {
         NIX_REMOTE = "daemon";
         mkPkg      = wrap {
@@ -105,6 +105,11 @@ benchVars = {
           };
           script = ''
             #!/usr/bin/env bash
+
+            echo "Storing input" 1>&2
+            INPUT_TIP=$(pipeToNix input.smt2)
+            export INPUT_TIP
+
             ${mkPkgInner}
             echo "$OUT_DIR"
           '';
