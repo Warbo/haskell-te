@@ -51,7 +51,7 @@ with rec {
 
   countVars = writeScript "countVars.hs" ''
     -- TODO: We don't need all of these
-    import Test.QuickSpec
+    import Test.QuickSpec hiding (lists)
     import Test.QuickSpec.Signature
     import Data.Digest.Murmur32
     import Data.Serialize
@@ -66,20 +66,23 @@ with rec {
     mkIfCxtInstances '''Ord
     mkIfCxtInstances '''Arbitrary
 
-    intLen  = Prelude.length (Test.RuntimeArbitrary.getArbGen [
-        Prelude.undefined :: (Prelude.Integer)
-      ])
+    ints  = ("Integer", Test.RuntimeArbitrary.getArbGen
+                          [Prelude.undefined :: (Prelude.Integer)])
+    lists = ("List",    Test.RuntimeArbitrary.getArbGen
+                          [Prelude.undefined :: ((A.List) Prelude.Integer)])
+    nats  = ("Nat",     Test.RuntimeArbitrary.getArbGen
+                          [Prelude.undefined :: (A.Nat)])
 
-    listLen = Prelude.length (Test.RuntimeArbitrary.getArbGen [
-        Prelude.undefined :: ((A.List) Prelude.Integer)
-      ])
+    check (t, l) = case l of
+      [] -> error ("No Arbitrary instance for " ++ t)
+      _  -> return ()
 
-    message = case (intLen, listLen) of
-      (0, _) -> error "No Arbitrary instance for Integer"
-      (_, 0) -> error "No Arbitrary instance for (List Integer)"
-      _      -> "Found Arbitrary instances"
-
-    main = putStrLn message
+    main = sequence [
+        check ints
+      , check nats
+      , check lists
+      , putStrLn "Found Arbitrary instances"
+      ]
   '';
 };
 {
