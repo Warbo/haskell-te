@@ -62,7 +62,9 @@ with rec {
     import Test.RuntimeArbitrary
     import Prelude
     import GHC.Types
+    import qualified Test.Feat as F
 
+    mkIfCxtInstances '''F.Enumerable
     mkIfCxtInstances '''Ord
     mkIfCxtInstances '''Arbitrary
 
