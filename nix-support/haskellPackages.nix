@@ -74,8 +74,8 @@ hsOverride = self: super:
                                        (fetchFromGitHub {
                                          owner  = "Warbo";
                                          repo   = "mlspec";
-                                         rev    = "e8dd35e";
-                                         sha256 = "0xhb6gvzgpmi6mwpjzcqpiak4g4c25nyxm3bhfnvw2334s3igb4l";
+                                         rev    = "4c74f0f";
+                                         sha256 = "1idnlykmpdwqk411vddyllxj9d0m8is4nwwpf7xcg26ldnng9mz1";
                                        })
                                        {};
 
