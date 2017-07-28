@@ -1,0 +1,12 @@
+From: Chris Warburton
+Date: Thu, 27 Jul 2017 13:52:56 +0100
+Subject: Re: No variables available for parameterised types
+Message-Id: <d7b518eda6e0cc84-caf3f5ee096cd4c4-artemis@nixos>
+References: <d7b518eda6e0cc84-0-artemis@nixos>
+In-Reply-To: <d7b518eda6e0cc84-0-artemis@nixos>
+
+Looks like we just need to add the `mkIfCxtInstances ''F.Enumerable`
+line suggested above.
+
+Adding this to our "check we have Arbitrary instances" test makes it
+pass. Now we just have to add it to the actual Haskell code generator.

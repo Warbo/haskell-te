@@ -1,6 +1,6 @@
-{ annotated, benchmark, buildEnv, ensureVars, glibcLocales, haskellPackages, jq,
-  lib, makeWrapper, nix, nixEnv, runCmd, runCommand, stdenv, time, timeout,
-  tipBenchmarks, withNix, writeScript }:
+{ annotated, bash, benchmark, buildEnv, ensureVars, glibcLocales,
+  haskellPackages, jq, lib, makeWrapper, nix, nix-config, nixEnv, runCmd,
+  runCommand, stdenv, time, timeout, tipBenchmarks, withNix, writeScript }:
 
 # Provides a script which accepts smtlib data, runs it through QuickSpec and
 # outputs the resulting equations along with benchmark times.
@@ -11,9 +11,135 @@ with builtins; with lib;
 
 rec {
 
+inherit (nix-config) wrap;
+
 fail = msg: ''{ echo -e "${msg}" 1>&2; exit 1; }'';
 
+qsGenerateSig =
+  with rec {
+    runGenCmd = wrap {
+      file  = getCmd;
+      paths = [ (haskellPackages.ghcWithPackages (h: [ h.mlspec h.nix-eval ])) ];
+      vars  = {
+        #NIX_PATH = innerNixPath;
+        NIX_EVAL_HASKELL_PKGS = customHs;
+      };
+    };
+  };
+  wrap {
+    paths  = [ jq ];
+    script = ''
+      #!/usr/bin/env bash
+      jq 'map(select(.quickspecable))' | "${runGenCmd}"
+    '';
+  };
+
+benchVars = {
+  sampled = {
+    runner  = wrap {
+      paths = [ ((import augmentedHs {
+                   hsDir = "${tipBenchmarks.tip-benchmark-haskell}";
+                 }).ghcWithPackages (h: map (n: h."${n}") [
+                   "quickspec" "murmur-hash" "cereal" "mlspec-helper"
+                   "tip-benchmark-sig" "runtime-arbitrary" "QuickCheck" "ifcxt"
+                   "hashable"
+                 ])) ];
+      script = ''
+        #!/usr/bin/env bash
+        cat | $*
+      '';
+    };
+
+    genInput = wrap {
+      paths = [ jq tipBenchmarks.tools ];
+      vars  = {
+        OUT_DIR   = tipBenchmarks.tip-benchmark-haskell;
+
+        ANNOTATED = annotated (toString tipBenchmarks.tip-benchmark-haskell);
+
+        FILTER = writeScript "filter.jq" ''
+          def mkId: {"name": .name, "package": .package, "module": .module};
+
+          def keep($id): $keepers | map(. == $id) | any;
+
+          def setQS: . + {"quickspecable": (.quickspecable and keep(mkId))};
+
+          map(setQS)
+        '';
+      };
+      script = ''
+        #!/usr/bin/env bash
+
+        [[ -n "$ANNOTATED" ]] || ${fail "No ANNOTATED given"}
+        [[ -n "$OUT_DIR"   ]] || ${fail "No OUT_DIR given"}
+
+        # Give sampled names a module and package, then slurp into an array
+        KEEPERS=$(jq -R '{"name"    : .,
+                          "module"  : "A",
+                          "package" : "tip-benchmark-sig"}' |
+                  jq -s '.')
+
+        # Filters the signature to only those sampled in KEEPERS
+        jq --argjson keepers "$KEEPERS" -f "$FILTER" < "$ANNOTATED" |
+          "${qsGenerateSig}"
+        '';
+      };
+  };
+
+  # For exploring an arbitrary theory supplied via stdin
+  standalone = {
+    runner   = wrap {
+      script = ''
+        #!/usr/bin/env bash
+        cat | $*
+      '';
+    };
+
+    genAnnotatedPkg = wrap {
+      paths = [ nix nix-config.pipeToNix tipBenchmarks.tools ];
+      vars  = {
+        NIX_REMOTE = "daemon";
+        mkPkg      = wrap {
+          vars = {
+            NIX_PATH = innerNixPath;
+          };
+          script = ''
+            #!/usr/bin/env bash
+
+            echo "Storing input" 1>&2
+            INPUT_TIP=$(pipeToNix input.smt2)
+            export INPUT_TIP
+
+            ${mkPkgInner}
+            echo "$OUT_DIR"
+          '';
+        };
+      };
+
+      script = ''
+        #!/usr/bin/env bash
+        set -e
+
+        echo "Generating package" 1>&2
+        OUT_DIR=$(INPUT_TIP="$1" "$mkPkg")
+        export OUT_DIR
+
+        echo "Annotating package" 1>&2
+        ANNOTATED=$(nix-build --show-trace --no-out-link \
+                      --argstr dir "$OUT_DIR"            \
+                      -E '{ dir }: with import <nixpkgs> {}; annotated dir')
+
+        jq -n --arg annotated "$ANNOTATED" --arg dir "$OUT_DIR" \
+           '{"annotated": $annotated, "out_dir": $dir}'
+      '';
+    };
+
+    genInput = qsGenerateSig;
+  };
+};
+
 getCmd = writeScript "getCmd.hs" ''
+  #!/usr/bin/env runhaskell
   {-# LANGUAGE OverloadedStrings #-}
   import           Data.Aeson
   import qualified Data.ByteString.Lazy.Char8 as BS

@@ -1,0 +1,9 @@
+From: Chris Warburton
+Date: Tue, 25 Jul 2017 15:17:09 +0100
+Subject: Re: Use asv for running benchmarks
+Message-Id: <f535fc881e4491fe-cefdad0078648e95-artemis@nixos>
+References: <f535fc881e4491fe-0-artemis@nixos>
+In-Reply-To: <f535fc881e4491fe-0-artemis@nixos>
+
+Added quickspec benchmarks for the "standalone" theories from Isabelle
+("nat-simple", "nat-full" and "list-full").

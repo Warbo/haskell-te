@@ -1,0 +1,37 @@
+From: Chris Warburton
+Date: Fri, 28 Jul 2017 12:44:08 +0100
+Subject: Re: No variables available for parameterised types
+Message-Id: <d7b518eda6e0cc84-f9b033d833db8cd0-artemis@nixos>
+References: <d7b518eda6e0cc84-0-artemis@nixos>
+In-Reply-To: <d7b518eda6e0cc84-0-artemis@nixos>
+
+Looking into this a bit more, I think the issue is that functions have
+no Ord instance; since getArbGen checks for Ord and for Arbitrary, it's
+not returning a generator.
+
+There are a few approaches we could take:
+
+ - We could declare an `Ord` instance for functions.
+  - Since the Ord instances are what actually determine equality in
+    quickspec, we would have to do it "properly" or else risk breaking
+    the output
+  - There's no general way in Haskell to compare functions; they're
+    black boxes, so this seems like a no go
+ - We could use some intermediate datatype, such as lookup tables, which
+   we can easily make an Ord instance for (e.g. convert to an assoc
+   list, sort and compare lexicographically)
+  - This requires some sort of conversion layer, since the functions in
+    our signature are expecting normal functions (would be nice if ->
+    were more polymorphic/overloadable in Haskell!)
+  - Too invasive, probably requires too much work to integrate (there
+    are off-the-shelf datatypes we can use, but it's the
+    wrapping/unwrapping which would be a pain)
+ - We could see if the Ord instance is still needed
+  - It looks like it's needed for using the `fun0`, `fun1`, etc.
+    functions, but not the `gvars` functions.
+  - Even in the case of `funN`, only the last type needs to be Ord,
+    e.g. it's fine to have `map :: (a -> b) -> [a] -> [b]`, as long as
+    `[b]` is an instance of Ord; `[a]` and `(a -> b)` don't have to be.
+
+I'll try dumping the Ord constraint in RuntimeArbitrary's getArbGen, to
+see if that will work.

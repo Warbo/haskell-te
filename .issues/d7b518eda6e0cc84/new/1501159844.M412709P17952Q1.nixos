@@ -1,0 +1,32 @@
+From: Chris Warburton
+Date: Thu, 27 Jul 2017 13:43:17 +0100
+State: resolved
+Subject: No variables available for parameterised types
+Message-Id: <d7b518eda6e0cc84-0-artemis@nixos>
+resolution: fixed
+
+For example, exploring a theory of lists, with `length`, `reverse`,
+etc. we find things like:
+
+  append [] [x] = [x]
+
+We would expect to find the following, more general, theorem, since its
+syntax tree is shallower:
+
+  append [] y = y
+
+The reason we don't is that we can't generate Arbitrary instances for
+lists, and hence we don't get any list variables (like `y`). We can get
+Arbitrary instances for non-parameterised types, like Nat, and hence
+they get variables.
+
+It looks like our parameterised types do have an instance, thanks to
+TIP's translation, but it has an `Enumerable` constraint. Since we're
+monomorphising everything to `Integer`, maybe we don't have an
+`Enumerable` instance for `Integer`, and that's why we don't get an
+Arbitrary instance?
+
+Alternatively, it may be that ifcxt isn't choosing an instance because
+it's not following the chain of constraints. Our patches to ifcxt should
+have fixed this, but maybe we need to include something like
+`mkIfCxtInstances ''Enumerable`?

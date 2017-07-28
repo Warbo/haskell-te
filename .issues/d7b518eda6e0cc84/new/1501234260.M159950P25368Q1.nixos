@@ -1,0 +1,19 @@
+From: Chris Warburton
+Date: Fri, 28 Jul 2017 10:06:14 +0100
+Subject: Re: No variables available for parameterised types
+Message-Id: <d7b518eda6e0cc84-fa22343661a8f83a-artemis@nixos>
+References: <d7b518eda6e0cc84-0-artemis@nixos>
+In-Reply-To: <d7b518eda6e0cc84-0-artemis@nixos>
+
+Added the "''Enumerable" line to MLSpec's theory renderer (qualified,
+along with the necessary module imports and package dependencies for
+testing-feat).
+
+We're now getting variables of parameterised types like lists.
+
+We're still not getting arbitrary function variables, e.g. for use in
+map, fold, etc. even though we're asking for them.
+
+Looking at the default instances of Arbitrary, it looks like we need to
+satisfy a CoArbitrary constraint too, which ifcxt may be missing since
+we're not giving it access to CoArbitrary.
