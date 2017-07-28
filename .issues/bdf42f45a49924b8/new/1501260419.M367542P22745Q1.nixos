@@ -1,0 +1,12 @@
+From: Chris Warburton
+Date: Fri, 28 Jul 2017 17:45:23 +0100
+Subject: Re: Equation comparison seems to be missing some matches
+Message-Id: <bdf42f45a49924b8-fb4f7e79bc1b6b78-artemis@nixos>
+References: <bdf42f45a49924b8-0-artemis@nixos>
+In-Reply-To: <bdf42f45a49924b8-0-artemis@nixos>
+
+Bumped te-benchmarks to a new version, which doesn't compare variables
+based on their types (we assume expressions are type-correct, so they
+can't only differ by a variable's type; but different systems (Isabelle,
+TIP, QuickSpec, etc.) can encode (or erase!) types in different ways,
+which makes them incomparable).

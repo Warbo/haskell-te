@@ -9,8 +9,8 @@ rec {
             else fetchFromGitHub {
                    owner  = "Warbo";
                    repo   = "theory-exploration-benchmarks";
-                   rev    = "2285111";
-                   sha256 = "0s4arrrvihzbh471zvrwj9x6j6fv500pv9q8vpbgvgj7zdd6np09";
+                   rev    = "79d33e2";
+                   sha256 = "1icpxjldlgwxacb0brjpn72yrq2asbg74kmymdkk9y8qvxny9ib0";
                  };
 
   inherit (callPackage path {
