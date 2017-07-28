@@ -45,9 +45,11 @@ with rec {
 
       export OUT_DIR
 
-      nix-shell --show-trace -p "$EXPR" --run "$RUNNER"
+      nix-shell --show-trace -p "$EXPR" --run "$RUNNER $*"
     '';
   };
+
+  ticks = "''";
 
   countVars = writeScript "countVars.hs" ''
     -- TODO: We don't need all of these
@@ -64,10 +66,18 @@ with rec {
     import GHC.Types
     import qualified Test.Feat as F
 
-    mkIfCxtInstances '''F.Enumerable
-    mkIfCxtInstances '''Ord
-    mkIfCxtInstances '''Arbitrary
+    mkIfCxtInstances ${ticks}F.Enumerable
+    mkIfCxtInstances ${ticks}Ord
+    mkIfCxtInstances ${ticks}CoArbitrary
+    mkIfCxtInstances ${ticks}Arbitrary
 
+    func1 = ("Unary",   Test.RuntimeArbitrary.getArbGen
+                          [Prelude.undefined :: ((->) Prelude.Integer
+                                                      Prelude.Integer)])
+    func2 = ("Binary",  Test.RuntimeArbitrary.getArbGen
+                          [Prelude.undefined :: ((->) Prelude.Integer
+                                                      ((->) Prelude.Integer
+                                                            Prelude.Integer))])
     ints  = ("Integer", Test.RuntimeArbitrary.getArbGen
                           [Prelude.undefined :: (Prelude.Integer)])
     lists = ("List",    Test.RuntimeArbitrary.getArbGen
@@ -83,6 +93,8 @@ with rec {
         check ints
       , check nats
       , check lists
+      , check func1
+      , check func2
       , putStrLn "Found Arbitrary instances"
       ]
   '';

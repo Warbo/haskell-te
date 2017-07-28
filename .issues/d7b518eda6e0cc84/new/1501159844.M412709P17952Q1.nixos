@@ -1,8 +1,9 @@
 From: Chris Warburton
 Date: Thu, 27 Jul 2017 13:43:17 +0100
-State: new
+State: resolved
 Subject: No variables available for parameterised types
 Message-Id: <d7b518eda6e0cc84-0-artemis@nixos>
+resolution: fixed
 
 For example, exploring a theory of lists, with `length`, `reverse`,
 etc. we find things like:

@@ -1,0 +1,11 @@
+From: Chris Warburton
+Date: Fri, 28 Jul 2017 14:35:55 +0100
+Subject: Re: No variables available for parameterised types
+Message-Id: <d7b518eda6e0cc84-e90ab6a111a0937d-artemis@nixos>
+References: <d7b518eda6e0cc84-0-artemis@nixos>
+In-Reply-To: <d7b518eda6e0cc84-0-artemis@nixos>
+
+I've removed the Ord constraint on getArbGen, and added
+mkIfCxt... template haskell lines for Enumerable and CoArbitrary. This
+seems to have done the trick, since we're now getting loads of theorems
+involving lists and higher-order functions (e.g. map, foldl and foldr)

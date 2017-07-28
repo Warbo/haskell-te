@@ -1,0 +1,12 @@
+From: Chris Warburton
+Date: Fri, 28 Jul 2017 13:44:05 +0100
+State: resolved
+Subject: brief description
+Message-Id: <aa1e06bb5811c27f-0-artemis@nixos>
+resolution: fixed
+
+I've removed the Ord constraint in getArbGen, and now we're getting
+generators for functions like `Integer -> Integer` :)
+
+Next thing to check is that we can still explore given theories and
+sampled theories with quickspec, hashspec and mlspec.

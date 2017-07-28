@@ -74,8 +74,8 @@ hsOverride = self: super:
                                        (fetchFromGitHub {
                                          owner  = "Warbo";
                                          repo   = "mlspec";
-                                         rev    = "4c74f0f";
-                                         sha256 = "1idnlykmpdwqk411vddyllxj9d0m8is4nwwpf7xcg26ldnng9mz1";
+                                         rev    = "a5f0dd2";
+                                         sha256 = "0x17y5fb1r77bjzdxq7r8d5b7n5ksljmivcllgisvc1wafjwlrnq";
                                        })
                                        {};
 
@@ -118,8 +118,8 @@ hsOverride = self: super:
                                        (fetchFromGitHub {
                                          owner  = "Warbo";
                                          repo   = "runtime-arbitrary";
-                                         rev    = "dc722289226520019307f9bfe000b378630e9d6c";
-                                         sha256 = "001v1k6m56kik18jcccygwa7k5wc49j2gbpk9hj2n7pgrk3nfady";
+                                         rev    = "5b7ff2f";
+                                         sha256 = "11gnfmz48vxvf42xs9255r51vbv1sjghvzi60gcrpx3jk38d2gyb";
                                        })
                                        {};
 
