@@ -5,7 +5,7 @@ from os         import chmod, getenv
 from parameters import repetitions, timeout_secs
 from sexpdata   import loads as sloads, dumps as sdumps
 from stat       import S_IRWXU, S_IRWXG, S_IRWXO
-from util       import cached, eqs_in, generate_cache, pipe, sort, TempDir, timed_run
+from util       import cached, eqs_in, generate_cache, pipe, set_attributes, sort, timed_run
 
 files  = jloads(getenv('theoryFiles'))
 truths = jloads(getenv('theoryTruths'))
@@ -13,16 +13,6 @@ args   = {
     'rep'    : range(0, repetitions),
     'theory' : list(set(jloads(getenv('theoryFiles' )).keys() + \
                         jloads(getenv('theoryTruths')).keys()))
-}
-
-# Tells asv how to run the benchmarks
-attrs = {
-    'repeat'      : 1,
-    'number'      : 1,
-    'params'      : reduce(lambda x, y: x + (y,),
-                           [args[name] for name in sort(args.keys())],
-                           ()),
-    'param_names' : sort(args.keys())
 }
 
 def setup_cache():
@@ -52,7 +42,7 @@ def setup_cache():
         }
 
         # Translate this theory into Haskell and extract type, arity, etc. info
-        ann_out, _ = pipe([getenv('qsStandaloneMkPkg'), files[theory]])
+        ann_out, _ = pipe([getenv('qsStandaloneMkPkg')], thy['content'])
         pkg        = jloads(ann_out)
 
         env        = {'OUT_DIR': pkg['out_dir']}
@@ -110,9 +100,14 @@ def setup_cache():
 setup_cache.timeout = max(3600,
                           timeout_secs * len(args['rep']) * len(args['theory']))
 
-def track_data(cache):
+def track_data(cache, _):
     '''A dummy benchmark which spits out the raw data, for archiving.'''
     return cache
+track_data.repeat      = 1
+track_data.number      = 1
+track_data.params      = (["dummy"],)
+track_data.param_names = ["dummy"]
+
 
 # Benchmarks
 
@@ -134,10 +129,16 @@ def track_time(cache, rep, theory):
 
 # Assign parameters to benchmarks
 
-for f in (track_conjectures, track_equations, track_precision, track_recall,
-          track_time):
-    for attr in attrs:
-        setattr(f, attr, attrs[attr])
+set_attributes([track_conjectures, track_equations, track_precision,
+                track_recall, track_time],
+               {
+                   'repeat'      : 1,
+                   'number'      : 1,
+                   'params'      : reduce(lambda x, y: x + (y,),
+                                          [args[name] for name in sort(args.keys())],
+                                          ()),
+                   'param_names' : sort(args.keys())
+               })
 
 # The available conjectures (ground truth) doesn't change across reps, so only
 # track it per theory

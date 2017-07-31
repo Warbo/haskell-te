@@ -72,15 +72,15 @@ def timed_run(cmd, stdin, timeout=None, env=None):
         'success' : not killed
     }
 
-def cached(cache, size, rep, *path):
+def cached(cache, theory, rep, *path):
     '''Look up the given data from the cache. If this run failed, an exception
     is thrown (so we avoid looking up data that wasn't generated).'''
-    result = cache[size]['reps'][rep]
+    result = cache[theory]['reps'][rep]
     if result['success']:
         for key in path:
             result = result[key]
         return result
-    raise Exception('Repetition {0} of size {1} failed'.format(rep, size))
+    raise Exception('Repetition {0} of theory {1} failed'.format(rep, theory))
 
 def sort(l):
     '''Built-in sort is in-place; this will return the sorted list too.'''
@@ -107,11 +107,7 @@ def generate_cache(theories, f):
             cache[theory]['reps'][rep] = data
     return cache
 
-class TempDir(object):
-    '''Context manager for using temp dirs in 'with' statements.'''
-    def __enter__(self):
-        self.name = mkdtemp()
-        return self.name
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        rmtree(self.name)
+def set_attributes(funcs, attrs):
+    for f in funcs:
+        for attr in attrs:
+            setattr(f, attr, attrs[attr])

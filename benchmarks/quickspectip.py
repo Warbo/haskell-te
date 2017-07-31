@@ -1,25 +1,14 @@
-# See "Writing benchmarks" in the asv docs for more information.
-
 from json       import dumps, loads
 from os         import getenv
 from parameters import repetitions, timeout_secs
-from util       import cached, eqs_in, generate_cache, pipe, sort, timed_run
+from util       import cached, eqs_in, generate_cache, pipe, set_attributes, \
+                       sort, timed_run
 
 # Benchmark parameters. Will appear in alphabetical order as arguments, after
 # 'cache'
 args = {
-    'rep'     : range(0, repetitions),
-    'size'    : range(1, 5),
-}
-
-# Tells asv how to run the benchmarks
-attrs = {
-    'repeat'      : 1,
-    'number'      : 1,
-    'params'      : reduce(lambda x, y: x + (y,),
-                           [args[name] for name in sort(args.keys())],
-                           ()),
-    'param_names' : sort(args.keys())
+    'rep'  : range(0, repetitions),
+    'size' : range(1, 20),
 }
 
 def setup_cache():
@@ -55,12 +44,18 @@ def setup_cache():
         return data
 
     return generate_cache(args['size'], gen)
-setup_cache.timeout = timeout_secs * len(args['rep']) * len(args['size'])
+setup_cache.timeout = max(3600,
+                          timeout_secs * len(args['rep']) * len(args['size']))
 
-def track_data(cache):
+def track_data(cache, _):
     '''Store the generated data in our results, so we can inspect it and
     reproduce the executions/analysis.'''
     return cache
+
+track_data.repeat      = 1
+track_data.number      = 1
+track_data.params      = (["dummy"],)
+track_data.param_names = ["dummy"]
 
 # Benchmark functions
 
@@ -80,20 +75,26 @@ def track_equations(cache, rep, size):
 
 def track_precision(cache, rep, size):
     '''Proportion of found equations which were wanted.'''
-    prec = cached(cache, rep, size, 'conjectures', 'precision')
+    prec = cached(cache, size, rep, 'conjectures', 'precision')
     return prec if prec else 0
 
 def track_recall(cache, rep, size):
     '''Proportion of wanted conjectures which were found.'''
-    return cached(cache, rep, size, 'conjectures', 'recall')
+    return cached(cache, size, rep, 'conjectures', 'recall')
 
 def track_time(cache, rep, size):
     '''Time taken to explore (excludes setup and analysis).'''
     return cached(cache, size, rep, 'time')
 
-# Assign parameters to benchmarks
+# Tells asv how to run the benchmarks
 
-for f in (track_conjectures, track_conjectured_equations, track_equations,
-          track_precision, track_recall, track_time):
-    for attr in attrs:
-        setattr(f, attr, attrs[attr])
+set_attributes([track_conjectures, track_conjectured_equations, track_equations,
+                track_precision, track_recall, track_time],
+               {
+                   'repeat'      : 1,
+                   'number'      : 1,
+                   'params'      : reduce(lambda x, y: x + (y,),
+                                          [args[name] for name in sort(args.keys())],
+                                          ()),
+                   'param_names' : sort(args.keys())
+               })
