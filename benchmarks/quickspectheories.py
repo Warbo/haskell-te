@@ -42,8 +42,8 @@ def setup_cache():
         }
 
         # Translate this theory into Haskell and extract type, arity, etc. info
-        ann_out, _ = pipe([getenv('qsStandaloneMkPkg')], thy['content'])
-        pkg        = jloads(ann_out)
+        ann_out = pipe([getenv('qsStandaloneMkPkg')], thy['content'])['stdout']
+        pkg     = jloads(ann_out)
 
         env        = {'OUT_DIR': pkg['out_dir']}
         annotated  = None
@@ -51,14 +51,13 @@ def setup_cache():
             annotated = jloads(f.read())
 
         # Make a Haskell program to explore this theory with QuickSpec
-        setup_out, _ = pipe([getenv('qsStandaloneSetup')],
-                            jdumps(annotated),
-                            env=env)
-        setup        = jloads(setup_out)
+        setup_out = pipe([getenv('qsStandaloneSetup')],
+                         jdumps(annotated),
+                         env=env)['stdout']
+        setup     = jloads(setup_out)
 
         # Build the environment (GHC with all the right packages)
-        env, _      = pipe(['nix-build', '-E', setup['env']], env=env)
-
+        env         = pipe(['nix-build', '-E', setup['env']], env=env)['stdout']
         thy['env']  = {'PATH' : env.strip() + '/bin:' + getenv('PATH')}
         thy['cmd']  = [getenv('qsStandaloneRunner'), setup['runner']]
         thy['code'] = setup['code']
@@ -76,13 +75,13 @@ def setup_cache():
         result['analysis'] = None
         if result['success']:
             # Discard "Depth" lines, since they're just progress info
-            eqs       = map(jloads, filter(lambda l: not l.startswith('Depth') \
-                                                     and l.strip(),
-                                           result['stdout'].split('\n')))
+            eqs = map(jloads, filter(lambda l: not l.startswith('Depth') \
+                                               and l.strip(),
+                                     result['stdout'].split('\n')))
 
-            out, _ = pipe(['precision_recall_eqs'], jdumps(eqs),
-                          env={'GROUND_TRUTH' : truths[theory],
-                               'TRUTH_SOURCE' : truths[theory]})
+            out = pipe(['precision_recall_eqs'], jdumps(eqs),
+                       env={'GROUND_TRUTH' : truths[theory],
+                            'TRUTH_SOURCE' : truths[theory]})['stdout']
 
             result['analysis'] = jloads(out)
 

@@ -1,0 +1,24 @@
+From: Chris Warburton
+Date: Mon, 31 Jul 2017 17:54:08 +0100
+State: new
+Subject: Apply memory limits to individual buckets
+Message-Id: <d9c91ce7c958cbd0-0-artemis@nixos>
+
+We can run MLSpec without a memory cutoff, but it's dangerous as it'll
+gladly eat up all of our RAM.
+
+Instead, we apply a cutoff using withTimeout. That works, but it's a
+little bit crappy since the whole point of using buckets is that we get
+to use multiple processes. Hence we should allow our limits to be set on
+the individual runners, rather than the invoker.
+
+One way to do this would be to augment `wrapper.sh` in nix-eval, e.g. to
+accept a new env var like `NIX_EVAL_WRAP_PROGRAM`. If found, that would
+be invoked with the given command (`runhaskell ...`) as an argument.
+
+We can then set it to a script which calls `wrapProgram`. Note that we'd
+probably have to propagate any given limit through "manually", since it
+may be running in a different environment to our invoking CLI.
+
+Note that MLSpec is used by hashspec as well, so this should apply to
+both.
