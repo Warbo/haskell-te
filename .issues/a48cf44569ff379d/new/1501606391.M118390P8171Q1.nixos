@@ -1,0 +1,32 @@
+From: Chris Warburton
+Date: Tue, 01 Aug 2017 17:47:12 +0100
+State: new
+Subject: See if our benchmark setup could be built by Nix
+Message-Id: <a48cf44569ff379d-0-artemis@nixos>
+
+The setup_cache functions in our benchmarks are getting quite
+complicated. There's a lot this that we could probably do with Nix,
+rather than just giving access to a few env vars.
+
+We specifically DON'T want to run the benchmarking tools via Nix, since
+that can cause them to interfere (e.g. if Nix builds a bunch of stuff in
+parallel).
+
+We can do the sampling, translation, etc. up front in Nix.
+
+We can turn the parameters.py file into a JSON file, which can be read
+by Nix (and maybe passed in to Python via the environment?)
+
+Analysing the results will still need to be done from Python, since that
+requires the stdout of the benchmarked runs. We might be able to package
+this up a little better though.
+
+I think there's a balance to be struck in general:
+
+ - Nix is good at running programs, reading files, setting up
+   environments, etc. so it should be used for that.
+ - Python is good for manipulating data (e.g. JSON or otherwise).
+
+We should focus each on their strengths. In particular, we can use
+Python instead of jq in Nix, and we can use Nix instead of subprocess32
+in Python.
