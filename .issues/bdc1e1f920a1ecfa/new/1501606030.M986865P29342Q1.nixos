@@ -1,0 +1,51 @@
+From: Chris Warburton
+Date: Tue, 01 Aug 2017 17:29:08 +0100
+State: new
+Subject: Tease out independent components again.
+Message-Id: <bdc1e1f920a1ecfa-0-artemis@nixos>
+
+This began as a collection of bash scripts (oh how times have changed!),
+which were at least runnable as standalone commands.
+
+The closest we have right now are the quickspecBench, hashspecBench and
+mlspecBench commands, which are awful for the following reasons:
+
+ - Their primary purpose is to benchmark these systems, rather than just
+   run them.
+ - They're FAR too complicated, mostly because of the benchmarking
+   mentioned above.
+ - They try to do too much, for example they include one mode which
+   samples from TEB and one mode which takes TIP from stdin. They
+   include TIP to Haskell package translation (from TEB). And so on.
+ - Their functionality is reasonably modular, but it's invoked in weird
+   ways (e.g. calling out to nix-build).
+
+A lot of this is due to the requirements of benchmarking: we need to
+repeat one bunch of work (the exploration) without repeating other
+expensive work (like AST extraction); we need to be flexible enough to
+support arbitrary packages, whilst ensuring the benchmarked sections
+don't invoke any compilers; and so on.
+
+Using asv lets us offload a bunch of these concerns:
+
+ - Benchmarking and repetition are handled by our Python benchmark
+   scripts.
+ - Preparing the input (translation, etc.) can be taken care of by Nix
+   and/or Python.
+ - Compiling, setting up an appropriate environment, etc. can be taken
+   care of by Nix, in benchmarks/default.nix.
+
+We should try, as much as possible, to turn the actual exploration
+systems into reasonably-standalone scripts. These should probably be
+something like:
+
+ - A TIP to haskell package script (taken from TEB)
+ - A Haskell package to ASTs script
+ - A TIP sample to ASTs script
+ - A script to explore ASTs with QuickSpec (no reduction)
+ - Ditto for HashSpec (no reduction)
+ - Ditto for MLSpec (no reduction)
+
+These should, as far as possible, avoid doing stuff like caching to the
+Nix store. They don't need to, and they're modular enough that we can do
+so in our benchmark environments.

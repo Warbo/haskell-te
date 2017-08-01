@@ -1,8 +1,9 @@
 From: Chris Warburton
 Date: Wed, 12 Jul 2017 13:30:44 +0100
-State: new
+State: resolved
 Subject: Use asv for running benchmarks
 Message-Id: <f535fc881e4491fe-0-artemis@nixos>
+resolution: fixed
 
 We should benchmark:
 

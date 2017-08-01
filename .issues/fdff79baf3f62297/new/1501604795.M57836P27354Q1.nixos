@@ -1,0 +1,7 @@
+From: Chris Warburton
+Date: Tue, 01 Aug 2017 17:26:01 +0100
+State: new
+Subject: Add HashSpec asv benchmark for Isabelle theories
+Message-Id: <fdff79baf3f62297-0-artemis@nixos>
+
+We need to process the TIP, as in QuickSpec's.

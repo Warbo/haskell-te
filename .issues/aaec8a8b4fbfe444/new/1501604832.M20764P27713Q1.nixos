@@ -1,0 +1,7 @@
+From: Chris Warburton
+Date: Tue, 01 Aug 2017 17:26:36 +0100
+State: new
+Subject: Add MLSpec asv benchmark for Isabelle theories
+Message-Id: <aaec8a8b4fbfe444-0-artemis@nixos>
+
+We should probably get HashSpec running first, then base this on that.

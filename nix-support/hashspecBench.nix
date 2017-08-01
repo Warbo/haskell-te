@@ -1,8 +1,77 @@
-{ bash, buckets, explore, format, glibcLocales, makeWrapper, mlspecBench,
-  nixEnv, quickspecBench, reduce-equations, runCommand, stdenv, timeout,
-  writeScript }:
+{ annotated, bash, buckets, explore, format, glibcLocales, jq, makeWrapper,
+  mlspecBench, nix-config, nixEnv, quickspecBench, reduce-equations, runCommand,
+  stdenv, timeout, tipBenchmarks, writeScript }:
 
+with builtins;
+with {
+  inherit (nix-config) wrap;
+  inherit (quickspecBench) fail;
+};
 rec {
+
+  benchVars = {
+    sampled = {
+      runner  = wrap {
+        paths = [ ((import quickspecBench.augmentedHs {
+                     hsDir = "${tipBenchmarks.tip-benchmark-haskell}";
+                   }).ghcWithPackages (h: map (n: h."${n}") [
+                     "quickspec" "murmur-hash" "cereal" "mlspec-helper"
+                     "tip-benchmark-sig" "runtime-arbitrary" "QuickCheck" "ifcxt"
+                     "hashable" "mlspec"
+                   ]))
+
+                   reduce-equations
+                   buckets.hashes ];
+        script = ''
+          #!/usr/bin/env bash
+          [[ -n "$TEMPDIR" ]] || ${fail "No TEMPDIR given"}
+
+          [[ -n "$MAX_KB"  ]] || {
+            echo "Setting default memory limit of 2GB" 1>&2
+            export MAX_KB=2000000
+          }
+
+          export NIX_EVAL_EXTRA_IMPORTS='[("tip-benchmark-sig", "A")]'
+          hashBucket | "${explore.explore-theories}" | reduce-equations
+        '';
+      };
+
+      genInput = wrap {
+        paths = [ jq tipBenchmarks.tools ];
+        vars  = {
+          OUT_DIR   = tipBenchmarks.tip-benchmark-haskell;
+
+          ANNOTATED = annotated (toString tipBenchmarks.tip-benchmark-haskell);
+
+          FILTER = writeScript "filter.jq" ''
+            def mkId: {"name": .name, "package": .package, "module": .module};
+
+            def keep($id): $keepers | map(. == $id) | any;
+
+            def setQS: . + {"quickspecable": (.quickspecable and keep(mkId))};
+
+            map(setQS)
+          '';
+        };
+        script = ''
+          #!/usr/bin/env bash
+
+          [[ -n "$ANNOTATED" ]] || ${fail "No ANNOTATED given"}
+          [[ -n "$OUT_DIR"   ]] || ${fail "No OUT_DIR given"}
+
+          # Give sampled names a module and package, then slurp into an array
+          KEEPERS=$(jq -R '{"name"    : .,
+                            "module"  : "A",
+                            "package" : "tip-benchmark-sig"}' |
+                    jq -s '.')
+
+          # Filters the signature to only those sampled in KEEPERS
+          jq --argjson keepers "$KEEPERS" -f "$FILTER" < "$ANNOTATED" |
+            jq 'map(select(.quickspecable))'
+        '';
+      };
+    };
+  };
 
   inEnvScript = runCommand "hashspecBench-inenvscript"
     {

@@ -1,0 +1,14 @@
+From: Chris Warburton
+Date: Tue, 01 Aug 2017 17:27:13 +0100
+State: new
+Subject: Remove the complicated nix-support/*specBench stuff
+Message-Id: <dee3112df2cc9787-0-artemis@nixos>
+
+These used to be standalone commands, which looped through many samples,
+timed themselves, etc.
+
+Since we're using asv for this now, this extra cruft can be removed. We
+can probably do a LOT of consolidation, deduping and garbage collection.
+
+Note that we should only do this once we've got QuickSpec, HashSpec and
+MLSpec benchmarks for asv, for both Isabelle theories and TIP samples.

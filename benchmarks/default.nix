@@ -8,7 +8,9 @@ with rec {
 
   qs = quickspecBench.benchVars;
 
-  py = nixpkgs-2016-09.python.withPackages (p: [ p.sexpdata ]);
+  hs = hashspecBench.benchVars;
+
+  py = nixpkgs-2016-09.python.withPackages (p: [ p.sexpdata p.subprocess32 ]);
 };
 attrsToDirs {
   bin = {
@@ -21,6 +23,9 @@ attrsToDirs {
 
         qsTipSetup  = qs.sampled.genInput;
         qsTipRunner = qs.sampled.runner;
+
+        hsTipSetup  = hs.sampled.genInput;
+        hsTipRunner = hs.sampled.runner;
 
         qsStandaloneMkPkg  = qs.standalone.genAnnotatedPkg;
         qsStandaloneSetup  = qs.standalone.genInput;
