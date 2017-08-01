@@ -1,0 +1,13 @@
+From: Chris Warburton
+Date: Tue, 01 Aug 2017 17:54:02 +0100
+Subject: Re: Use asv for running benchmarks
+Message-Id: <f535fc881e4491fe-f1f725b5b0e54420-artemis@nixos>
+References: <f535fc881e4491fe-0-artemis@nixos>
+In-Reply-To: <f535fc881e4491fe-0-artemis@nixos>
+
+This isn't completely finished yet, but I've opened new issues for the
+remaining parts, which are more fine-grained.
+
+The broadness of this issue was making it a bit cumbersome, so I'm
+closing it now that asv is implemented and the previous stuff is
+obsolete.
