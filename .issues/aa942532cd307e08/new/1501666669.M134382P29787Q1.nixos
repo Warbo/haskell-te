@@ -1,0 +1,10 @@
+From: Chris Warburton
+Date: Wed, 02 Aug 2017 10:36:49 +0100
+Subject: Re: Get MLSpec TIP benchmark for asv
+Message-Id: <aa942532cd307e08-e0abcfb03fc756ce-artemis@nixos>
+References: <aa942532cd307e08-0-artemis@nixos>
+In-Reply-To: <aa942532cd307e08-0-artemis@nixos>
+
+Copied from hashspec and it works (for sizes 1 and 4 got failure; for
+size 2 got success but 0 precision/recall, for size 3 got 100% recall
+and 11% precision) :)
