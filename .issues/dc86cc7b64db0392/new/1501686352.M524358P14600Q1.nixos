@@ -1,0 +1,24 @@
+From: Chris Warburton
+Date: Wed, 02 Aug 2017 15:59:43 +0100
+State: new
+Subject: asv errors on desktop
+Message-Id: <dc86cc7b64db0392-0-artemis@nixos>
+
+Looks like an obvious issue with jq not being in the environment:
+
+"Setting default memory limit of 2GB\nNo cluster count given; using 1
+(sqrt of sample size)\nCalculating SHA256 checksums of
+names\n/nix/store/cj83n3yg86zpvk9wi77dbr6myvi9aq12-explore-theories: line 20: jq: command not
+found\ngrep: write error\nreduce-equations: Failed to parse eqs: not
+enough input\n
+
+Also, when exploration gets killed there might be a more graceful way to
+handle it, e.g. setting 'success' to False:
+
+"Setting default memory limit of 2GB\nNo cluster count given; using 1
+(sqrt of sample size)\nCalculating SHA256 checksums of
+names\nrunghcXXXX1804289383846930886.hs:
+runghcXXXX1804289383846930886.hs: signal: 15\nMEM CPU 14.97 MEM 2035168
+MAXMEM 2035168 STALE 0 MAXMEM_RSS 837336\n<time
+name=\"ALL\">13930</time>\nreduce-equations: Failed to parse eqs: not
+enough input\n"
