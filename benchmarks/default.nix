@@ -10,6 +10,8 @@ with rec {
 
   hs = hashspecBench.benchVars;
 
+  ml = mlspecBench.benchVars;
+
   py = nixpkgs-2016-09.python.withPackages (p: [ p.sexpdata p.subprocess32 ]);
 };
 attrsToDirs {
@@ -26,6 +28,9 @@ attrsToDirs {
 
         hsTipSetup  = hs.sampled.genInput;
         hsTipRunner = hs.sampled.runner;
+
+        mlTipSetup  = ml.sampled.genInput;
+        mlTipRunner = ml.sampled.runner;
 
         qsStandaloneMkPkg  = qs.standalone.genAnnotatedPkg;
         qsStandaloneSetup  = qs.standalone.genInput;

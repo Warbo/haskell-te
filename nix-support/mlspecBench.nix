@@ -1,10 +1,46 @@
-{ bash, buildEnv, cluster, ensureVars, explore, format, glibcLocales,
-  haskellPackages, jq, lib, makeWrapper, nixEnv, quickspecBench,
-  reduce-equations, runCommand, runWeka, stdenv, timeout, writeScript }:
+{ bash, buckets, buildEnv, cluster, ensureVars, explore, format, glibcLocales,
+  hashspecBench, haskellPackages, jq, lib, makeWrapper, nix-config, nixEnv,
+  quickspecBench, reduce-equations, runCommand, runWeka, stdenv, timeout,
+  tipBenchmarks, writeScript }:
 with builtins;
 with lib;
-
+with {
+  inherit (nix-config) wrap;
+};
 rec {
+
+  benchVars = {
+    sampled = {
+      inherit (hashspecBench.benchVars.sampled) genInput;
+
+      runner  = wrap {
+        paths = [ ((import quickspecBench.augmentedHs {
+          hsDir = "${tipBenchmarks.tip-benchmark-haskell}";
+        }).ghcWithPackages (h: map (n: h."${n}") [
+          "quickspec" "murmur-hash" "cereal" "mlspec-helper"
+          "tip-benchmark-sig" "runtime-arbitrary" "QuickCheck" "ifcxt"
+          "hashable" "mlspec"
+        ]))
+
+        reduce-equations
+        buckets.hashes
+        runWeka ];
+        script = inEnvScript;
+        /*''
+          #!/usr/bin/env bash
+          [[ -n "$TEMPDIR" ]] || ${fail "No TEMPDIR given"}
+
+          [[ -n "$MAX_KB"  ]] || {
+            echo "Setting default memory limit of 2GB" 1>&2
+            export MAX_KB=2000000
+          }
+
+          export NIX_EVAL_EXTRA_IMPORTS='[("tip-benchmark-sig", "A")]'
+          hashBucket | "${explore.explore-theories}" | reduce-equations
+        '';*/
+      };
+    };
+  };
 
   ourEnv = writeScript "our-env.nix" ''
     with import ${./..}/nix-support {};
@@ -38,21 +74,15 @@ rec {
     set -e
     set -o pipefail
 
-    function finish {
-      rm "$DIR/clusters.json"
-    }
-    trap finish EXIT
-
     # Perform clustering
     clusters="$DIR/clusters.json"
     export clusters
 
-    ${cluster.clusterScript} > "$clusters"
+    CL=$(${cluster.clusterScript})
 
-    clCount=$("${jq}/bin/jq" 'map(.cluster) | max' < "$DIR/clusters.json")
+    clCount=$(echo "$CL" | "${jq}/bin/jq" 'map(.cluster) | max')
     ${assertNumeric "$clCount" "clCount should contain number of clusters"}
 
-    export clusters
     export clCount
 
     NIX_EVAL_EXTRA_IMPORTS='[("tip-benchmark-sig", "A")]'
@@ -66,7 +96,7 @@ rec {
       export MAX_KB="$EXPLORATION_MEM"
     fi
 
-    "${writeScript "format" format.script}" < "$clusters"        |
+    echo "$CL" | "${format.fromStdin}"                           |
       "${timeout}/bin/withTimeout" "${explore.explore-theories}" |
       "${reduce-equations}/bin/reduce-equations"
   '';
