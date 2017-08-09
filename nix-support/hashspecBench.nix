@@ -1,4 +1,4 @@
-{ annotated, bash, buckets, explore, format, glibcLocales, jq, makeWrapper,
+{ annotated, bash, buckets, explore, format, glibcLocales, jq,
   mlspecBench, nix-config, nixEnv, quickspecBench, reduce-equations, runCommand,
   stdenv, timeout, tipBenchmarks, writeScript }:
 
@@ -22,6 +22,9 @@ rec {
 
                    reduce-equations
                    buckets.hashes ];
+        vars   = {
+          NIX_EVAL_EXTRA_IMPORTS = ''[("tip-benchmark-sig", "A")]'';
+        };
         script = ''
           #!/usr/bin/env bash
           [[ -n "$TEMPDIR" ]] || ${fail "No TEMPDIR given"}
@@ -31,7 +34,6 @@ rec {
             export MAX_KB=2000000
           }
 
-          export NIX_EVAL_EXTRA_IMPORTS='[("tip-benchmark-sig", "A")]'
           hashBucket | "${explore.explore-theories}" | reduce-equations
         '';
       };
@@ -73,30 +75,25 @@ rec {
     };
   };
 
-  inEnvScript = runCommand "hashspecBench-inenvscript"
-    {
-      raw = writeScript "hashspecBench-inenvscript-raw" ''
-        #!${bash}/bin/bash
+  inEnvScript = wrap {
+    name   = "hashspecBench-inenvscript";
+    paths  = [ reduce-equations timeout buckets.hashes ];
+    vars   = {
+      NIX_EVAL_EXTRA_IMPORTS = ''[("tip-benchmark-sig", "A")]'';
+    };
+    script = ''
+      #!${bash}/bin/bash
 
-        NIX_EVAL_EXTRA_IMPORTS='[("tip-benchmark-sig", "A")]'
-        export NIX_EVAL_EXTRA_IMPORTS
+      if [[ -n "$EXPLORATION_MEM" ]]
+      then
+        echo "Limiting memory to '$EXPLORATION_MEM'" 1>&2
+        export MAX_KB="$EXPLORATION_MEM"
+      fi
 
-        if [[ -n "$EXPLORATION_MEM" ]]
-        then
-          echo "Limiting memory to '$EXPLORATION_MEM'" 1>&2
-          export MAX_KB="$EXPLORATION_MEM"
-        fi
-
-        echo "Exploring" 1>&2
-        hashBucket | withTimeout "${explore.explore-theories}" | reduce-equations
-      '';
-      buildInputs = [ makeWrapper ];
-    }
-    ''
-      makeWrapper "$raw" "$out" --prefix PATH : "${reduce-equations}/bin" \
-                                --prefix PATH : "${timeout}/bin"          \
-                                --prefix PATH : "${buckets.hashes}/bin"
+      echo "Exploring" 1>&2
+      hashBucket | withTimeout "${explore.explore-theories}" | reduce-equations
     '';
+    };
 
   script = quickspecBench.wrapScript "hashspecBench" rawScript;
 

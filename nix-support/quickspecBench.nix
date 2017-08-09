@@ -249,37 +249,36 @@ mkGenInput = after:
           "${after}"
       '';
 
-genSig2 = runCommand "gen-sig2-wrapped"
-  {
-    raw = writeScript "gen-sig2" ''
-      #!/usr/bin/env bash
+genSig2 = wrap {
+  name   = "gen-sig2";
+  paths  = [ nix-config.pipeToNix ];
+  vars   = {
+    NIX_EVAL_HASKELL_PKGS = customHs;
+    NIX_PATH              = innerNixPath;
+  };
+  script = ''
+    #!/usr/bin/env bash
 
-      jq 'map(select(.quickspecable))' > chosen
-      CHOSEN=$(nix-store --add chosen)
-      rm chosen
+    CHOSEN=$(jq 'map(select(.quickspecable))' | pipeToNix)
 
-      export NIX_EVAL_HASKELL_PKGS="${customHs}"
-      nix-shell -p '(import <support> {}).haskellPackages.ghcWithPackages
-                      (h: [ h.mlspec h.nix-eval ])' \
-                --show-trace --run 'runhaskell ${getCmd}' < "$CHOSEN" |
-        jq --arg chosen "$CHOSEN" '. + { "chosen": $chosen }'
-    '';
-    buildInputs = [ makeWrapper ];
-  }
-  ''
-    makeWrapper "$raw" "$out" \
-      --set NIX_PATH '${innerNixPath}'
+    nix-shell -p '(import <support> {}).haskellPackages.ghcWithPackages
+                    (h: [ h.mlspec h.nix-eval ])' \
+              --show-trace --run 'runhaskell ${getCmd}' < "$CHOSEN" |
+      jq --arg chosen "$CHOSEN" '. + { "chosen": $chosen }'
   '';
+};
 
-wrapScript = name: script: runCommand name { buildInputs = [ makeWrapper ]; } ''
-  makeWrapper "${script}" "$out"                                     \
-    --prefix PATH :         "${env}/bin"                 \
-    --set    LANG           'en_US.UTF-8'                               \
-    --set    LOCALE_ARCHIVE '${glibcLocales}/lib/locale/locale-archive' \
-    --set    NIX_EVAL_HASKELL_PKGS "${customHs}"         \
-    --set    NIX_REMOTE     '${nixEnv.nixRemote}'                       \
-    --set    NIX_PATH       '${innerNixPath}'
-'';
+wrapScript = name: script: wrap {
+  inherit name script;
+  paths = [ env ];
+  vars  = {
+    LANG                  = "en_US.UTF-8";
+    LOCALE_ARCHIVE        = "${glibcLocales}/lib/locale/locale-archive";
+    NIX_EVAL_HASKELL_PKGS = customHs;
+    NIX_REMOTE            = nixEnv.nixRemote;
+    NIX_PATH              = innerNixPath;
+  };
+};
 
 mkPkgInner = ''
   set -e
@@ -434,7 +433,7 @@ env = buildEnv {
 qs = stdenv.mkDerivation (withNix {
   name = "quickspecBench";
   src  = script;
-  buildInputs  = [ env makeWrapper ];
+  buildInputs  = [ env ];
   unpackPhase  = "true";  # Nothing to do
 
   doCheck    = true;

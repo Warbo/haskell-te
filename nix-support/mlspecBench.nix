@@ -1,5 +1,5 @@
 { bash, buckets, buildEnv, cluster, ensureVars, explore, format, glibcLocales,
-  hashspecBench, haskellPackages, jq, lib, makeWrapper, nix-config, nixEnv,
+  hashspecBench, haskellPackages, jq, lib, nix-config, nixEnv,
   quickspecBench, reduce-equations, runCommand, runWeka, stdenv, timeout,
   tipBenchmarks, writeScript }:
 with builtins;
@@ -26,18 +26,6 @@ rec {
         buckets.hashes
         runWeka ];
         script = inEnvScript;
-        /*''
-          #!/usr/bin/env bash
-          [[ -n "$TEMPDIR" ]] || ${fail "No TEMPDIR given"}
-
-          [[ -n "$MAX_KB"  ]] || {
-            echo "Setting default memory limit of 2GB" 1>&2
-            export MAX_KB=2000000
-          }
-
-          export NIX_EVAL_EXTRA_IMPORTS='[("tip-benchmark-sig", "A")]'
-          hashBucket | "${explore.explore-theories}" | reduce-equations
-        '';*/
       };
     };
   };
@@ -69,37 +57,36 @@ rec {
       }
     '';
 
-  inEnvScript = writeScript "mlspecBench-inenvscript" ''
-    #!${bash}/bin/bash
-    set -e
-    set -o pipefail
+  inEnvScript = wrap {
+    name   = "mlspecBench-inenvscript";
+    paths  = [ bash jq reduce-equations timeout ];
+    vars   = {
+      NIX_EVAL_EXTRA_IMPORTS = ''[("tip-benchmark-sig", "A")]'';
+      SIMPLE                 = "1";
+    };
+    script =  ''
+      #!/usr/bin/env bash
+      set -e
+      set -o pipefail
 
-    # Perform clustering
-    clusters="$DIR/clusters.json"
-    export clusters
+      # Perform clustering
+      CL=$(${cluster.clusterScript})
 
-    CL=$(${cluster.clusterScript})
+      clCount=$(echo "$CL" | jq 'map(.cluster) | max')
+      ${assertNumeric "$clCount" "clCount should contain number of clusters"}
 
-    clCount=$(echo "$CL" | "${jq}/bin/jq" 'map(.cluster) | max')
-    ${assertNumeric "$clCount" "clCount should contain number of clusters"}
+      export clCount
 
-    export clCount
+      if [[ -n "$EXPLORATION_MEM" ]]
+      then
+        echo "Limiting memory to '$EXPLORATION_MEM'" 1>&2
+        export MAX_KB="$EXPLORATION_MEM"
+      fi
 
-    NIX_EVAL_EXTRA_IMPORTS='[("tip-benchmark-sig", "A")]'
-    export NIX_EVAL_EXTRA_IMPORTS
-
-    export SIMPLE=1
-
-    if [[ -n "$EXPLORATION_MEM" ]]
-    then
-      echo "Limiting memory to '$EXPLORATION_MEM'" 1>&2
-      export MAX_KB="$EXPLORATION_MEM"
-    fi
-
-    echo "$CL" | "${format.fromStdin}"                           |
-      "${timeout}/bin/withTimeout" "${explore.explore-theories}" |
-      "${reduce-equations}/bin/reduce-equations"
-  '';
+      echo "$CL" | "${format.fromStdin}" |
+        withTimeout "${explore.explore-theories}" | reduce-equations
+    '';
+  };
 
   script = quickspecBench.wrapScript "mlspecBench" rawScript;
 
