@@ -17,7 +17,7 @@ with rec {
 attrsToDirs {
   bin = {
     python = wrap {
-      paths = [ tipBenchmarks.tools ];
+      paths = [ tipBenchmarks.tools py ];
       vars  = {
         NIX_EVAL_HASKELL_PKGS = quickspecBench.customHs;
         NIX_PATH              =
@@ -35,20 +35,22 @@ attrsToDirs {
         qsStandaloneMkPkg  = qs.standalone.genAnnotatedPkg;
         qsStandaloneSetup  = qs.standalone.genInput;
         qsStandaloneRunner = qs.standalone.runner;
-      };
-      script = ''
-        #!/usr/bin/env bash
-        export theoryFiles='${trace "TODO: Fix quoting in wrap" toJSON {
+
+        theoryFiles = toJSON {
           list-full  = ./list-full.smt2;
           nat-full   = ./nat-full.smt2;
           nat-simple = ./nat-simple.smt2;
-        }}'
-        export theoryTruths='${trace "TODO: Fix quoting in wrap" toJSON {
+        };
+
+        theoryTruths = toJSON {
           list-full  = ./ground-truth/list-full.smt2;
           nat-full   = ./ground-truth/nat-full.smt2;
           nat-simple = ./ground-truth/nat-simple.smt2;
-        }}'
-        exec "${py}/bin/python" "$@"
+        };
+      };
+      script = ''
+        #!/usr/bin/env bash
+        exec python "$@"
       '';
     };
   };

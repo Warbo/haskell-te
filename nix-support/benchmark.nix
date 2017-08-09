@@ -1,4 +1,4 @@
-{ fetchFromGitHub, havePath, makeWrapper, nix, pkgs, pythonPackages, runCommand,
+{ fetchFromGitHub, havePath, nix, nix-config, pkgs, pythonPackages, runCommand,
   time, withNix, writeScript }:
 
 with builtins;
@@ -16,9 +16,11 @@ rec {
 
   timeout = pkgs.callPackage "${src}/timeout.nix" {};
 
-  simpleBench = runCommand "simple" {
-    buildInputs = [ makeWrapper pythonPackages.python time ];
-    raw         = writeScript "benchmark" ''
+  simpleBench = nix-config.wrap {
+    name   = "simple-benchmark";
+    paths  = [ pythonPackages.python time timeout nix ];
+    vars   = { inherit (withNix {}) NIX_PATH NIX_REMOTE; };
+    script = ''
       #!/usr/bin/env python
       import json
       import re
@@ -100,13 +102,5 @@ rec {
       finally:
         shutil.rmtree(tmpdir)
     '';
-  }
-  ''
-    makeWrapper "$raw" "$out" --prefix PATH :  "${pythonPackages.python}/bin" \
-                              --prefix PATH :  "${time}/bin"                  \
-                              --prefix PATH :  "${timeout}/bin"               \
-                              --prefix PATH :  "${nix}/bin"                   \
-                              --set NIX_PATH   "${(withNix {}).NIX_PATH}"     \
-                              --set NIX_REMOTE "${(withNix {}).NIX_REMOTE}"
-  '';
+  };
 }

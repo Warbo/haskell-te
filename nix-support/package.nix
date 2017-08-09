@@ -1,4 +1,4 @@
-{ buckets, buildEnv, hashspecBench, makeWrapper, mlspecBench, quickspecBench,
+{ buckets, buildEnv, hashspecBench, mlspecBench, quickspecBench,
   stdenv, tipBenchmarks }:
 
 let env = buildEnv {
