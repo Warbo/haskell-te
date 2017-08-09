@@ -1,33 +1,39 @@
 { runCmd, checkFailures, checkHsEnv, drvFromScript, haskellPackageNames,
-  haskellPackages, jq, lib, mlspec, pkgName, stdParts, storeParts,
+  haskellPackages, jq, lib, mlspec, nix-config, pkgName, stdParts, storeParts,
   timeout, writeScript }:
 with builtins;
 with lib;
+with { inherit (nix-config) wrap; };
+with rec {
 
-let
+explore-theories = wrap {
+  name   = "explore-theories";
+  paths  = [ jq timeout ];
+  script =  ''
+    #!/usr/bin/env bash
+    set -e
+    set -o pipefail
 
-explore-theories = writeScript "explore-theories" ''
-  #!/usr/bin/env bash
-  set -e
-  set -o pipefail
+    function noDepth {
+      grep -v "^Depth" || true # Don't abort if nothing found
+    }
 
-  function noDepth {
-    grep -v "^Depth" || true # Don't abort if nothing found
-  }
+    function checkForErrors {
+      while read -r LINE
+      do
+        echo "$LINE"
+        if echo "$LINE" | grep "No instance for" > /dev/null
+        then
+          echo "Haskell error, aborting" 1>&2
+          exit 1
+        fi
+      done
+    }
 
-  # limit time/memory using 'timeout'
-  "${timeout}/bin/withTimeout" \
-    MLSpec "$@" 1> "$TEMPDIR/explore-stdout" \
-                2> >(tee "$TEMPDIR/explore-stderr" >&2)
-
-  if grep "No instance for" < "$TEMPDIR/explore-stderr" > /dev/null
-  then
-    echo "Haskell error, aborting" 1>&2
-    exit 1
-  fi
-
-  noDepth < "$TEMPDIR/explore-stdout" | jq -s '.'
-'';
+    # limit time/memory using 'timeout'
+    withTimeout MLSpec "$@" 2> >(checkForErrors 1>&2) | noDepth | jq -s '.'
+  '';
+};
 
 extractEnv = f:
   drvFromScript { inherit f; } ''
@@ -186,7 +192,8 @@ checkAndExplore = { formatted, standalone ? null }:
       result  = { inherit results failed; };
    in result;
 
-in {
+};
+{
   inherit extra-haskell-packages explore-theories exploreEnv
           extractedEnv findHsPkgReferences;
   explore = checkAndExplore;
