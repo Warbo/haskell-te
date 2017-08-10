@@ -64,8 +64,8 @@ let pkgs = rec {
   inherit (callPackage ./runBenchmark.nix {})
           runCmd checkHsEnv;
 
-  inherit (callPackage ./benchmarkOutputs.nix {})
-          processPackage processPackages;
+  inherit (callPackage ./nix-config.nix {})
+          nix-config nix-config-src;
 
   inherit (callPackage ./test-defs.nix {})
           runTestInDrv testAll testDbg testDrvString testFiles testMsg
@@ -85,12 +85,10 @@ let pkgs = rec {
   hashspecBench      = callPackage ./hashspecBench.nix      {};
   importDir          = callPackage ./importDir.nix          {};
   mlspecBench        = callPackage ./mlspecBench.nix        {};
-  nix-config         = callPackage ./nix-config.nix         {};
   package            = callPackage ./package.nix            {};
   parseJSON          = callPackage ./parseJSON.nix          {};
   pkgName            = callPackage ./pkgName.nix            {};
   quickspecBench     = callPackage ./quickspecBench.nix     {};
-  reduce             = callPackage ./reduce.nix             {};
   runScript          = callPackage ./runScript.nix          {};
   runTypes           = callPackage ./runTypes.nix           {};
   runTypesScript     = callPackage ./runTypesScript.nix     {};

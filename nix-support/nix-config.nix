@@ -21,4 +21,7 @@ with rec {
               then gh
               else local;
 };
-import <nixpkgs> { config = import "${chosen}/config.nix"; }
+{
+  nix-config-src = chosen;
+  nix-config     = import <nixpkgs> { config = import "${chosen}/config.nix"; };
+}

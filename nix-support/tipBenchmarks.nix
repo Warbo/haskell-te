@@ -1,5 +1,5 @@
 { annotated, bash, callPackage, defaultClusters, fetchFromGitHub, fetchgit,
-  haskellPackages, nixFromCabal, pkgs, processPackage, runScript, stdenv,
+  haskellPackages, nix-config-src, nixFromCabal, pkgs, runScript, stdenv,
   writeScript }:
 
 with builtins;
@@ -21,10 +21,6 @@ rec {
   pkgDef = nixFromCabal (toString tip-benchmark-haskell) null;
 
   pkg = haskellPackages.callPackage pkgDef {};
-
-  process = { clusters ? defaultClusters, sampleSize ? null }:
-              processPackage { inherit clusters sampleSize; }
-                             pkg.name pkg;
 
   annotatedAsts = annotated (toString tip-benchmark-haskell);
 }
