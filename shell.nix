@@ -1,2 +1,4 @@
 with import ./nix-support {};
-runCommand "dummy" { buildInputs = [ package asv-nix ]; } "exit 1"
+runCommand "dummy" (withNix {
+  buildInputs = [ package asv-nix git ];
+}) "exit 1"
