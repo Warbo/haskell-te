@@ -77,6 +77,7 @@ let pkgs = rec {
   annotate           = callPackage ./annotate.nix           {};
   asv-nix            = callPackage ./asv-nix.nix            {};
   buckets            = callPackage ./buckets.nix            {};
+  cacheContent       = callPackage ./cacheContent.nix       {};
   cluster            = callPackage ./cluster.nix            {};
   dumpPackage        = callPackage ./dumpPackage.nix        {};
   dumpToNix          = callPackage ./dumpToNix.nix          {};
