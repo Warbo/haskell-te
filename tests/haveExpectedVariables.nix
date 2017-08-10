@@ -30,6 +30,7 @@ with rec {
   # The 'runhaskell' command used to execute the sig generator, run inside the
   # appropriate Nix environment (for GHC, dependencies, generated package, etc.)
   runhaskell = nix-config.wrap {
+    name   = "haveExpectedVariables-runhaskell";
     vars   = {
       inherit env;
       NIX_EVAL_HASKELL_PKGS = quickspecBench.customHs;

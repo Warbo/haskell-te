@@ -14,6 +14,7 @@ rec {
       inherit (hashspecBench.benchVars.sampled) genInput;
 
       runner  = wrap {
+        name  = "mlspec-sampled-runner";
         paths = [ ((import quickspecBench.augmentedHs {
           hsDir = "${tipBenchmarks.tip-benchmark-haskell}";
         }).ghcWithPackages (h: map (n: h."${n}") [

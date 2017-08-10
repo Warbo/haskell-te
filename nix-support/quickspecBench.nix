@@ -18,6 +18,7 @@ fail = msg: ''{ echo -e "${msg}" 1>&2; exit 1; }'';
 qsGenerateSig =
   with rec {
     runGenCmd = wrap {
+      name  = "quickspec-run-gen-cmd";
       file  = getCmd;
       paths = [ (haskellPackages.ghcWithPackages (h: [ h.mlspec h.nix-eval ])) ];
       vars  = {
@@ -27,6 +28,7 @@ qsGenerateSig =
     };
   };
   wrap {
+    name   = "quickspec-generate-sig";
     paths  = [ jq ];
     script = ''
       #!/usr/bin/env bash
@@ -37,6 +39,7 @@ qsGenerateSig =
 benchVars = {
   sampled = {
     runner  = wrap {
+      name  = "quickspec-sampled-runner";
       paths = [ ((import augmentedHs {
                    hsDir = "${tipBenchmarks.tip-benchmark-haskell}";
                  }).ghcWithPackages (h: map (n: h."${n}") [
@@ -51,6 +54,7 @@ benchVars = {
     };
 
     genInput = wrap {
+      name  = "quickspec-sampled-gen-input";
       paths = [ jq tipBenchmarks.tools ];
       vars  = {
         OUT_DIR   = tipBenchmarks.tip-benchmark-haskell;
@@ -89,6 +93,7 @@ benchVars = {
   # For exploring an arbitrary theory supplied via stdin
   standalone = {
     runner   = wrap {
+      name   = "quickspec-standalone-runner";
       script = ''
         #!/usr/bin/env bash
         cat | $*
@@ -96,10 +101,12 @@ benchVars = {
     };
 
     genAnnotatedPkg = wrap {
+      name  = "quickspec-standalone-gen-annotated-pkg";
       paths = [ nix nix-config.pipeToNix tipBenchmarks.tools ];
       vars  = {
         NIX_REMOTE = "daemon";
         mkPkg      = wrap {
+          name = "quickspec-mk-pkg";
           vars = {
             NIX_PATH = innerNixPath;
           };

@@ -12,6 +12,7 @@ rec {
   benchVars = {
     sampled = {
       runner  = wrap {
+        name  = "hashspec-sampled-runner";
         paths = [ ((import quickspecBench.augmentedHs {
                      hsDir = "${tipBenchmarks.tip-benchmark-haskell}";
                    }).ghcWithPackages (h: map (n: h."${n}") [
@@ -39,6 +40,7 @@ rec {
       };
 
       genInput = wrap {
+        name  = "hashspec-sampled-gen-input";
         paths = [ jq tipBenchmarks.tools ];
         vars  = {
           OUT_DIR   = tipBenchmarks.tip-benchmark-haskell;

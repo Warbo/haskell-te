@@ -17,6 +17,7 @@ with rec {
 attrsToDirs {
   bin = {
     python = wrap {
+      name  = "benchmark-python-runner";
       paths = [ tipBenchmarks.tools py ];
       vars  = {
         NIX_EVAL_HASKELL_PKGS = quickspecBench.customHs;
