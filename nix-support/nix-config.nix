@@ -6,17 +6,16 @@ with rec {
     inherit rev;
     owner  = "Warbo";
     repo   = "nix-config";
-    sha256 = "0s7a7s8l8jm78wgxrcxv0hbvivs4ynk5ykdnb7kwwrlbm6xaky55";
+    sha256 = "1kkjdn0bhc9wii3hmi27v0snzkckr44pcg7k2n1p32bg3mmgfi6x";
   };
 
   local = fetchgit {
     inherit rev;
     url    = "${getEnv "GIT_REPO_DIR"}/nix-config.git";
-    sha256 = "12576nyfdynyncfhgmhppmr6gcxhlc98w0vj97q1c6ay9mxxv0ad";
+    sha256 = "1zx5bmqxzibz0jcx46ghscl7vx3imvpwjp3lwv9bkcfkxfqc03q6";
   };
 
-  rev    = "eca9df2";
-
+  rev    = "cd88c9a";
   chosen = if getEnv "GIT_REPO_DIR" == ""
               then gh
               else local;
