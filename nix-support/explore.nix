@@ -35,20 +35,6 @@ explore-theories = wrap {
   '';
 };
 
-extractEnv = f:
-  drvFromScript { inherit f; } ''
-    set -e
-    set -o pipefail
-
-    [[ -e "$f" ]] || {
-      echo "Path '$f' doesn't exist" 1>&2
-      exit 1
-    }
-
-    jq -r '.[] | (if type == "array" then .[] else . end) | .package' < "$f" |
-      sort -u > "$out"
-  '';
-
 findHsPkgReferences =
   let extractionScript = writeScript "find-references" ''
         # Allow package names to be given directly, one per line (limit to 128
