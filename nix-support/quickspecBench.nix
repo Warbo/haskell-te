@@ -223,38 +223,39 @@ fileInStore = var: content: ''
 
 qsGenInput = mkGenInput genSig2;
 
-mkGenInput = after:
-  let filter = writeScript "filter.jq" ''
-        def mkId: {"name": .name, "package": .package, "module": .module};
+mkGenInput = after: wrap {
+  name   = "gen-input";
+  paths  = [ bash jq ];
+  vars   = {
+    inherit after;
+    OUT_DIR   = tipBenchmarks.tip-benchmark-haskell;
+    ANNOTATED = annotated (toString tipBenchmarks.tip-benchmark-haskell);
+    filter = writeScript "filter.jq" ''
+      def mkId: {"name": .name, "package": .package, "module": .module};
 
-        def keep($id): $keepers | map(. == $id) | any;
+      def keep($id): $keepers | map(. == $id) | any;
 
-        def setQS: . + {"quickspecable": (.quickspecable and keep(mkId))};
+      def setQS: . + {"quickspecable": (.quickspecable and keep(mkId))};
 
-        map(setQS)
-      '';
+      map(setQS)
+    '';
+  };
+  script = ''
+    #!/usr/bin/env bash
 
-   in writeScript "gen-input" ''
-        #!/usr/bin/env bash
+    # Sample some names, give the default module and package, then slurp
+    # into an array
+    echo "Running 'choose_sample $1 $2'" 1>&2
+    KEEPERS=$(choose_sample "$1" "$2" |
+              jq -R '{"name"    : .,
+                      "module"  : "A",
+                      "package" : "tip-benchmark-sig"}' |
+              jq -s '.')
 
-        # Sample some names, give the default module and package, then slurp
-        # into an array
-        echo "Running 'choose_sample $1 $2'" 1>&2
-        KEEPERS=$(choose_sample "$1" "$2" |
-                  jq -R '{"name"    : .,
-                          "module"  : "A",
-                          "package" : "tip-benchmark-sig"}' |
-                  jq -s '.')
-
-        # The whole annotated signature
-        export   OUT_DIR="${tipBenchmarks.tip-benchmark-haskell}"
-        export ANNOTATED="${annotated
-                              (toString tipBenchmarks.tip-benchmark-haskell)}"
-
-        # Filters the signature to only those sampled in KEEPERS
-        jq --argjson keepers "$KEEPERS" -f "${filter}" < "$ANNOTATED" |
-          "${after}"
-      '';
+    # Filters the signature to only those sampled in KEEPERS
+    jq --argjson keepers "$KEEPERS" -f "$filter" < "$ANNOTATED" | "$after"
+  '';
+};
 
 genSig2 = wrap {
   name   = "gen-sig2";
