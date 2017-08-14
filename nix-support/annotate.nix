@@ -1,5 +1,5 @@
-{ bash, runCmd, drvFromScript, explore, getDepsScript, haskellPackages, jq,
-  runTypesScript, stdParts, storeParts, withDeps, writeScript }:
+{ bash, checkStderr, explore, getDepsScript, haskellPackages, jq, runCommand,
+  runTypesScript, wrap }:
 
 with builtins;
 
@@ -7,155 +7,201 @@ with builtins;
 
 with rec {
 
-getAritiesScript = withDeps "getArities" [ jq ] ''
-  #!${bash}/bin/bash
+getAritiesScript = wrap {
+  name   = "getArities";
+  paths  = [ bash jq ];
+  vars   = {
 
-  # Split a qualified name into a module and a name
-  # shellcheck disable=SC2016
-  INPUT='(.qname | split(".") | reverse) as $bits'
+    # Extract the name and module from the qname of each object
+    EXTRACT =
+      with rec {
+        # Splits a qualified name into a module and a name ("bits")
+        input = ''(.qname | split(".") | reverse) as $bits'';
 
-  # The name is the last bit
-  # shellcheck disable=SC2016
-  NAME='$bits[0]'
+        # The name is the last "bit"
+        name = ''$bits[0]'';
 
-  # The module is all except the last bit, joined by dots
-  # shellcheck disable=SC2016
-  MOD='$bits[1:] | reverse | join(".")'
+        # The module is all except the last "bit", joined by dots
+        mod = ''$bits[1:] | reverse | join(".")'';
+      };
+    "${input} | . + {name: ${name}, module: ${mod}}";
 
-  # Keep lines which look like JSON objects
-  # Extract the name and module from the qname of each
-  # "Slurp" these objects into an array. There may be duplicates: one which is
-  # hashed and one which isn't. We prefer to be hashed if possible, so we update
-  # each objects' "hashable" field to true if the array contains a hashable
-  # object with the same qname. Any duplicates will now be identical, including
-  # their "hashable" field, so we can dedupe using "unique".
-  grep '^{' |
-    jq -c -M "$INPUT | . + {name: $NAME, module: $MOD}" |
-    jq -s -M '. as $all | map(.qname as $qn | . + {"hashable": ($all | map(select(.qname == $qn)) | any)})' |
-    jq       '. | unique | map(del(.qname))'
-'';
+    # There may be duplicates: one which is hashed and one which isn't. We
+    # prefer to be hashed if possible, so we update each objects' "hashable"
+    # field to true if the array contains a hashable object with the same qname.
+    SET_HASHABLE = ''
+      . as $all | map(.qname as $qn | . + {
+                        "hashable": ($all | map(select(.qname == $qn)) | any)
+                      })
+    '';
 
-getTypesScript = withDeps "getTypes" [ jq ] ''
-  #!${bash}/bin/bash
+    # Any duplicates will be identical, including their "hashable" field, so we
+    # can dedupe using "unique".
+    UNIQUIFY = ". | unique | map(del(.qname))";
+  };
+  script = ''
+    #!/usr/bin/env bash
+    set -e
 
-  # Monomorphic types come in via stdin
+    # Keep lines which look like JSON objects
+    grep '^{' | jq -c -M "$EXTRACT"      |  # Set the right name
+                jq -s -M "$SET_HASHABLE" |  # Prefer hashable
+                jq       "$UNIQUIFY"        # Remove dupes
+  '';
+};
 
-  function trim {
-    grep -o '[^ ].*[^ ]'
-  }
+getTypesScript = wrap {
+  name   = "getTypes";
+  paths  = [ bash jq ];
+  script = ''
+    #!/usr/bin/env bash
+    set -e
 
-  # Turn (foo)::bar::baz into foo\tbaz
-  grep '::' |
-    sed 's/(\(.*\)).*::*.*::\(.*\)/\1\t\2/g' |
-    while read -r LINE
-    do
-      # Cut at the \t, trim whitespace and reverse the (qualified) name
-      RNAME=$(echo "$LINE" | cut -f 1 | trim | rev)
-      TYPE=$( echo "$LINE" | cut -f 2 | trim)
+    # Monomorphic types come in via stdin
 
-      # Chop the reversed name at the first dot, eg. 'eman.2doM.1doM' gives
-      # 'eman' and '2doM.1doM', then reverse to get 'name' and 'Mod1.Mod2'
-      NAME=$(echo "$RNAME" | cut -d '.' -f 1  | rev)
-      MODS=$(echo "$RNAME" | cut -d '.' -f 2- | rev)
+    function trim {
+      grep -o '[^ ].*[^ ]'
+    }
 
-      echo "{\"module\": \"$MODS\", \"name\": \"$NAME\", \"type\": \"$TYPE\"}"
-    done |
-    jq -s '.'
-'';
+    # Turn (foo)::bar::baz into foo\tbaz
+    grep '::' |
+      sed 's/(\(.*\)).*::*.*::\(.*\)/\1\t\2/g' |
+      while read -r LINE
+      do
+        # Cut at the \t, trim whitespace and reverse the (qualified) name
+        RNAME=$(echo "$LINE" | cut -f 1 | trim | rev)
+        TYPE=$( echo "$LINE" | cut -f 2 | trim)
 
-tagAstsScript = default: withDeps "tagAsts" [ jq ] ''
-  #!${bash}/bin/bash
+        # Chop the reversed name at the first dot, eg. 'eman.2doM.1doM' gives
+        # 'eman' and '2doM.1doM', then reverse to get 'name' and 'Mod1.Mod2'
+        NAME=$(echo "$RNAME" | cut -d '.' -f 1  | rev)
+        MODS=$(echo "$RNAME" | cut -d '.' -f 2- | rev)
 
-  # Given JSON objects on stdin, and a file descriptor containing JSON objects as
-  # $1, combines those elements of each with matching pkg/mod/name. If no match is
-  # found in $1, 'default' is used as a fallback
+        echo "{\"module\": \"$MODS\", \"name\": \"$NAME\", \"type\": \"$TYPE\"}"
+      done |
+      jq -s '.'
+  '';
+};
 
-  function msg {
-    echo -e "$1" 1>&2
-  }
+tagAstsScript = default: wrap {
+  name   = "tagAsts";
+  paths  = [ bash jq ];
+  vars   = {
+    inherit default;
+    FALLBACK_ID = ''
+      {
+           "name" : $this.name,
+         "module" : $this.module,
+        "package" : $this.package
+      }
+    '';
 
-  [[ -n "$1" ]] || {
-    msg "tagAsts requires an argument for its tags"
-    msg "For example, 'echo FOO | tagAsts <(echo BAR)'"
-    exit 1
-  }
+    # Select $tags matching $this
+    QUERY = ''map(select((.module == $this.module) and
+                         (.name   == $this.name))) | .[0]'';
 
-  TYPE=$(echo '${default}' | jq -r 'type') || {
-    msg "Couldn't parse tagAsts default argument '${default}' as JSON"
-    exit 3
-  }
 
-  [[ "x$TYPE" = "xobject" ]] || {
-      msg "tagAsts default argument '${default}' has type '$TYPE'"
+    # Combine matching $tags with $this
+    ACTION = ". + $this";
+  };
+  script = ''
+    #!/usr/bin/env bash
+
+    # Given JSON objects on stdin, and a file descriptor containing JSON objects
+    # as $1, combines those elements of each with matching pkg/mod/name. If no
+    # match is found in $1, 'default' is used as a fallback
+
+    function msg {
+      echo -e "$1" 1>&2
+    }
+
+    [[ -n "$1" ]] || {
+      msg "tagAsts requires an argument for its tags"
+      msg "For example, 'echo FOO | tagAsts <(echo BAR)'"
+      exit 1
+    }
+
+    TYPE=$(echo "$default" | jq -r 'type') || {
+      msg "Couldn't parse tagAsts default argument '$default' as JSON"
+      exit 3
+    }
+
+    [[ "x$TYPE" = "xobject" ]] || {
+      msg "tagAsts default argument '$default' has type '$TYPE'"
       msg "It should be an object"
       exit 4
-  }
+    }
 
-  FALLBACK='({"name":$this.name,"module":$this.module,"package":$this.package} + ${default})'
+    export FALLBACK="($FALLBACK_ID + $default)"
 
-  # Call the current AST $this, then loop over $tags
-  INPUT=".[] | . as \$this | \$tags + [$FALLBACK]"
+    # Call the current AST $this, then loop over $tags
+    INPUT=".[] | . as \$this | \$tags + [$FALLBACK]"
 
-  # Select $tags matching $this
-  # shellcheck disable=SC2016
-  QUERY='map(select((.module == $this.module) and (.name == $this.name))) | .[0]'
+    jq --argfile tags "$1" "[$INPUT | $QUERY | $ACTION]"
+  '';
+};
 
-  # Combine matching $tags with $this
-  # shellcheck disable=SC2016
-  ACTION='. + $this'
+annotateAstsScript = wrap {
+  name   = "annotateAsts";
+  paths  = [ jq ];
+  vars   = {
+    inherit getTypesScript getAritiesScript;
+    tagTypesScript   = tagAstsScript ''{"type":null}'';
+    tagAritiesScript = tagAstsScript ''
+      {
+                "arity" : null,
+        "quickspecable" : false,
+             "hashable" : false
+      }
+    '';
+  };
+  script = ''
+    #!/usr/bin/env bash
+    set -e
 
-  jq --argfile tags "$1" "[$INPUT | $QUERY | $ACTION]"
-'';
+    function msg {
+      echo -e "$1" 1>&2
+    }
 
-annotateAstsScript = withDeps "annotateAsts" [ jq ] ''
-  #!/usr/bin/env bash
-  set -e
+    function tagTypes {
+      "$tagTypesScript" <(echo "$RAWSCOPE" | "$getTypesScript")
+    }
 
-  function msg {
-    echo -e "$1" 1>&2
-  }
+    function tagArities {
+      "$tagAritiesScript" <(echo "$RAWTYPES" | "$getAritiesScript")
+    }
 
-  function tagTypes {
-    "${tagAstsScript ''{"type":null}''}" <(echo "$RAWSCOPE" | "${getTypesScript}")
-  }
+       INPUT=$(cat                                 ); msg "Getting ASTs"
+     RAWASTS=$(echo "$INPUT" | jq -c '.asts'       ); msg "Getting types"
+    RAWTYPES=$(echo "$INPUT" | jq -r '.result'     ); msg "Getting scope"
+    RAWSCOPE=$(echo "$INPUT" | jq -r '.scoperesult'); msg "Tagging"
 
-  function tagArities {
-    "${tagAstsScript ''{"arity":null,"quickspecable":false,"hashable":false}''}" <(echo "$RAWTYPES" | "${getAritiesScript}")
-  }
+    echo "$RAWASTS" | tagTypes | tagArities
 
-     INPUT=$(cat)
+    msg "Tagged"
+  '';
+};
 
-  msg "Getting ASTs"
+annotateDb = wrap {
+  name   = "annotateDb";
+  paths  = [ bash ];
+  vars   = {
+    inherit annotateAstsScript getDepsScript;
+    typesScript = runTypesScript {
+      pkgSrc = if pkg ? srcNixed
+                  then pkg.srcNixed
+                  else pkgSrc;
+    };
+  };
+  script = ''
+    #!/usr/bin/env bash
 
-   RAWASTS=$(echo "$INPUT" | jq -c '.asts')
+    # Turns output from dump-package or dump-hackage into a form suitable for
+    # clustering
 
-  msg "Getting types"
-
-  RAWTYPES=$(echo "$INPUT" | jq -r '.result')
-
-  msg "Getting scope"
-
-  RAWSCOPE=$(echo "$INPUT" | jq -r '.scoperesult')
-
-  msg "Tagging"
-
-  echo "$RAWASTS" | tagTypes | tagArities
-
-  msg "Tagged"
-'';
-
-annotateDb = writeScript "annotateDb" ''
-  #!${bash}/bin/bash
-
-  # Turns output from dump-package or dump-hackage into a form suitable for
-  # clustering
-
-  "${runTypesScript { pkgSrc = if pkg ? srcNixed
-                                  then pkg.srcNixed
-                                  else pkgSrc; }}" |
-    "${annotateAstsScript}"                        |
-    "${getDepsScript}"
-'';
+    "$typesScript" | "$annotateAstsScript" | "$getDepsScript"
+  '';
+};
 
 env = if haskellPackages ? pkg.name
          then { extraHs    = [ pkg.name ];

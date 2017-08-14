@@ -98,7 +98,6 @@ let pkgs = rec {
   tipBenchmarks      = callPackage ./tipBenchmarks.nix      {
     pkgs = nixpkgs-2016-09;
   };
-  withDeps           = callPackage ./withDeps.nix           {};
 
   buildPackage    = callPackage ./buildPackage.nix
                       { inherit (haskellPackages) cabal2nix cabal-install; };
