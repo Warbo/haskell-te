@@ -4,14 +4,15 @@
 
 with builtins;
 rec {
-  path = if any (x: x.prefix == "te-benchmarks") nixPath
-            then <te-benchmarks>
-            else fetchFromGitHub {
-                   owner  = "Warbo";
-                   repo   = "theory-exploration-benchmarks";
-                   rev    = "79d33e2";
-                   sha256 = "1icpxjldlgwxacb0brjpn72yrq2asbg74kmymdkk9y8qvxny9ib0";
-                 };
+  fallback = fetchFromGitHub {
+               owner  = "Warbo";
+               repo   = "theory-exploration-benchmarks";
+               rev    = "79d33e2";
+               sha256 = "1icpxjldlgwxacb0brjpn72yrq2asbg74kmymdkk9y8qvxny9ib0";
+             };
+  path     = if any (x: x.prefix == "te-benchmarks") nixPath
+                then <te-benchmarks>
+                else fallback;
 
   inherit (callPackage path {
             inherit haskellPackages pkgs;

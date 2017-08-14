@@ -20,6 +20,9 @@ with { inherit (nixpkgs) buildEnv jq runCommand writeScript; };
 with {
   inherit (nixpkgs.callPackage ./nixFromCabal.nix {})
     nixFromCabal nixedHsPkg;
+
+  inherit (nixpkgs.callPackage ./nix-config.nix {})
+    nix-config nix-config-src;
 };
 
 with rec {
@@ -51,7 +54,7 @@ with (nixpkgs.callPackage ./haskellPackages.nix {
 let pkgs = rec {
   # Include the above definitions
   inherit drvFromScript extractTarball haskellPackages hsOverride nixedHsPkg
-          nixEnv nixFromCabal nixpkgs-2016-09 withNix;
+          nixEnv nix-config nix-config-src nixFromCabal nixpkgs-2016-09 withNix;
 
   # Use newer Racket for contract definitions
   inherit (nixpkgs-2016-09)
@@ -63,9 +66,6 @@ let pkgs = rec {
 
   inherit (callPackage ./runBenchmark.nix {})
           runCmd checkHsEnv;
-
-  inherit (callPackage ./nix-config.nix {})
-          nix-config nix-config-src;
 
   inherit (callPackage ./test-defs.nix {})
           runTestInDrv testAll testDbg testDrvString testFiles testMsg
