@@ -9,8 +9,8 @@ with rec {
   fallback = fetchFromGitHub {
                owner  = "Warbo";
                repo   = "theory-exploration-benchmarks";
-               rev    = "79d33e2";
-               sha256 = "1icpxjldlgwxacb0brjpn72yrq2asbg74kmymdkk9y8qvxny9ib0";
+               rev    = "35a8a28";
+               sha256 = "1zzy30zsvcwvn7j47pla3arxwjbcimcp8rdsqkf6lzjvfxdb1s0b";
              };
   path     = if any (x: x.prefix == "te-benchmarks") nixPath
                 then <te-benchmarks>
@@ -22,9 +22,9 @@ with rec {
 };
 rec {
   inherit (tebench) tip-benchmarks cache env tools tip-benchmark-smtlib;
-  annotatedAsts = annotated (toString tip-benchmark-haskell);
-  pkg           = haskellPackages.callPackage pkgDef {};
-  pkgDef        = nixFromCabal (toString tip-benchmark-haskell) null;
+  annotatedAsts         = annotated tip-benchmark-haskell;
+  pkg                   = haskellPackages.callPackage pkgDef {};
+  pkgDef                = nixFromCabal (toString tip-benchmark-haskell) null;
   tip-benchmark-haskell = cacheContent "cached-benchmark-haskell"
                                        tebench.tip-benchmark-haskell;
 }
