@@ -4,4 +4,4 @@ with builtins;
 
 env: text:
   let script = writeScript "script" text;
-   in runCommand (env.name or "runner") (withNix env) script
+   in runCommand (env.name or "drv-from-script") (withNix env) script
