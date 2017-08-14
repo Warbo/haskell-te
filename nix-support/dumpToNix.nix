@@ -9,15 +9,7 @@ with lib;
 let
 
 # Look for a .cabal file and extract the "name:" field
-pName = let files = filter (hasSuffix ".cabal")
-                           (attrNames (readDir pkgDir));
-            cabal = if files == []
-                       then abort "Couldn't find name of package in '${pkgDir}'"
-                       else head files;
-         in runScript { inherit cabal pkgDir; } ''
-              grep -i "name[ ]*:" < "$pkgDir/$cabal" |
-                cut -d ':' -f 2 | tr -d '[:space:]' > "$out"
-            '';
+pName = (haskellPackages.callPackage pkgDir {}).name;
 
 # Runs AstPlugin. Requires OPTIONS to point GHC at a pkg-db containing all of
 # the required dependencies, plus AstPlugin
