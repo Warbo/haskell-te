@@ -1,71 +1,85 @@
-{ bash, haskellPackages, jq, runScript, withDeps, writeScript }:
+{ bash, haskellPackages, jq, lib, wrap, writeScript }:
 
 { pkgSrc }:
 
 with builtins;
-let
-
-# Recombines any lines which GHCi split up
-replLines = writeScript "replLines" ''
-              while IFS= read -r LINE
-              do
-                if echo "$LINE" | grep '^ ' > /dev/null
-                then
-                  printf  " %s" "$LINE"
-                else
-                  printf "\n%s" "$LINE"
-                fi
-              done
-            '';
+with lib;
+with {
 
 # Run GHCi with all relevant packages available. We need "--pure" to avoid
 # multiple GHCs appearing in $PATH, since we may end up calling one with the
 # wrong package database.
-repl = let cmd = "nix-shell --run 'ghci -v0 -XTemplateHaskell'";
-           msg = "No default.nix found " + toJSON { inherit pkgSrc; };
-           given = assert isString pkgSrc || typeOf pkgSrc == "path" ||
-                          abort "runTypesScript: pkgSrc should be string or path, given ${typeOf pkgSrc}'";
-                   assert isString (runScript { inherit pkgSrc; } ''
-                            printf "%s" "$pkgSrc" > "$out"
-                          '');
-                   assert pathExists (unsafeDiscardStringContext "${pkgSrc}/default.nix") ||
-                             abort "Couldn't find '${pkgSrc}/default.nix'";
-                   ''(x.callPackage "${pkgSrc}" {})'';
-           hsPkgs = "[x.QuickCheck x.quickspec x.cereal x.murmur-hash ${given}]";
-        in writeScript "repl" ''
-             ${cmd} --pure -p "haskellPackages.ghcWithPackages (x: ${hsPkgs})"
-           '';
+repl = wrap {
+  name   = "repl";
+  vars   = {
+    inherit pkgSrc;
+    cmd    = "ghci -v0 -XTemplateHaskell";
+    hs     = "haskellPackages.ghcWithPackages";
+    hsPkgs = "x.QuickCheck x.quickspec x.cereal x.murmur-hash";
+  };
+  script = ''
+    #!/usr/bin/env bash
+    nix-shell --show-trace --run "$cmd" --pure \
+              -p "$hs (x: [ $hsPkgs (x.callPackage $pkgSrc {}) ])"
+  '';
+};
 
-# Writes GHCi commands to stdout, which we use to test the types of terms
-typeCommand = writeScript "typeCommand" ''
-                echo ":m"
+};
 
-                # Used for hashing values, to reduce memory usage.
-                echo "import qualified Data.Serialize"
-                echo "import qualified Data.Digest.Murmur32"
+# Runs GHCi to get type information
+wrap {
+  name   = "runTypesScript";
+  paths  = [ bash jq ];
+  vars   = {
+    inherit repl;
 
-                while read -r MOD
-                do
-                  echo "import $MOD"
-                done < <(echo "$MODS")
+    # Makes sure that the modules we've been given can be imported.
+    checkMods = wrap {
+      name   = "checkMods";
+      vars   = { inherit repl; };
+      script = ''
+        #!/usr/bin/env bash
+        ALL_MODS=$(echo -e "$MODS\nData.Serialize\nData.Digest.Murmur32")
+         IMPORTS=$(echo "$ALL_MODS" |
+                   while read -r MOD
+                   do
+                     echo "import $MOD"
+                   done |
+                   "$repl" 2>&1)
 
-                grep "^{" | while read -r LINE
-                do
-                  MOD=$(echo "$LINE" | "${jq}/bin/jq" -r '.module')
-                  echo "import $MOD"
-                  QNAME=$(echo "$LINE" | "${jq}/bin/jq" -r '.module + "." + .name')
-                  "${mkQuery}" "$QNAME"
-                done
-              '';
+        if echo "$IMPORTS" | grep "Could not find module"
+        then
+          exit 1
+        fi
+        exit 0
+      '';
+    };
 
-# Try to type-check QuickSpec signatures, to see which work
-# TODO: Higher-kinded polymorphism, eg. Functors and Monads
-mkQuery = writeScript "mkQuery" ''
+    # Writes GHCi commands to stdout, which we use to test the types of terms
+    typeCommand = wrap {
+      name   = "typeCommand";
+      paths  = [ jq ];
+      vars   = {
+        # Try to type-check QuickSpec signatures, to see which work
+        # TODO: Higher-kinded polymorphism, eg. Functors and Monads
+        mkQuery = wrap {
+          name   = "mkQuery";
+          vars   = {
+            # Shorthand
+            QS = "Test.QuickSpec";
+
+            # Make sure our parens stay balanced!
+            FUNCS = concatStringsSep " " [
+               "Data.Digest.Murmur32.asWord32"
+              "(Data.Digest.Murmur32.hash32"
+              "(Data.Serialize.runPut"
+              "(Data.Serialize.put"
+            ];
+          };
+          script = ''
+            #!/usr/bin/env bash
             # The name of the value we're trying to send through QuickSpec
             GIVEN="$1"
-
-            # Shorthand
-            QS="Test.QuickSpec"
 
             # Use Template Haskell to monomorphise our value (tries to
             # instantiate all type variables with "Integer")
@@ -110,9 +124,9 @@ mkQuery = writeScript "mkQuery" ''
               # We include the given name, the given arity and whether it's
               # hashable. We can assume it's quickspecable, since the message
               # won't appear if it isn't.
-              QNAME="\\\"qname\\\": \\\"$GIVEN\\\""
+               QNAME="\\\"qname\\\": \\\"$GIVEN\\\""
               FIELDS="$QNAME, \\\"quickspecable\\\": true"
-              JSON="\"{\\\"arity\\\": $NUM, \\\"hashable\\\":$3, $FIELDS}\""
+                JSON="\"{\\\"arity\\\": $NUM, \\\"hashable\\\":$3, $FIELDS}\""
 
               # We use the given function to add our term (monomorphised as `f`)
               # to a QuickSpec signature; we use the above JSON as its name. We
@@ -136,7 +150,7 @@ mkQuery = writeScript "mkQuery" ''
               do
                 CALL="$CALL undefined"
               done
-              CALL="(Data.Digest.Murmur32.asWord32 (Data.Digest.Murmur32.hash32 (Data.Serialize.runPut (Data.Serialize.put ($CALL)))))"
+              CALL="($FUNCS ($CALL)))))"
 
               # We don't need the result of the hash call, so we put it in an
               # unused let/in variable; the result we want is a call to `blind`
@@ -149,101 +163,130 @@ mkQuery = writeScript "mkQuery" ''
               # Try constructing a signature using `fun5`, `fun4`, etc. until
               # we either get a success, or run out (not QuickSpecable).
               tryCall "$QS.fun$NUM" "$NUM" false
-          done
-        '';
+            done
+          '';
+        };
+      };
+      script = ''
+        echo ":m"
 
-# Makes sure the types we've been given are actually available in scope (ie.
-# they're not off in some hidden package)
-typeScopes = writeScript "typeScopes" ''
-               echo ":m"
+        # Used for hashing values, to reduce memory usage.
+        echo "import qualified Data.Serialize"
+        echo "import qualified Data.Digest.Murmur32"
 
-               while read -r MOD
-               do
-                 echo "import $MOD"
-               done < <(echo "$MODS")
+        while read -r MOD
+        do
+          echo "import $MOD"
+        done < <(echo "$MODS")
 
-               grep "in f[ ]*::" |
-               while IFS= read -r LINE
-               do
-                 NAME=$(echo "$LINE" | sed -e "s/^.*('\(.*\)))[ ]*in f[ ]*::.*$/\1/g")
-                 TYPE=$(echo "$LINE" | sed -e "s/^.*::[ ]*\(.*\)$/\1/g")
-                 echo ":t ($NAME) :: ($TYPE)"
-               done
-             '';
+        grep "^{" | while read -r LINE
+                    do
+                      MOD=$(echo "$LINE" | jq -r '.module')
+                      echo "import $MOD"
+                      QNAME=$(echo "$LINE" | jq -r '.module + "." + .name')
+                      "$mkQuery" "$QNAME"
+                    done
+      '';
+    };
 
-# Makes sure that the modules we've been given can be imported.
-checkMods = writeScript "checkMods" ''
-  ALL_MODS=$(echo -e "$MODS\nData.Serialize\nData.Digest.Murmur32")
-  IMPORTS=$(echo "$ALL_MODS" |
-            while read -r MOD
-            do
-              echo "import $MOD"
-            done |
-            ${repl} 2>&1)
+    # Makes sure the types we've been given are actually available in scope (ie.
+    # they're not off in some hidden package)
+    typeScopes = wrap {
+      name   = "typeScopes";
+      script = ''
+        echo ":m"
 
-  if echo "$IMPORTS" | grep "Could not find module"
-  then
-    exit 1
-  fi
-  exit 0
-'';
+        while read -r MOD
+        do
+          echo "import $MOD"
+        done < <(echo "$MODS")
 
-in
+        grep "in f[ ]*::" |
+        while IFS= read -r LINE
+        do
+          NAME=$(echo "$LINE" | sed -e "s/^.*('\(.*\)))[ ]*in f[ ]*::.*$/\1/g")
+          TYPE=$(echo "$LINE" | sed -e "s/^.*::[ ]*\(.*\)$/\1/g")
+          echo ":t ($NAME) :: ($TYPE)"
+        done
+      '';
+    };
 
-# Runs GHCi to get type information
-withDeps "runTypesScript" [ jq ] ''
-  #!${bash}/bin/bash
-  set -e
-  set -o pipefail
+    # Recombines any lines which GHCi split up
+    replLines = writeScript "replLines" ''
+      #!/usr/bin/env bash
+      while IFS= read -r LINE
+      do
+        if echo "$LINE" | grep '^ ' > /dev/null
+        then
+          printf  " %s" "$LINE"
+        else
+          printf "\n%s" "$LINE"
+        fi
+      done
+    '';
 
-  ERR=$(mktemp "/tmp/haskell-te-runTypesScript-XXXXX.stderr")
+    JQ_COMMAND = concatStrings [
+      "{"
+        (concatStringsSep ", "
+          (map (x: x + ": $" + x)
+               [ "asts" "cmd" "result" "scopecmd" "scoperesult" ]))
+      "}"
+    ];
+  };
+  script = ''
+    #!/usr/bin/env bash
+    set -e
+    set -o pipefail
 
-  function finish {
-    cat "$ERR" 1>&2
-  }
-  trap finish EXIT
+    ERR=$(mktemp "/tmp/haskell-te-runTypesScript-XXXXX.stderr")
 
-  ASTS=$(cat)
+    function finish {
+      cat "$ERR" 1>&2
+    }
+    trap finish EXIT
 
-  MODS=$(echo "$ASTS" | jq -r '.[] | .module')
-  export MODS
+    ASTS=$(cat)
 
-  echo "Checking module availability" 1>&2
-  if "${checkMods}"
-  then
-    echo "Found modules" 1>&2
-  else
-    echo "Couldn't find modules, aborting" 1>&2
-    exit 1
-  fi
+    MODS=$(echo "$ASTS" | jq -r '.[] | .module')
+    export MODS
 
-  echo "Building type-extraction command" 1>&2
-  CMD=$(echo "$ASTS" | jq -c '.[]' | "${typeCommand}") 2> "$ERR"  || {
-    echo "Error building type extraction command" 1>&2
-    exit 1
-  }
+    echo "Checking module availability" 1>&2
+    if "$checkMods"
+    then
+      echo "Found modules" 1>&2
+    else
+      echo "Couldn't find modules, aborting" 1>&2
+      exit 1
+    fi
 
-  echo "Extracting types" 1>&2
-  RESULT=$(echo "$CMD" | "${repl}" 2>> "$ERR" | "${replLines}") || {
-    echo "Error extracting types" 1>&2
-    exit 1
-  }
+    echo "Building type-extraction command" 1>&2
+    CMD=$(echo "$ASTS" | jq -c '.[]' | "$typeCommand") 2> "$ERR"  || {
+      echo "Error building type extraction command" 1>&2
+      exit 1
+    }
 
-  echo "Building scope-checking command" 1>&2
-  SCOPECMD=$(echo "$RESULT" | "${typeScopes}")
+    echo "Extracting types" 1>&2
+    RESULT=$(echo "$CMD" | "$repl" 2>> "$ERR" | "$replLines") || {
+      echo "Error extracting types" 1>&2
+      exit 1
+    }
 
-  echo "Checking scope" 1>&2
-  SCOPERESULT=$(echo "$SCOPECMD" | "${repl}" | "${replLines}")
+    echo "Building scope-checking command" 1>&2
+    SCOPECMD=$(echo "$RESULT" | "$typeScopes")
 
-  echo "Outputting JSON" 1>&2
-  # shellcheck disable=SC2016
-  jq -n --argfile asts        <(echo "$ASTS")                       \
-        --argfile cmd         <(echo "$CMD"         | jq -s -R '.') \
-        --argfile result      <(echo "$RESULT"      | jq -s -R '.') \
-        --argfile scopecmd    <(echo "$SCOPECMD"    | jq -s -R '.') \
-        --argfile scoperesult <(echo "$SCOPERESULT" | jq -s -R '.') \
-        '{asts: $asts, cmd: $cmd, result: $result, scopecmd: $scopecmd, scoperesult: $scoperesult}'
-  echo "Finished output" 1>&2
+    echo "Checking scope" 1>&2
+    SCOPERESULT=$(echo "$SCOPECMD" | "$repl" | "$replLines")
 
-  echo "" > "$ERR"
-''
+    echo "Outputting JSON" 1>&2
+    # shellcheck disable=SC2016
+    jq -n --argfile asts        <(echo "$ASTS")                       \
+          --argfile cmd         <(echo "$CMD"         | jq -s -R '.') \
+          --argfile result      <(echo "$RESULT"      | jq -s -R '.') \
+          --argfile scopecmd    <(echo "$SCOPECMD"    | jq -s -R '.') \
+          --argfile scoperesult <(echo "$SCOPERESULT" | jq -s -R '.') \
+          "$JQ_COMMAND"
+    echo "Finished output" 1>&2
+
+    echo "" > "$ERR"
+  '';
+}
