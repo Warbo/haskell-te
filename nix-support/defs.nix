@@ -60,6 +60,10 @@ let pkgs = rec {
   inherit (nixpkgs-2016-09)
     racket;
 
+  # Useful for setting dependencies, variables, etc. of scripts
+  inherit (nix-config)
+    wrap;
+
   # These provide executables
   inherit (haskellPackages)
     AstPlugin GetDeps ML4HSFE mlspec reduce-equations;
