@@ -1,9 +1,11 @@
-{ annotated, bash, callPackage, defaultClusters, fetchFromGitHub, fetchgit,
-  haskellPackages, nix-config-src, nixFromCabal, pkgs, runScript, stdenv,
-  writeScript }:
+{ annotated, asv-nix, bash, cacheContent, callPackage, defaultClusters,
+  drvFromScript, fetchFromGitHub, fetchgit, haskellPackages, jq, nix-config-src,
+  nixFromCabal, pkgs, runCommand, runScript, stdenv, writeScript }:
 
 with builtins;
-rec {
+with rec {
+  inherit (nix-config) sanitiseName;
+
   fallback = fetchFromGitHub {
                owner  = "Warbo";
                repo   = "theory-exploration-benchmarks";
@@ -13,15 +15,16 @@ rec {
   path     = if any (x: x.prefix == "te-benchmarks") nixPath
                 then <te-benchmarks>
                 else fallback;
-
-  inherit (callPackage path {
-            inherit haskellPackages pkgs;
-          })
-    tip-benchmarks cache env tools tip-benchmark-smtlib tip-benchmark-haskell;
-
-  pkgDef = nixFromCabal (toString tip-benchmark-haskell) null;
-
-  pkg = haskellPackages.callPackage pkgDef {};
-
+  tebench  = callPackage path {
+    inherit asv-nix haskellPackages nix-config-src;
+    pkgsPath = with tryEval <real>; if success then value else <nixpkgs>;
+  };
+};
+rec {
+  inherit (tebench) tip-benchmarks cache env tools tip-benchmark-smtlib;
   annotatedAsts = annotated (toString tip-benchmark-haskell);
+  pkg           = haskellPackages.callPackage pkgDef {};
+  pkgDef        = nixFromCabal (toString tip-benchmark-haskell) null;
+  tip-benchmark-haskell = cacheContent "cached-benchmark-haskell"
+                                       tebench.tip-benchmark-haskell;
 }
