@@ -422,10 +422,10 @@ qs = stdenv.mkDerivation (withNix {
     '';
 
   }; ''
-    ${test "gen-input" ''
+    ${test "test-gen-input" ''
       P=$(${qsGenInput} 4 2) || ${fail "Couldn't run gen-input"}
     ''}
-    ${test "gen-haskell" ''
+    ${test "test-gen-haskell" ''
       C=$(${qsGenInput} 4 2 | jq 'has("code")') || ${fail "Failed to gen"}
       [[ "$C" = "true" ]] || ${fail "Didn't gen Haskell ($C)"}
     ''}
@@ -436,7 +436,7 @@ qs = stdenv.mkDerivation (withNix {
         ${fail "Shouldn't have accepted garbage"}
       fi
     ''}
-    ${test "can-run-quickspecbench" ''
+    ${test "test-can-run-quickspecbench" ''
       BENCH_OUT=$(DIR="$PWD" "$src" < "${../tests/example.smt2}") ||
         ${fail "Failed to run.\n$BENCH_OUT"}
 
