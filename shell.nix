@@ -1,4 +1,4 @@
 with import ./nix-support {};
-runCommand "dummy" (withNix {
+runCommand "haskell-te-env" (withNix {
   buildInputs = [ package asv-nix git ];
 }) "exit 1"
