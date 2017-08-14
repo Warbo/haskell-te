@@ -318,10 +318,6 @@ mkPkgInner = ''
   echo "Created Haskell package" 1>&2
 '';
 
-runSigCmd = ''
-  ${runCmd { cmd = "$CMD"; }}
-'';
-
 innerNixPath =
   "nixpkgs=${toString <nixpkgs>}:support=${toString ../nix-support}";
 
