@@ -1,5 +1,5 @@
 { callHackage, extractTarball, fetchFromGitHub, fetchgit, fetchurl, haskell,
-  havePath, lib, nixFromCabal, superHaskellPackages }:
+  havePath, lib, nix-config, nixFromCabal, superHaskellPackages }:
 
 with builtins;
 with lib;
@@ -137,6 +137,9 @@ hsOverride = self: super:
                             }) {};
       };
 
-haskellPackages = superHaskellPackages.override { overrides = hsOverride; };
+haskellPackages = superHaskellPackages.override {
+  overrides = self: super: (nix-config.haskellOverrides self super) //
+                           (hsOverride                  self super);
+};
 
 }

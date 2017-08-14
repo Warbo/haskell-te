@@ -43,7 +43,7 @@ with rec {
 };
 
 with (nixpkgs.callPackage ./haskellPackages.nix {
-       inherit extractTarball havePath nixFromCabal;
+       inherit extractTarball havePath nix-config nixFromCabal;
        callHackage          = nixpkgs.callPackage ./callHackage.nix {};
        superHaskellPackages = nixpkgs.haskellPackages;
      });
