@@ -116,45 +116,11 @@ let pkgs = rec {
                       { deps = collect isDerivation tests; }
                       ''echo "true" > "$out"'';
 
-  annotated = pkgDir:
-    let nixed  = toString (nixedHsPkg pkgDir);
-        dumped = dumpPackage { src = nixed; };
-        ann    = annotate {
-                   pkg    = { name = "dummy"; };
-                   asts   = dumped.stdout;
-                   pkgSrc = nixed;
-                 };
-        failed = drvFromScript
-                   {
-                     dumpF = dumped.failed;
-                     dumpE = dumped.stderr;
-                      annF = ann.failed;
-                      annE = ann.stderr;
-                   }
-                   ''
-                     D=$(cat "$dumpF")
-                     [[ "x$D" = "xfalse" ]] || {
-                       cat "$dumpE" 1>&2
-                       echo "Dump failed (failed = '$D')" 1>&2
-                       exit 1
-                     }
-
-                     A=$(cat "$annF")
-                     [[ "x$A" = "xfalse" ]] || {
-                       cat "$annE" 1>&2
-                       echo "Annotate failed (failed = '$A')" 1>&2
-                       exit 1
-                     }
-                     touch "$out"
-                   '';
-     in drvFromScript
-          {
-            inherit failed;
-            ann = ann.stdout;
-          }
-          ''
-             cp "$ann" "$out"
-          '';
+  annotated = pkgDir: annotate  rec {
+    pkg    = { name = "dummy"; };
+    asts   = dumpToNix { pkgDir = pkgSrc; };
+    pkgSrc = toString (nixedHsPkg pkgDir);
+  };
 
   callPackage = nixpkgs.newScope pkgs;
 
