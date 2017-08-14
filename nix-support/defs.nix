@@ -69,7 +69,7 @@ let pkgs = rec {
     AstPlugin GetDeps ML4HSFE mlspec reduce-equations;
 
   inherit (callPackage ./runBenchmark.nix {})
-          runCmd checkHsEnv;
+          runCmd checkHsEnv checkStderr;
 
   inherit (callPackage ./test-defs.nix {})
           runTestInDrv testAll testDbg testDrvString testFiles testMsg
