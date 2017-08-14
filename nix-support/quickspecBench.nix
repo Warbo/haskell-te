@@ -263,15 +263,26 @@ genSig2 = wrap {
   vars   = {
     NIX_EVAL_HASKELL_PKGS = customHs;
     NIX_PATH              = innerNixPath;
+    runGetCmd             = wrap {
+      name   = "run-get-cmd";
+      paths  = [ (haskellPackages.ghcWithPackages
+                   (h: [ h.mlspec h.nix-eval ])) ];
+      vars   = {
+        inherit getCmd;
+      };
+      script = ''
+        #!/usr/bin/env bash
+        runhaskell "$getCmd"
+      '';
+    };
   };
   script = ''
     #!/usr/bin/env bash
+    set -e
 
     CHOSEN=$(jq 'map(select(.quickspecable))' | pipeToNix)
 
-    nix-shell -p '(import <support> {}).haskellPackages.ghcWithPackages
-                    (h: [ h.mlspec h.nix-eval ])' \
-              --show-trace --run 'runhaskell ${getCmd}' < "$CHOSEN" |
+    "$runGetCmd" < "$CHOSEN" |
       jq --arg chosen "$CHOSEN" '. + { "chosen": $chosen }'
   '';
 };
