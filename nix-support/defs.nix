@@ -76,7 +76,7 @@ let pkgs = rec {
           testPackages testRec testRun testWrap;
 
   inherit (callPackage ./benchmark.nix { inherit havePath; })
-          benchmark simpleBench timeout;
+          benchmark timeout;
 
   annotate           = callPackage ./annotate.nix           {};
   asv-nix            = callPackage ./asv-nix.nix            {};
