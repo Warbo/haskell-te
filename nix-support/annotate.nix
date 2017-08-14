@@ -213,17 +213,12 @@ env = if haskellPackages ? pkg.name
 
 };
 
-drvFromScript
+runCommand "annotate"
    {
      buildInputs = explore.extractedEnv (env // { f = asts; });
-     outputs     = stdParts;
-     inherit asts;
+     inherit asts annotateDb checkStderr;
    }
    ''
      set -e
-     O=$("${runCmd {
-              cmd = annotateDb;
-          }}" < "$asts")
-
-     ${storeParts}
+     "$annotateDb" < "$asts" 2> >("$checkStderr" >&2) > "$out"
    ''
