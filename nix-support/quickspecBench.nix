@@ -332,53 +332,12 @@ setUpDir = ''
 '';
 
 getInput = ''
-  echo "Checking for input" 1>&2
-  if [ -t 0 ]
-  then
-    echo "stdin is a tty; assuming we have no input" 1>&2
-    GIVEN_INPUT=0
-  else
-    # Shell is non-interactive; it's safe to try cat
-    cat > "$DIR/stdin"
-    if [[ -s "$DIR/stdin" ]]
-    then
-      echo "Input found on stdin" 1>&2
-      GIVEN_INPUT=1
-      INPUT_TIP=$(nix-store --add "$DIR/stdin")
-      echo "Input stored at '$INPUT_TIP'" 1>&2
-    else
-      echo "No input found on stdin" 1>&2
-      rm "$DIR/stdin"
-      GIVEN_INPUT=0
-    fi
-  fi
-
-  # Check for incompatible options
-  if [[ -n "$SAMPLE_SIZES" ]] && [[ "$GIVEN_INPUT" -eq 1 ]]
-  then
-    {
-      echo "Error: data given on stdin, and asked to draw samples. These"
-      echo "options are incompatible: sampling will only work for the TIP"
-      echo "benchmarks. Either avoid the SAMPLE_SIZES option, to use all of"
-      echo "the given input; otherwise avoid giving data on stdin, to use the"
-      echo "TIP benchmarks for sampling."
-    } 1>&2
-    exit 1
-  fi
-
-  [[ -n "$REPS" ]] || {
-    echo "No REPS given; only running once" 1>&2
-    export REPS=1
-  }
+  INPUT_TIP=$(pipeToNix)
+  echo "Input stored at '$INPUT_TIP'" 1>&2
 
   # Initialise all of the data we need
-  if [[ "$GIVEN_INPUT" -eq 0 ]]
-  then
-    echo "Preparing to use TIP benchmarks" 1>&2
-    OUT_DIR="${tipBenchmarks.tip-benchmark-haskell}"
-  else
-    ${mkPkgInner}
-  fi
+  ${mkPkgInner}
+
   export OUT_DIR
 
   # Extract ASTs from the Haskell package, annotate and add to the Nix store. By
