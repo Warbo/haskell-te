@@ -13,6 +13,4 @@ rec {
                 });
 
   benchmark = import src { inherit pkgs; };
-
-  timeout = pkgs.callPackage "${src}/timeout.nix" {};
 }

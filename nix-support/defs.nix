@@ -62,7 +62,7 @@ let pkgs = rec {
 
   # Useful for setting dependencies, variables, etc. of scripts
   inherit (nix-config)
-    wrap;
+    timeout wrap;
 
   # These provide executables
   inherit (haskellPackages)
@@ -76,7 +76,7 @@ let pkgs = rec {
           testPackages testRec testRun testWrap;
 
   inherit (callPackage ./benchmark.nix { inherit havePath; })
-          benchmark timeout;
+          benchmark;
 
   annotate           = callPackage ./annotate.nix           {};
   asv-nix            = callPackage ./asv-nix.nix            {};
