@@ -1,5 +1,5 @@
-{ runCmd, drvFromScript, explore, haskellPackages, lib, runScript,
-  writeScript }:
+{ bash, checkStderr, runCmd, drvFromScript, explore, haskellPackages, lib,
+  runScript, wrap, writeScript }:
 with builtins;
 with lib;
 
@@ -35,13 +35,19 @@ mkDeps = hsPkgs:
    in [ hsPkgs.quickspec hsPkgs.QuickCheck hsPkgs.AstPlugin
         hsPkgs.mlspec hsPkgs.mlspec-helper ] ++ pkgDeps;
 
-in drvFromScript
-  {
-    inherit pkgDir;
-    buildInputs = [ haskellPackages.cabal-install
-                    (haskellPackages.ghcWithPackages mkDeps) ];
-  }
-  ''
+in wrap {
+  name  = "dumpToNix";
+  paths = [
+    bash
+    haskellPackages.cabal-install
+    (haskellPackages.ghcWithPackages mkDeps)
+  ];
+  vars  = {
+    inherit checkStderr pkgDir runAstPlugin;
+    EXTRA_OPTS = "-package AstPlugin -fplugin=AstPlugin.Plugin";
+  };
+  script = ''
+    #!/usr/bin/env bash
     set -e
 
     cp -r "$pkgDir" ./pkgDir
@@ -86,6 +92,8 @@ in drvFromScript
 
     cabal configure --package-db="$GHC_PKG" 1>&2
 
-    OPTIONS="-package-db=$GHC_PKG -package AstPlugin -fplugin=AstPlugin.Plugin" \
-      "${runCmd { cmd = runAstPlugin; }}" > "$out"
-  ''
+    export OPTIONS="-package-db=$GHC_PKG $EXTRA_OPTS"
+
+    "$runAstPlugin" 2> >("$checkStderr" >&2) > "$out"
+  '';
+}
