@@ -1,30 +1,35 @@
-{ bash, coreutils, explore, lib, runScript, sanitise, strip, time, writeScript }:
+{ bash, coreutils, explore, jq, lib, runScript, sanitise, strip, time, wrap,
+  writeScript }:
 
 with builtins; with lib;
 
 rec {
-
   # A quick and dirty sanity check
-  knownErrors = writeScript "known-errors" ''
-    jq: error
-    MLSpec: Failed
-    syntax error
-    Argument list too long
-    out of memory
-    parse error:
-    ^error:
-  '';
-
-  checkStderr = writeScript "check-stderr" ''
-    #!${bash}/bin/bash
-    set -e
-    if grep -f "${knownErrors}" < "$1" 1>&2
-    then
-      echo "Errors found in '$1'" 1>&2
-      exit 2
-    fi
-    exit
-  '';
+  checkStderr = wrap {
+    name   = "check-stderr";
+    paths  = [ bash ];
+    vars   = {
+      knownErrors = writeScript "known-errors" ''
+        jq: error
+        MLSpec: Failed
+        syntax error
+        Argument list too long
+        out of memory
+        parse error:
+        ^error:
+      '';
+    };
+    script = ''
+      #!/usr/bin/env bash
+      set -e
+      if grep -f "$knownErrors" < "$1" 1>&2
+      then
+        echo "Errors found in '$1'" 1>&2
+        exit 2
+      fi
+      exit
+    '';
+  };
 
   # Check that the required Haskell packages are found in the environment
   checkHsEnv = extra:
@@ -80,76 +85,20 @@ rec {
   #  - Store the given command, arguments, stdin, stdout and stderr
   #  - Force an error if stderr matches some known error pattern
   #  - Benchmark the command
-
   runCmd = { cmd, args ? [], inputs ? []}:
-   let shellArgs = map escapeShellArg args;
-       argStr    = concatStringsSep " " shellArgs;
-       name      = unsafeDiscardStringContext (baseNameOf cmd);
-       checkInput = if inputs == []
-                       then ""
-                       else ''
-                         # Check that all Haskell packages references in our
-                         # input are available to GHC
-                         "${checkHsEnv []}" < stdin || {
-                           echo "checkHsEnv failed" 1>&2
-                           exit 1
-                         }
-                       '';
-    in writeScript "run-cmd-${sanitise name}" ''
-         #!${bash}/bin/bash
-
-         # Store our input
-         cat > stdin
-         ${checkInput}
+    with { argStr = concatStringsSep " " (map escapeShellArg args); };
+    wrap {
+      name   = "run-cmd-${sanitise (unsafeDiscardStringContext (baseNameOf cmd))}";
+      paths  = [ bash ];
+      vars   = {
+        inherit cmd checkStderr;
+      };
+      script = ''
+         #!/usr/bin/env bash
+         set -e
 
          # Run the given command; tee stderr so the user sees it in real time.
-         "${cmd}" ${argStr} < stdin 1> stdout 2> >(tee stderr >&2)
-         CODE="$?"
-
-         # Put results in the Nix store, so we make better use of the cache and
-         # avoid sending huge strings into Nix
-          STDIN=$(nix-store --add stdin)
-         STDOUT=$(nix-store --add stdout)
-         STDERR=$(nix-store --add stderr)
-
-         FAILED=false
-         if [[ "$CODE" -ne 0 ]]
-         then
-           echo "Failed to run '${cmd}' with '${argStr}'" 1>&2
-
-           echo "Contents of stdin:"  1>&2
-           cat  stdin                 1>&2 || true
-           echo "End of stdin"        1>&2
-
-           echo "Contents of stderr:" 1>&2
-           cat  stderr                1>&2 || true
-           echo "End of stderr"       1>&2
-
-           echo "Contents of stdout:" 1>&2
-           cat  stdout                1>&2 || true
-           echo "End of stdout"       1>&2
-
-           FAILED=true
-         elif ! "${checkStderr}" "$STDERR"
-         then
-           echo "Errors found in '$STDERR' for '${cmd}'" 1>&2
-           FAILED=true
-         else
-           echo "Finished running '${cmd}'" 1>&2
-         fi
-
-         # Make report
-         jq -n --arg     cmd    '${cmd}'         \
-               --argjson args   '${toJSON args}' \
-               --arg     stdin  "$STDIN"         \
-               --arg     stdout "$STDOUT"        \
-               --arg     stderr "$STDERR"        \
-               --argjson failed "$FAILED"        \
-               '{"failed"   : $failed,
-                 "cmd"      : $cmd,
-                 "args"     : $args,
-                 "stdin"    : $stdin,
-                 "stdout"   : $stdout,
-                 "stderr"   : $stderr}'
+         "$cmd" ${argStr} > "$out" 2> >("$checkStderr" >&2)
        '';
+    };
 }
