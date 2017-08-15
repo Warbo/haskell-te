@@ -75,9 +75,6 @@ let pkgs = rec {
           runTestInDrv testAll testDbg testDrvString testFiles testMsg
           testPackages testRec testRun testWrap;
 
-  inherit (callPackage ./benchmark.nix { inherit havePath; })
-          benchmark;
-
   annotate           = callPackage ./annotate.nix           {};
   asv-nix            = callPackage ./asv-nix.nix            {};
   buckets            = callPackage ./buckets.nix            {};
