@@ -356,56 +356,6 @@ getInput = ''
   export ANNOTATED
 '';
 
-rawScript = writeScript "quickspec-bench" ''
-  #!/usr/bin/env bash
-  set -e
-
-  ${setUpDir}
-  ${getInput}
-
-  # Explore
-  if [[ -n "$SAMPLE_SIZES" ]]
-  then
-    # The numeric arguments are arbitrary
-    echo "Running sampler to obtain environment" 1>&2
-    export NIXENV=$("${qsGenInput}" 5 1 | jq -r '.env')
-
-    echo "Looping through sample sizes" 1>&2
-    for SAMPLE_SIZE in $SAMPLE_SIZES
-    do
-      echo "Limiting to a sample size of '$SAMPLE_SIZE'" 1>&2
-
-      export      INFO="$SAMPLE_SIZE"
-      export GEN_INPUT="${qsGenInput}"
-      export       CMD="${writeScript "run-cmd" ''
-                            #!/usr/bin/env bash
-                            INPUT=$(cat)
-                            RUNNER=$(echo "$INPUT" | jq -r '.runner')
-                            HASKELL_PROGRAM_CODE=$(echo "$INPUT" | jq -r '.code')
-
-                            if [[ -n "$EXPLORATION_MEM" ]]
-                            then
-                              echo "Limiting memory to '$EXPLORATION_MEM'" 1>&2
-                              export MAX_KB="$EXPLORATION_MEM"
-                            fi
-                            echo "$HASKELL_PROGRAM_CODE" | "${timeout}/bin/withTimeout" $RUNNER
-                          ''}"
-
-      benchmark
-    done
-  else
-    echo "No sample size given, using whole signature" 1>&2
-    OUTPUT=$("${genSig2}" < "$ANNOTATED")
-
-    export CMD=$(echo "$OUTPUT" | jq -r '.runner')
-    export HASKELL_PROGRAM_CODE=$(echo "$OUTPUT" | jq -r '.code')
-    export GEN_INPUT="${writeScript "run-code" ''echo "$HASKELL_PROGRAM_CODE"''}"
-
-    export NIXENV=$(echo "$OUTPUT" | jq -r '.env')
-    INFO="" benchmark
-  fi
-'';
-
 env = buildEnv {
   name  = "te-env";
   paths = [ benchmark jq nix tipBenchmarks.tools ];
@@ -424,6 +374,47 @@ qs = stdenv.mkDerivation (withNix {
       bash "${writeScript "quickspec-${name}-test" code}" || {
         echo "Test ${name} failed" 1>&2
         exit 1
+qsRaw = nix-config.attrsToDirs {
+  bin = {
+    quickspec = wrap {
+      name  = "quickspec-bench";
+      paths = [ bash env pipeToNix ];
+      vars  = {
+        inherit genSig2 mkPkgInner;
+        LANG                  = "en_US.UTF-8";
+        LOCALE_ARCHIVE        = "${glibcLocales}/lib/locale/locale-archive";
+        NIX_EVAL_HASKELL_PKGS = customHs;
+        NIX_REMOTE            = nixEnv.nixRemote;
+        NIX_PATH              = innerNixPath;
+      };
+      script = ''
+        #!/usr/bin/env bash
+        set -e
+
+        ${setUpDir}
+        ${getInput}
+
+        OUTPUT=$("$genSig2" < "$ANNOTATED")
+
+        HASKELL_PROGRAM_CODE=$(echo "$OUTPUT" | jq -r '.code'  )
+                      NIXENV=$(echo "$OUTPUT" | jq -r '.env'   )
+                         CMD=$(echo "$OUTPUT" | jq -r '.runner')
+
+        function run() {
+          if [[ -n "$NIXENV" ]]
+          then
+            nix-shell -p "$NIXENV" --run "'$CMD'"
+          else
+            "$CMD" "$HASKELL_PROGRAM_CODE"
+          fi
+        }
+
+        echo "$HASKELL_PROGRAM_CODE" | run 2> >("$checkStderr" 1>&2)
+      '';
+    };
+  };
+};
+
       }
       echo "Passed ${name}" 1>&2
     '';
