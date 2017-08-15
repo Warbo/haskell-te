@@ -62,7 +62,7 @@ let pkgs = rec {
 
   # Useful for setting dependencies, variables, etc. of scripts
   inherit (nix-config)
-    timeout wrap;
+    inNixedDir timeout wrap;
 
   # These provide executables
   inherit (haskellPackages)
@@ -163,6 +163,21 @@ let pkgs = rec {
   haskellPackageNames = writeScript
                           "haskell-names"
                           (concatStringsSep "\n" (attrNames haskellPackages));
+
+  pipeToNix = nix-config.attrsToDirs {
+    bin = {
+      pipeToNix = wrap {
+        name   = "pipeToNix-logger";
+        paths  = [ nix-config.pipeToNix ];
+        script = ''
+          #!/usr/bin/env bash
+          X=$(pipeToNix "$@")
+          echo "Cached data to $X" 1>&2
+          echo "$X"
+        '';
+      };
+    };
+  };
 
   runWeka = callPackage ./runWeka.nix { inherit havePath; };
 
