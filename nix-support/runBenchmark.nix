@@ -22,11 +22,25 @@ rec {
     script = ''
       #!/usr/bin/env bash
       set -e
-      if grep -f "$knownErrors" < "$1" 1>&2
+
+      function check() {
+        if grep -f "$knownErrors" 1>&2
+        then
+          echo "Errors found in '$1'" 1>&2
+          exit 2
+        fi
+      }
+
+      if ! [ -t 1 ]
       then
-        echo "Errors found in '$1'" 1>&2
-        exit 2
+        cat | check "stdin"
       fi
+
+      if [[ -n "$1" ]]
+      then
+        check "$1" < "$1"
+      fi
+
       exit
     '';
   };
