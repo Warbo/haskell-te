@@ -1,38 +1,42 @@
-{ GetDeps, jq, utillinux, writeScript }:
+{ bash, GetDeps, jq, utillinux, wrap, writeScript }:
 
-writeScript "getDeps" ''
-  #!/usr/bin/env bash
+wrap {
+  name   = "getDeps";
+  paths  = [ bash jq GetDeps utillinux ];
+  script = ''
+    #!/usr/bin/env bash
+    set -e
 
-  function msg {
-    echo -e "$1" 1>&2
-  }
+    function msg {
+      echo -e "$1" 1>&2
+    }
 
-  "${jq}/bin/jq" -c '.[]' | while read -r LINE
-  do
-    DEPENDENCIES=$(echo "$LINE" | "${jq}/bin/jq" -r '.ast' | "${GetDeps}/bin/GetDeps")
-    [[ -z "$DEPENDENCIES" ]] && msg "Unexpected line: $LINE"
-
-    # Split versions from the package names
-    VERSIONED=$(echo "$DEPENDENCIES" | "${jq}/bin/jq" -c '.[]' | while read -r DEP
+    jq -c '.[]' | while read -r LINE
     do
-      PKG=$(echo "$DEP" | "${jq}/bin/jq" -cr '.package')
-      if echo "$PKG" | grep -- "-[0-9][0-9.]*$" > /dev/null
-      then
-        # We have a version number in our package field; split it up
-        NAME=$(echo    "$PKG" | "${utillinux}/bin/rev" | cut -d '-' -f 2- | "${utillinux}/bin/rev")
-        VERSION=$(echo "$PKG" | "${utillinux}/bin/rev" | cut -d '-' -f 1  | "${utillinux}/bin/rev")
+      DEPENDENCIES=$(echo "$LINE" | jq -r '.ast' | GetDeps)
+      [[ -n "$DEPENDENCIES" ]] || msg "Unexpected line: $LINE"
 
-        # shellcheck disable=SC2016
-        echo "$DEP" | "${jq}/bin/jq" --arg name "$NAME"       \
-                                     --arg version "$VERSION" \
-                                     '. + {"package":$name,"version":$version}'
-      else
-        # We don't have a version number in our package field; leave as-is
-        echo "$DEP"
-      fi
-    done | "${jq}/bin/jq" -s '.')
+      # Split versions from the package names
+      VERSIONED=$(echo "$DEPENDENCIES" | jq -c '.[]' | while read -r DEP
+      do
+        PKG=$(echo "$DEP" | jq -cr '.package')
+        if echo "$PKG" | grep -- "-[0-9][0-9.]*$" > /dev/null
+        then
+          # We have a version number in our package field; split it up
+             NAME=$(echo "$PKG" | rev | cut -d '-' -f 2- | rev)
+          VERSION=$(echo "$PKG" | rev | cut -d '-' -f 1  | rev)
 
-    # Add the dependencies to the object
-    echo "$LINE" | "${jq}/bin/jq" -c ". + {\"dependencies\": $VERSIONED }"
-  done  | "${jq}/bin/jq" -s '.'
-''
+          echo "$DEP" | jq --arg name "$NAME"       \
+                           --arg version "$VERSION" \
+                           '. + {"package":$name,"version":$version}'
+        else
+          # We don't have a version number in our package field; leave as-is
+          echo "$DEP"
+        fi
+      done | jq -s '.')
+
+      # Add the dependencies to the object
+      echo "$LINE" | jq -c ". + {\"dependencies\": $VERSIONED }"
+    done  | jq -s '.'
+  '';
+}
