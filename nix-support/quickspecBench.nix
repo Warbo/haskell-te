@@ -1,5 +1,5 @@
-{ annotated, bash, benchmark, buildEnv, ensureVars, glibcLocales,
-  haskellPackages, jq, lib, makeWrapper, nix, nix-config, nixEnv, runCmd,
+{ annotated, bash, buildEnv, ensureVars, glibcLocales, haskellPackages,
+  inNixedDir, jq, lib, makeWrapper, nix, nix-config, nixEnv, pipeToNix, runCmd,
   runCommand, stdenv, time, timeout, tipBenchmarks, withNix, writeScript }:
 
 # Provides a script which accepts smtlib data, runs it through QuickSpec and
@@ -100,7 +100,7 @@ benchVars = {
 
     genAnnotatedPkg = wrap {
       name  = "quickspec-standalone-gen-annotated-pkg";
-      paths = [ nix nix-config.pipeToNix tipBenchmarks.tools ];
+      paths = [ nix pipeToNix tipBenchmarks.tools ];
       vars  = {
         NIX_REMOTE = "daemon";
         mkPkg      = wrap {
@@ -224,7 +224,7 @@ qsGenInput = mkGenInput genSig2;
 
 mkGenInput = after: wrap {
   name   = "gen-input";
-  paths  = [ bash jq ];
+  paths  = [ bash jq tipBenchmarks.tools ];
   vars   = {
     inherit after;
     OUT_DIR   = tipBenchmarks.tip-benchmark-haskell;
@@ -258,7 +258,7 @@ mkGenInput = after: wrap {
 
 genSig2 = wrap {
   name   = "gen-sig2";
-  paths  = [ nix-config.pipeToNix ];
+  paths  = [ pipeToNix ];
   vars   = {
     NIX_EVAL_HASKELL_PKGS = customHs;
     NIX_PATH              = innerNixPath;
@@ -266,12 +266,10 @@ genSig2 = wrap {
       name   = "run-get-cmd";
       paths  = [ (haskellPackages.ghcWithPackages
                    (h: [ h.mlspec h.nix-eval ])) ];
-      vars   = {
-        inherit getCmd;
-      };
+      vars   = { inherit getCmd; };
       script = ''
         #!/usr/bin/env bash
-        runhaskell "$getCmd"
+        exec runhaskell "$getCmd"
       '';
     };
   };
@@ -279,7 +277,7 @@ genSig2 = wrap {
     #!/usr/bin/env bash
     set -e
 
-    CHOSEN=$(jq 'map(select(.quickspecable))' | pipeToNix)
+    CHOSEN=$(jq 'map(select(.quickspecable))' | pipeToNix quickspec-asts.json)
 
     "$runGetCmd" < "$CHOSEN" |
       jq --arg chosen "$CHOSEN" '. + { "chosen": $chosen }'
@@ -332,10 +330,12 @@ setUpDir = ''
 
 getInput = ''
   INPUT_TIP=$(pipeToNix)
+  export INPUT_TIP
+
   echo "Input stored at '$INPUT_TIP'" 1>&2
 
   # Initialise all of the data we need
-  ${mkPkgInner}
+  OUT_DIR=$("$mkPkgInner")
 
   export OUT_DIR
 
