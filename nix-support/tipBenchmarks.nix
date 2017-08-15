@@ -1,6 +1,6 @@
 { annotated, asv-nix, bash, cacheContent, callPackage, defaultClusters,
   drvFromScript, fetchFromGitHub, fetchgit, haskellPackages, jq, nix-config-src,
-  nixFromCabal, pkgs, runCommand, runScript, stdenv, writeScript }:
+  nixFromCabal, pkgs, runCommand, stdenv, writeScript }:
 
 with builtins;
 with rec {

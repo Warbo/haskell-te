@@ -1,5 +1,7 @@
 { bash, checkStderr, runCmd, drvFromScript, explore, haskellPackages, lib,
   runScript, wrap, writeScript }:
+{ bash, checkStderr, runCmd, drvFromScript, explore, haskellPackages, jq, lib,
+  runCommand, wrap, writeScript }:
 with builtins;
 with lib;
 
