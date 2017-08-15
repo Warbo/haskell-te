@@ -3,9 +3,7 @@
   runCommand, stdenv, time, timeout, tipBenchmarks, withNix, writeScript }:
 
 # Provides a script which accepts smtlib data, runs it through QuickSpec and
-# outputs the resulting equations along with benchmark times.
-
-# Note that we use "./.." so that all of our dependencies get included
+# outputs the resulting equations
 
 with builtins; with lib;
 
@@ -108,6 +106,7 @@ benchVars = {
         mkPkg      = wrap {
           name = "quickspec-mk-pkg";
           vars = {
+            inherit mkPkgInner;
             NIX_PATH = innerNixPath;
           };
           script = ''
@@ -117,8 +116,7 @@ benchVars = {
             INPUT_TIP=$(pipeToNix input.smt2)
             export INPUT_TIP
 
-            ${mkPkgInner}
-            echo "$OUT_DIR"
+            "$mkPkgInner"
           '';
         };
       };
@@ -184,6 +182,7 @@ customHs = writeScript "custom-hs.nix" ''
     }
   '';
 
+# We use "./.." so that all of our dependencies get included
 augmentedHs = writeScript "augmented-hs.nix" ''
   # Provides a set of Haskell packages for use by nix-eval.
   { hsDir }:
