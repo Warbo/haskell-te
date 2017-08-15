@@ -296,24 +296,32 @@ wrapScript = name: script: wrap {
   };
 };
 
-mkPkgInner = ''
-  set -e
-  echo "Creating Haskell package" 1>&2
-  OUT_DIR=$(nix-build --show-trace --argstr "input" "$INPUT_TIP" \
-                      -E 'with import <support> {};
-                          { input }:
-                          stdenv.mkDerivation {
-                            inherit input;
-                            name         = "generated-haskell-package";
-                            buildInputs  = [ tipBenchmarks.tools ];
-                            buildCommand = "
-                              mkdir -p \"$out\"
-                              OUT_DIR=\"$out\" full_haskell_package < \"$input\"
-                            ";
-                          }') ||
-    ${fail "Failed to create Haskell package"}
-  echo "Created Haskell package" 1>&2
-'';
+mkPkgInner = wrap {
+  name = "mkPkgInner";
+  vars = {
+    inherit inNixedDir;
+
+    MAKE_PACKAGE = wrap {
+      name   = "make-haskell-package";
+      paths  = [ tipBenchmarks.tools ];
+      script = ''
+        OUT_DIR="$PWD" full_haskell_package < "$INPUT_TIP"
+      '';
+    };
+  };
+  script = ''
+    #!/usr/bin/env bash
+    set -e
+    [[ -n "$INPUT_TIP" ]] || {
+      echo "No INPUT_TIP given, aborting" 1>&2
+      exit 1
+    }
+    echo "Creating Haskell package" 1>&2
+    "$inNixedDir" "$MAKE_PACKAGE" "generated-haskell-package" ||
+      ${fail "Failed to create Haskell package"}
+    echo "Created Haskell package" 1>&2
+  '';
+};
 
 innerNixPath =
   "nixpkgs=${toString <nixpkgs>}:support=${toString ../nix-support}";
