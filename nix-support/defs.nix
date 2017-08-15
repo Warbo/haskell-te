@@ -117,7 +117,7 @@ let pkgs = rec {
   annotated = pkgDir: annotate  rec {
     pkg    = { name = "dummy"; };
     asts   = dumpToNix { pkgDir = pkgSrc; };
-    pkgSrc = toString (nixedHsPkg pkgDir);
+    pkgSrc = nixedHsPkg pkgDir;
   };
 
   callPackage = nixpkgs.newScope pkgs;
