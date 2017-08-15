@@ -358,22 +358,11 @@ getInput = ''
 
 env = buildEnv {
   name  = "te-env";
-  paths = [ benchmark jq nix tipBenchmarks.tools ];
+  paths = [ jq nix tipBenchmarks.tools ];
 };
 
-qs = stdenv.mkDerivation (withNix {
-  name = "quickspecBench";
-  src  = script;
-  buildInputs  = [ env ];
-  unpackPhase  = "true";  # Nothing to do
+qs = nix-config.withDeps checks qsRaw;
 
-  doCheck    = true;
-  checkPhase = with rec {
-    test = name: code: ''
-      echo "Testing ${name}" 1>&2
-      bash "${writeScript "quickspec-${name}-test" code}" || {
-        echo "Test ${name} failed" 1>&2
-        exit 1
 qsRaw = nix-config.attrsToDirs {
   bin = {
     quickspec = wrap {
@@ -415,27 +404,39 @@ qsRaw = nix-config.attrsToDirs {
   };
 };
 
+checks =
+  with {
+    test = name: code: runCommand "quickspec-${name}-test"
+      {
+        given       = name;
+        go          = writeScript "${name}-code" code;
+        buildInputs = [ jq qsRaw ];
       }
-      echo "Passed ${name}" 1>&2
-    '';
+      ''
+        #!/usr/bin/env bash
+        set -e
+        "$go" || exit 1
+        echo "pass" > "$out"
+      '';
+  };
+  [
+    (test "test-gen-input" "${qsGenInput} 4 2")
 
-  }; ''
-    ${test "test-gen-input" ''
-      P=$(${qsGenInput} 4 2) || ${fail "Couldn't run gen-input"}
-    ''}
-    ${test "test-gen-haskell" ''
+    (test "test-gen-haskell" ''
       C=$(${qsGenInput} 4 2 | jq 'has("code")') || ${fail "Failed to gen"}
       [[ "$C" = "true" ]] || ${fail "Didn't gen Haskell ($C)"}
-    ''}
-    ${test "check-garbage" ''
-      if echo '!"£$%^&*()' | "$src" 1> /dev/null 2> garbage.err
+    '')
+
+    (test "check-garbage" ''
+      if echo '!"£$%^&*()' | quickspec 1> /dev/null 2> garbage.err
       then
         cat garbage.err 1>&2
         ${fail "Shouldn't have accepted garbage"}
       fi
-    ''}
-    ${test "test-can-run-quickspecbench" ''
-      BENCH_OUT=$(DIR="$PWD" "$src" < "${../tests/example.smt2}") ||
+    '')
+
+    (test "test-can-run-quickspecbench" ''
+      BENCH_OUT=$(DIR="$PWD" quickspec < "${../tests/example.smt2}") ||
         ${fail "Failed to run.\n$BENCH_OUT"}
 
       RESULTS=$(echo "$BENCH_OUT" | jq '.results | length') ||
@@ -458,13 +459,7 @@ qsRaw = nix-config.attrsToDirs {
 
         [[ "$EQS" -gt 0 ]] || ${fail "Found no equations"}
       done < <(echo "$BENCH_OUT" | jq -r '.results | .[] | .stdout')
-    ''}
-  '';
-
-  installPhase = ''
-    mkdir -p "$out/bin"
-    cp "$src" "$out/bin/quickspecBench"
-  '';
-});
+    '')
+  ];
 
 }
