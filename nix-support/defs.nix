@@ -63,7 +63,7 @@ let pkgs = rec {
 
   # Useful for setting dependencies, variables, etc. of scripts
   inherit (nix-config)
-    inNixedDir timeout wrap;
+    inNixedDir stripOverrides timeout wrap;
 
   # These provide executables
   inherit (haskellPackages)
@@ -231,15 +231,6 @@ let pkgs = rec {
               in if unsuf == s
                     then s
                     else strip unsuf;
-
-  # Remove cruft, like "override" and "overrideDerivation"
-  stripOverrides = as:
-    if isAttrs as
-       then mapAttrs (n: stripOverrides)
-                     (filterAttrs (n: v: !(elem n ["override"
-                                                   "overrideDerivation"]))
-                                  as)
-       else as;
 };
 
 in nixpkgs // pkgs
