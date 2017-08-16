@@ -15,10 +15,13 @@ fail = msg: ''{ echo -e "${msg}" 1>&2; exit 1; }'';
 
 qsGenerateSig =
   with rec {
-    runGenCmd = wrap {
+    runGetCmd = wrap {
       name  = "quickspec-run-gen-cmd";
       file  = getCmd;
-      paths = [ (haskellPackages.ghcWithPackages (h: [ h.mlspec h.nix-eval ])) ];
+      paths = [
+        nix
+        (haskellPackages.ghcWithPackages (h: [ h.mlspec h.nix-eval ]))
+      ];
       vars  = {
         #NIX_PATH = innerNixPath;
         NIX_EVAL_HASKELL_PKGS = customHs;
@@ -28,9 +31,10 @@ qsGenerateSig =
   wrap {
     name   = "quickspec-generate-sig";
     paths  = [ jq ];
+    vars   = { inherit runGenCmd; };
     script = ''
       #!/usr/bin/env bash
-      jq 'map(select(.quickspecable))' | "${runGenCmd}"
+      jq 'map(select(.quickspecable))' | "$runGetCmd"
     '';
   };
 
@@ -264,9 +268,11 @@ genSig2 = wrap {
     NIX_PATH              = innerNixPath;
     runGetCmd             = wrap {
       name   = "run-get-cmd";
-      paths  = [ (haskellPackages.ghcWithPackages
-                   (h: [ h.mlspec h.nix-eval ])) ];
-      vars   = { inherit getCmd; };
+      paths  = [
+        nix
+        (haskellPackages.ghcWithPackages (h: [ h.mlspec h.nix-eval ]))
+      ];
+      vars   = removeAttrs (withNix { inherit getCmd; }) [ "buildInputs" ];
       script = ''
         #!/usr/bin/env bash
         exec runhaskell "$getCmd"
