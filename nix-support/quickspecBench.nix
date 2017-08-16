@@ -1,6 +1,7 @@
-{ annotated, bash, buildEnv, ensureVars, glibcLocales, haskellPackages,
-  inNixedDir, jq, lib, makeWrapper, nix, nix-config, nixEnv, pipeToNix, runCmd,
-  runCommand, stdenv, time, timeout, tipBenchmarks, withNix, writeScript }:
+{ annotated, bash, checkStderr, buildEnv, ensureVars, fail, glibcLocales,
+  haskellPackages, inNixedDir, jq, lib, makeWrapper, nix, nix-config, nixEnv,
+  pipeToNix, runCmd, runCommand, stdenv, time, timeout, tipBenchmarks, withNix,
+  wrap, writeScript }:
 
 # Provides a script which accepts smtlib data, runs it through QuickSpec and
 # outputs the resulting equations
@@ -8,10 +9,6 @@
 with builtins; with lib;
 
 rec {
-
-inherit (nix-config) wrap;
-
-fail = msg: ''{ echo -e "${msg}" 1>&2; exit 1; }'';
 
 qsGenerateSig =
   with rec {
@@ -57,7 +54,7 @@ benchVars = {
 
     genInput = wrap {
       name  = "quickspec-sampled-gen-input";
-      paths = [ jq tipBenchmarks.tools ];
+      paths = [ fail jq tipBenchmarks.tools ];
       vars  = {
         OUT_DIR   = tipBenchmarks.tip-benchmark-haskell;
 
@@ -75,9 +72,10 @@ benchVars = {
       };
       script = ''
         #!/usr/bin/env bash
+        set -e
 
-        [[ -n "$ANNOTATED" ]] || ${fail "No ANNOTATED given"}
-        [[ -n "$OUT_DIR"   ]] || ${fail "No OUT_DIR given"}
+        [[ -n "$ANNOTATED" ]] || fail "No ANNOTATED given"
+        [[ -n "$OUT_DIR"   ]] || fail "No OUT_DIR given"
 
         # Give sampled names a module and package, then slurp into an array
         KEEPERS=$(jq -R '{"name"    : .,
@@ -303,8 +301,9 @@ wrapScript = name: script: wrap {
 };
 
 mkPkgInner = wrap {
-  name = "mkPkgInner";
-  vars = {
+  name  = "mkPkgInner";
+  paths = [ fail inNixedDir ];
+  vars  = {
     inherit inNixedDir;
 
     MAKE_PACKAGE = wrap {
@@ -323,8 +322,8 @@ mkPkgInner = wrap {
       exit 1
     }
     echo "Creating Haskell package" 1>&2
-    "$inNixedDir" "$MAKE_PACKAGE" "generated-haskell-package" ||
-      ${fail "Failed to create Haskell package"}
+    inNixedDir "$MAKE_PACKAGE" "generated-haskell-package" ||
+      fail "Failed to create Haskell package"
     echo "Created Haskell package" 1>&2
   '';
 };
@@ -415,56 +414,44 @@ checks =
     test = name: code: runCommand "quickspec-${name}-test"
       {
         given       = name;
-        go          = writeScript "${name}-code" code;
-        buildInputs = [ jq qsRaw ];
+        buildInputs = [ fail jq pipeToNix qsRaw ];
       }
       ''
         #!/usr/bin/env bash
         set -e
-        "$go" || exit 1
+        {
+          ${code}
+        } || exit 1
         echo "pass" > "$out"
       '';
   };
   [
-    (test "test-gen-input" "${qsGenInput} 4 2")
+    (test "gen-input" "${qsGenInput} 4 2 > /dev/null")
 
-    (test "test-gen-haskell" ''
-      C=$(${qsGenInput} 4 2 | jq 'has("code")') || ${fail "Failed to gen"}
-      [[ "$C" = "true" ]] || ${fail "Didn't gen Haskell ($C)"}
+    (test "gen-haskell" ''
+      C=$(${qsGenInput} 4 2 | jq 'has("code")') || fail "Failed to gen"
+      [[ "$C" = "true" ]] || fail "Didn't gen Haskell ($C)"
     '')
 
     (test "check-garbage" ''
       if echo '!"£$%^&*()' | quickspec 1> /dev/null 2> garbage.err
       then
         cat garbage.err 1>&2
-        ${fail "Shouldn't have accepted garbage"}
+        fail "Shouldn't have accepted garbage"
       fi
     '')
 
-    (test "test-can-run-quickspecbench" ''
-      BENCH_OUT=$(DIR="$PWD" quickspec < "${../tests/example.smt2}") ||
-        ${fail "Failed to run.\n$BENCH_OUT"}
+    (test "can-run-quickspecbench" ''
+      BENCH_OUT=$(DIR="$PWD" quickspec < "${../tests/example.smt2}" |
+                  pipeToNix) ||
+        fail "Failed to run.\n$BENCH_OUT"
 
-      RESULTS=$(echo "$BENCH_OUT" | jq '.results | length') ||
-        ${fail "No results"}
+      echo "Cached to $BENCH_OUT" 1>&2
 
-      [[ "$RESULTS" -gt 0 ]] || ${fail "Empty results"}
+      RESULTS=$(jq 'length' < "$BENCH_OUT") ||
+        fail "Couldn't get equation array"
 
-      NOFAILS=$(echo "$BENCH_OUT" |
-                jq '.results | map(.failure == null) | all') ||
-        ${fail "Couldn't check for failures"}
-
-      [[ "$NOFAILS" = "true" ]] || ${fail "Encountered failures"}
-
-      while read -r F
-      do
-        [[ -e "$F" ]] || ${fail "Couldn't find stdout file"}
-
-        EQS=$(grep -v "^Depth" < "$F" | jq -s '. | length') ||
-          ${fail "Couldn't get equations from stdout"}
-
-        [[ "$EQS" -gt 0 ]] || ${fail "Found no equations"}
-      done < <(echo "$BENCH_OUT" | jq -r '.results | .[] | .stdout')
+      [[ "$RESULTS" -gt 0 ]] || fail "Found no equations"
     '')
   ];
 

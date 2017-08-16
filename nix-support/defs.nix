@@ -161,6 +161,16 @@ let pkgs = rec {
                                 '')
                             vars);
 
+  fail = nix-config.attrsToDirs {
+    bin = {
+      fail = writeScript "error-logger" ''
+        #!/usr/bin/env bash
+        echo -e "$*" 1>&2
+        exit 1
+      '';
+    };
+  };
+
   haskellPackageNames = writeScript
                           "haskell-names"
                           (concatStringsSep "\n" (attrNames haskellPackages));
