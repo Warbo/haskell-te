@@ -210,8 +210,6 @@ augmentedHs = writeScript "augmented-hs.nix" ''
       hsPkgs
 '';
 
-qsGenInput = mkGenInput genSig2;
-
 mkGenInput = after: wrap {
   name   = "gen-input";
   paths  = [ bash jq tipBenchmarks.tools ];
@@ -418,13 +416,6 @@ checks =
       '';
   };
   [
-    (test "gen-input" "${qsGenInput} 4 2 > /dev/null")
-
-    (test "gen-haskell" ''
-      C=$(${qsGenInput} 4 2 | jq 'has("code")') || fail "Failed to gen"
-      [[ "$C" = "true" ]] || fail "Didn't gen Haskell ($C)"
-    '')
-
     (test "check-garbage" ''
       if echo '!"£$%^&*()' | quickspec 1> /dev/null 2> garbage.err
       then
@@ -446,5 +437,4 @@ checks =
       [[ "$RESULTS" -gt 0 ]] || fail "Found no equations"
     '')
   ];
-
 }
