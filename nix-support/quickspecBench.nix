@@ -399,7 +399,17 @@ qsRaw = nix-config.attrsToDirs {
           fi
         }
 
-        echo "$HASKELL_PROGRAM_CODE" | run 2> >("$checkStderr")
+        function keepJson() {
+          # Strip out cruft that QuickSpec puts on stdout. Since this is just a
+          # filter, we don't actually care if grep finds anything or not; hence
+          # we use '|| true' to avoid signalling an error, and hide this
+          # complexity inside a function.
+          grep -v '^Depth' || true
+        }
+
+        echo "$HASKELL_PROGRAM_CODE" | run 2> >("$checkStderr") |
+                                       keepJson                 |
+                                       jq -s '.'
       '';
     };
   };
