@@ -393,9 +393,9 @@ qsRaw = nix-config.attrsToDirs {
         function run() {
           if [[ -n "$NIXENV" ]]
           then
-            nix-shell -p "$NIXENV" --run "'$CMD'"
+            nix-shell -p "$NIXENV" --run "$CMD"
           else
-            "$CMD" "$HASKELL_PROGRAM_CODE"
+            $CMD "$HASKELL_PROGRAM_CODE"
           fi
         }
 
