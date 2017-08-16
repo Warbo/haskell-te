@@ -26,12 +26,13 @@ with {
 };
 
 with rec {
-  nixEnv         = nixpkgs.callPackage ./nixEnv.nix         {};
-  withNix        = nixpkgs.callPackage ./withNix.nix        {
+  nixEnv  = (nixpkgs.callPackage ./nixEnv.nix {}) null;
+
+  withNix = nixpkgs.callPackage ./withNix.nix {
     inherit nixEnv;
   };
 
-  drvFromScript  = nixpkgs.callPackage ./drvFromScript.nix  {
+  drvFromScript = nixpkgs.callPackage ./drvFromScript.nix  {
     inherit withNix;
   };
 

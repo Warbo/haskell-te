@@ -28,7 +28,10 @@ with rec {
     fi
   '';
 };
-{
+
+# Return a thunk, to prevent callPackage polluting our attrset with
+# "overrideDerivation" and friends.
+_: {
    NIX_PATH   = concatStringsSep ":" pathParts;
 
    NIX_REMOTE = if remoteGiven == ""
