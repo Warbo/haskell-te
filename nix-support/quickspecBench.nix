@@ -19,7 +19,7 @@ qsGenerateSig =
         nix
         (haskellPackages.ghcWithPackages (h: [ h.mlspec h.nix-eval ]))
       ];
-      vars  = {
+      vars  = nixEnv // {
         #NIX_PATH = innerNixPath;
         NIX_EVAL_HASKELL_PKGS = customHs;
       };
@@ -102,12 +102,12 @@ benchVars = {
 
     genAnnotatedPkg = wrap {
       name  = "quickspec-standalone-gen-annotated-pkg";
-      paths = [ nix pipeToNix tipBenchmarks.tools ];
-      vars  = {
-        NIX_REMOTE = "daemon";
+      paths = [ nix ];
+      vars  = nixEnv // {
         mkPkg      = wrap {
-          name = "quickspec-mk-pkg";
-          vars = {
+          name  = "quickspec-mk-pkg";
+          paths = [ pipeToNix ];
+          vars  = nixEnv // {
             inherit mkPkgInner;
             NIX_PATH = innerNixPath;
           };
@@ -261,7 +261,7 @@ mkGenInput = after: wrap {
 genSig2 = wrap {
   name   = "gen-sig2";
   paths  = [ pipeToNix ];
-  vars   = {
+  vars   = nixEnv // {
     NIX_EVAL_HASKELL_PKGS = customHs;
     NIX_PATH              = innerNixPath;
     runGetCmd             = wrap {
@@ -270,7 +270,7 @@ genSig2 = wrap {
         nix
         (haskellPackages.ghcWithPackages (h: [ h.mlspec h.nix-eval ]))
       ];
-      vars   = removeAttrs (withNix { inherit getCmd; }) [ "buildInputs" ];
+      vars   = nixEnv // { inherit getCmd; };
       script = ''
         #!/usr/bin/env bash
         exec runhaskell "$getCmd"
@@ -291,11 +291,10 @@ genSig2 = wrap {
 wrapScript = name: script: wrap {
   inherit name script;
   paths = [ env ];
-  vars  = {
+  vars  = nixEnv // {
     LANG                  = "en_US.UTF-8";
     LOCALE_ARCHIVE        = "${glibcLocales}/lib/locale/locale-archive";
     NIX_EVAL_HASKELL_PKGS = customHs;
-    NIX_REMOTE            = nixEnv.nixRemote;
     NIX_PATH              = innerNixPath;
   };
 };
@@ -372,13 +371,12 @@ qsRaw = nix-config.attrsToDirs {
   bin = {
     quickspec = wrap {
       name  = "quickspec-bench";
-      paths = [ bash env pipeToNix ];
-      vars  = {
+      paths = [ bash jq nix pipeToNix ];
+      vars  = nixEnv // {
         inherit checkStderr genSig2 mkPkgInner;
         LANG                  = "en_US.UTF-8";
         LOCALE_ARCHIVE        = "${glibcLocales}/lib/locale/locale-archive";
         NIX_EVAL_HASKELL_PKGS = customHs;
-        NIX_REMOTE            = nixEnv.nixRemote;
         NIX_PATH              = innerNixPath;
       };
       script = ''

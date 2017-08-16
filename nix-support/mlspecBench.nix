@@ -1,5 +1,5 @@
 { bash, buckets, buildEnv, cluster, ensureVars, explore, format, glibcLocales,
-  hashspecBench, haskellPackages, jq, lib, nix-config, nixEnv,
+  hashspecBench, haskellPackages, jq, lib, nix-config,
   quickspecBench, reduce-equations, runCommand, runWeka, stdenv, timeout,
   tipBenchmarks, writeScript }:
 with builtins;
