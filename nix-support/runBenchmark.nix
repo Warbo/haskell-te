@@ -23,23 +23,38 @@ rec {
       #!/usr/bin/env bash
       set -e
 
+      ERR=""
+
       function check() {
-        if grep -f "$knownErrors" 1>&2
-        then
-          echo "Errors found in '$1'" 1>&2
-          exit 2
-        fi
+        while read -r LINE
+        do
+          # Spit out line so user can see it
+          echo "$LINE" 1>&2
+
+          # Check if it contains an error
+          if echo "$LINE" | grep -f "$knownErrors" > /dev/null
+          then
+            ERR="$ERR $1"
+          fi
+        done
       }
 
-      if ! [ -t 1 ]
+      # Check stdin if it's not a TTY
+      if ! [ -t 0 ]
       then
-        cat | check "stdin"
+        cat | check "stdin (NOTE: May have been redirected from stderr)"
       fi
 
-      if [[ -n "$1" ]]
-      then
-        check "$1" < "$1"
-      fi
+      # Check any given args
+      for F in "$@"
+      do
+        check "$F" < "$F"
+      done
+
+      [[ -z "$ERR" ]] || {
+        echo "Errors found in$ERR" 1>&2
+        exit 2
+      }
 
       exit
     '';
@@ -112,7 +127,7 @@ rec {
          set -e
 
          # Run the given command; tee stderr so the user sees it in real time.
-         "$cmd" ${argStr} > "$out" 2> >("$checkStderr" >&2)
+         "$cmd" ${argStr} > "$out" 2> >("$checkStderr")
        '';
     };
 }

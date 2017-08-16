@@ -375,7 +375,7 @@ qsRaw = nix-config.attrsToDirs {
       name  = "quickspec-bench";
       paths = [ bash env pipeToNix ];
       vars  = {
-        inherit genSig2 mkPkgInner;
+        inherit checkStderr genSig2 mkPkgInner;
         LANG                  = "en_US.UTF-8";
         LOCALE_ARCHIVE        = "${glibcLocales}/lib/locale/locale-archive";
         NIX_EVAL_HASKELL_PKGS = customHs;
@@ -404,7 +404,7 @@ qsRaw = nix-config.attrsToDirs {
           fi
         }
 
-        echo "$HASKELL_PROGRAM_CODE" | run 2> >("$checkStderr" 1>&2)
+        echo "$HASKELL_PROGRAM_CODE" | run 2> >("$checkStderr")
       '';
     };
   };

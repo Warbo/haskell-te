@@ -86,7 +86,7 @@ with rec {
       export GHC_PKG
 
       cabal configure --package-db="$GHC_PKG" 1>&2
-      "$runAstPlugin" 2> >("$checkStderr" >&2) > "$out"
+      "$runAstPlugin" 2> >("$checkStderr") > "$out"
     '';
   };
 

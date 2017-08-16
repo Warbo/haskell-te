@@ -219,10 +219,5 @@ runCommand "annotate"
    ''
      set -e
 
-     # Run$annotateDb with input read from $asts.
-     # Copy stderr with tee; send one to the screen with cat; send the other to
-     # $checkStderr. Send the output of $checkStderr to stderr.
-     # Write stdout to $out.
-
-     "$annotateDb" < "$asts" 2> >(tee >(cat 1>&2) | "$checkStderr" >&2) > "$out"
+     "$annotateDb" < "$asts" 2> >("$checkStderr") > "$out"
    ''
