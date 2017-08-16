@@ -303,8 +303,6 @@ mkPkgInner = wrap {
   name  = "mkPkgInner";
   paths = [ fail inNixedDir ];
   vars  = {
-    inherit inNixedDir;
-
     MAKE_PACKAGE = wrap {
       name   = "make-haskell-package";
       paths  = [ tipBenchmarks.tools ];
