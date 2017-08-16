@@ -1,4 +1,4 @@
-{ bash, haskellPackages, jq, lib, wrap, writeScript }:
+{ bash, haskellPackages, jq, lib, withNix, wrap, writeScript }:
 
 { pkgSrc }:
 
@@ -11,7 +11,8 @@ with {
 # wrong package database.
 repl = wrap {
   name   = "repl";
-  vars   = {
+  paths  = (withNix {}).buildInputs;
+  vars   = removeAttrs (withNix {}) [ "buildInputs" ] // {
     inherit pkgSrc;
     cmd    = "ghci -v0 -XTemplateHaskell";
     hs     = "haskellPackages.ghcWithPackages";

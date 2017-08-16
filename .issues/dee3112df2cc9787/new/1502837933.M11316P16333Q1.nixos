@@ -1,0 +1,12 @@
+From: Chris Warburton
+Date: Tue, 15 Aug 2017 23:57:36 +0100
+Subject: Re: Remove the complicated nix-support/*specBench stuff
+Message-Id: <dee3112df2cc9787-ea49bd9e0f971088-artemis@nixos>
+References: <dee3112df2cc9787-0-artemis@nixos>
+In-Reply-To: <dee3112df2cc9787-0-artemis@nixos>
+
+Despite the warning above, I've started unpicking some of this, so we
+can throw it away and ease maintenance.
+
+The scripts now focus on exploring their input, rather than looping,
+timing, choosing between TEBenchmark or input, etc.

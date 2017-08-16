@@ -1,0 +1,11 @@
+From: Chris Warburton
+Date: Tue, 15 Aug 2017 23:59:01 +0100
+State: new
+Subject: Reduce usage of ./.
+Message-Id: <9af3e5fc0184a792-0-artemis@nixos>
+
+In a few places we're using './.', or './nix-support', or './..',
+etc. usually spliced into strings. This is annoying, since it adds the
+path to the Nix store, so any minor change to the code (e.g. a refactor)
+will cause the hash to change, and hence the dependencies to change,
+causing unnecessary rebuilding.

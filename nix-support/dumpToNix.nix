@@ -1,5 +1,5 @@
-{ bash, checkStderr, runCmd, drvFromScript, explore, haskellPackages, jq, lib,
-  runCommand, wrap, writeScript }:
+{ bash, checkStderr, runCmd, drvFromScript, explore, haskellPackages,
+  hsNameVersion, jq, lib, runCommand, wrap, writeScript }:
 with builtins;
 with lib;
 
@@ -89,11 +89,20 @@ with rec {
       "$runAstPlugin" 2> >("$checkStderr" >&2) > "$out"
     '';
   };
+
+  nameVersion = runCommand "hs-name-version.json"
+    {
+      inherit pName;
+      buildInputs = [ hsNameVersion ];
+    }
+    ''
+      hsNameVersion "$pName" > "$out"
+    '';
 };
 
 runCommand "dumpToNix"
   {
-    inherit main pName;
+    inherit main nameVersion;
     buildInputs = [ jq ];
   }
   ''
@@ -106,8 +115,10 @@ runCommand "dumpToNix"
 
     # Capture all JSON lines
     function getOut() {
-      cat stdout stderr | grep "^{" | jq -c ". + {package: \"$pName\"}" |
-                                      jq -s '.' || true
+      cat stdout stderr                                  |
+        grep "^{"                                        |
+        jq -c --slurpfile nv "$nameVersion" '. + $nv[0]' |
+        jq -s '.' || true
     }
     getOut > "$out"
   ''
