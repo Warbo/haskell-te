@@ -210,18 +210,6 @@ augmentedHs = writeScript "augmented-hs.nix" ''
       hsPkgs
 '';
 
-# Write 'content' to a file, splicing in any shell variables. Add that file to
-# the Nix store and put the resulting path in the shell variable 'var'. Like a
-# build-time alternative to writeScript.
-fileInStore = var: content: ''
-  cat << EOF > filed
-  ${content}
-  EOF
-  chmod +x filed
-  ${var}=$(nix-store --add filed)
-  rm -f filed
-'';
-
 qsGenInput = mkGenInput genSig2;
 
 mkGenInput = after: wrap {
@@ -327,8 +315,6 @@ mkPkgInner = wrap {
 
 innerNixPath =
   "nixpkgs=${toString <nixpkgs>}:support=${toString ../nix-support}";
-
-script = wrapScript "quickspecBench" rawScript;
 
 setUpDir = ''
   [[ -n "$DIR" ]] || {
