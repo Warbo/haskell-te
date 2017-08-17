@@ -4,4 +4,5 @@ with {
 };
 pkgs.stripOverrides {
   inherit (pkgs) tests testSuite package;
+  benchmarkEnv = import ./benchmarks {};
 }
