@@ -1,0 +1,15 @@
+From: Chris Warburton
+Date: Thu, 17 Aug 2017 19:40:56 +0100
+State: new
+Subject: Speed up getDepsScript.nix
+Message-Id: <e0eb468d529cd0c2-0-artemis@nixos>
+
+This can take a LONG time, and it seems to spend that time sitting idle,
+or spending a chunk of CPU on a bash process.
+
+This looks like a prime opportunity to optimise by porting to
+Haskell. Since it calls the GetDeps binary, we might as well move it
+into a new binary in the same project, e.g. GetAllDeps or something.
+
+It's basically just JSON manipulation, so aeson (and maybe lenses?)
+would do the job.
