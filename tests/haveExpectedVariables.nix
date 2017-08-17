@@ -29,17 +29,17 @@ with rec {
 
   # The 'runhaskell' command used to execute the sig generator, run inside the
   # appropriate Nix environment (for GHC, dependencies, generated package, etc.)
-  runhaskell = nix-config.wrap {
+  runhaskell = wrap {
     name   = "haveExpectedVariables-runhaskell";
-    vars   = {
+    vars   = nixEnv // {
       inherit env;
       NIX_EVAL_HASKELL_PKGS = quickspecBench.customHs;
       NIX_PATH              = quickspecBench.innerNixPath;
-      NIX_REMOTE            = "daemon";
     };
     paths  = [ jq nix ];
     script = ''
       #!/usr/bin/env bash
+      set -e
        RUNNER=$(jq -r '.runner'  < "$env")
          EXPR=$(jq -r '.env'     < "$env")
       OUT_DIR=$(jq -r '.out_dir' < "$env")

@@ -1,0 +1,30 @@
+From: Chris Warburton
+Date: Thu, 17 Aug 2017 20:04:33 +0100
+Subject: Re: See if our benchmark setup could be built by Nix
+Message-Id: <a48cf44569ff379d-90f38293a514930a-artemis@nixos>
+References: <a48cf44569ff379d-0-artemis@nixos>
+In-Reply-To: <a48cf44569ff379d-0-artemis@nixos>
+
+I've just realised a much more obvious improvement: we provide an
+environment via shell.nix for running the benchmarks; this provides asv
+and the asv-nix plugin. Why not *also* make it provide all of the
+required commands, env vars, etc.?
+
+We currently have three "levels" of Nix builder to run our benchmarks:
+
+ 1 nix-shell builds an environment, which we only use for providing asv
+   and asv-nix.
+ 2 benchmarks/default.nix builds an environment, which provides the
+   python binary used for invoking the benchmark functions, but isn't
+   specific to any particular git commit.
+ 3 asv-nix provides each particular git commit to the
+   benchmarks/default.nix builder, so it can put commit-specific things
+   into the environment. It currently ignores that though.
+
+We don't use 3, but it's nice to keep the option open. We currently do
+all of the complicated stuff in 2, which gets called *inside* 1, and
+hence may run into problems with NIX_PATH and friends.
+
+We should move as much as possible out of 2 and into 1. This way, we
+aren't building complicated stuff *inside* a Nix environment, so we can
+check it all with release.nix, tests.nix and friends.

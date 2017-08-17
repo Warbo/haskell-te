@@ -12,8 +12,9 @@ with rec {
                rev    = "35a8a28";
                sha256 = "1zzy30zsvcwvn7j47pla3arxwjbcimcp8rdsqkf6lzjvfxdb1s0b";
              };
-  path     = if any (x: x.prefix == "te-benchmarks") nixPath
-                then <te-benchmarks>
+  path     = with tryEval <te-benchmarks>;
+             if success
+                then value
                 else fallback;
   tebench  = callPackage path {
     inherit asv-nix haskellPackages nix-config-src;
