@@ -1,12 +1,8 @@
-{ annotated, bash, buckets, explore, format, glibcLocales, jq,
+{ annotated, bash, buckets, explore, fail, format, glibcLocales, jq,
   mlspecBench, nix-config, quickspecBench, reduce-equations, runCommand,
-  stdenv, timeout, tipBenchmarks, writeScript }:
+  stdenv, timeout, tipBenchmarks, wrap, writeScript }:
 
 with builtins;
-with {
-  inherit (nix-config) wrap;
-  inherit (quickspecBench) fail;
-};
 rec {
 
   benchVars = {
@@ -22,13 +18,15 @@ rec {
                    ]))
 
                    reduce-equations
-                   buckets.hashes ];
+                   buckets.hashes
+                   fail ];
         vars   = {
           NIX_EVAL_EXTRA_IMPORTS = ''[("tip-benchmark-sig", "A")]'';
         };
         script = ''
           #!/usr/bin/env bash
-          [[ -n "$TEMPDIR" ]] || ${fail "No TEMPDIR given"}
+          set -e
+          [[ -n "$TEMPDIR" ]] || fail "No TEMPDIR given"
 
           [[ -n "$MAX_KB"  ]] || {
             echo "Setting default memory limit of 2GB" 1>&2
@@ -41,7 +39,7 @@ rec {
 
       genInput = wrap {
         name  = "hashspec-sampled-gen-input";
-        paths = [ jq tipBenchmarks.tools ];
+        paths = [ fail jq tipBenchmarks.tools ];
         vars  = {
           OUT_DIR   = tipBenchmarks.tip-benchmark-haskell;
 
@@ -59,9 +57,10 @@ rec {
         };
         script = ''
           #!/usr/bin/env bash
+          set -e
 
-          [[ -n "$ANNOTATED" ]] || ${fail "No ANNOTATED given"}
-          [[ -n "$OUT_DIR"   ]] || ${fail "No OUT_DIR given"}
+          [[ -n "$ANNOTATED" ]] || fail "No ANNOTATED given"
+          [[ -n "$OUT_DIR"   ]] || fail "No OUT_DIR given"
 
           # Give sampled names a module and package, then slurp into an array
           KEEPERS=$(jq -R '{"name"    : .,
