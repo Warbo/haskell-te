@@ -20,9 +20,8 @@ let
 
 # If we have a <real> path, use that as the source of fetchFromGitHub. Otherwise
 # use <nixpkgs>
-path    = if any (p: p.prefix == "real") nixPath
-                 then <real>
-                 else <nixpkgs>;
+path    = with tryEval <real>;
+          if success then value else <nixpkgs>;
 
 fetch   = rev: sha256: import ((import path {}).fetchFromGitHub {
             inherit rev sha256;

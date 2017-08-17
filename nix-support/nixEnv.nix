@@ -8,7 +8,7 @@ with rec {
   # Override <nixpkgs>, with <real> as a fallback. Use toString so the path
   # appears as-is, rather than being added to the Nix store.
   pathParts = [ "nixpkgs=${toString ./.}"
-                   "real=${pathReal}"
+                   "real=${toString pathReal}"
                 (getEnv "NIX_PATH") ];
 
   # If we don't have <real> yet, use <nixpkgs>

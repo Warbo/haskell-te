@@ -194,6 +194,7 @@ with rec {
     };
     script = ''
       #!/usr/bin/env bash
+      set -e
 
       # Turns output from dump-package or dump-hackage into a form suitable for
       # clustering

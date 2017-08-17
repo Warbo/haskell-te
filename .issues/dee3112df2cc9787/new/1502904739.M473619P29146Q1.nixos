@@ -1,0 +1,24 @@
+From: Chris Warburton
+Date: Wed, 16 Aug 2017 18:24:43 +0100
+Subject: Re: Remove the complicated nix-support/*specBench stuff
+Message-Id: <dee3112df2cc9787-a76a0a21f5ddb14d-artemis@nixos>
+References: <dee3112df2cc9787-0-artemis@nixos>
+In-Reply-To: <dee3112df2cc9787-0-artemis@nixos>
+
+Removed most of the cruft associated with quickspecBench. We should now
+rename it to quickspec.nix and re-organise it to simplify the remaining
+functionality.
+
+In particular, we should have:
+
+ - tipToHsPkg - a converter around full_haskell_package; should use
+   inNixedDir to cache the result to Nix, and should generate a
+   default.nix file in there too
+ - hsPkgToAsts - takes a Haskell package dir and outputs annotated ASTs.
+   Should generate a default.nix if there isn't already one, and should
+   tincify to ensure we satisfy all dependencies. This should output to
+   stdout, so that we can use pipeToNix at our own discretion.
+ - quickspecAsts should accept a haskell package dir as argument and
+   ASTs on stdin, explore the package and spit out an array of equations
+ - quickspec should take a haskell package dir as argument, explore the
+   package and spit out an array of equations

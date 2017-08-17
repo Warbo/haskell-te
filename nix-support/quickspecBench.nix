@@ -28,7 +28,7 @@ qsGenerateSig =
   wrap {
     name   = "quickspec-generate-sig";
     paths  = [ jq ];
-    vars   = { inherit runGenCmd; };
+    vars   = { inherit runGetCmd; };
     script = ''
       #!/usr/bin/env bash
       jq 'map(select(.quickspecable))' | "$runGetCmd"
