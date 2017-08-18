@@ -1,5 +1,6 @@
 defs: with defs; with builtins; with lib;
-
+{}
+/*FIXME: Don't use sampling
 with rec {
   dep = "global746970323031352f62696e5f646973747269622e736d7432706c7573";
 
@@ -25,9 +26,10 @@ with rec {
   commEqsJson = runCommand "comm-deps-eq-count"
     {
       inherit commEqs;
-      buildInputs = [ jq ];
+      buildInputs = [ jq package ];
     }
     ''
+      quickspec
       F=$(jq -r '.stdout' < "$commEqs")
       grep '^{' < "$F" | jq -s '.' > "$out"
     '';
@@ -129,3 +131,4 @@ with rec {
       echo "pass" > "$out"
     '';
 }
+*/

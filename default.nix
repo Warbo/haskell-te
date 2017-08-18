@@ -14,5 +14,4 @@ with {
 
   # Our stable API
   inherit (allDefs) buckets package testSuite tipBenchmarks;
-  inherit (allDefs.sampling) analyseData resultsFor;
 }

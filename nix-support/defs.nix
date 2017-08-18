@@ -76,44 +76,41 @@ let pkgs = rec {
           runTestInDrv testAll testDbg testDrvString testFiles testMsg
           testPackages testRec testRun testWrap;
 
-  annotate           = callPackage ./annotate.nix           {};
-  asv-nix            = callPackage ./asv-nix.nix            {};
-  buckets            = callPackage ./buckets.nix            {};
-  cacheContent       = callPackage ./cacheContent.nix       {};
-  cluster            = callPackage ./cluster.nix            {};
-  dumpPackage        = callPackage ./dumpPackage.nix        {};
-  dumpToNix          = callPackage ./dumpToNix.nix          {};
-  explore            = callPackage ./explore.nix            {};
-  format             = callPackage ./format.nix             {};
-  hashspecBench      = callPackage ./hashspecBench.nix      {};
-  hsNameVersion      = callPackage ./hsNameVersion.nix      {};
-  importDir          = callPackage ./importDir.nix          {};
-  mlspecBench        = callPackage ./mlspecBench.nix        {};
-  package            = callPackage ./package.nix            {};
-  parseJSON          = callPackage ./parseJSON.nix          {};
-  pkgName            = callPackage ./pkgName.nix            {};
-  quickspecBench     = callPackage ./quickspecBench.nix     {};
-  runScript          = callPackage ./runScript.nix          {};
-  runTypes           = callPackage ./runTypes.nix           {};
-  runTypesScript     = callPackage ./runTypesScript.nix     {};
-  sampling           = callPackage ./sampling.nix           {};
-  sta                = callPackage ./sta.nix                {};
-  tipBenchmarks      = callPackage ./tipBenchmarks.nix      {
+  annotate           = callPackage ./annotate.nix       {};
+  asv-nix            = callPackage ./asv-nix.nix        {};
+  benchmarkEnv       = callPackage ./benchmarkEnv.nix   {};
+  buckets            = callPackage ./buckets.nix        {};
+  cacheContent       = callPackage ./cacheContent.nix   {};
+  cluster            = callPackage ./cluster.nix        {};
+  dumpPackage        = callPackage ./dumpPackage.nix    {};
+  dumpToNix          = callPackage ./dumpToNix.nix      {};
+  explore            = callPackage ./explore.nix        {};
+  format             = callPackage ./format.nix         {};
+  hashspecBench      = callPackage ./hashspecBench.nix  {};
+  hsNameVersion      = callPackage ./hsNameVersion.nix  {};
+  importDir          = callPackage ./importDir.nix      {};
+  mlspecBench        = callPackage ./mlspecBench.nix    {};
+  package            = callPackage ./package.nix        {};
+  parseJSON          = callPackage ./parseJSON.nix      {};
+  pkgName            = callPackage ./pkgName.nix        {};
+  quickspecBench     = callPackage ./quickspecBench.nix {};
+  runScript          = callPackage ./runScript.nix      {};
+  runTypes           = callPackage ./runTypes.nix       {};
+  runTypesScript     = callPackage ./runTypesScript.nix {};
+  sta                = callPackage ./sta.nix            {};
+
+  buildPackage  = callPackage ./buildPackage.nix
+                    { inherit (haskellPackages) cabal2nix cabal-install; };
+  downloadToNix = callPackage ./downloadToNix.nix
+                    { inherit (haskellPackages) cabal-install;           };
+  getDepsScript = callPackage ./getDepsScript.nix
+                    { inherit (haskellPackages) GetDeps;                 };
+  tests         = callPackage ./tests.nix
+                    { pkgs = nixpkgs // pkgs;                            };
+
+  tipBenchmarks = callPackage ./tipBenchmarks.nix  {
     pkgs = nixpkgs-2016-09;
   };
-
-  buildPackage    = callPackage ./buildPackage.nix
-                      { inherit (haskellPackages) cabal2nix cabal-install; };
-  downloadToNix   = callPackage ./downloadToNix.nix
-                      { inherit (haskellPackages) cabal-install;           };
-  getDepsScript   = callPackage ./getDepsScript.nix
-                      { inherit (haskellPackages) GetDeps;                 };
-  tests           = callPackage ./tests.nix
-                      { pkgs = nixpkgs // pkgs;                            };
-
-  testSuite       = runCommand "haskell-te-tests"
-                      { deps = collect isDerivation tests; }
-                      ''echo "true" > "$out"'';
 
   annotated = pkgDir: annotate  rec {
     pkg    = { name = "dummy"; };
@@ -231,6 +228,10 @@ let pkgs = rec {
               in if unsuf == s
                     then s
                     else strip unsuf;
+
+  testSuite = runCommand "haskell-te-tests"
+                { deps = collect isDerivation tests; }
+                ''echo "true" > "$out"'';
 };
 
 in nixpkgs // pkgs
