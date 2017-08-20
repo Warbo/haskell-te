@@ -18,8 +18,6 @@ with lib;
                                              "All 'formatted' list entries are attrs")
                               pkg.formatted;
 
-  exploredAttrs  = testMsg (isAttrs pkg.rawExplored.results) "explored is set";
-
   exploredInts   = mapAttrs (n: v: testMsg (isInt (fromJSON n))
                                            "explored key ${n} is numeric")
                             pkg.rawExplored.results;

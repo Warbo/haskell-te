@@ -40,6 +40,9 @@ wrap {
       vars   = { inherit repl; };
       script = ''
         #!/usr/bin/env bash
+        set -e
+        set -o pipefail
+
         ALL_MODS=$(echo -e "$MODS\nData.Serialize\nData.Digest.Murmur32")
          IMPORTS=$(echo "$ALL_MODS" |
                    while read -r MOD

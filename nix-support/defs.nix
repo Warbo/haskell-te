@@ -63,7 +63,7 @@ let pkgs = rec {
 
   # Useful for setting dependencies, variables, etc. of scripts
   inherit (nix-config)
-    fail inNixedDir stripOverrides timeout wrap;
+    fail inNixedDir nixListToBashArray stripOverrides timeout unpack wrap;
 
   # These provide executables
   inherit (haskellPackages)
