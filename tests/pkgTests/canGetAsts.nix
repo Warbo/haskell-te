@@ -1,8 +1,11 @@
 defs: with defs; pkg:
 with builtins;
 
-let count = fromJSON (parseJSON (runScript {} ''
-      "${jq}/bin/jq" -r 'length' < "${pkg.annotated}" > "$out"
-    ''));
- in testMsg (count > 0)
-            "Found '${toString count}' annotated ASTs for '${pkg.name}'"
+runCommand "canGetAsts-${pkg.pkg.name}"
+  {
+    inherit (pkg) asts;
+    buildInputs = [ jq ];
+  }
+  ''
+    jq 'length' < "$asts" | tee "$out" | jq -e '. > 0'
+  ''
