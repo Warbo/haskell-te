@@ -17,9 +17,9 @@ let result = script: input: drvFromScript {
                         "";
 
     runCat = result (runCmd { cmd = "cat"; })
-                     "hello world";
+                    "hello world";
 
-    checkCat = found: testFieldFile found "stdout" "hello world";
+    checkCat = found: testFieldFile found "hello world";
 
     testField = found: field: expect:
       testRun "Checking field ${field}" { inherit field expect; }
@@ -33,10 +33,10 @@ let result = script: input: drvFromScript {
                 [[ "x$GOT" = "x$expect" ]] || exit 1
               '';
 
-    testFieldFile = found: field: expect:
-      testRun "Checking field file ${field}" null
-              { inherit expect field found; } ''
-                F=$(jq -r ".$field" < "$found")
+    testFieldFile = found: expect:
+      testRun "Checking script output" null
+              { inherit expect found; } ''
+                F=$(cat < "$found")
                 echo "F: $F" 1>&2
 
                 GOT=$(cat "$F")
@@ -46,10 +46,7 @@ let result = script: input: drvFromScript {
               '';
 
     check = found: {
-      cmd    = testField     found "cmd"    "echo";
-      args   = testField     found "args"   ''["hello","world"]'';
-      stderr = testFieldFile found "stderr" "";
-      stdout = testFieldFile found "stdout" "hello world";
+      stdout = testFieldFile found "hello world";
     };
 
     checkInput = args:
