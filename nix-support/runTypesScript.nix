@@ -1,30 +1,32 @@
-{ bash, haskellPackages, jq, lib, withNix, wrap, writeScript }:
+{ bash, haskellPackages, jq, lib, nixEnv, withNix, wrap, writeScript }:
 
 { pkgSrc }:
 
 with builtins;
 with lib;
 with {
-
-# Run GHCi with all relevant packages available. We need "--pure" to avoid
-# multiple GHCs appearing in $PATH, since we may end up calling one with the
-# wrong package database.
-repl = wrap {
-  name   = "repl";
-  paths  = (withNix {}).buildInputs;
-  vars   = removeAttrs (withNix {}) [ "buildInputs" ] // {
-    inherit pkgSrc;
-    cmd    = "ghci -v0 -XTemplateHaskell";
-    hs     = "haskellPackages.ghcWithPackages";
-    hsPkgs = "x.QuickCheck x.quickspec x.cereal x.murmur-hash";
+  # Run GHCi with all relevant packages available. We need "--pure" to avoid
+  # multiple GHCs appearing in $PATH, since we may end up calling one with the
+  # wrong package database.
+  repl = wrap {
+    name  = "repl";
+    paths = (withNix {}).buildInputs;
+    vars  = nixEnv // {
+      inherit pkgSrc;
+      cmd = "ghci -v0 -XTemplateHaskell";
+      pkg = with {
+        hs     = "with builtins; haskellPackages.ghcWithPackages";
+        hsPkgs = "x.QuickCheck x.quickspec x.cereal x.murmur-hash";
+      };
+      ''
+        ${hs} (x: [ ${hsPkgs} (x.callPackage (getEnv "pkgSrc") {}) ])
+      '';
+    };
+    script = ''
+      #!/usr/bin/env bash
+      exec nix-shell --show-trace --pure -p "$pkg" --run "$cmd"
+    '';
   };
-  script = ''
-    #!/usr/bin/env bash
-    nix-shell --show-trace --run "$cmd" --pure \
-              -p "$hs (x: [ $hsPkgs (x.callPackage $pkgSrc {}) ])"
-  '';
-};
-
 };
 
 # Runs GHCi to get type information
