@@ -19,52 +19,40 @@ rec {
 
 nixedHsPkg = dir:
 
-  assert typeOf dir == "path" || isString dir ||
-         abort "nixedHsPkg: dir should be string, given '${typeOf dir}'";
+  assert typeOf dir == "path" || isString dir || isDerivation dir ||
+         abort "nixedHsPkg: dir should be str|path|drv, given '${typeOf dir}'";
 
-  let hsVer   = haskellPackages.ghc.version;
+  runCommand "nixedHsPkg"
+    {
+      inherit dir;
+      name         = "nixFromCabal";
+      buildInputs  = [ haskellPackages.cabal2nix ];
+      }
+      ''
+        source $stdenv/setup
 
-      # Find the .cabal file and read properties from it
-      cabalF  = head (filter (x: hasSuffix ".cabal" x) (attrNames (readDir dir)));
-      cabalC  = map (replaceStrings [" " "\t"] ["" ""])
-                    (splitString "\n" (readFile (dir + "/${cabalF}")));
+        echo "Source is '$dir'" 1>&2
+        cp -r "$dir" ./source-"$name"
+        pushd ./source-* > /dev/null
 
-      getField = f: replaceStrings [f (toLower f)] ["" ""]
-                                   (head (filter (l: hasPrefix          f  l ||
-                                                     hasPrefix (toLower f) l)
-                                                 cabalC));
+        echo "Setting permissions" 1>&2
+        chmod +w . -R # We need this if dir has come from the store
 
-      pkgName = unsafeDiscardStringContext (getField "Name:");
-      pkgV    = unsafeDiscardStringContext (getField "Version:");
-   in runCommand "nixedHsPkg" {
-        inherit dir;
-        name         = "nixFromCabal-${hsVer}-${pkgName}-${pkgV}";
-        buildInputs  = [ haskellPackages.cabal2nix ];
-      } ''
-          source $stdenv/setup
+        echo "Cleaning up unnecessary files" 1>&2
+        rm -rf ".git" || true
 
-          echo "Source is '$dir'" 1>&2
-          cp -vr "$dir" ./source-"$name"
-          pushd ./source-* > /dev/null
+        echo "Creating 'default.nix'" 1>&2
+        touch default.nix
+        chmod +w default.nix
 
-          echo "Setting permissions" 1>&2
-          chmod +w . -R # We need this if dir has come from the store
+        echo "Generating package definition" 1>&2
+        cabal2nix ./. > default.nix
+        echo "Finished generating" 1>&2
+        popd > /dev/null
 
-          echo "Cleaning up unnecessary files" 1>&2
-          rm -rf ".git" || true
-
-          echo "Creating 'default.nix'" 1>&2
-          touch default.nix
-          chmod +w default.nix
-
-          echo "Generating package definition" 1>&2
-          cabal2nix ./. > default.nix
-          echo "Finished generating" 1>&2
-          popd > /dev/null
-
-          echo "Adding to store" 1>&2
-          cp -r ./source-* "$out"
-        '';
+        echo "Adding to store" 1>&2
+        cp -r ./source-* "$out"
+      '';
 
 nixFromCabal = dir: f:
 let result = import (toString (nixedHsPkg dir));
