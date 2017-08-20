@@ -195,6 +195,7 @@ with rec {
     script = ''
       #!/usr/bin/env bash
       set -e
+      set -o pipefail
 
       # Turns output from dump-package or dump-hackage into a form suitable for
       # clustering

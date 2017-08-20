@@ -63,7 +63,7 @@ let pkgs = rec {
 
   # Useful for setting dependencies, variables, etc. of scripts
   inherit (nix-config)
-    inNixedDir stripOverrides timeout wrap;
+    fail inNixedDir stripOverrides timeout wrap;
 
   # These provide executables
   inherit (haskellPackages)
@@ -158,16 +158,6 @@ let pkgs = rec {
                                   }
                                 '')
                             vars);
-
-  fail = nix-config.attrsToDirs {
-    bin = {
-      fail = writeScript "error-logger" ''
-        #!/usr/bin/env bash
-        echo -e "$*" 1>&2
-        exit 1
-      '';
-    };
-  };
 
   haskellPackageNames = writeScript
                           "haskell-names"

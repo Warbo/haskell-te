@@ -1,5 +1,5 @@
-{ bash, coreutils, explore, jq, lib, sanitise, strip, time, wrap,
-  writeScript }:
+{ bash, coreutils, explore, jq, lib, nixListToBashArray, sanitise, strip, time,
+  wrap, writeScript }:
 
 with builtins; with lib;
 
@@ -113,21 +113,34 @@ rec {
   # Run commands with extra info for debugging and reproducability:
   #  - Store the given command, arguments, stdin, stdout and stderr
   #  - Force an error if stderr matches some known error pattern
-  #  - Benchmark the command
   runCmd = { cmd, args ? [], inputs ? []}:
-    with { argStr = concatStringsSep " " (map escapeShellArg args); };
+    # Stores the args in variables ARGS1, ARGS2, etc. and provides a code
+    # snippet which collects them up into a bash array ARGS. This is better than
+    # splicing into the build script, since it avoids unnecessary forcing and
+    # eval-time building.
+    with nixListToBashArray {
+      inherit args;
+      name = "ARGS";
+    };
     wrap {
-      name   = "run-cmd-${sanitise (unsafeDiscardStringContext (baseNameOf cmd))}";
+      name   = "run-cmd-${sanitise (unsafeDiscardStringContext
+                                     (baseNameOf cmd))}";
       paths  = [ bash ];
-      vars   = {
+      vars   = env // {
         inherit cmd checkStderr;
       };
       script = ''
          #!/usr/bin/env bash
          set -e
 
-         # Run the given command; tee stderr so the user sees it in real time.
-         "$cmd" ${argStr} > "$out" 2> >("$checkStderr")
+         # Sets up the ARGS array
+         ${code}
+
+         # Unset ARGS1, ARGS2, etc. to avoid polluting the environment of $cmd
+         ${concatStringsSep "\n" (map (n: "unset " + n) (attrNames env))}
+
+         # Run with the given arguments and check stderr for error messages
+         "$cmd" "''${ARGS[@]}" > "$out" 2> >("$checkStderr")
        '';
     };
 }
