@@ -1,0 +1,8 @@
+From: Chris Warburton
+Date: Mon, 21 Aug 2017 17:58:05 +0100
+Subject: Re: Tease out independent components again.
+Message-Id: <bdc1e1f920a1ecfa-f3c00af80ce79864-artemis@nixos>
+References: <bdc1e1f920a1ecfa-0-artemis@nixos>
+In-Reply-To: <bdc1e1f920a1ecfa-0-artemis@nixos>
+
+Made a TIP to haskell package script: tipToHaskellPkg
