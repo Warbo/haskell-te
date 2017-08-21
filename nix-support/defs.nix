@@ -63,7 +63,8 @@ let pkgs = rec {
 
   # Useful for setting dependencies, variables, etc. of scripts
   inherit (nix-config)
-    fail inNixedDir nixListToBashArray stripOverrides timeout unpack wrap;
+    attrsToDirs fail inNixedDir nixListToBashArray stripOverrides timeout unpack
+    withDeps wrap;
 
   # These provide executables
   inherit (haskellPackages)
@@ -98,6 +99,7 @@ let pkgs = rec {
   runTypes           = callPackage ./runTypes.nix       {};
   runTypesScript     = callPackage ./runTypesScript.nix {};
   sta                = callPackage ./sta.nix            {};
+  tipToHaskellPkg    = callPackage ./tipToHaskellPkg.nix  {};
 
   buildPackage  = callPackage ./buildPackage.nix
                     { inherit (haskellPackages) cabal2nix cabal-install; };
