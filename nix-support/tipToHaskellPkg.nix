@@ -1,7 +1,8 @@
-{ bash, attrsToDirs, fail, inNixedDir, runCommand, tipBenchmarks, withDeps,
-  wrap }:
+{ bash, attrsToDirs, fail, inNixedDir, lib, runCommand, tipBenchmarks, testData,
+  withDeps, wrap }:
 
 with builtins;
+with lib;
 with rec {
   tipToHaskellPkg = attrsToDirs {
     bin = {
@@ -26,9 +27,8 @@ with rec {
     };
   };
 
-  checks = map
-    (f: runCommand "test-tipToHaskellPkg-${unsafeDiscardStringContext
-                                             (baseNameOf f)}"
+  checks = mapAttrs
+    (n: f: runCommand "test-tipToHaskellPkg-${n}"
       {
         inherit f;
         buildInputs = [ fail tipToHaskellPkg ];
@@ -68,12 +68,7 @@ with rec {
 
         echo pass > "$out"
       '')
-    [
-      ../benchmarks/list-full.smt2
-      ../benchmarks/nat-full.smt2
-      ../benchmarks/nat-simple.smt2
-      tipBenchmarks.tip-benchmark-smtlib
-    ];
+    testData.tip;
 };
 
-withDeps checks tipToHaskellPkg
+withDeps (attrValues checks) tipToHaskellPkg

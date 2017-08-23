@@ -244,36 +244,6 @@ mkGenInput = after: wrap {
   '';
 };
 
-genSig2 = wrap {
-  name   = "gen-sig2";
-  paths  = [ pipeToNix ];
-  vars   = nixEnv // {
-    NIX_EVAL_HASKELL_PKGS = customHs;
-    NIX_PATH              = innerNixPath;
-    runGetCmd             = wrap {
-      name   = "run-get-cmd";
-      paths  = [
-        nix
-        (haskellPackages.ghcWithPackages (h: [ h.mlspec h.nix-eval ]))
-      ];
-      vars   = nixEnv // { inherit getCmd; };
-      script = ''
-        #!/usr/bin/env bash
-        exec runhaskell "$getCmd"
-      '';
-    };
-  };
-  script = ''
-    #!/usr/bin/env bash
-    set -e
-
-    CHOSEN=$(jq 'map(select(.quickspecable))' | pipeToNix quickspec-asts.json)
-
-    "$runGetCmd" < "$CHOSEN" |
-      jq --arg chosen "$CHOSEN" '. + { "chosen": $chosen }'
-  '';
-};
-
 wrapScript = name: script: wrap {
   inherit name script;
   paths = [ env ];

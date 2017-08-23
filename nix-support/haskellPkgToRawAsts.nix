@@ -1,5 +1,5 @@
-{ attrsToDirs, dumpToNixScripts, fail, inNixedDir, jq, makeHaskellPkgNixable,
-  runCommand, tipToHaskellPkg, withDeps, wrap }:
+{ attrsToDirs, dumpToNixScripts, fail, haskellPkgNameVersion, inNixedDir, jq,
+  makeHaskellPkgNixable, runCommand, tipToHaskellPkg, withDeps, wrap }:
 
 with builtins;
 with rec {
@@ -19,7 +19,7 @@ with rec {
     bin = {
       haskellPkgToRawAsts = wrap {
         name   = "haskellPkgToRawAsts";
-        paths  = [ fail inNixedDir ];
+        paths  = [ fail haskellPkgNameVersion inNixedDir jq ];
         vars   = { inherit impureGetAsts; };
         script = ''
           #!/usr/bin/env bash
@@ -29,21 +29,11 @@ with rec {
           [[ -d "$1" ]] || fail "haskellPkgToRawAsts arg '$1' should be dir"
 
           # Get name and version from .cabal file
-            pName=""
-          version=""
-          for CBL in "$1"/*.cabal
-          do
-              pName=$(grep -i '^\s*name\s*:'    < "$CBL" | cut -d ':' -f 2 |
-                                                           sed -e 's/\s//g')
-            version=$(grep -i '^\s*version\s*:' < "$CBL" | cut -d ':' -f 2 |
-                                                           sed -e 's/\s//g')
-          done
+          nameVersion=$(haskellPkgNameVersion "$1")
+          export nameVersion
 
-          [[ -n "$pName"   ]] || fail "Couldn't get project name from '$1'"
-          [[ -n "$version" ]] || fail "Couldn't get project version from '$1'"
-
+          pName=$(echo "$nameVersion" | jq -r '.package')
           export pName
-          export nameVersion="{\"package\":\"$pName\",\"version\":\"$version\"}"
 
           DIR=$(readlink -f "$1")
           export DIR

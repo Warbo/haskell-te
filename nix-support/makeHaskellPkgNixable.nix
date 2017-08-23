@@ -1,7 +1,9 @@
 { attrsToDirs, bash, bzip2, cabal2nix, fail, gnutar, gzip, inNixedDir,
-  nix-config, pipeToNix, runCommand, withDeps, withNix, wrap, xz }:
+  lib, nix-config, pipeToNix, runCommand, testData, withDeps, withNix, wrap,
+  xz }:
 
 with builtins;
+with lib;
 with rec {
   hasCabalFile = wrap {
     name   = "hasCabalFile";
@@ -91,27 +93,30 @@ with rec {
     };
   };
 
-  testMakeHaskellPkgNixable = runCommand "testMakeHaskellPkgNixable"
-    (withNix {
-      inherit (nix-config) stableHackageDb;
-      buildInputs = [ fail makeHaskellPkgNixable ];
-      example     = ../tests/testPackage;
-      expr        = ''builtins.typeOf (import (builtins.getEnv "F"))'';
-    })
-    ''
-      export HOME="$PWD"
-      ln -s "$stableHackageDb/.cabal" "$HOME/.cabal"
+  testMakeHaskellPkgNixable = mapAttrs
+    (n: p: runCommand "testMakeHaskellPkgNixable-${n}"
+      (withNix {
+        inherit n p;
+        inherit (nix-config) stableHackageDb;
+        buildInputs = [ fail makeHaskellPkgNixable ];
+        expr        = ''builtins.typeOf (import (builtins.getEnv "F"))'';
+      })
+      ''
+        export HOME="$PWD"
+        ln -s "$stableHackageDb/.cabal" "$HOME/.cabal"
 
-      X=$(makeHaskellPkgNixable "$example") || fail "Example failed"
-      [[ -n "$X" ]] || fail "No output for example"
-      [[ -d "$X" ]] || fail "Didn't make nixified dir for example: '$X'"
+        X=$(makeHaskellPkgNixable "$p") || fail "Package $n failed"
+        [[ -n "$X" ]] || fail "No output for package $n"
+        [[ -d "$X" ]] || fail "Didn't make nixified dir for $n: '$X'"
 
-      T=$(F="$X" nix-instantiate --show-trace --eval -E "$expr") ||
-        fail "Example output didn't parse"
-      [[ "x$T" = 'x"lambda"' ]] || fail "Example type was '$T'"
+        T=$(F="$X" nix-instantiate --show-trace --eval -E "$expr") ||
+          fail "Output for $n didn't parse"
+        [[ "x$T" = 'x"lambda"' ]] || fail "Expr type of $n was '$T'"
 
-      echo pass > "$out"
-    '';
+        echo pass > "$out"
+      '')
+    testData.haskellPkgs;
 };
 
-withDeps [ testHasCabalFile testMakeHaskellPkgNixable ] makeHaskellPkgNixable
+withDeps ([ testHasCabalFile ] ++ (attrValues testMakeHaskellPkgNixable))
+         makeHaskellPkgNixable

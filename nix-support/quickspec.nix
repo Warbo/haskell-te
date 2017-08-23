@@ -1,52 +1,25 @@
-{ attrsToDirs, bash, checkStderr, fail, glibcLocales, jq, nix, nixEnv,
-  pipeToNix, quickspecBench, runCommand, withDeps, wrap }:
+{ attrsToDirs, bash, fail, haskellPkgToAsts, jq, makeHaskellPkgNixable,
+  quickspecAsts, runCommand, tipToHaskellPkg, withDeps, wrap }:
 
-with { inherit (quickspecBench) customHs genSig2 getInput mkPkgInner setUpDir; };
 with rec {
   quickspec = attrsToDirs {
     bin = {
       quickspec = wrap {
         name  = "quickspec";
-        paths = [ bash jq nix pipeToNix ];
-        vars  = nixEnv // {
-          inherit checkStderr genSig2 mkPkgInner;
-          LANG                  = "en_US.UTF-8";
-          LOCALE_ARCHIVE        = "${glibcLocales}/lib/locale/locale-archive";
-          NIX_EVAL_HASKELL_PKGS = customHs;
-        };
+        paths = [
+          bash haskellPkgToAsts jq makeHaskellPkgNixable quickspecAsts
+        ];
+        vars   = {};
         script = ''
           #!/usr/bin/env bash
           set -e
+          set -o pipefail
 
-          ${setUpDir}
-          ${getInput}
+          [[ -n "$1" ]] || fail "quickspec needs a dir as argument"
+          [[ -d "$1" ]] || fail "quickspec arg '$1' isn't a directory"
 
-          OUTPUT=$("$genSig2" < "$ANNOTATED")
-
-          HASKELL_PROGRAM_CODE=$(echo "$OUTPUT" | jq -r '.code'  )
-                        NIXENV=$(echo "$OUTPUT" | jq -r '.env'   )
-                           CMD=$(echo "$OUTPUT" | jq -r '.runner')
-
-          function run() {
-            if [[ -n "$NIXENV" ]]
-            then
-              nix-shell -p "$NIXENV" --run "$CMD"
-            else
-              $CMD "$HASKELL_PROGRAM_CODE"
-            fi
-          }
-
-          function keepJson() {
-            # Strip out cruft that QuickSpec puts on stdout. Since this is just a
-            # filter, we don't actually care if grep finds anything or not; hence
-            # we use '|| true' to avoid signalling an error, and hide this
-            # complexity inside a function.
-            grep -v '^Depth' || true
-          }
-
-          echo "$HASKELL_PROGRAM_CODE" | run 2> >("$checkStderr") |
-                                         keepJson                 |
-                                         jq -s '.'
+          DIR=$(makeHaskellPkgNixable "$1") || fail "Couldn't nixify '$1'"
+          haskellPkgToAsts "$DIR" | quickspecAsts "$DIR"
         '';
       };
     };
@@ -55,7 +28,7 @@ with rec {
   test = name: code: runCommand "quickspec-${name}-test"
     {
       given       = name;
-      buildInputs = [ fail jq pipeToNix quickspec ];
+      buildInputs = [ fail jq quickspec tipToHaskellPkg ];
     }
     ''
       #!/usr/bin/env bash
@@ -75,16 +48,15 @@ with rec {
       fi
     '')
 
-    (test "can-run-quickspecbench" ''
-      BENCH_OUT=$(quickspec < "${../tests/example.smt2}" | pipeToNix) ||
+    (test "can-run-quickspec" ''
+      PKG=$(tipToHaskellPkg < "${../tests/example.smt2}")
+      BENCH_OUT=$(quickspec "$PKG") ||
         fail "Failed to run.\n$BENCH_OUT"
 
-      echo "Cached to $BENCH_OUT" 1>&2
-
-      RESULTS=$(jq 'length' < "$BENCH_OUT") ||
+      RESULTS=$(echo "$BENCH_OUT" | jq 'length') ||
         fail "Couldn't get equation array"
 
-      [[ "$RESULTS" -gt 0 ]] || fail "Found no equations"
+      [[ "$RESULTS" -gt 0 ]] || fail "Found no equations $BENCH_OUT"
     '')
   ];
 };

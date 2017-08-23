@@ -1,3 +1,5 @@
+# Looks up info from the environment, returns a package with everything
+# necessary to generate a QuickSpec 'runner'
 with builtins;
 with rec {
   pkgs    = import <nixpkgs> {};
@@ -9,6 +11,6 @@ with rec {
   hsPkgs  = hs.override { overrides = support.hsOverride; };
 };
 hsPkgs.ghcWithPackages (h: [
-  h.AstPlugin h.mlspec h.mlspec-helper h.QuickCheck h.quickspec
+  h.AstPlugin h.mlspec h.mlspec-helper h.nix-eval h.QuickCheck h.quickspec
   (h.callPackage pkg {})
 ])
