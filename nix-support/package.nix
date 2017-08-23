@@ -1,14 +1,15 @@
-{ buckets, buildEnv, hashspecBench, mlspecBench, quickspecBench,
-  stdenv, tipBenchmarks }:
+{ buckets, buildEnv, hashspecBench, mlspecBench, quickspec, stdenv,
+  tipBenchmarks }:
 
-let env = buildEnv {
-      name  = "te-env";
-      paths = [ tipBenchmarks.tools ];
-    };
- in buildEnv {
-      name  = "haskell-te";
-      paths = [
-        quickspecBench.qs mlspecBench.mls hashspecBench.hs
-        buckets.hashes
-      ];
-    }
+with {
+  env = buildEnv {
+    name  = "te-env";
+    paths = [ tipBenchmarks.tools ];
+  };
+};
+buildEnv {
+  name  = "haskell-te";
+  paths = [
+    quickspec mlspecBench.mls hashspecBench.hs buckets.hashes
+  ];
+}

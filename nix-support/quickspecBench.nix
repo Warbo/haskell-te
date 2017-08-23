@@ -314,6 +314,7 @@ mkPkgInner = wrap {
 innerNixPath =
   "nixpkgs=${toString <nixpkgs>}:support=${toString ../nix-support}";
 
+# Only used by hashspec and mlspec
 setUpDir = ''
   [[ -n "$DIR" ]] || {
     echo "No DIR given to work in, using current directory $PWD" 1>&2
@@ -342,99 +343,8 @@ getInput = ''
   export ANNOTATED
 '';
 
-env = buildEnv {
+env = trace "FIXME: remove qs.env" buildEnv {
   name  = "te-env";
   paths = [ jq nix tipBenchmarks.tools ];
 };
-
-qs = nix-config.withDeps checks qsRaw;
-
-qsRaw = nix-config.attrsToDirs {
-  bin = {
-    quickspec = wrap {
-      name  = "quickspec-bench";
-      paths = [ bash jq nix pipeToNix ];
-      vars  = nixEnv // {
-        inherit checkStderr genSig2 mkPkgInner;
-        LANG                  = "en_US.UTF-8";
-        LOCALE_ARCHIVE        = "${glibcLocales}/lib/locale/locale-archive";
-        NIX_EVAL_HASKELL_PKGS = customHs;
-        NIX_PATH              = innerNixPath;
-      };
-      script = ''
-        #!/usr/bin/env bash
-        set -e
-
-        ${setUpDir}
-        ${getInput}
-
-        OUTPUT=$("$genSig2" < "$ANNOTATED")
-
-        HASKELL_PROGRAM_CODE=$(echo "$OUTPUT" | jq -r '.code'  )
-                      NIXENV=$(echo "$OUTPUT" | jq -r '.env'   )
-                         CMD=$(echo "$OUTPUT" | jq -r '.runner')
-
-        function run() {
-          if [[ -n "$NIXENV" ]]
-          then
-            nix-shell -p "$NIXENV" --run "$CMD"
-          else
-            $CMD "$HASKELL_PROGRAM_CODE"
-          fi
-        }
-
-        function keepJson() {
-          # Strip out cruft that QuickSpec puts on stdout. Since this is just a
-          # filter, we don't actually care if grep finds anything or not; hence
-          # we use '|| true' to avoid signalling an error, and hide this
-          # complexity inside a function.
-          grep -v '^Depth' || true
-        }
-
-        echo "$HASKELL_PROGRAM_CODE" | run 2> >("$checkStderr") |
-                                       keepJson                 |
-                                       jq -s '.'
-      '';
-    };
-  };
-};
-
-checks =
-  with {
-    test = name: code: runCommand "quickspec-${name}-test"
-      {
-        given       = name;
-        buildInputs = [ fail jq pipeToNix qsRaw ];
-      }
-      ''
-        #!/usr/bin/env bash
-        set -e
-        {
-          ${code}
-        } || exit 1
-        echo "pass" > "$out"
-      '';
-  };
-  [
-    (test "check-garbage" ''
-      if echo '!"£$%^&*()' | quickspec 1> /dev/null 2> garbage.err
-      then
-        cat garbage.err 1>&2
-        fail "Shouldn't have accepted garbage"
-      fi
-    '')
-
-    (test "can-run-quickspecbench" ''
-      BENCH_OUT=$(DIR="$PWD" quickspec < "${../tests/example.smt2}" |
-                  pipeToNix) ||
-        fail "Failed to run.\n$BENCH_OUT"
-
-      echo "Cached to $BENCH_OUT" 1>&2
-
-      RESULTS=$(jq 'length' < "$BENCH_OUT") ||
-        fail "Couldn't get equation array"
-
-      [[ "$RESULTS" -gt 0 ]] || fail "Found no equations"
-    '')
-  ];
 }
