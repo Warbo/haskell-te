@@ -1,6 +1,7 @@
 { bash, attrsToDirs, fail, inNixedDir, runCommand, tipBenchmarks, withDeps,
   wrap }:
 
+with builtins;
 with rec {
   tipToHaskellPkg = attrsToDirs {
     bin = {
@@ -19,14 +20,15 @@ with rec {
         };
         script = ''
           #!/usr/bin/env bash
-          inNixedDir "$genPkgHere"
+          inNixedDir "$genPkgHere" "haskellPkgGeneratedFromTip"
         '';
       };
     };
   };
 
   checks = map
-    (f: runCommand "test-tipToHaskellPkg-${baseNameOf f}"
+    (f: runCommand "test-tipToHaskellPkg-${unsafeDiscardStringContext
+                                             (baseNameOf f)}"
       {
         inherit f;
         buildInputs = [ fail tipToHaskellPkg ];
@@ -70,6 +72,7 @@ with rec {
       ../benchmarks/list-full.smt2
       ../benchmarks/nat-full.smt2
       ../benchmarks/nat-simple.smt2
+      tipBenchmarks.tip-benchmark-smtlib
     ];
 };
 
