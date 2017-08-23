@@ -1,12 +1,9 @@
-{ bash, checkStderr, explore, getDepsScript, haskellPackages, jq, runCommand,
-  runTypesScript, utillinux, wrap }:
+{ bash, checkStderr, explore, fail, getDepsScript, haskellPackages, jq,
+  runCommand, runTypesScript, utillinux, wrap }:
 
 with builtins;
 
-{ asts, pkg, pkgSrc ? null }:
-
 with rec {
-
   getAritiesScript = wrap {
     name   = "getArities";
     paths  = [ bash jq ];
@@ -181,17 +178,10 @@ with rec {
     '';
   };
 
-  annotateDb = wrap {
+  annotateDbScript = wrap {
     name   = "annotateDb";
     paths  = [ bash ];
-    vars   = {
-      inherit annotateAstsScript getDepsScript;
-      typesScript = runTypesScript {
-        pkgSrc = if pkg ? srcNixed
-                    then pkg.srcNixed
-                    else pkgSrc;
-      };
-    };
+    vars   = { inherit annotateAstsScript getDepsScript; };
     script = ''
       #!/usr/bin/env bash
       set -e
@@ -204,22 +194,58 @@ with rec {
     '';
   };
 
-  env = if haskellPackages ? pkg.name
-           then { extraHs    = [ pkg.name ];
-                  standalone = null; }
-           else { extraHs    = [];
-                  standalone = if pkg ? srcNixed
-                                  then pkg.srcNixed
-                                  else pkgSrc; };
+  helpers = { pkg, pkgSrc }: {
+    annotateDb = wrap {
+      vars = {
+        typesScript = runTypesScript {
+          pkgSrc = if pkg ? srcNixed
+                      then pkg.srcNixed
+                      else pkgSrc;
+        };
+      };
+      file = annotateDbScript;
+    };
+
+    env = if haskellPackages ? pkg.name
+             then { extraHs    = [ pkg.name ];
+                    standalone = null; }
+             else { extraHs    = [];
+                    standalone = if pkg ? srcNixed
+                                    then pkg.srcNixed
+                                    else pkgSrc; };
+  };
 };
 
-runCommand "annotate"
-   {
-     buildInputs = explore.extractedEnv (env // { f = asts; });
-     inherit asts annotateDb checkStderr;
-   }
-   ''
-     set -e
+rec {
+  annotateScript = wrap {
+    name   = "annotate";
+    paths  = [ bash fail ];
+    vars   = {
+      inherit checkStderr;
+      annotateDb = annotateDbScript;
+    };
+    script = ''
+      #!/usr/bin/env bash
+      [[ -n "$typesScript" ]] || fail "No typesScript set"
+      "$annotateDb" 2> >("$checkStderr")
+    '';
+  };
 
-     "$annotateDb" < "$asts" 2> >("$checkStderr") > "$out"
-   ''
+  annotate = { asts, pkg, pkgSrc ? null }:
+    with helpers { inherit pkg pkgSrc; };
+    runCommand "annotate"
+      {
+        buildInputs = explore.extractedEnv (env // { f = asts; });
+        inherit asts annotateScript;
+        typesScript = runTypesScript {
+          pkgSrc = if pkg ? srcNixed
+                      then pkg.srcNixed
+                      else pkgSrc;
+        };
+      }
+      ''
+        set -e
+
+        "$annotateScript" < "$asts" > "$out"
+      '';
+}

@@ -1,49 +1,100 @@
-{ bash, checkStderr, runCmd, drvFromScript, explore, haskellPackages,
-  hsNameVersion, jq, lib, runCommand, wrap, writeScript }:
+{ bash, checkStderr, explore, fail, haskellPackages, hsNameVersion, jq, lib,
+  python, runCommand, withDeps, wrap, writeScript }:
 with builtins;
 with lib;
 
-# Extract ASTs from a Cabal package
-{ pkgDir }:
-
 with rec {
-  # Look for a .cabal file and extract the "name:" field
-  pName = (haskellPackages.callPackage pkgDir {}).name;
-
-  # Runs AstPlugin. Requires OPTIONS to point GHC at a pkg-db containing all of
+  # Runs AstPlugin. Requires GHC_PKG to point at a pkg-db containing all of
   # the required dependencies, plus AstPlugin
-  runAstPlugin = writeScript "runAstPlugin" ''
-    #!/usr/bin/env bash
-    set -e
-
-    OPTIONS="-package-db=$GHC_PKG -package AstPlugin -fplugin=AstPlugin.Plugin"
-
-    # NOTE: GHC plugins write to stderr
-    cabal --ghc-options="$OPTIONS" build 1> stdout 2> stderr
-  '';
-
-  mkDeps = hsPkgs:
-    with {
-      pkgDeps = if hsPkgs ? "${pName}"
-                   then [ hsPkgs."${pName}" ]
-                   else [ (hsPkgs.callPackage pkgDir {}) ];
-    };
-    [ hsPkgs.AstPlugin hsPkgs.mlspec hsPkgs.mlspec-helper hsPkgs.QuickCheck
-       hsPkgs.quickspec ] ++ pkgDeps;
-
-  main = wrap {
-    name  = "dumpToNix-script";
-    paths = [
-      bash
-      haskellPackages.cabal-install
-      (haskellPackages.ghcWithPackages mkDeps)
-    ];
-    vars   = { inherit checkStderr pkgDir pName runAstPlugin; };
+  runAstPluginRaw = wrap {
+    name   = "runAstPlugin";
+    paths  = [ bash ];
     script = ''
       #!/usr/bin/env bash
       set -e
 
-      cp -r "$pkgDir" ./pkgDir
+      OPTS="-package-db=$GHC_PKG -package AstPlugin -fplugin=AstPlugin.Plugin"
+
+      # NOTE: GHC plugin writes JSON to stderr
+      cabal --ghc-options="$OPTS" build
+    '';
+  };
+
+  # Extract the JSON from runAstPlugin's stderr
+  getJson = wrap {
+    name   = "getJson";
+    paths  = [ python ];
+    script = ''
+      #!/usr/bin/env python
+      from os         import getenv
+      from subprocess import PIPE, Popen
+      from sys        import stdout, stderr
+
+      # Run the given command, capturing stdout and stderr
+      p = Popen([getenv('CMD')], stdout=PIPE, stderr=PIPE)
+      sout, serr = p.communicate()
+
+      # We want any lines beginning with '{' to go to stdout, all else to stderr
+      isJson  = lambda l: l.startswith('{')
+      notJson = lambda l: not isJson(l)
+
+      stderr.write(sout + '\n')
+      stderr.write('\n'.join(filter(notJson, serr.split('\n'))))
+      stdout.write('\n'.join(filter(isJson,  serr.split('\n'))))
+    '';
+  };
+
+  testGetJson = runCommand "testGetJson"
+    {
+      inherit getJson;
+      buildInputs = [ fail ];
+      script1     = writeScript "script1" ''
+        #!/usr/bin/env bash
+        set -e
+        echo   stdout1
+        echo   stderr1   1>&2
+        echo '{stdout2}'
+        echo '{stderr2}' 1>&2
+        echo   stdout3
+        echo   stderr3   1>&2
+      '';
+    }
+    ''
+      set -e
+      set -o pipefail
+
+      X=$(CMD="$script1" "$getJson") || fail "Couldn't run getJson"
+      [[ "x$X" = 'x{stderr2}' ]]     || fail "Got unexpected output '$X'"
+
+      echo pass > "$out"
+    '';
+
+  runAstPlugin = withDeps [ testGetJson ] (wrap {
+    name  = "runAstPlugin";
+    paths = [ jq ];
+    vars  = {
+      inherit getJson;
+      CMD = runAstPluginRaw;
+    };
+    script = ''
+      #!/usr/bin/env bash
+      set -e
+      set -o pipefail
+
+      "$getJson" | jq -c --argjson nv "$nameVersion" '. + $nv' |
+                   jq -s '.'
+    '';
+  });
+
+  main = wrap {
+    name   = "dumpToNix-script";
+    paths  = [ bash haskellPackages.cabal-install ];
+    vars   = { inherit checkStderr runAstPlugin; };
+    script = ''
+      #!/usr/bin/env bash
+      set -e
+
+      cp -r "$1" ./pkgDir
       chmod +w -R ./pkgDir
 
       export HOME="$PWD"
@@ -86,39 +137,43 @@ with rec {
       export GHC_PKG
 
       cabal configure --package-db="$GHC_PKG" 1>&2
-      "$runAstPlugin" 2> >("$checkStderr") > "$out"
+      "$runAstPlugin" 2> >("$checkStderr")
     '';
   };
-
-  nameVersion = runCommand "hs-name-version.json"
-    {
-      inherit pName;
-      buildInputs = [ hsNameVersion ];
-    }
-    ''
-      hsNameVersion "$pName" > "$out"
-    '';
 };
 
-runCommand "dumpToNix"
-  {
-    inherit main nameVersion;
-    buildInputs = [ jq ];
-  }
-  ''
-    "$main"
+{
+  inherit main;
 
-    cd pkgDir
+  dumpToNix = { pkgDir }:
+    with rec {
+      mkDeps = hsPkgs:
+        with {
+          pkgDeps = if hsPkgs ? "${pName}"
+                       then [ hsPkgs."${pName}" ]
+                       else [ (hsPkgs.callPackage pkgDir {}) ];
+        };
+        [ hsPkgs.AstPlugin hsPkgs.mlspec hsPkgs.mlspec-helper hsPkgs.QuickCheck
+          hsPkgs.quickspec ] ++ pkgDeps;
 
-    # Send non-JSON to stderr, since it's probably progress/error info
-    cat stdout stderr | grep -v "^{" 1>&2 || true
+      nameVersion = runCommand "hs-name-version.json"
+        {
+          inherit pName;
+          buildInputs = [ hsNameVersion ];
+        }
+        ''
+          hsNameVersion "$pName" > "$out"
+        '';
 
-    # Capture all JSON lines
-    function getOut() {
-      cat stdout stderr                                  |
-        grep "^{"                                        |
-        jq -c --slurpfile nv "$nameVersion" '. + $nv[0]' |
-        jq -s '.' || true
-    }
-    getOut > "$out"
-  ''
+      # Look for a .cabal file and extract the "name:" field
+      pName = (haskellPackages.callPackage pkgDir {}).name;
+    };
+    runCommand "dumpToNix"
+      {
+        inherit main nameVersion pkgDir pName;
+        buildInputs = [ (haskellPackages.ghcWithPackages mkDeps) ];
+      }
+      ''
+        "$main" "$pkgDir" > "$out"
+      '';
+}

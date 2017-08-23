@@ -77,29 +77,31 @@ let pkgs = rec {
           runTestInDrv testAll testDbg testDrvString testFiles testMsg
           testPackages testRec testRun testWrap;
 
-  annotate           = callPackage ./annotate.nix       {};
-  asv-nix            = callPackage ./asv-nix.nix        {};
-  benchmarkEnv       = callPackage ./benchmarkEnv.nix   {};
-  buckets            = callPackage ./buckets.nix        {};
-  cacheContent       = callPackage ./cacheContent.nix   {};
-  cluster            = callPackage ./cluster.nix        {};
-  dumpPackage        = callPackage ./dumpPackage.nix    {};
-  dumpToNix          = callPackage ./dumpToNix.nix      {};
-  explore            = callPackage ./explore.nix        {};
-  format             = callPackage ./format.nix         {};
-  hashspecBench      = callPackage ./hashspecBench.nix  {};
-  hsNameVersion      = callPackage ./hsNameVersion.nix  {};
-  importDir          = callPackage ./importDir.nix      {};
-  mlspecBench        = callPackage ./mlspecBench.nix    {};
-  package            = callPackage ./package.nix        {};
-  parseJSON          = callPackage ./parseJSON.nix      {};
-  pkgName            = callPackage ./pkgName.nix        {};
-  quickspecBench     = callPackage ./quickspecBench.nix {};
-  runScript          = callPackage ./runScript.nix      {};
-  runTypes           = callPackage ./runTypes.nix       {};
-  runTypesScript     = callPackage ./runTypesScript.nix {};
-  sta                = callPackage ./sta.nix            {};
-  tipToHaskellPkg    = callPackage ./tipToHaskellPkg.nix  {};
+  annotateRawAstsFrom   = callPackage ./annotateRawAstsFrom.nix   {};
+  asv-nix               = callPackage ./asv-nix.nix               {};
+  benchmarkEnv          = callPackage ./benchmarkEnv.nix          {};
+  buckets               = callPackage ./buckets.nix               {};
+  cacheContent          = callPackage ./cacheContent.nix          {};
+  cluster               = callPackage ./cluster.nix               {};
+  dumpPackage           = callPackage ./dumpPackage.nix           {};
+  explore               = callPackage ./explore.nix               {};
+  format                = callPackage ./format.nix                {};
+  hashspecBench         = callPackage ./hashspecBench.nix         {};
+  haskellPkgToAsts      = callPackage ./haskellPkgToAsts.nix      {};
+  haskellPkgToRawAsts   = callPackage ./haskellPkgToRawAsts.nix   {};
+  hsNameVersion         = callPackage ./hsNameVersion.nix         {};
+  importDir             = callPackage ./importDir.nix             {};
+  makeHaskellPkgNixable = callPackage ./makeHaskellPkgNixable.nix {};
+  mlspecBench           = callPackage ./mlspecBench.nix           {};
+  package               = callPackage ./package.nix               {};
+  parseJSON             = callPackage ./parseJSON.nix             {};
+  pkgName               = callPackage ./pkgName.nix               {};
+  quickspec             = callPackage ./quickspec.nix             {};
+  quickspecBench        = callPackage ./quickspecBench.nix        {};
+  runScript             = callPackage ./runScript.nix             {};
+  runTypes              = callPackage ./runTypes.nix              {};
+  sta                   = callPackage ./sta.nix                   {};
+  tipToHaskellPkg       = callPackage ./tipToHaskellPkg.nix       {};
 
   buildPackage  = callPackage ./buildPackage.nix
                     { inherit (haskellPackages) cabal2nix cabal-install; };
@@ -114,11 +116,15 @@ let pkgs = rec {
     pkgs = nixpkgs-2016-09;
   };
 
-  annotated = pkgDir: annotate  rec {
+  annotate = annotateScripts.annotate;
+
+  annotated = pkgDir: annotate rec {
     pkg    = { name = "dummy"; };
     asts   = dumpToNix { pkgDir = pkgSrc; };
     pkgSrc = nixedHsPkg pkgDir;
   };
+
+  annotateScripts = callPackage ./annotate.nix {};
 
   callPackage = nixpkgs.newScope pkgs;
 
@@ -152,6 +158,9 @@ let pkgs = rec {
 
   defaultClusters = [ 1 2 4 ];
 
+  dumpToNixScripts = callPackage ./dumpToNix.nix {};
+  dumpToNix        = dumpToNixScripts.dumpToNix;
+
   ensureVars = vars: concatStringsSep "\n"
                        (map (v: ''
                                   [[ -n "${"$" + v}" ]] || {
@@ -179,6 +188,9 @@ let pkgs = rec {
       };
     };
   };
+
+  runTypesScriptData = callPackage ./runTypesScript.nix {};
+  runTypesScript     = runTypesScriptData.script;
 
   runWeka = callPackage ./runWeka.nix { inherit havePath; };
 
