@@ -2,18 +2,14 @@ defs: with defs;
 with builtins;
 with lib;
 
-# Run tests ./pkgTests, deferring their evaluation to avoid slowdowns
+# Run tests ./pkgTests
 
 let
 
 tests = importDir ./pkgTests;
 
 # Apply the given test to all testPackages
-testOnPkgs = testName: _:
-  mapAttrs (pkgName: _:
-             runTestInDrv
-               "tests/pkgTests/${testName}.nix"
-               [ ''((import ./nix-support {}).testPackages."${pkgName}")'' ])
-           testPackages;
+testOnPkgs = _: test:
+  mapAttrs (_: pkg: test defs pkg) testPackages;
 
 in mapAttrs testOnPkgs tests
