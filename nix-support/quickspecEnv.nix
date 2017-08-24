@@ -2,7 +2,6 @@
 # to use during exploration
 with builtins;
 with rec {
-  pkgs    = import <nixpkgs> {};
   support = import ./. {};
   hs      = if getEnv "HASKELL_PACKAGES" == ""
                then support.haskellPackages
