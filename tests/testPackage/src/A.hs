@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE TypeOperators #-}
@@ -7,16 +8,20 @@ module A where
 import qualified Text.Show.Functions
 import qualified Data.Typeable as T
 import qualified Prelude as P
+import qualified GHC.Generics
+import qualified Data.Serialize
 import qualified Test.Feat as F
 import qualified Test.QuickCheck as QC
 data List locala = Nil | Cons locala (List locala)
-  deriving (P.Eq, P.Ord, P.Show, T.Typeable)
+  deriving (GHC.Generics.Generic, P.Eq, P.Ord, P.Show, T.Typeable)
 F.deriveEnumerable (''List)
+instance (Data.Serialize.Serialize a) => Data.Serialize.Serialize (List a)
 instance (F.Enumerable locala) => QC.Arbitrary (List locala) where
   arbitrary = QC.sized F.uniform
 data Nat = Z | Prodprop14smt2S Nat
-  deriving (P.Eq, P.Ord, P.Show, T.Typeable)
+  deriving (GHC.Generics.Generic, P.Eq, P.Ord, P.Show, T.Typeable)
 F.deriveEnumerable (''Nat)
+instance Data.Serialize.Serialize Nat
 instance QC.Arbitrary Nat where arbitrary = QC.sized F.uniform
 le :: Nat -> Nat -> P.Bool
 le Z localy = P.True
