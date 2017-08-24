@@ -105,14 +105,17 @@ with rec {
         pkg         = getAttr n testData.haskellPkgs;
         MAX_SECS    = "180";
         MAX_KB      = "1000000";
+        FAIL_MSG    = ''
+          quickspecAsts failed, but this theory is known to be problematic (e.g.
+          running out of time or memory). Storing stderr in our output to aid in
+          debugging if it turns out to be a different problem.
+        '';
       }
       ''
         BENCH_OUT=$(quickspecAsts "$pkg" < "$asts" 2> >(tee stderr 1>&2)) || {
           if "$allowFail"
           then
-            echo "quickspecAsts failed, but this theory is known to be"     1>&2
-            echo "problematic (e.g. running out of time or memory)."        1>&2
-            echo "Storing stderr in our output in case it's something else" 1>&2
+            echo "$FAIL_MSG" 1>&2
             mkdir -p "$out"
             cp stderr "$out"/
             exit 0
