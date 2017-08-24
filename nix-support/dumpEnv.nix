@@ -7,7 +7,7 @@ with rec {
   hs      = if getEnv "HASKELL_PACKAGES" == ""
                then support.haskellPackages
                else import (getEnv "HASKELL_PACKAGES");
-  pkg     = getEnv "DIR";
+  pkg     = getEnv "OUT_DIR";
   hsPkgs  = hs.override { overrides = support.hsOverride; };
 };
 hsPkgs.ghcWithPackages (h: [

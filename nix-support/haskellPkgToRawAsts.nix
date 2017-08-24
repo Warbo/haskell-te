@@ -11,7 +11,10 @@ with rec {
     };
     script = ''
       #!/usr/bin/env bash
-      nix-shell -p "import $EXPR" --run "'$main' '$DIR'" > ./rawAsts.json
+      set -e
+
+      nix-shell --show-trace -p "import $EXPR" \
+                --run "'$main' '$OUT_DIR'" > ./rawAsts.json
     '';
   };
 
@@ -35,8 +38,8 @@ with rec {
           pName=$(echo "$nameVersion" | jq -r '.package')
           export pName
 
-          DIR=$(readlink -f "$1")
-          export DIR
+          OUT_DIR=$(makeHaskellPkgNixable "$1")
+          export OUT_DIR
 
           D=$(inNixedDir "$impureGetAsts" "getRawAstsFrom")
           [[ -f "$D/rawAsts.json" ]] || fail "Couldn't find raw ASTs"
