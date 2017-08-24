@@ -1,6 +1,7 @@
-{ attrsToDirs, bash, fail, haskellPkgToAsts, jq, makeHaskellPkgNixable,
-  quickspecAsts, runCommand, tipToHaskellPkg, withDeps, wrap }:
+{ attrsToDirs, bash, fail, haskellPkgToAsts, jq, lib, makeHaskellPkgNixable,
+  quickspecAsts, runCommand, testData, tipToHaskellPkg, withDeps, wrap }:
 
+with lib;
 with rec {
   quickspec = attrsToDirs {
     bin = {
@@ -39,26 +40,58 @@ with rec {
       echo "pass" > "$out"
     '';
 
-  checks = [
-    (test "check-garbage" ''
+  testGarbage = runCommand "check-garbage"
+    {
+      buildInputs = [ fail quickspec ];
+    }
+    ''
       if echo '!"£$%^&*()' | quickspec 1> /dev/null 2> garbage.err
       then
         cat garbage.err 1>&2
         fail "Shouldn't have accepted garbage"
       fi
-    '')
+      echo "pass" > "$out"
+    '';
 
-    (test "can-run-quickspec" ''
-      PKG=$(tipToHaskellPkg < "${../tests/example.smt2}")
-      BENCH_OUT=$(quickspec "$PKG") ||
-        fail "Failed to run.\n$BENCH_OUT"
+  checks = [ testGarbage ] ++ attrValues testHsPkgs;
 
-      RESULTS=$(echo "$BENCH_OUT" | jq 'length') ||
-        fail "Couldn't get equation array"
+  testHsPkgs = mapAttrs
+    (n: pkg: runCommand "test-quickspec-${n}"
+      {
+        inherit pkg;
+        allowFail   = if elem n [ "nat-full" "teBenchmark" ]
+                         then "true"
+                         else "false";
+        buildInputs = [ fail jq quickspec ];
+        MAX_SECS    = "300";
+        MAX_KB      = "1000000";
+        FAIL_MSG    = ''
+          quickspec failed, but this theory is known to be problematic (e.g.
+          running out of time or memory). Storing stderr in our output to aid in
+          debugging if it turns out to be a different problem.
+        '';
+      }
+      ''
+        BENCH_OUT=$(quickspec "$pkg" 2> >(tee stderr 1>&2)) || {
+          if "$allowFail"
+          then
+            echo "$FAIL_MSG" 1>&2
+            mkdir -p "$out"
+            cp stderr "$out"/
+            exit 0
+          else
+            fail "Failed to run.\n$BENCH_OUT"
+          fi
+        }
 
-      [[ "$RESULTS" -gt 0 ]] || fail "Found no equations $BENCH_OUT"
-    '')
-  ];
+        RESULTS=$(echo "$BENCH_OUT" | jq 'length') ||
+          fail "Couldn't get equation array"
+
+        [[ "$RESULTS" -gt 0 ]] || fail "Found no equations $BENCH_OUT"
+
+        echo "pass" > "$out"
+      '')
+    testData.haskellPkgs;
 };
 
 withDeps checks quickspec
