@@ -1,11 +1,14 @@
-{ attrsToDirs, dumpToNixScripts, fail, haskellPkgNameVersion, inNixedDir, jq,
-  makeHaskellPkgNixable, runCommand, tipToHaskellPkg, withDeps, wrap }:
+{ attrsToDirs, bash, dumpToNixScripts, fail, haskellPkgNameVersion, inNixedDir,
+  jq, lib, makeHaskellPkgNixable, makeWrapper, nix, nixEnv, runCommand,
+  testData, tipToHaskellPkg, withDeps, wrap, writeScript }:
 
 with builtins;
+with lib;
 with rec {
   impureGetAsts = wrap {
-    name = "impureGetAsts";
-    vars = {
+    name  = "impureGetAsts";
+    paths = [ nix ];
+    vars  = {
       inherit (dumpToNixScripts) main;
       EXPR = toString ./dumpEnv.nix;
     };
@@ -22,14 +25,16 @@ with rec {
     bin = {
       haskellPkgToRawAsts = wrap {
         name   = "haskellPkgToRawAsts";
-        paths  = [ fail haskellPkgNameVersion inNixedDir jq ];
+        paths  = [
+          fail haskellPkgNameVersion inNixedDir jq makeHaskellPkgNixable
+        ];
         vars   = { inherit impureGetAsts; };
         script = ''
           #!/usr/bin/env bash
           set -e
 
           [[ -n "$1" ]] || fail "haskellPkgToRawAsts needs an arg"
-          [[ -d "$1" ]] || fail "haskellPkgToRawAsts arg '$1' should be dir"
+          [[ -e "$1" ]] || fail "haskellPkgToRawAsts arg '$1' doesn't exist"
 
           # Get name and version from .cabal file
           nameVersion=$(haskellPkgNameVersion "$1")
@@ -50,15 +55,15 @@ with rec {
     };
   };
 
-  testExamplePkg = runCommand "rawAstsOfExample"
-    {
+  testExamplePkg = n: pkg: runCommand "testRawAstsOf-${n}"
+    (nixEnv // {
+      inherit pkg;
       buildInputs = [ fail haskellPkgToRawAsts jq ];
-      example     = ../tests/testPackage;
-    }
+    })
     ''
       set -o pipefail
 
-      ASTS=$(haskellPkgToRawAsts "$example") || fail "Couldn't get ASTs"
+      ASTS=$(haskellPkgToRawAsts "$pkg") || fail "Couldn't get ASTs"
 
       T=$(echo "$ASTS" | jq 'type')       || fail "Couldn't get type of: $ASTS"
       [[ "x$T" = 'x"array"' ]] || fail "Got '$T' instead of array"
@@ -69,32 +74,7 @@ with rec {
       echo "pass" > "$out"
     '';
 
-  testWithTip = f: runCommand "rawAstsOfTip-${unsafeDiscardStringContext
-                                                (baseNameOf f)}"
-    {
-      inherit f;
-      buildInputs = [ fail haskellPkgToRawAsts jq makeHaskellPkgNixable
-                      tipToHaskellPkg ];
-    }
-    ''
-      set -e
-      set -o pipefail
-      DIR=$(tipToHaskellPkg       < "$f") || fail "Couldn't turn '$f' into pkg"
-      NIX=$(makeHaskellPkgNixable "$DIR") || fail "Couldn't nixify '$DIR'"
-      RAW=$(haskellPkgToRawAsts   "$NIX") || fail "Couldn't get ASTs of '$DIR'"
-
-      L=$(echo "$RAW" | jq 'length') || fail "Couldn't get length of '$RAW'"
-      [[ "$L" -gt 3 ]] || fail "Got '$L' raw ASTs, expected a few"
-
-      echo pass > "$out"
-    '';
-
-  checks = [ testExamplePkg ] ++ map testWithTip [
-    ../benchmarks/nat-full.smt2
-    ../benchmarks/nat-simple.smt2
-    ../benchmarks/list-full.smt2
-
-  ];
+  checks = attrValues (mapAttrs testExamplePkg testData.haskellPkgs);
 };
 
 withDeps checks haskellPkgToRawAsts
