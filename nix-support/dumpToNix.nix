@@ -88,11 +88,13 @@ with rec {
 
   main = wrap {
     name   = "dumpToNix-script";
-    paths  = [ bash haskellPackages.cabal-install ];
+    paths  = [ bash fail haskellPackages.cabal-install ];
     vars   = { inherit checkStderr runAstPlugin; };
     script = ''
       #!/usr/bin/env bash
       set -e
+
+      [[ -n "$pName" ]] || fail "Can't dump ASTs without pName"
 
       cp -r "$1" ./pkgDir
       chmod +w -R ./pkgDir
@@ -111,6 +113,8 @@ with rec {
       GHC_PKG=""
       if packageMissing "ghc-pkg"
       then
+        echo "Didn't find '$pName' in ghc-pkg DB, trying others" 1>&2
+
         # Not found in DB. Maybe broken nix-shell nesting, try elsewhere in PATH.
         while read -r DIR
         do
@@ -122,6 +126,8 @@ with rec {
 
           # If we're here, we've found a ghc-pkg with AstPlugin and $pName
           GHC_PKG=$("$DIR/ghc-pkg" list | head -n 1 | tr -d ':')
+
+          echo "Found ghc-pkg DB at '$GHC_PKG'" 1>&2
           break
         done < <(echo "$PATH" | tr ':' '\n' | grep ghc)
 
