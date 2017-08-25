@@ -87,6 +87,7 @@ let pkgs = rec {
   dumpPackage           = callPackage ./dumpPackage.nix           {};
   explore               = callPackage ./explore.nix               {};
   format                = callPackage ./format.nix                {};
+  genQuickspecRunner    = callPackage ./genQuickspecRunner.nix    {};
   hashspecBench         = callPackage ./hashspecBench.nix         {};
   haskellPkgNameVersion = callPackage ./haskellPkgNameVersion.nix {};
   haskellPkgToAsts      = callPackage ./haskellPkgToAsts.nix      {};

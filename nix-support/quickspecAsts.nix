@@ -1,81 +1,36 @@
-{ attrsToDirs, bash, checkStderr, fail, glibcLocales, haskellPackages,
-  haskellPkgNameVersion, jq, lib, makeHaskellPkgNixable, nix, nixEnv,
-  quickspecBench, runCommand, testData, timeout, withDeps, wrap }:
+{ attrsToDirs, bash, fail, genQuickspecRunner, glibcLocales,
+  haskellPkgNameVersion, jq, lib, makeHaskellPkgNixable, nixEnv, runCommand,
+  testData, withDeps, wrap }:
 
 with lib;
-with { inherit (quickspecBench) getCmd innerNixPath mkPkgInner; };
 with rec {
-  genSig2 = wrap {
-    name   = "gen-sig2";
-    paths  = [
-      fail nix (haskellPackages.ghcWithPackages (h: [ h.mlspec h.nix-eval ]))
-    ];
-    vars   = nixEnv // {
-      inherit getCmd;
-      NIX_EVAL_HASKELL_PKGS = toString ./quickspecEnv.nix;
-      #NIX_PATH              = innerNixPath;
-    };
-    script = ''
-      #!/usr/bin/env bash
-      set -e
-      set -o pipefail
-
-      ALL=$(cat)
-       QS=$(echo "$ALL" | jq 'map(select(.quickspecable))')
-
-      { echo "$QS" | runhaskell "$getCmd"; } || {
-        echo -e "Given:\n$ALL\n" 1>&2
-        echo -e "Chosen:\n$QS\n" 1>&2
-        fail "Couldn't generate QuickSpec code"
-      }
-    '';
-  };
-
   quickspecAsts = attrsToDirs {
     bin = {
       quickspecAsts = wrap {
         name  = "quickspecAsts";
-        paths = [ bash haskellPkgNameVersion jq makeHaskellPkgNixable nix
-                  timeout ];
-        vars  = nixEnv // {
-          inherit checkStderr genSig2 mkPkgInner;
+        paths = [ bash haskellPkgNameVersion jq makeHaskellPkgNixable ];
+        vars  = {
+          inherit genQuickspecRunner;
           LANG                  = "en_US.UTF-8";
           LOCALE_ARCHIVE        = "${glibcLocales}/lib/locale/locale-archive";
-          NIX_EVAL_HASKELL_PKGS = toString ./quickspecEnv.nix;
+          NIX_EVAL_HASKELL_PKGS = builtins.toString ./quickspecEnv.nix;
         };
         script = ''
           #!/usr/bin/env bash
           set   -e
           set   -o pipefail
-          shopt -s nullglob
 
-          DIR=$(makeHaskellPkgNixable "$1")
-          export DIR
+          OUT_DIR=$(makeHaskellPkgNixable "$1")
+          export OUT_DIR
 
-          PKG_NAME=$(haskellPkgNameVersion "$DIR" | jq -r '.package')
+          PKG_NAME=$(haskellPkgNameVersion "$OUT_DIR" | jq -r '.package')
           export PKG_NAME
 
-          OUTPUT=$("$genSig2")
+          D=$("$genQuickspecRunner")
 
-          HASKELL_PROGRAM_CODE=$(echo "$OUTPUT" | jq -r '.code'  )
-                        NIXENV=$(echo "$OUTPUT" | jq -r '.env'   )
-                           CMD=$(echo "$OUTPUT" | jq -r '.runner')
-
-          function run() {
-            withTimeout nix-shell -p "$NIXENV" --run "$CMD"
-          }
-
-          function keepJson() {
-            # Strip out cruft that QuickSpec puts on stdout. Since this is just a
-            # filter, we don't actually care if grep finds anything or not; hence
-            # we use '|| true' to avoid signalling an error, and hide this
-            # complexity inside a function.
-            grep -v '^Depth' || true
-          }
-
-          echo "$HASKELL_PROGRAM_CODE" | run 2> >("$checkStderr") |
-                                         keepJson                 |
-                                         jq -s '.'
+          [[ -e "$D/nixRunner" ]] || fail "No nixRunner found in '$D'"
+          [[ -e "$D/rawRunner" ]] || fail "No rawRunner found in '$D'"
+          "$D/nixRunner"
         '';
       };
     };
@@ -96,7 +51,7 @@ with rec {
 
   testAsts = mapAttrs
     (n: asts: runCommand "test-quickspecasts-${n}"
-      {
+      (nixEnv // {
         inherit asts;
         allowFail   = if elem n [ "nat-full" "teBenchmark" ]
                          then "true"
@@ -110,7 +65,7 @@ with rec {
           running out of time or memory). Storing stderr in our output to aid in
           debugging if it turns out to be a different problem.
         '';
-      }
+      })
       ''
         BENCH_OUT=$(quickspecAsts "$pkg" < "$asts" 2> >(tee stderr 1>&2)) || {
           if "$allowFail"
