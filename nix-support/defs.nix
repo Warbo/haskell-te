@@ -63,7 +63,7 @@ let pkgs = rec {
 
   # Useful for setting dependencies, variables, etc. of scripts
   inherit (nix-config)
-    attrsToDirs fail inNixedDir nixListToBashArray stripOverrides timeout unpack
+    attrsToDirs inNixedDir nixListToBashArray stripOverrides timeout unpack
     withDeps wrap;
 
   # These provide executables
@@ -79,6 +79,7 @@ let pkgs = rec {
 
   annotateRawAstsFrom   = callPackage ./annotateRawAstsFrom.nix   {};
   asv-nix               = callPackage ./asv-nix.nix               {};
+  backtrace             = callPackage ./backtrace.nix             {};
   benchmarkEnv          = callPackage ./benchmarkEnv.nix          {};
   buckets               = callPackage ./buckets.nix               {};
   cacheContent          = callPackage ./cacheContent.nix          {};
@@ -90,6 +91,7 @@ let pkgs = rec {
   haskellPkgNameVersion = callPackage ./haskellPkgNameVersion.nix {};
   haskellPkgToAsts      = callPackage ./haskellPkgToAsts.nix      {};
   haskellPkgToRawAsts   = callPackage ./haskellPkgToRawAsts.nix   {};
+  haveVar               = callPackage ./haveVar.nix               {};
   hsNameVersion         = callPackage ./hsNameVersion.nix         {};
   importDir             = callPackage ./importDir.nix             {};
   makeHaskellPkgNixable = callPackage ./makeHaskellPkgNixable.nix {};
@@ -172,6 +174,26 @@ let pkgs = rec {
                                   }
                                 '')
                             vars);
+
+  fail = attrsToDirs {
+    bin = {
+      fail = wrap {
+        name   = "failure-logger";
+        paths  = [ nixpkgs.bash backtrace ];
+        script = ''
+          #!/usr/bin/env bash
+          set -e
+          echo -e "$*" 1>&2
+          {
+            echo "Backtrace:"
+            backtrace
+            echo "End Backtrace"
+          } 1>&2
+          exit 1
+        '';
+      };
+    };
+  };
 
   haskellPackageNames = writeScript
                           "haskell-names"
