@@ -62,8 +62,11 @@ let pkgs = rec {
   inherit drvFromScript extractTarball haskellPackages hsOverride nixedHsPkg
           nixEnv nix-config nix-config-src nixFromCabal nixpkgs-2016-09 withNix;
 
-  # Use newer Racket for contract definitions
   inherit (nixpkgs-2016-09)
+    # Use newer makeWrapper for quoting changes
+    makeWrapper
+
+    # Use newer Racket for contract definitions
     racket;
 
   # Useful for setting dependencies, variables, etc. of scripts
