@@ -1,4 +1,4 @@
-{ fetchFromGitHub, fetchgit }:
+{ mkNixpkgs, fetchFromGitHub, fetchgit }:
 
 with builtins;
 with rec {
@@ -19,11 +19,8 @@ with rec {
   chosen = if getEnv "GIT_REPO_DIR" == ""
               then gh
               else local;
-
-  path = with tryEval <real>;
-         if success then value else <nixpkgs>;
 };
 {
   nix-config-src = chosen;
-  nix-config     = import path { config = import "${chosen}/config.nix"; };
+  nix-config     = mkNixpkgs { config = import "${chosen}/config.nix"; };
 }

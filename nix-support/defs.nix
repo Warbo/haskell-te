@@ -3,8 +3,11 @@ args:
 
 # Fetch known revisions of nixpkgs, so we're not at the mercy of system updates
 with rec {
-  inherit (import ./nixpkgs.nix args) nixpkgs-2016-03 nixpkgs-2016-09;
-  nixpkgs = nixpkgs-2016-03;
+  inherit (import ./nixpkgs.nix) mkNixpkgs-2016-03 mkNixpkgs-2016-09;
+  defaultNixpkgs  = mkNixpkgs-2016-03;
+  nixpkgs         = defaultNixpkgs args;
+  nixpkgs-2016-03 = mkNixpkgs-2016-03 args;
+  nixpkgs-2016-09 = mkNixpkgs-2016-09 args;
 };
 
 # We define things in stages, to avoid everything depending on everything else
@@ -21,7 +24,9 @@ with {
   inherit (nixpkgs.callPackage ./nixFromCabal.nix {})
     nixFromCabal nixedHsPkg;
 
-  inherit (nixpkgs.callPackage ./nix-config.nix {})
+  inherit (nixpkgs.callPackage ./nix-config.nix {
+            mkNixpkgs = mkNixpkgs-2016-09;
+          })
     nix-config nix-config-src;
 };
 

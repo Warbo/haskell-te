@@ -29,14 +29,12 @@ fetch   = rev: sha256: import ((import path {}).fetchFromGitHub {
             repo  = "nixpkgs";
           });
 
-in args: {
-  nixpkgs-2016-03 = fetch
+in {
+  mkNixpkgs-2016-03 = fetch
     "16.03"
-    "0m2b5ignccc5i5cyydhgcgbyl8bqip4dz32gw0c6761pd4kgw56v"
-    args;
+    "0m2b5ignccc5i5cyydhgcgbyl8bqip4dz32gw0c6761pd4kgw56v";
 
-  nixpkgs-2016-09 = fetch
+  mkNixpkgs-2016-09 = fetch
     "16.09"
-    "1cx5cfsp4iiwq8921c15chn1mhjgzydvhdcmrvjmqzinxyz71bzh"
-    args;
+    "1cx5cfsp4iiwq8921c15chn1mhjgzydvhdcmrvjmqzinxyz71bzh";
 }
