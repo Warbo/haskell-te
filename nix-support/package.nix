@@ -10,6 +10,8 @@ with {
 buildEnv {
   name  = "haskell-te";
   paths = [
-    quickspec mlspecBench.mls hashspecBench.hs buckets.hashes
+    quickspec
+    quickspecAsts
+    haskellPkgToAsts
   ];
 }
