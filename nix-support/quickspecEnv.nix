@@ -14,4 +14,7 @@ with rec {
     };
   };
 };
+
+assert typeOf pkg == "path" || (isString pkg && substring 0 1 pkg == "/") ||
+       abort "Value of 'OUT_DIR' is '${toJSON pkg}'";
 hsPkgs
