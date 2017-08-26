@@ -88,6 +88,7 @@ let pkgs = rec {
   annotateRawAstsFrom   = callPackage ./annotateRawAstsFrom.nix   {};
   asv-nix               = callPackage ./asv-nix.nix               {};
   backtrace             = callPackage ./backtrace.nix             {};
+  bashEscape            = callPackage ./bashEscape.nix            {};
   benchmarkEnv          = callPackage ./benchmarkEnv.nix          {};
   buckets               = callPackage ./buckets.nix               {};
   cacheContent          = callPackage ./cacheContent.nix          {};

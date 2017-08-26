@@ -15,12 +15,7 @@ qsGenerateSig =
     runGetCmd = wrap {
       name  = "quickspec-run-gen-cmd";
       file  = getCmd;
-      paths = [
-        nix
-        (haskellPackages.ghcWithPackages (h: [ h.mlspec h.nix-eval ]))
-      ];
-      vars  = nixEnv // {
-        #NIX_PATH = innerNixPath;
+      vars  = {
         NIX_EVAL_HASKELL_PKGS = customHs;
       };
     };
@@ -145,37 +140,49 @@ benchVars = {
   };
 };
 
-getCmd = writeScript "getCmd.hs" ''
-  #!/usr/bin/env runhaskell
-  {-# LANGUAGE OverloadedStrings #-}
-  import           Data.Aeson
-  import qualified Data.ByteString.Lazy.Char8 as BS
-  import           MLSpec.Theory
-  import           Language.Eval.Internal
+getCmd = wrap {
+  name   = "getCmd";
+  paths  = [
+    bash jq nix
+    (haskellPackages.ghcWithPackages (h: [ h.mlspec h.nix-eval ]))
+  ];
+  vars   = nixEnv // {
+    code = writeScript "getCmd.hs" ''
+      {-# LANGUAGE OverloadedStrings #-}
+      import           Data.Aeson
+      import qualified Data.ByteString.Lazy.Char8 as BS
+      import           MLSpec.Theory
+      import           Language.Eval.Internal
 
-  render ts x = "main = do { eqs <- quickSpecAndSimplify (" ++
-                  withoutUndef' (renderWithVariables x ts)  ++
-                  "); mapM_ print eqs; }"
+      render ts x = "main = do { eqs <- quickSpecAndSimplify (" ++
+                      withoutUndef' (renderWithVariables x ts)  ++
+                      "); mapM_ print eqs; }"
 
-  -- Reads JSON from stdin, outputs a QuickSpec signature and associated shell
-  -- and Nix commands for running it
-  main = do
-    projects <- getProjects <$> getContents
-    let t = case projects of
-                 [t] -> t
-                 _   -> error ("Got " ++ show (length projects) ++ " projects")
+      -- Reads JSON from stdin, outputs a QuickSpec signature and associated shell
+      -- and Nix commands for running it
+      main = do
+        projects <- getProjects <$> getContents
+        let t = case projects of
+                     [t] -> t
+                     _   -> error ("Got " ++ show (length projects) ++ " projects")
 
-    rendered <- renderTheory t
-    let (ts, x) = case rendered of
-                       Nothing      -> error ("Failed to render " ++ show t)
-                       Just (ts, x) -> (ts, x)
+        rendered <- renderTheory t
+        let (ts, x) = case rendered of
+                           Nothing      -> error ("Failed to render " ++ show t)
+                           Just (ts, x) -> (ts, x)
 
-    BS.putStrLn (encode (object [
-        "runner" .= unwords ("runhaskell" : flagsOf x),
-        "env"    .= pkgOf x,
-        "code"   .= buildInput (render ts) x
-      ]))
-'';
+        BS.putStrLn (encode (object [
+            "runner" .= unwords ("runhaskell" : flagsOf x),
+            "env"    .= pkgOf x,
+            "code"   .= buildInput (render ts) x
+          ]))
+    '';
+  };
+  script = ''
+    #!/usr/bin/env bash
+    jq 'map(select(.quickspecable))' | runhaskell "$code"
+  '';
+};
 
 customHs = writeScript "custom-hs.nix" ''
     # Uses OUT_DIR env var to include the package generated from smtlib data

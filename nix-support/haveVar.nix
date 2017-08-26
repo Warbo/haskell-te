@@ -1,16 +1,17 @@
-{ attrsToDirs, bash, fail, wrap }:
+{ attrsToDirs, bash, fail, gnugrep, wrap }:
 
 attrsToDirs {
   bin = {
     haveVar = wrap {
       name   = "haveVar";
-      paths  = [ bash fail ];
+      paths  = [ bash fail gnugrep ];
       script = ''
         #!/usr/bin/env bash
         set -e
 
-        [[ -n "$1"      ]] || fail "No var given to check"
-        [[ -n "''${!1}" ]] || fail "No '$1' variable set"
+        [[ "$#" -eq 1 ]] || fail "haveVar needs 1 arg, given $#"
+
+        echo "''${!1}" | grep '\S' > /dev/null || fail "No '$1' variable set"
 
         exit 0
       '';

@@ -1,5 +1,6 @@
-{ bash, checkStderr, fail, gnugrep, gnused, haskellPackages, haveVar,
-  inNixedDir, jq, makeWrapper, nix, nixEnv, quickspecBench, timeout, wrap }:
+{ bash, bashEscape, checkStderr, fail, gnugrep, gnused, haskellPackages,
+  haveVar, inNixedDir, jq, makeWrapper, nix, nixEnv, quickspecBench, timeout,
+  wrap }:
 
 with rec {
   inherit (quickspecBench) getCmd;
@@ -59,9 +60,7 @@ with rec {
       # the version we "export" for normal usage.
       haveVar NIXENV
       haveVar CMD
-      haveVar fibblefoo
 
-      echo "FIXME: NIXENV: ($NIXENV)" 1>&2
       nix-shell -p "$NIXENV" --run "$CMD"
     '';
   };
@@ -85,10 +84,9 @@ with rec {
 
   encapsulate = wrap {
     name   = "encapsulate-quickspec-runner";
-    paths  = [ bash fail gnused haveVar ];
+    paths  = [ bash bashEscape fail gnused haveVar ];
     vars   = {
       inherit makeWrapper nixTemplate rawTemplate runner;
-      escapeVar = "s/'/'\''/g";
     };
     script = ''
       #!/usr/bin/env bash
@@ -96,26 +94,20 @@ with rec {
 
       source "$makeWrapper/nix-support/setup-hook"
 
-      function escapeVar {
-        # Escape ', so we can wrap values in single quotes with confidence
-
-        # Wrap in single quotes, but also surround in double quotes to bypass
-        # the broken escaping of makeWrapper (it uses "foo", so by wrapping our
-        # values in double quotes we get ""foo"", which is foo (our
-        # single-quoted string) concatenated between two empty strings).
-        echo "\"'$(echo "$1" | sed -e "$escapeVar")'\""
-      }
-
       haveVar NIXENV
       haveVar CMD
       haveVar HASKELL_CODE
 
+            ESC_NIXENV=$(echo "$NIXENV"       | bashEscape NIXENV)
+               ESC_CMD=$(echo "$CMD"          | bashEscape CMD)
+      ESC_HASKELL_CODE=$(echo "$HASKELL_CODE" | bashEscape HASKELL_CODE)
+
       function setArgs {
-        makeWrapper "$runner" "$2"                                    \
-          --set    RUNNER       "$1"                                  \
-          --set    NIXENV       "$(echo "$NIXENV"       | escapeVar)" \
-          --set    CMD          "$(echo "$CMD"          | escapeVar)" \
-          --set    HASKELL_CODE "$(echo "$HASKELL_CODE" | escapeVar)"
+        makeWrapper "$runner" "$2"                  \
+          --set    RUNNER       "$1"                \
+          --set    NIXENV       "$ESC_NIXENV"       \
+          --set    CMD          "$ESC_CMD"          \
+          --set    HASKELL_CODE "$ESC_HASKELL_CODE"
       }
 
       setArgs "$nixTemplate" ./nixRunner
@@ -141,25 +133,29 @@ with rec {
       ALL=$(cat)
        QS=$(echo "$ALL" | jq 'map(select(.quickspecable))')
 
+      echo "$QS" | jq -e 'length | . > 0' > /dev/null ||
+        fail "Nothing quickspecable ($QS) in ($ALL)"
+
       # Get the required environment, code and Haskell command
-      GENERATED=$(echo "$QS" | runhaskell "$getCmd") || {
+      GENERATED=$(echo "$QS" | "$getCmd") || {
         echo -e "Given:\n$ALL\n" 1>&2
         echo -e "Chosen:\n$QS\n" 1>&2
         fail "Couldn't generate QuickSpec code"
       }
+      [[ -n "$GENERATED" ]] || fail "Empty GENERATED"
 
       # Encapsulate the command and code into a standalone script
       HASKELL_CODE=$(echo "$GENERATED" | jq -r '.code'  )
             NIXENV=$(echo "$GENERATED" | jq -r '.env'   )
                CMD=$(echo "$GENERATED" | jq -r '.runner')
 
-      haveVar HASKELL_CODE
-      haveVar NIXENV
-      haveVar CMD
-
       export HASKELL_CODE
       export NIXENV
       export CMD
+
+      haveVar HASKELL_CODE
+      haveVar NIXENV
+      haveVar CMD
 
       inNixedDir "$encapsulate" "quickspec-runner"
     '';
