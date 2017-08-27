@@ -187,7 +187,7 @@ with rec {
 
   # Makes sure the types we've been given are actually available in scope (ie.
   # they're not off in some hidden package)
-  typeScopes = wrap {
+  typeScopes = mkBin {
     name   = "typeScopes";
     script = ''
       echo ":m"
