@@ -1,4 +1,4 @@
-{ bash, fail, haskellPkgToAsts, jq, lib, makeHaskellPkgNixable, mkBin,
+{ bash, fail, haskellPkgToAsts, jq, lib, makeHaskellPkgNixable, mkBin, nixEnv,
   quickspecAsts, runCommand, testData, tipToHaskellPkg, withDeps }:
 
 with lib;
@@ -50,7 +50,7 @@ with rec {
 
   testHsPkgs = mapAttrs
     (n: pkg: runCommand "test-quickspec-${n}"
-      {
+      (nixEnv // {
         inherit pkg;
         allowFail   = if elem n [ "nat-full" "teBenchmark" ]
                          then "true"
@@ -63,7 +63,7 @@ with rec {
           running out of time or memory). Storing stderr in our output to aid in
           debugging if it turns out to be a different problem.
         '';
-      }
+      })
       ''
         BENCH_OUT=$(quickspec "$pkg" 2> >(tee stderr 1>&2)) || {
           if "$allowFail"
