@@ -1,11 +1,10 @@
-{ attrsToDirs, bash, bzip2, cabal2nix, fail, gnutar, gzip, inNixedDir,
-  lib, nix-config, pipeToNix, runCommand, testData, withDeps, withNix, wrap,
-  xz }:
+{ attrsToDirs, bash, cabal2nix, fail, inNixedDir, lib, mkBin, nix-config,
+  pipeToNix, runCommand, testData, withDeps, withNix }:
 
 with builtins;
 with lib;
 with rec {
-  hasCabalFile = wrap {
+  hasCabalFile = mkBin {
     name   = "hasCabalFile";
     paths  = [ bash fail ];
     script = ''
@@ -25,30 +24,29 @@ with rec {
 
   testHasCabalFile = runCommand "test-hasCabalFile"
     rec {
-      inherit hasCabalFile;
       foo     = toFile "foo" "foo";
       tooFew  = attrsToDirs { inherit foo;       bar         = foo; };
       justOne = attrsToDirs { "foo.cabal" = foo; bar         = foo; };
       tooMany = attrsToDirs { "foo.cabal" = foo; "bar.cabal" = foo; };
-      buildInputs = [ fail ];
+      buildInputs = [ fail hasCabalFile ];
     }
     ''
-      if "$hasCabalFile" "$tooFew"
+      if hasCabalFile "$tooFew"
       then
         fail "Should have been too few"
       fi
 
-      if "$hasCabalFile" "$tooMany"
+      if hasCabalFile "$tooMany"
       then
         fail "Should have been too many"
       fi
 
-      "$hasCabalFile" "$justOne" || fail "Should've worked for one .cabal file"
+      hasCabalFile "$justOne" || fail "Should've worked for one .cabal file"
 
       echo pass > "$out"
     '';
 
-  addNixFile = wrap {
+  addNixFile = mkBin {
     name   = "addNixFile";
     paths  = [ bash cabal2nix ];
     script = ''
@@ -64,33 +62,28 @@ with rec {
     '';
   };
 
-  makeHaskellPkgNixable = attrsToDirs {
-    bin = {
-      makeHaskellPkgNixable = wrap {
-        name   = "makeHaskellPkgNixable";
-        paths  = [ cabal2nix fail inNixedDir pipeToNix ];
-        vars   = { inherit addNixFile hasCabalFile; };
-        script = ''
-          #!/usr/bin/env bash
-          set -e
-          set -o pipefail
+  makeHaskellPkgNixable = mkBin {
+    name   = "makeHaskellPkgNixable";
+    paths  = [ addNixFile cabal2nix fail hasCabalFile inNixedDir pipeToNix ];
+    script = ''
+      #!/usr/bin/env bash
+      set -e
+      set -o pipefail
 
-          if [[ -d "$1" ]]
-          then
-            DIR=$(readlink -f "$1")
-            "$hasCabalFile" "$DIR" || fail "Need .cabal file, aborting"
-            if [[ -e "$DIR/default.nix" ]]
-            then
-              echo "$DIR"
-            else
-              DIR="$DIR" inNixedDir "$addNixFile" "withAddedNixFile"
-            fi
-          else
-            fail "Not a directory '$1'"
-          fi
-        '';
-      };
-    };
+      if [[ -d "$1" ]]
+      then
+        DIR=$(readlink -f "$1")
+        hasCabalFile "$DIR" || fail "Need .cabal file, aborting"
+        if [[ -e "$DIR/default.nix" ]]
+        then
+          echo "$DIR"
+        else
+          DIR="$DIR" inNixedDir addNixFile "withAddedNixFile"
+        fi
+      else
+        fail "Not a directory '$1'"
+      fi
+    '';
   };
 
   testMakeHaskellPkgNixable = mapAttrs

@@ -1,12 +1,12 @@
 { bash, bashEscape, checkStderr, fail, gnugrep, gnused, haskellPackages,
-  haveVar, inNixedDir, jq, makeWrapper, nix, nixEnv, quickspecBench, timeout,
-  wrap }:
+  haveVar, inNixedDir, jq, makeWrapper, mkBin, nix, nixEnv, quickspecBench,
+  timeout, wrap }:
 
 with rec {
   inherit (quickspecBench) getCmd;
 
-  keepJson  = wrap {
-    name   = "keep-json";
+  keepJson  = mkBin {
+    name   = "keepJson";
     paths  = [ bash gnugrep jq ];
     script = ''
       #!/usr/bin/env bash
@@ -24,9 +24,8 @@ with rec {
   };
 
   runner = wrap {
-    name   = "quickspec-runner";
-    vars   = { inherit checkStderr keepJson; };
-    paths  = [ bash haveVar timeout ];
+    name   = "quickspecRunner";
+    paths  = [ bash checkStderr haveVar keepJson timeout ];
     script = ''
       #!/usr/bin/env bash
       set -e
@@ -42,10 +41,10 @@ with rec {
 
       function run {
         # Let users choose time/memory limits by wrapping in withTimout
-        withTimeout "$RUNNER" 2> >("$checkStderr")
+        withTimeout "$RUNNER" 2> >(checkStderr)
       }
 
-      echo "$HASKELL_CODE" | run | "$keepJson"
+      echo "$HASKELL_CODE" | run | keepJson
     '';
   };
 
@@ -82,8 +81,8 @@ with rec {
     '';
   };
 
-  encapsulate = wrap {
-    name   = "encapsulate-quickspec-runner";
+  encapsulate = mkBin {
+    name   = "encapsulate";
     paths  = [ bash bashEscape fail gnused haveVar ];
     vars   = {
       inherit makeWrapper nixTemplate rawTemplate runner;
@@ -115,14 +114,14 @@ with rec {
     '';
   };
 
-  generateCode = wrap {
-    name   = "generate-quickspec-code";
+  generateCode = mkBin {
+    name   = "generateQuickspecCode";
     paths  = [
       (haskellPackages.ghcWithPackages (h: [ h.mlspec h.nix-eval ]))
-      fail haveVar inNixedDir jq nix
+      encapsulate fail haveVar inNixedDir jq nix
     ];
     vars   = nixEnv // {
-      inherit encapsulate getCmd;
+      inherit getCmd;
       NIX_EVAL_HASKELL_PKGS = builtins.toString ./quickspecEnv.nix;
     };
     script = ''
@@ -157,7 +156,7 @@ with rec {
       haveVar NIXENV
       haveVar CMD
 
-      inNixedDir "$encapsulate" "quickspec-runner"
+      inNixedDir encapsulate "quickspec-runner"
     '';
   };
 };

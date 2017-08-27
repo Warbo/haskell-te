@@ -1,39 +1,34 @@
-{ attrsToDirs, bash, fail, genQuickspecRunner, glibcLocales,
-  haskellPkgNameVersion, jq, lib, makeHaskellPkgNixable, nixEnv, runCommand,
-  testData, withDeps, wrap }:
+{ bash, fail, genQuickspecRunner, glibcLocales, haskellPkgNameVersion, jq, lib,
+  makeHaskellPkgNixable, mkBin, nixEnv, runCommand, testData, withDeps }:
 
 with lib;
 with rec {
-  quickspecAsts = attrsToDirs {
-    bin = {
-      quickspecAsts = wrap {
-        name  = "quickspecAsts";
-        paths = [ bash haskellPkgNameVersion jq makeHaskellPkgNixable ];
-        vars  = {
-          inherit genQuickspecRunner;
-          LANG                  = "en_US.UTF-8";
-          LOCALE_ARCHIVE        = "${glibcLocales}/lib/locale/locale-archive";
-          NIX_EVAL_HASKELL_PKGS = builtins.toString ./quickspecEnv.nix;
-        };
-        script = ''
-          #!/usr/bin/env bash
-          set   -e
-          set   -o pipefail
-
-          OUT_DIR=$(makeHaskellPkgNixable "$1")
-          export OUT_DIR
-
-          PKG_NAME=$(haskellPkgNameVersion "$OUT_DIR" | jq -r '.package')
-          export PKG_NAME
-
-          D=$("$genQuickspecRunner")
-
-          [[ -e "$D/nixRunner" ]] || fail "No nixRunner found in '$D'"
-          [[ -e "$D/rawRunner" ]] || fail "No rawRunner found in '$D'"
-          "$D/nixRunner"
-        '';
-      };
+  quickspecAsts = mkBin {
+    name  = "quickspecAsts";
+    paths = [ bash genQuickspecRunner haskellPkgNameVersion jq
+              makeHaskellPkgNixable ];
+    vars  = {
+      LANG                  = "en_US.UTF-8";
+      LOCALE_ARCHIVE        = "${glibcLocales}/lib/locale/locale-archive";
+      NIX_EVAL_HASKELL_PKGS = builtins.toString ./quickspecEnv.nix;
     };
+    script = ''
+      #!/usr/bin/env bash
+      set   -e
+      set   -o pipefail
+
+      OUT_DIR=$(makeHaskellPkgNixable "$1")
+      export OUT_DIR
+
+      PKG_NAME=$(haskellPkgNameVersion "$OUT_DIR" | jq -r '.package')
+      export PKG_NAME
+
+      D=$(generateQuickspecCode)
+
+      [[ -e "$D/nixRunner" ]] || fail "No nixRunner found in '$D'"
+      [[ -e "$D/rawRunner" ]] || fail "No rawRunner found in '$D'"
+      "$D/nixRunner"
+    '';
   };
 
   testGarbage = runCommand "check-garbage"

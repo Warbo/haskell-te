@@ -105,6 +105,7 @@ let pkgs = rec {
   hsNameVersion         = callPackage ./hsNameVersion.nix         {};
   importDir             = callPackage ./importDir.nix             {};
   makeHaskellPkgNixable = callPackage ./makeHaskellPkgNixable.nix {};
+  mkBin                 = callPackage ./mkBin.nix                 {};
   mlspecBench           = callPackage ./mlspecBench.nix           {};
   package               = callPackage ./package.nix               {};
   parseJSON             = callPackage ./parseJSON.nix             {};
@@ -185,43 +186,35 @@ let pkgs = rec {
                                 '')
                             vars);
 
-  fail = attrsToDirs {
-    bin = {
-      fail = wrap {
-        name   = "failure-logger";
-        paths  = [ nixpkgs.bash backtrace ];
-        script = ''
-          #!/usr/bin/env bash
-          set -e
-          echo -e "$*" 1>&2
-          {
-            echo "Backtrace:"
-            backtrace
-            echo "End Backtrace"
-          } 1>&2
-          exit 1
-        '';
-      };
-    };
+  fail = mkBin {
+    name   = "fail";
+    paths  = [ nixpkgs.bash backtrace ];
+    script = ''
+      #!/usr/bin/env bash
+      set -e
+      echo -e "$*" 1>&2
+      {
+        echo "Backtrace:"
+        backtrace
+        echo "End Backtrace"
+      } 1>&2
+      exit 1
+    '';
   };
 
   haskellPackageNames = writeScript
                           "haskell-names"
                           (concatStringsSep "\n" (attrNames haskellPackages));
 
-  pipeToNix = nix-config.attrsToDirs {
-    bin = {
-      pipeToNix = wrap {
-        name   = "pipeToNix-logger";
-        paths  = [ nix-config.pipeToNix ];
-        script = ''
-          #!/usr/bin/env bash
-          X=$(pipeToNix "$@")
-          echo "Cached data to $X" 1>&2
-          echo "$X"
-        '';
-      };
-    };
+  pipeToNix = mkBin {
+    name   = "pipeToNix";
+    paths  = [ nix-config.pipeToNix ];
+    script = ''
+      #!/usr/bin/env bash
+      X=$(pipeToNix "$@")
+      echo "Cached data to $X" 1>&2
+      echo "$X"
+    '';
   };
 
   runTypesScriptData = callPackage ./runTypesScript.nix {};

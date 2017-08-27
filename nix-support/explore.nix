@@ -1,12 +1,11 @@
 { runCmd, checkFailures, checkHsEnv, drvFromScript, haskellPackageNames,
-  haskellPackages, jq, lib, mlspec, nix-config, pkgName, stdParts, storeParts,
-  timeout, writeScript }:
+  haskellPackages, jq, lib, mkBin, mlspec, pkgName, stdParts, storeParts,
+  timeout, wrap, writeScript }:
 with builtins;
 with lib;
-with { inherit (nix-config) wrap; };
 with rec {
 
-explore-theories = wrap {
+explore-theories = mkBin {
   name   = "explore-theories";
   paths  = [ jq timeout ];
   script =  ''
@@ -154,17 +153,16 @@ mkGhcPkg = writeScript "mkGhcPkg" ''
 '';
 
 doExplore = standalone: clusterCount: f:
-  let cmd    = toString explore-theories;
+  let cmd    = "explore-theories";
       script = ''
         set -e
         export CLUSTERS="${clusterCount}"
-        O=$("${runCmd {
-                 inherit cmd;
-             }}" < "$f")
+        O=$("${runCmd { inherit cmd; }}" < "$f")
 
         ${storeParts}
       '';
-      env    = { buildInputs = extractedEnv { inherit standalone; };
+      env    = { buildInputs = extractedEnv { inherit standalone; } ++
+                               [ explore-theories ];
                  inherit f;
                  outputs     = stdParts; };
    in drvFromScript env script;

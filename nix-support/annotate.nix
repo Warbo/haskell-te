@@ -1,10 +1,10 @@
-{ bash, checkStderr, explore, fail, getDepsScript, haskellPackages, jq,
+{ bash, checkStderr, explore, fail, getDepsScript, haskellPackages, jq, mkBin,
   runCommand, runTypesScript, utillinux, wrap }:
 
 with builtins;
 
 with rec {
-  getAritiesScript = wrap {
+  getArities = mkBin {
     name   = "getArities";
     paths  = [ bash jq ];
     vars   = {
@@ -47,7 +47,7 @@ with rec {
     '';
   };
 
-  getTypesScript = wrap {
+  getTypes = mkBin {
     name   = "getTypes";
     paths  = [ bash jq utillinux ];
     script = ''
@@ -137,11 +137,10 @@ with rec {
     '';
   };
 
-  annotateAstsScript = wrap {
+  annotateAsts = mkBin {
     name   = "annotateAsts";
-    paths  = [ jq ];
+    paths  = [ getArities getTypes jq ];
     vars   = {
-      inherit getTypesScript getAritiesScript;
       tagTypesScript   = tagAstsScript ''{"type":null}'';
       tagAritiesScript = tagAstsScript ''
         {
@@ -160,11 +159,11 @@ with rec {
       }
 
       function tagTypes {
-        "$tagTypesScript" <(echo "$RAWSCOPE" | "$getTypesScript")
+        "$tagTypesScript" <(echo "$RAWSCOPE" | getTypes)
       }
 
       function tagArities {
-        "$tagAritiesScript" <(echo "$RAWTYPES" | "$getAritiesScript")
+        "$tagAritiesScript" <(echo "$RAWTYPES" | getArities)
       }
 
          INPUT=$(cat                                 ); msg "Getting ASTs"
@@ -180,8 +179,7 @@ with rec {
 
   annotateDbScript = wrap {
     name   = "annotateDb";
-    paths  = [ bash ];
-    vars   = { inherit annotateAstsScript getDepsScript; };
+    paths  = [ annotateAsts bash getDepsScript ];
     script = ''
       #!/usr/bin/env bash
       set -e
@@ -190,7 +188,7 @@ with rec {
       # Turns output from dump-package or dump-hackage into a form suitable for
       # clustering
 
-      "$typesScript" | "$annotateAstsScript" | "$getDepsScript"
+      "$typesScript" | annotateAsts | getDepsScript
     '';
   };
 
@@ -217,17 +215,14 @@ with rec {
 };
 
 rec {
-  annotateScript = wrap {
+  annotateScript = mkBin {
     name   = "annotate";
-    paths  = [ bash fail ];
-    vars   = {
-      inherit checkStderr;
-      annotateDb = annotateDbScript;
-    };
+    paths  = [ bash checkStderr fail ];
+    vars   = { annotateDb = annotateDbScript; };
     script = ''
       #!/usr/bin/env bash
       [[ -n "$typesScript" ]] || fail "No typesScript set"
-      "$annotateDb" 2> >("$checkStderr")
+      "$annotateDb" 2> >(checkStderr)
     '';
   };
 
@@ -235,8 +230,9 @@ rec {
     with helpers { inherit pkg pkgSrc; };
     runCommand "annotate"
       {
-        buildInputs = explore.extractedEnv (env // { f = asts; });
-        inherit asts annotateScript;
+        buildInputs = explore.extractedEnv (env // { f = asts; }) ++
+                      [ annotateScript ];
+        inherit asts;
         typesScript = runTypesScript {
           pkgSrc = if pkg ? srcNixed
                       then pkg.srcNixed
@@ -246,6 +242,6 @@ rec {
       ''
         set -e
 
-        "$annotateScript" < "$asts" > "$out"
+        annotate < "$asts" > "$out"
       '';
 }

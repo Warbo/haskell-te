@@ -19,7 +19,9 @@ rec {
 
                    reduce-equations
                    buckets.hashes
-                   fail ];
+                   fail
+                   explore.explore-theories
+                 ];
         vars   = {
           NIX_EVAL_EXTRA_IMPORTS = ''[("tip-benchmark-sig", "A")]'';
         };
@@ -33,7 +35,7 @@ rec {
             export MAX_KB=2000000
           }
 
-          hashBucket | "${explore.explore-theories}" | reduce-equations
+          hashBucket | explore-theories | reduce-equations
         '';
       };
 
@@ -78,12 +80,14 @@ rec {
 
   inEnvScript = wrap {
     name   = "hashspecBench-inenvscript";
-    paths  = [ reduce-equations timeout buckets.hashes ];
+    paths  = [
+      bash explore.explore-theories reduce-equations timeout buckets.hashes
+    ];
     vars   = {
       NIX_EVAL_EXTRA_IMPORTS = ''[("tip-benchmark-sig", "A")]'';
     };
     script = ''
-      #!${bash}/bin/bash
+      #!/usr/bin/env bash
 
       if [[ -n "$EXPLORATION_MEM" ]]
       then
@@ -92,7 +96,7 @@ rec {
       fi
 
       echo "Exploring" 1>&2
-      hashBucket | withTimeout "${explore.explore-theories}" | reduce-equations
+      hashBucket | withTimeout explore-theories | reduce-equations
     '';
     };
 

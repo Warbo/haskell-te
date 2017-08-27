@@ -1,7 +1,7 @@
-{ bash, GetDeps, jq, utillinux, wrap, writeScript }:
+{ bash, GetDeps, jq, mkBin, utillinux }:
 
-wrap {
-  name   = "getDeps";
+mkBin {
+  name   = "getDepsScript";
   paths  = [ bash jq GetDeps utillinux ];
   script = ''
     #!/usr/bin/env bash

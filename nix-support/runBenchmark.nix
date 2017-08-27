@@ -1,12 +1,12 @@
-{ bash, coreutils, explore, jq, lib, nixListToBashArray, sanitise, strip, time,
-  wrap, writeScript }:
+{ bash, coreutils, explore, jq, lib, mkBin, nixListToBashArray, sanitise, strip,
+  time, wrap, writeScript }:
 
 with builtins; with lib;
 
 rec {
   # A quick and dirty sanity check
-  checkStderr = wrap {
-    name   = "check-stderr";
+  checkStderr = mkBin {
+    name   = "checkStderr";
     paths  = [ bash ];
     vars   = {
       knownErrors = writeScript "known-errors" ''
@@ -125,10 +125,8 @@ rec {
     wrap {
       name   = "run-cmd-${sanitise (unsafeDiscardStringContext
                                      (baseNameOf cmd))}";
-      paths  = [ bash ];
-      vars   = env // {
-        inherit cmd checkStderr;
-      };
+      paths  = [ bash checkStderr ];
+      vars   = env // { inherit cmd; };
       script = ''
          #!/usr/bin/env bash
          set -e
@@ -140,7 +138,7 @@ rec {
          ${concatStringsSep "\n" (map (n: "unset " + n) (attrNames env))}
 
          # Run with the given arguments and check stderr for error messages
-         "$cmd" "''${ARGS[@]}" > "$out" 2> >("$checkStderr")
+         "$cmd" "''${ARGS[@]}" > "$out" 2> >(checkStderr)
        '';
     };
 }

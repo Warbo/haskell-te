@@ -1,7 +1,6 @@
-{ annotated, bash, checkStderr, buildEnv, ensureVars, fail, glibcLocales,
-  haskellPackages, inNixedDir, jq, lib, makeWrapper, nix, nix-config, nixEnv,
-  pipeToNix, runCmd, runCommand, stdenv, time, timeout, tipBenchmarks, withNix,
-  wrap, writeScript }:
+{ annotated, bash, buildEnv, ensureVars, fail, glibcLocales, haskellPackages,
+  inNixedDir, jq, lib, makeWrapper, nix, nix-config, nixEnv, pipeToNix,
+  runCommand, stdenv, tipBenchmarks, withNix, wrap, writeScript }:
 
 # Provides a script which accepts smtlib data, runs it through QuickSpec and
 # outputs the resulting equations

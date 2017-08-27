@@ -1,30 +1,25 @@
-{ bash, attrsToDirs, fail, inNixedDir, lib, runCommand, tipBenchmarks, testData,
-  withDeps, wrap }:
+{ bash, fail, inNixedDir, lib, mkBin, runCommand, tipBenchmarks, testData,
+  withDeps }:
 
 with builtins;
 with lib;
 with rec {
-  tipToHaskellPkg = attrsToDirs {
-    bin = {
-      tipToHaskellPkg = wrap {
-        name   = "tipToHaskellPkg";
-        paths  = [ bash inNixedDir  ];
-        vars   = {
-          genPkgHere = wrap {
-            name  = "genPkgHere";
-            paths = [ bash tipBenchmarks.tools ];
-            script = ''
-              #!/usr/bin/env bash
-              OUT_DIR="$PWD" full_haskell_package
-            '';
-          };
-        };
-        script = ''
-          #!/usr/bin/env bash
-          inNixedDir "$genPkgHere" "haskellPkgGeneratedFromTip"
-        '';
-      };
-    };
+  genPkgHere = mkBin {
+    name  = "genPkgHere";
+    paths = [ bash tipBenchmarks.tools ];
+    script = ''
+      #!/usr/bin/env bash
+      OUT_DIR="$PWD" full_haskell_package
+    '';
+  };
+
+  tipToHaskellPkg = mkBin {
+    name   = "tipToHaskellPkg";
+    paths  = [ bash genPkgHere inNixedDir  ];
+    script = ''
+      #!/usr/bin/env bash
+      inNixedDir genPkgHere "haskellPkgGeneratedFromTip"
+    '';
   };
 
   checks = mapAttrs

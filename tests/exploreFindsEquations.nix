@@ -8,7 +8,8 @@ path   = toString ./exploreTheoriesExamples;
 files  = mapAttrs (f: _: "${path}/${f}") (readDir path);
 
 foundEquations = name: f:
-  let env = { buildInputs = explore.extractedEnv { inherit f; };
+  let env = { buildInputs = explore.extractedEnv { inherit f; } ++
+                            [ explore.explore-theories ];
               inherit f; };
       cmd = ''
         set -e
@@ -37,7 +38,7 @@ foundEquations = name: f:
         trap finish EXIT
 
         echo "Exploring '$f'" 1>&2
-        "${explore.explore-theories}" < "$f" 1> sout 2> serr || {
+        explore-theories < "$f" 1> sout 2> serr || {
           echo -e "Failed to explore '$f'"
           exit 2
         }

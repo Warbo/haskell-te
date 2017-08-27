@@ -1,37 +1,33 @@
-{ attrsToDirs, bash, fail, haveVar, lib, makeWrapper, runCommand, withDeps,
-  wrap, writeScript }:
+{ bash, fail, haveVar, lib, makeWrapper, mkBin, runCommand, withDeps,
+  writeScript }:
 
 with lib;
 with rec {
-  bashEscape = attrsToDirs {
-    bin = {
-      bashEscape = wrap {
-        name   = "bashEscape";
-        paths  = [ bash fail haveVar ];
-        vars   = {
-          sedExpr = "s/'/'\\\\''/g";
-        };
-        script = ''
-          #!/usr/bin/env bash
-          set -e
-
-          [[ -n "$1" ]] || fail "No name for escape value"
-
-          TO_ESCAPE=$(cat)
-          export TO_ESCAPE
-          haveVar TO_ESCAPE
-
-          # Escape ' so we can wrap values in single quotes with confidence
-          ESC=$(echo "$TO_ESCAPE" | sed -e "$sedExpr")
-
-          # Wrap in single quotes, but also surround in double quotes to bypass
-          # the broken escaping of makeWrapper (it uses "foo", so by wrapping
-          # our values in double quotes we get ""foo"", which is foo (our
-          # single-quoted string) concatenated between two empty strings).
-          echo "\"'$ESC'\""
-        '';
-      };
+  bashEscape = mkBin {
+    name   = "bashEscape";
+    paths  = [ bash fail haveVar ];
+    vars   = {
+      sedExpr = "s/'/'\\\\''/g";
     };
+    script = ''
+      #!/usr/bin/env bash
+      set -e
+
+      [[ -n "$1" ]] || fail "No name for escape value"
+
+      TO_ESCAPE=$(cat)
+      export TO_ESCAPE
+      haveVar TO_ESCAPE
+
+      # Escape ' so we can wrap values in single quotes with confidence
+      ESC=$(echo "$TO_ESCAPE" | sed -e "$sedExpr")
+
+      # Wrap in single quotes, but also surround in double quotes to bypass
+      # the broken escaping of makeWrapper (it uses "foo", so by wrapping
+      # our values in double quotes we get ""foo"", which is foo (our
+      # single-quoted string) concatenated between two empty strings).
+      echo "\"'$ESC'\""
+    '';
   };
 
   runTest = typ: input: runCommand "check-escape-${typ}"

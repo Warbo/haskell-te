@@ -1,13 +1,15 @@
 { bash, checkStderr, explore, fail, haskellPackages, hsNameVersion, jq, lib,
-  python, runCommand, withDeps, wrap, writeScript }:
+  mkBin, python, runCommand, withDeps, wrap, writeScript }:
 with builtins;
 with lib;
 
 with rec {
+  inherit (haskellPackages) cabal-install;
+
   # Runs AstPlugin. Requires GHC_PKG to point at a pkg-db containing all of
   # the required dependencies, plus AstPlugin
-  runAstPluginRaw = wrap {
-    name   = "runAstPlugin";
+  runAstPluginRaw = mkBin {
+    name   = "runAstPluginRaw";
     paths  = [ bash ];
     script = ''
       #!/usr/bin/env bash
@@ -21,7 +23,7 @@ with rec {
   };
 
   # Extract the JSON from runAstPlugin's stderr
-  getJson = wrap {
+  getJson = mkBin {
     name   = "getJson";
     paths  = [ python ];
     script = ''
@@ -46,8 +48,7 @@ with rec {
 
   testGetJson = runCommand "testGetJson"
     {
-      inherit getJson;
-      buildInputs = [ fail ];
+      buildInputs = [ fail getJson ];
       script1     = writeScript "script1" ''
         #!/usr/bin/env bash
         set -e
@@ -63,33 +64,28 @@ with rec {
       set -e
       set -o pipefail
 
-      X=$(CMD="$script1" "$getJson") || fail "Couldn't run getJson"
-      [[ "x$X" = 'x{stderr2}' ]]     || fail "Got unexpected output '$X'"
+      X=$(CMD="$script1" getJson) || fail "Couldn't run getJson"
+      [[ "x$X" = 'x{stderr2}' ]]  || fail "Got unexpected output '$X'"
 
       echo pass > "$out"
     '';
 
-  runAstPlugin = withDeps [ testGetJson ] (wrap {
-    name  = "runAstPlugin";
-    paths = [ jq ];
-    vars  = {
-      inherit getJson;
-      CMD = runAstPluginRaw;
-    };
+  runAstPlugin = withDeps [ testGetJson ] (mkBin {
+    name   = "runAstPlugin";
+    paths  = [ getJson jq runAstPluginRaw ];
+    vars   = { CMD = "runAstPluginRaw"; };
     script = ''
       #!/usr/bin/env bash
       set -e
       set -o pipefail
 
-      "$getJson" | jq -c --argjson nv "$nameVersion" '. + $nv' |
-                   jq -s '.'
+      getJson | jq -c --argjson nv "$nameVersion" '. + $nv' | jq -s '.'
     '';
   });
 
-  main = wrap {
-    name   = "dumpToNix-script";
-    paths  = [ bash fail haskellPackages.cabal-install ];
-    vars   = { inherit checkStderr runAstPlugin; };
+  main = mkBin {
+    name   = "dumpToNix";
+    paths  = [ bash cabal-install checkStderr fail runAstPlugin ];
     script = ''
       #!/usr/bin/env bash
       set -e
@@ -143,7 +139,7 @@ with rec {
       export GHC_PKG
 
       cabal configure --package-db="$GHC_PKG" 1>&2
-      "$runAstPlugin" 2> >("$checkStderr")
+      runAstPlugin 2> >(checkStderr)
     '';
   };
 };
@@ -176,10 +172,10 @@ with rec {
     };
     runCommand "dumpToNix"
       {
-        inherit main nameVersion pkgDir pName;
-        buildInputs = [ (haskellPackages.ghcWithPackages mkDeps) ];
+        inherit nameVersion pkgDir pName;
+        buildInputs = [ main (haskellPackages.ghcWithPackages mkDeps) ];
       }
       ''
-        "$main" "$pkgDir" > "$out"
+        dumpToNix "$pkgDir" > "$out"
       '';
 }

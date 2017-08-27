@@ -1,29 +1,22 @@
-{ attrsToDirs, bash, fail, haskellPkgToAsts, jq, lib, makeHaskellPkgNixable,
-  quickspecAsts, runCommand, testData, tipToHaskellPkg, withDeps, wrap }:
+{ bash, fail, haskellPkgToAsts, jq, lib, makeHaskellPkgNixable, mkBin,
+  quickspecAsts, runCommand, testData, tipToHaskellPkg, withDeps }:
 
 with lib;
 with rec {
-  quickspec = attrsToDirs {
-    bin = {
-      quickspec = wrap {
-        name  = "quickspec";
-        paths = [
-          bash haskellPkgToAsts jq makeHaskellPkgNixable quickspecAsts
-        ];
-        vars   = {};
-        script = ''
-          #!/usr/bin/env bash
-          set -e
-          set -o pipefail
+  quickspec = mkBin {
+    name   = "quickspec";
+    paths  = [ bash haskellPkgToAsts jq makeHaskellPkgNixable quickspecAsts ];
+    script = ''
+      #!/usr/bin/env bash
+      set -e
+      set -o pipefail
 
-          [[ -n "$1" ]] || fail "quickspec needs a dir as argument"
-          [[ -d "$1" ]] || fail "quickspec arg '$1' isn't a directory"
+      [[ -n "$1" ]] || fail "quickspec needs a dir as argument"
+      [[ -d "$1" ]] || fail "quickspec arg '$1' isn't a directory"
 
-          DIR=$(makeHaskellPkgNixable "$1") || fail "Couldn't nixify '$1'"
-          haskellPkgToAsts "$DIR" | quickspecAsts "$DIR"
-        '';
-      };
-    };
+      DIR=$(makeHaskellPkgNixable "$1") || fail "Couldn't nixify '$1'"
+      haskellPkgToAsts "$DIR" | quickspecAsts "$DIR"
+    '';
   };
 
   test = name: code: runCommand "quickspec-${name}-test"

@@ -5,9 +5,8 @@ let
 path  = toString ./exploreTheoriesExamples;
 files = map (f: "${path}/${f}") (attrNames (readDir path));
 
-noDupesFor = f: testRun "Testing ${f}" null { buildInputs = explore.extractedEnv {
-                                                              #inherit f;
-                                                            }; } ''
+noDupesFor = f: testRun "Testing ${f}" null
+  { buildInputs = explore.extractedEnv {} ++ [ explore.explore-theories ]; } ''
   set -e
   set -o pipefail
 
@@ -24,7 +23,7 @@ noDupesFor = f: testRun "Testing ${f}" null { buildInputs = explore.extractedEnv
   }
 
   echo "Exploring '${f}'" 1>&2
-  OUTPUT=$("${explore.explore-theories}" < "${f}" 2>&1) || {
+  OUTPUT=$(explore-theories < "${f}" 2>&1) || {
     echo "Failed to explore '${f}'" 1>&2
     echo -e "OUTPUT:\n\n$OUTPUT\n\n" 1>&2
     exit 2
