@@ -23,11 +23,10 @@ with rec {
       PKG_NAME=$(haskellPkgNameVersion "$OUT_DIR" | jq -r '.package')
       export PKG_NAME
 
-      D=$(generateQuickspecCode)
+      S=$(generateQuickspecCode)
 
-      [[ -e "$D/nixRunner" ]] || fail "No nixRunner found in '$D'"
-      [[ -e "$D/rawRunner" ]] || fail "No rawRunner found in '$D'"
-      "$D/nixRunner"
+      [[ -e "$S" ]] || fail "Runner '$S' doesn't exist"
+      "$S"
     '';
   };
 

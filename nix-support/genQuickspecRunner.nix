@@ -1,6 +1,6 @@
 { bash, bashEscape, checkStderr, fail, gnugrep, gnused, haskellPackages,
   haveVar, inNixedDir, jq, makeWrapper, mkBin, nix, nixEnv, quickspecBench,
-  timeout, wrap }:
+  timeout, wrap, writeScript }:
 
 with rec {
   inherit (quickspecBench) getCmd;
@@ -31,86 +31,31 @@ with rec {
       set -e
       set -o pipefail
 
-      haveVar NIXENV
       haveVar CMD
       haveVar HASKELL_CODE
-      haveVar RUNNER
       haveVar PKG_NAME
       haveVar NIX_EVAL_HASKELL_PKGS
       haveVar OUT_DIR
 
       function run {
         # Let users choose time/memory limits by wrapping in withTimout
-        withTimeout "$RUNNER" 2> >(checkStderr)
+        withTimeout $CMD 2> >(checkStderr)
       }
 
       echo "$HASKELL_CODE" | run | keepJson
     '';
   };
 
-  nixTemplate = wrap {
-    name   = "quickspec-nix-shell-template";
-    paths  = [ bash haveVar nix ];
-    script = ''
-      #!/usr/bin/env bash
-      set -e
-
-      # This version uses nix-shell to ensure the correct environment; it's
-      # the version we "export" for normal usage.
-      haveVar NIXENV
-      haveVar CMD
-
-      nix-shell -p "$NIXENV" --run "$CMD"
-    '';
-  };
-
-  rawTemplate = wrap {
-    name   = "quickspec-raw-template";
-    paths  = [ bash haveVar ];
-    script = ''
-      #!/usr/bin/env bash
-      set -e
-
-      # This version assumes that it's already in the correct environment.
-      # This is fragile, so we don't export it to users. It's useful for
-      # benchmarking since it avoids some of the Nix overhead.
-
-      haveVar CMD
-
-      $CMD
-    '';
-  };
-
   encapsulate = mkBin {
     name   = "encapsulate";
-    paths  = [ bash bashEscape fail gnused haveVar ];
+    paths  = [ bash bashEscape fail gnused haveVar nix ];
     vars   = {
-      inherit makeWrapper nixTemplate rawTemplate runner;
+
     };
     script = ''
       #!/usr/bin/env bash
       set -e
 
-      source "$makeWrapper/nix-support/setup-hook"
-
-      haveVar NIXENV
-      haveVar CMD
-      haveVar HASKELL_CODE
-
-            ESC_NIXENV=$(echo "$NIXENV"       | bashEscape NIXENV)
-               ESC_CMD=$(echo "$CMD"          | bashEscape CMD)
-      ESC_HASKELL_CODE=$(echo "$HASKELL_CODE" | bashEscape HASKELL_CODE)
-
-      function setArgs {
-        makeWrapper "$runner" "$2"                  \
-          --set    RUNNER       "$1"                \
-          --set    NIXENV       "$ESC_NIXENV"       \
-          --set    CMD          "$ESC_CMD"          \
-          --set    HASKELL_CODE "$ESC_HASKELL_CODE"
-      }
-
-      setArgs "$nixTemplate" ./nixRunner
-      setArgs "$rawTemplate" ./rawRunner
     '';
   };
 
@@ -121,8 +66,24 @@ with rec {
       encapsulate fail haveVar inNixedDir jq nix
     ];
     vars   = nixEnv // {
-      inherit getCmd;
+      inherit getCmd runner;
       NIX_EVAL_HASKELL_PKGS = builtins.toString ./quickspecEnv.nix;
+      mkCmd = writeScript "quickspec-builder.nix" ''
+        with builtins;
+        assert getEnv "NIXENV"  != "" || abort "No NIXENV set";
+        assert getEnv "OUT_DIR" != "" || abort "No OUT_DIR set";
+        assert getEnv "CMD"     != "" || abort "No CMD set";
+        (import ${toString ../nix-support} {}).wrap {
+          name  = "quickspec-runner";
+          paths = [ (import (toFile "env.nix" (getEnv "NIXENV"))) ];
+          vars  = {
+            CMD          = getEnv("CMD");
+            HASKELL_CODE = getEnv("HASKELL_CODE");
+            OUT_DIR      = getEnv("OUT_DIR");
+          };
+          file  = getEnv("runner");
+        }
+      '';
     };
     script = ''
       #!/usr/bin/env bash
@@ -143,20 +104,19 @@ with rec {
       }
       [[ -n "$GENERATED" ]] || fail "Empty GENERATED"
 
-      # Encapsulate the command and code into a standalone script
       HASKELL_CODE=$(echo "$GENERATED" | jq -r '.code'  )
             NIXENV=$(echo "$GENERATED" | jq -r '.env'   )
                CMD=$(echo "$GENERATED" | jq -r '.runner')
 
-      export HASKELL_CODE
-      export NIXENV
-      export CMD
-
+      export  HASKELL_CODE
       haveVar HASKELL_CODE
+      export  NIXENV
       haveVar NIXENV
+      export  CMD
       haveVar CMD
 
-      inNixedDir encapsulate "quickspec-runner"
+      # Encapsulate the command and code into a standalone script
+      nix-build --no-out-link --show-trace -E 'import (builtins.getEnv "mkCmd")'
     '';
   };
 };
