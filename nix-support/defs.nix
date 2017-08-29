@@ -218,7 +218,7 @@ let pkgs = rec {
   };
 
   runTypesScriptData = callPackage ./runTypesScript.nix {};
-  runTypesScript     = runTypesScriptData.script;
+  runTypesScript     = runTypesScriptData.runTypesScript;
 
   runWeka = callPackage ./runWeka.nix { inherit havePath; };
 
