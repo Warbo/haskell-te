@@ -1,6 +1,6 @@
 { bash, bashEscape, checkStderr, fail, gnugrep, gnused, haskellPackages,
-  haskellPkgNameVersion, haveVar, inNixedDir, jq, makeWrapper, mkBin, nix,
-  nixEnv, quickspecBench, timeout, wrap, writeScript }:
+  haskellPkgNameVersion, haveVar, jq, makeWrapper, mkBin, nix, nixEnv,
+  pipeToNix, quickspecBench, timeout, wrap, writeScript }:
 
 with rec {
   inherit (quickspecBench) getCmd;
@@ -43,7 +43,7 @@ with rec {
         withTimeout $CMD 2> >(checkStderr)
       }
 
-      echo "$HASKELL_CODE" | run | keepJson
+      run < "$HASKELL_CODE" | keepJson
     '';
   };
 
@@ -51,7 +51,7 @@ with rec {
     name   = "genQuickspecRunner";
     paths  = [
       (haskellPackages.ghcWithPackages (h: [ h.mlspec h.nix-eval ]))
-      fail haskellPkgNameVersion haveVar inNixedDir jq nix
+      fail haskellPkgNameVersion haveVar jq nix pipeToNix
     ];
     vars   = nixEnv // {
       inherit getCmd runner;
@@ -99,7 +99,8 @@ with rec {
       }
       [[ -n "$GENERATED" ]] || fail "Empty GENERATED"
 
-      HASKELL_CODE=$(echo "$GENERATED" | jq -r '.code'  )
+      # Store code in a file file since it may be too big for an env var
+      HASKELL_CODE=$(echo "$GENERATED" | jq -r '.code'  | pipeToNix "qsCode.hs")
             NIXENV=$(echo "$GENERATED" | jq -r '.env'   )
                CMD=$(echo "$GENERATED" | jq -r '.runner')
 
