@@ -23,7 +23,7 @@ with rec {
       PKG_NAME=$(haskellPkgNameVersion "$OUT_DIR" | jq -r '.package')
       export PKG_NAME
 
-      S=$(generateQuickspecCode)
+      S=$(genQuickspecRunner)
 
       [[ -e "$S" ]] || fail "Runner '$S' doesn't exist"
       "$S"

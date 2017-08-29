@@ -1,6 +1,6 @@
 { bash, bashEscape, checkStderr, fail, gnugrep, gnused, haskellPackages,
-  haveVar, inNixedDir, jq, makeWrapper, mkBin, nix, nixEnv, quickspecBench,
-  timeout, wrap, writeScript }:
+  haskellPkgNameVersion, haveVar, inNixedDir, jq, makeWrapper, mkBin, nix,
+  nixEnv, quickspecBench, timeout, wrap, writeScript }:
 
 with rec {
   inherit (quickspecBench) getCmd;
@@ -26,6 +26,7 @@ with rec {
   runner = wrap {
     name   = "quickspecRunner";
     paths  = [ bash checkStderr haveVar keepJson timeout ];
+    vars   = { NIX_EVAL_HASKELL_PKGS = toString ./quickspecEnv.nix; };
     script = ''
       #!/usr/bin/env bash
       set -e
@@ -46,33 +47,21 @@ with rec {
     '';
   };
 
-  encapsulate = mkBin {
-    name   = "encapsulate";
-    paths  = [ bash bashEscape fail gnused haveVar nix ];
-    vars   = {
-
-    };
-    script = ''
-      #!/usr/bin/env bash
-      set -e
-
-    '';
-  };
-
   generateCode = mkBin {
-    name   = "generateQuickspecCode";
+    name   = "genQuickspecRunner";
     paths  = [
       (haskellPackages.ghcWithPackages (h: [ h.mlspec h.nix-eval ]))
-      encapsulate fail haveVar inNixedDir jq nix
+      fail haskellPkgNameVersion haveVar inNixedDir jq nix
     ];
     vars   = nixEnv // {
       inherit getCmd runner;
       NIX_EVAL_HASKELL_PKGS = builtins.toString ./quickspecEnv.nix;
       mkCmd = writeScript "quickspec-builder.nix" ''
         with builtins;
-        assert getEnv "NIXENV"  != "" || abort "No NIXENV set";
-        assert getEnv "OUT_DIR" != "" || abort "No OUT_DIR set";
-        assert getEnv "CMD"     != "" || abort "No CMD set";
+        assert getEnv "NIXENV"   != "" || abort "No NIXENV set";
+        assert getEnv "OUT_DIR"  != "" || abort "No OUT_DIR set";
+        assert getEnv "PKG_NAME" != "" || abort "No PKG_NAME set";
+        assert getEnv "CMD"      != "" || abort "No CMD set";
         (import ${toString ../nix-support} {}).wrap {
           name  = "quickspec-runner";
           paths = [ (import (toFile "env.nix" (getEnv "NIXENV"))) ];
@@ -80,6 +69,7 @@ with rec {
             CMD          = getEnv("CMD");
             HASKELL_CODE = getEnv("HASKELL_CODE");
             OUT_DIR      = getEnv("OUT_DIR");
+            PKG_NAME     = getEnv("PKG_NAME");
           };
           file  = getEnv("runner");
         }
@@ -89,6 +79,11 @@ with rec {
       #!/usr/bin/env bash
       set -e
       set -o pipefail
+
+      haveVar OUT_DIR
+
+      PKG_NAME=$(haskellPkgNameVersion "$OUT_DIR" | jq -r '.package')
+      export PKG_NAME
 
       ALL=$(cat)
        QS=$(echo "$ALL" | jq 'map(select(.quickspecable))')
