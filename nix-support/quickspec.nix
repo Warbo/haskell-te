@@ -48,34 +48,21 @@ with rec {
 
   checks = [ testGarbage ] ++ attrValues testHsPkgs;
 
+  # Avoid packages which are known to timeout, get out-of-memory, etc.
+  knownGoodPkgs = filterAttrs (n: _: !(elem n [ "nat-full" "teBenchmark" ]))
+                              testData.haskellPkgs;
+
   testHsPkgs = mapAttrs
     (n: pkg: runCommand "test-quickspec-${n}"
       (nixEnv // {
         inherit pkg;
-        allowFail   = if elem n [ "nat-full" "teBenchmark" ]
-                         then "true"
-                         else "false";
         buildInputs = [ fail jq quickspec ];
-        MAX_SECS    = "300";
+        MAX_SECS    = "180";
         MAX_KB      = "1000000";
-        FAIL_MSG    = ''
-          quickspec failed, but this theory is known to be problematic (e.g.
-          running out of time or memory). Storing stderr in our output to aid in
-          debugging if it turns out to be a different problem.
-        '';
       })
       ''
-        BENCH_OUT=$(quickspec "$pkg" 2> >(tee stderr 1>&2)) || {
-          if "$allowFail"
-          then
-            echo "$FAIL_MSG" 1>&2
-            mkdir -p "$out"
-            cp stderr "$out"/
-            exit 0
-          else
-            fail "Failed to run.\n$BENCH_OUT"
-          fi
-        }
+        BENCH_OUT=$(quickspec "$pkg" 2> >(tee stderr 1>&2)) ||
+          fail "Failed to run.\n$BENCH_OUT"
 
         RESULTS=$(echo "$BENCH_OUT" | jq 'length') ||
           fail "Couldn't get equation array"
@@ -84,7 +71,7 @@ with rec {
 
         echo "pass" > "$out"
       '')
-    testData.haskellPkgs;
+    knownGoodPkgs;
 };
 
 withDeps checks quickspec
