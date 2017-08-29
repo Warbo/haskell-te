@@ -1,6 +1,6 @@
 from json         import loads, dumps
 from os           import environ, getenv, getpgid, killpg, setsid
-from parameters   import repetitions, timeout_secs
+from parameters   import max_size, repetitions, timeout_secs
 from shutil       import rmtree
 from signal       import SIGTERM
 from subprocess32 import check_output, PIPE, Popen, TimeoutExpired
@@ -85,7 +85,7 @@ def generate_cache(theories, f):
     cache = {}
     for theory in theories:
         reps          = range(0, repetitions)
-        cache[theory] = {'reps': [{} for _ in reps]}
+        cache[theory] = {'reps': {}}
         for rep in reps:
             data = {'rep': rep, 'timeout': timeout_secs}
             data.update(f(theory, rep))
@@ -190,6 +190,37 @@ def tip_setup(prefix, args, mkCmd):
     setup_cache.timeout = max(
         3600,
         timeout_secs * len(args['rep']) * len(args['size']))
+
+    return setup_cache
+
+def sizes():
+    return range(1, max_size)
+
+def reps():
+    return range(0, repetitions)
+
+def tip_cache(cmd):
+    '''Running a TE tool is expensive, so we only want to run each sample once.
+    By returning all of the results from setup_cache, each benchmark can pick
+    out the values it cares about, without having to re-run anything.
+    The returned value will appear as the first argument to each benchmark.'''
+    def setup_cache():
+        def gen(size, rep):
+            cmds = loads(check_output([cmd],
+                                      env=dict(os.environ, SIZE=size, REP=rep)))
+
+            result   = timed_run([cmds['runner']], '', timeout=timeout_secs)
+            analysis = {}
+
+            if result['success']:
+                analysis = loads(pipe([cmds['analyser']],
+                                      result['stdout'])['stdout'])
+
+            return dict(result, **analysis)
+
+        return generate_cache(sizes(), gen)
+
+    setup_cache.timeout = max(3600, timeout_secs * len(reps()) * len(sizes()))
 
     return setup_cache
 

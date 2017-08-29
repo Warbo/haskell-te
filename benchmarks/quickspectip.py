@@ -10,12 +10,7 @@ args = {
     'size' : range(1, max_size),
 }
 
-setup_cache = tip_setup(
-    'qs',
-    args,
-    compose(lambda given: ([getenv(prefix + 'TipRunner'), given['runner']],
-                           given['code']),
-            loads))
+setup_cache = tip_cache('quickspecTip')
 
 # Generate benchmark functions and add them to this module
 locals().update(tip_benchmarks(args))
