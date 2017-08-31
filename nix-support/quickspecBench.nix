@@ -67,6 +67,7 @@ benchVars = {
       script = ''
         #!/usr/bin/env bash
         set -e
+        set -o pipefail
 
         [[ -n "$ANNOTATED" ]] || fail "No ANNOTATED given"
         [[ -n "$OUT_DIR"   ]] || fail "No OUT_DIR given"
@@ -235,6 +236,8 @@ mkGenInput = after: wrap {
   };
   script = ''
     #!/usr/bin/env bash
+    set -e
+    set -o pipefail
 
     # Sample some names, give the default module and package, then slurp
     # into an array

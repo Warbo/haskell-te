@@ -60,6 +60,7 @@ rec {
         script = ''
           #!/usr/bin/env bash
           set -e
+          set -o pipefail
 
           [[ -n "$ANNOTATED" ]] || fail "No ANNOTATED given"
           [[ -n "$OUT_DIR"   ]] || fail "No OUT_DIR given"

@@ -71,8 +71,8 @@ let pkgs = rec {
 
   # Useful for setting dependencies, variables, etc. of scripts
   inherit (nix-config)
-    attrsToDirs inNixedDir nixListToBashArray stripOverrides timeout unpack
-    withDeps wrap;
+    attrsToDirs backtrace fail inNixedDir mkBin nixListToBashArray pipeToNix
+    stripOverrides timeout unpack withDeps wrap;
 
   # These provide executables
   inherit (haskellPackages)
@@ -87,7 +87,6 @@ let pkgs = rec {
 
   annotateRawAstsFrom   = callPackage ./annotateRawAstsFrom.nix   {};
   asv-nix               = callPackage ./asv-nix.nix               {};
-  backtrace             = callPackage ./backtrace.nix             {};
   bashEscape            = callPackage ./bashEscape.nix            {};
   benchmarkEnv          = callPackage ./benchmarkEnv.nix          {};
   buckets               = callPackage ./buckets.nix               {};
@@ -105,8 +104,8 @@ let pkgs = rec {
   hsNameVersion         = callPackage ./hsNameVersion.nix         {};
   importDir             = callPackage ./importDir.nix             {};
   makeHaskellPkgNixable = callPackage ./makeHaskellPkgNixable.nix {};
-  mkBin                 = callPackage ./mkBin.nix                 {};
   mlspecBench           = callPackage ./mlspecBench.nix           {};
+  nixify                = callPackage ./nixify.nix                {};
   package               = callPackage ./package.nix               {};
   parseJSON             = callPackage ./parseJSON.nix             {};
   pkgName               = callPackage ./pkgName.nix               {};
@@ -186,36 +185,9 @@ let pkgs = rec {
                                 '')
                             vars);
 
-  fail = mkBin {
-    name   = "fail";
-    paths  = [ nixpkgs.bash backtrace ];
-    script = ''
-      #!/usr/bin/env bash
-      set -e
-      echo -e "$*" 1>&2
-      {
-        echo "Backtrace:"
-        backtrace
-        echo "End Backtrace"
-      } 1>&2
-      exit 1
-    '';
-  };
-
   haskellPackageNames = writeScript
                           "haskell-names"
                           (concatStringsSep "\n" (attrNames haskellPackages));
-
-  pipeToNix = mkBin {
-    name   = "pipeToNix";
-    paths  = [ nix-config.pipeToNix ];
-    script = ''
-      #!/usr/bin/env bash
-      X=$(pipeToNix "$@")
-      echo "Cached data to $X" 1>&2
-      echo "$X"
-    '';
-  };
 
   runTypesScriptData = callPackage ./runTypesScript.nix {};
   runTypesScript     = runTypesScriptData.runTypesScript;

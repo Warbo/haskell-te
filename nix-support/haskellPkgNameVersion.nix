@@ -26,8 +26,8 @@ mkBin {
     done
 
     [[ "$COUNT" -eq 1 ]] || fail "Found $COUNT .cabal files in '$1'"
-    [[ -n "$NAME"    ]] || fail "Couldn't get project name from '$1'"
-    [[ -n "$VERSION" ]] || fail "Couldn't get project version from '$1'"
+    [[ -n "$NAME"     ]] || fail "Couldn't get project name from '$1'"
+    [[ -n "$VERSION"  ]] || fail "Couldn't get project version from '$1'"
 
     jq -n --arg name "$NAME" --arg version "$VERSION" \
        '{"package": $name, "version": $version}'

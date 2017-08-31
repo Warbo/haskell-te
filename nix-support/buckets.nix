@@ -72,6 +72,8 @@ rec {
     doCheck      = true;
     checkPhase   = ''
       set -e
+      set -o pipefail
+
       echo "Testing empty input" 1>&2
       echo "" | CLUSTER_SIZE=10 "$src" 1 1 | jq -e 'length | . == 0'
 

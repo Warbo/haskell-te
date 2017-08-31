@@ -13,6 +13,7 @@ rec {
 
   fromStdin = writeScript "format-stdin" ''
     set -e
+    set -o pipefail
 
     INPUT=$(cat)
 
