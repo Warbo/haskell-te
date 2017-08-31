@@ -1,6 +1,5 @@
-{ runCmd, checkFailures, checkHsEnv, drvFromScript, haskellPackageNames,
-  haskellPackages, jq, lib, mkBin, mlspec, pkgName, stdParts, storeParts,
-  timeout, wrap, writeScript }:
+{ checkHsEnv, drvFromScript, haskellPackageNames, haskellPackages, jq, lib,
+  mkBin, mlspec, pkgName, timeout, writeScript }:
 with builtins;
 with lib;
 with rec {
@@ -119,66 +118,13 @@ extractedEnv = { extraPkgs ? [], extraHs ? [], standalone ? null, f ? null }:
 extra-haskell-packages = [ "mlspec" "mlspec-helper" "runtime-arbitrary"
                            "quickspec" "QuickCheck" "AstPlugin" ];
 
-prefixed-haskell-packages = concatStringsSep "\n"
-                              (map (x: "h.${x}") extra-haskell-packages);
-
 extra-packages = [ jq ];
 
 exploreEnv = [ (haskellPackages.ghcWithPackages (h: map (n: h."${n}")
                                                     extra-haskell-packages)) ] ++
              extra-packages;
-
-mkGhcPkg = writeScript "mkGhcPkg" ''
-  set -e
-  set -o pipefail
-
-  echo "(haskellPackages.ghcWithPackages (h: ["
-
-  GIVEN=($1)
-  EXTRA=($2)
-  for PKG in "''${GIVEN[@]}" "''${EXTRA[@]}"
-  do
-    UNQUAL=$(echo "$PKG" | sed -e 's/^h\.//g')
-    FOUND=$(nix-instantiate --eval -E \
-            "let pkgs = import <nixpkgs> {}; in pkgs.haskellPackages ? $UNQUAL")
-    if [[ "x$FOUND" = "xtrue" ]]
-    then
-      echo "$PKG"
-    else
-      echo "Couldn't find '$PKG' in haskellPackages; ignoring, in the hope we have a nixFromCabal alternative" 1>&2
-    fi
-  done
-
-  echo "]))"
-'';
-
-doExplore = standalone: clusterCount: f:
-  let cmd    = "explore-theories";
-      script = ''
-        set -e
-        export CLUSTERS="${clusterCount}"
-        O=$("${runCmd { inherit cmd; }}" < "$f")
-
-        ${storeParts}
-      '';
-      env    = { buildInputs = extractedEnv { inherit standalone; } ++
-                               [ explore-theories ];
-                 inherit f;
-                 outputs     = stdParts; };
-   in drvFromScript env script;
-
-go = { standalone }: clusterCount: clusters:
-       map (doExplore standalone clusterCount) clusters;
-
-checkAndExplore = { formatted, standalone ? null }:
-  let results = mapAttrs (go { inherit standalone; }) formatted;
-      failed  = checkFailures "all" results;
-      result  = { inherit results failed; };
-   in result;
-
 };
 {
   inherit extra-haskell-packages explore-theories exploreEnv
           extractedEnv findHsPkgReferences;
-  explore = checkAndExplore;
 }
