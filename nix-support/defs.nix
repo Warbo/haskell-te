@@ -143,23 +143,6 @@ let pkgs = rec {
 
   callPackage = nixpkgs.newScope pkgs;
 
-  checkFailures = type: results:
-    assert type == "any" || type == "all";
-    let names = attrNames results;
-        fails = let l = concatMap (n: if isList results."${n}"
-                                         then results."${n}"
-                                         else [ results."${n}" ]) names;
-                 in map (x: x.failed) l;
-        bFunc = if type == "any" then any else all;
-     in if all isBool fails
-           then bFunc id fails
-           else drvFromScript { inherit type; inherit fails; } ''
-                  for FAIL in $fails
-                  do
-                    cat "$FAIL"
-                  done | grep '^.' | jq -s '. | ${type}' > "$out"
-                '';
-
   # Use 'dbug foo bar' in place of 'bar' when 'bar' is fragile, tricky, etc. The
   # value of 'foo' will be included in the stack trace in case of an error, and
   # if the environment variable "TRACE" is non-empty it will also be printed out
