@@ -11,7 +11,7 @@ drvFromScript {} ''
     fi
   }
 
-  F="${pkg.annotated}"
+  F="${pkg.asts}"
   [[ -e "$F" ]] || {
     echo "Couldn't find file '$F'" 1>&2
     exit 1

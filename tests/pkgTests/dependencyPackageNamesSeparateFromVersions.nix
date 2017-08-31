@@ -1,9 +1,9 @@
 defs: with defs; pkg:
 
-drvFromScript { buildInputs = [ jq ]; }
+drvFromScript { inherit (pkg) asts; buildInputs = [ jq ]; }
   ''
     set -e
-    DEPS=$(jq -cr '.[] | .dependencies | .[] | .package' < "${pkg.deps}" |
+    DEPS=$(jq -cr '.[] | .dependencies | .[] | .package' < "$asts" |
            sort -u) || {
       echo "Couldn't get packages of '${pkg.name}' dependencies" 1>&2
       exit 1

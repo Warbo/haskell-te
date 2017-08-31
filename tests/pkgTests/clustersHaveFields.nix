@@ -2,28 +2,20 @@ defs: with defs; pkg:
 with builtins;
 with lib;
 
-let
+runCommand "clustersHaveFields-for-${pkg.name}"
+  {
+    inherit (pkg) clustered;
+    buildInputs = [ fail jq ];
+  }
+  ''
+    NUM=$(jq 'length' < "$clustered")
+    [[ "$NUM" -gt 0 ]] || fail "No clusters"
 
-go = src: c:
-  let sC = toString c;
-   in parseJSON
-        (runScript
-          { buildInputs = [ jq ]; }
-          ''
-            set -e
-            for field in arity name module type package ast features cluster \
-                         quickspecable
-            do
-              jq "{\"$field\": map(has(\"$field\")) | all}" < "${src.${sC}}"
-            done | jq -s '.' > "$out"
-          '');
+    for field in arity name module type package ast features cluster \
+                 quickspecable
+    do
+      jq -e "map(map(has(\"$field\")) | all) | all" < "$clustered"
+    done
 
-checkCluster = src: c:
-  testWrap (concatMap (x: map (n: testMsg x."${n}"
-                                  "Clusters of ${pkg.name} have field '${n}'")
-                              (attrNames x))
-                      (go src c))
-           "${pkg.name} cluster ${toString c} has fields";
-
-in testWrap (map (checkCluster pkg.clustered) defaultClusters)
-            "Checking cluster"
+    echo pass > "$out"
+  ''

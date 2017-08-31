@@ -1,7 +1,10 @@
 defs: with defs; pkg:
 
-testMsg (parseJSON (runScript { buildInputs = [ jq ]; } ''
-                      jq 'map(has("dependencies")) | all' < "${pkg.deps}" \
-                                                          > "$out"
-                    ''))
-        "${pkg.name} has dependencies"
+runCommand "haveDeps-${pkg.name}"
+  {
+    inherit (pkg) asts;
+    buildInputs = [ jq ];
+  }
+  ''
+    jq -e 'map(has("dependencies")) | all' < "$asts" > "$out"
+  ''

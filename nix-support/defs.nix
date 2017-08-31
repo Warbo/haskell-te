@@ -72,7 +72,7 @@ let pkgs = rec {
   # Useful for setting dependencies, variables, etc. of scripts
   inherit (nix-config)
     attrsToDirs backtrace fail inNixedDir mkBin nixListToBashArray pipeToNix
-    stripOverrides timeout unpack withDeps wrap;
+    reverse stripOverrides timeout unpack withDeps wrap;
 
   # These provide executables
   inherit (haskellPackages)
@@ -92,7 +92,6 @@ let pkgs = rec {
   buckets               = callPackage ./buckets.nix               {};
   cacheContent          = callPackage ./cacheContent.nix          {};
   cluster               = callPackage ./cluster.nix               {};
-  dumpPackage           = callPackage ./dumpPackage.nix           {};
   explore               = callPackage ./explore.nix               {};
   format                = callPackage ./format.nix                {};
   genQuickspecRunner    = callPackage ./genQuickspecRunner.nix    {};
@@ -118,10 +117,6 @@ let pkgs = rec {
   testData              = callPackage ./testData.nix              {};
   tipToHaskellPkg       = callPackage ./tipToHaskellPkg.nix       {};
 
-  buildPackage  = callPackage ./buildPackage.nix
-                    { inherit (haskellPackages) cabal2nix cabal-install; };
-  downloadToNix = callPackage ./downloadToNix.nix
-                    { inherit (haskellPackages) cabal-install;           };
   getDepsScript = callPackage ./getDepsScript.nix
                     { inherit (haskellPackages) GetDeps;                 };
   tests         = callPackage ./tests.nix
@@ -142,17 +137,6 @@ let pkgs = rec {
   annotateScripts = callPackage ./annotate.nix {};
 
   callPackage = nixpkgs.newScope pkgs;
-
-  # Use 'dbug foo bar' in place of 'bar' when 'bar' is fragile, tricky, etc. The
-  # value of 'foo' will be included in the stack trace in case of an error, and
-  # if the environment variable "TRACE" is non-empty it will also be printed out
-  # when there's no error
-  dbug = info: val:
-    let msg = toJSON { inherit info; };
-        v   = if getEnv "TRACE" == ""
-                 then val
-                 else trace info val;
-     in addErrorContext msg v;
 
   defaultClusters = [ 1 2 4 ];
 
@@ -183,32 +167,6 @@ let pkgs = rec {
                                           stringToCharacters "0123456789")
                                   then c
                                   else "");
-
-  stdParts = [ "failed" "out" "stderr" "stdout" ];
-
-  storeParts = ''
-    function fail {
-      echo "$1" 1>&2
-      exit 1
-    }
-
-    [[ -n "$O" ]] || fail "storeParts failed: No data given"
-    echo "$O" > "$out"
-
-    SO=$(echo "$O" | jq -r ".stdout") || fail "Failed to get .stdout"
-    cp "$SO" "$stdout"
-
-    SE=$(echo "$O" | jq -r ".stderr") || fail "Failed to get .stderr"
-    cp "$SE" "$stderr"
-
-    echo "$O" | jq -r ".failed" > "$failed" || fail "Failed to get .failed"
-  '';
-
-  storeResult = writeScript "store-result" ''
-    set -e
-    RESULT=$(nix-store --add "$1")
-    printf '%s' "$RESULT" > "$out"
-  '';
 
   strip = s: let unpre = removePrefix "\n" (removePrefix " " s);
                  unsuf = removeSuffix "\n" (removeSuffix " " unpre);

@@ -1,4 +1,5 @@
-{ annotate, dumpToNix, haskellPackages, lib, nixedHsPkg, unpack }:
+{ annotate, cluster, dumpToNix, haskellPackages, lib, nixedHsPkg, package,
+  runCommand, unpack }:
 
 with builtins;
 with lib;
@@ -9,6 +10,8 @@ with rec {
 
   extend = pkg: rec {
     inherit pkg;
+    inherit (pkg) name;
+
     src  = nixedHsPkg (unpack pkg.src);
 
     dump = dumpToNix { pkgDir = src; };
@@ -19,9 +22,24 @@ with rec {
       pkgSrc = src;
     };
 
-    eqs = runCommand { inherit asts; buildInputs = [ package ]; } ''
-      quickspecAsts > "$out"
-    '';
+    eqs = runCommand "eqs-of-${name}"
+      {
+        inherit asts;
+        buildInputs = [ package ];
+        OUT_DIR     = src;
+      }
+      ''
+        quickspecAsts < "$asts" > "$out"
+      '';
+
+    clustered = runCommand "cluster"
+      {
+        inherit asts;
+        inherit (cluster) clusterScript;
+      }
+      ''
+        "$clusterScript" < "$asts" > "$out"
+      '';
   };
 };
 genAttrs [ "list-extras" ] (n: extend (getAttr n haskellPackages))

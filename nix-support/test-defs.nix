@@ -1,4 +1,4 @@
-{ callPackage, dbug, drvFromScript, lib, writeScript }:
+{ callPackage, drvFromScript, lib, writeScript }:
 
 with builtins;
 with lib;

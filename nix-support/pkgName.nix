@@ -1,11 +1,21 @@
-{ runScript }:
+{ lib, reverse }:
 with builtins;
+with lib;
+with rec {
+  # Technically allows things like '.....' as numbers, but meh
+  isDigit = x: any (n: n == x) (stringToCharacters "0123456789.");
 
-givenName:
+  numeric = x: all isDigit (stringToCharacters x);
 
-assert isString givenName;
+  stripNums = xs: if xs == []
+                     then []
+                     else if numeric (head xs)
+                             then stripNums (tail xs)
+                             else xs;
 
-runScript { inherit givenName; } ''
-  N=$(echo "$givenName" | sed -e 's/-[0-9][0-9.]*$//g')
-  printf "%s" "$N" > "$out"
-''
+  stripEndNums = xs: reverse (stripNums (reverse xs));
+
+  stripVersion = s: concatStringsSep "-" (stripEndNums (splitString "-" s));
+};
+
+stripVersion

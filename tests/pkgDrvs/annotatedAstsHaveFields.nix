@@ -1,9 +1,9 @@
 defs: with defs; pkg:
 with builtins;
 
-let checkField = f: drvFromScript { inherit (pkg) annotated; } ''
+let checkField = f: drvFromScript { inherit (pkg) asts; } ''
       set -e
-      R=$(jq 'map(has("${f}")) | all' < "$annotated")
+      R=$(jq 'map(has("${f}")) | all' < "$asts")
 
       if [[ "x$R" = "xtrue" ]]
       then

@@ -1,18 +1,21 @@
-# Import useful stuff
-let pkgs = import ./. {};
- in with pkgs; with builtins; with lib;
+with builtins;
+with { ourPkgs = import ./. {}; };
+with ourPkgs;
+with lib;
+with rec {
+  testResults = import ./tests.nix { pkgs = ourPkgs; };
 
-# Import all *.nix files from ./tests, pass pkgs to each and collect up the
-# resulting tests
-let tests       = import ./tests.nix { inherit pkgs; };
-    testResults = mapAttrs (n: t: dbug "Running test '${n}'" t)
-                           tests;
+  flatten     = path: t:
+    if isBool t
+       then [ (testMsg t (toJSON path)) ]
+       else if t ? type && t.type == "derivation"
+               then [ t ]
+               else [ (testWrap (attrValues
+                        (mapAttrs
+                          (n: v: testWrap (flatten (path ++ [ n ]) v)
+                                          (toJSON  (path ++ [ n ])))
+                        t))
+                        (toJSON path)) ];
+};
 
-    flatten     = t: if isBool t
-                        then [ (testMsg t "Unknown") ]
-                        else if t ? type && t.type == "derivation"
-                                then [ t ]
-                                else concatMap flatten (attrValues t);
-
-    result      = flatten testResults;
- in testWrap result "All tests passed"
+testWrap (flatten [ "tests" ] testResults) "All tests passed"

@@ -1,40 +1,12 @@
 defs: with defs; with builtins; pkg:
 
-rec {
-
-join = x: addErrorContext "joining ${toJSON x}"
-            (concatStringsSep " " (map (e: ''"${e}"'') x));
-
-inScript = n: ''
-  for F in ${toString pkg.explored.${n}}
-  do
-    jq '.[]' < "$F"
-  done | jq -s '.' > out
-  "${storeResult}" out
-'';
-
-outScript = input: ''
-  "${reduce-equations}/bin/reduce-equations" < "${input}" > out
-  "${storeResult}" out
-'';
-
-checkReduce = n:
-  let iScript = inScript n;
-      oScript = outScript input;
-      input   = addErrorContext "inScript: ${iScript} "
-                                (runScript {} iScript);
-      output  = addErrorContext "oScript: ${oScript} "
-                                (runScript {
-                                    buildInputs = explore.extractedEnv {};
-                                  }
-                                  oScript);
-      dbg     = toJSON { inherit iScript oScript input output; };
-      result  = output != "";
-   in addErrorContext dbg result;
-
-tryReduce = n: addErrorContext "reducing: ${toJSON pkg.explored.${n}} "
-                               (checkReduce n);
-
-result = testMsg (all tryReduce (attrNames pkg.explored)) "Can reduce";
-
-}.result
+runCommand "reduceProducesEqs-${pkg.name}"
+  {
+    inherit (pkg) eqs;
+    buildInputs = [ jq reduce-equations ];
+  }
+  ''
+    GOT=$(reduce-equations < "$eqs")
+    echo "$GOT" | jq -e 'type == "array"'
+    echo "$GOT" | jq -e 'map(has("relation")) | all' > "$out"
+  ''

@@ -1,27 +1,23 @@
 defs: with defs; pkg:
 with builtins;
 
-let check = c:
-      let sC    = toString c;
-          stdin = readFile pkg.clustered."${sC}";
-          have  = parseJSON (runScript { buildInputs = [ jq ]; } ''
-            set -e
-            set -x
-            FOUND=$(jq '.[] | .cluster' < "${pkg.clustered."${sC}"}")
-            for NUM in $(seq 1 "${sC}")
-            do
-              echo "$FOUND" | grep "^$NUM$" > /dev/null || {
-                echo "Clustering '${pkg.name}' into '${sC}' clusters, '$NUM' was empty" 1>&2
-                echo "false" > "$out"
-              }
-            done
-            echo "true" > "$out"
-          '');
-          result = if stdin == ""
-                      then trace "Got no stdin" false
-                      else have;
-       in testDbg result "Have clusters for ${sC}" {
-            inherit c sC stdin;
-            inherit (pkg) clustered;
-          };
- in testAll (map check defaultClusters)
+runCommand "haveAllClusters"
+ {
+   inherit (cluster) clusterScript;
+   inherit (pkg) asts name;
+   buildInputs = [ fail jq ];
+ }
+ ''
+   for CLUSTERS in 1 2 3
+   do
+     export CLUSTERS
+     RESULT=$("$clusterScript" < "$asts")
+      FOUND=$(echo "$RESULT" | jq '.[] | .cluster')
+     for NUM in $(seq 1 "$CLUSTERS")
+     do
+       echo "$FOUND" | grep "^$NUM$" > /dev/null ||
+         fail "Clustering '$name' into '$CLUSTERS' clusters, '$NUM' was empty"
+     done
+   done
+   echo pass > "$out"
+ ''

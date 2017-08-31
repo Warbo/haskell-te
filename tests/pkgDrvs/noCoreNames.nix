@@ -1,12 +1,12 @@
 defs: with defs; pkg:
 with builtins;
 
-let count = drvFromScript { inherit (pkg) annotated; } ''
+let count = drvFromScript { inherit (pkg) asts; } ''
       set -e
-      if jq -cr '.[] | .name' < "$annotated" |
+      if jq -cr '.[] | .name' < "$asts" |
            grep -cF ".$"
       then
-        echo "Found core names in '$annotated'" 1>&2
+        echo "Found core names in '$asts'" 1>&2
         exit 1
       fi
 
@@ -14,16 +14,14 @@ let count = drvFromScript { inherit (pkg) annotated; } ''
       exit 0
     '';
  in {
-      haveAnnotated = testMsg (pkg ? annotated) "Have annotated";
-
-      annotatedExists = drvFromScript { inherit (pkg) annotated; } ''
-                             if [[ -e "$annotated" ]]
+      annotatedExists = drvFromScript { inherit (pkg) asts; } ''
+                             if [[ -e "$asts" ]]
                              then
                                touch "$out"
                                exit 0
                              fi
 
-                             echo "annotated '$annotated'" doesn't exist" 1>&2
+                             echo "annotated '$asts'" doesn't exist" 1>&2
                              exit 1
                            '';
 
