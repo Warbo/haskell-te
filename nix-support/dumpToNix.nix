@@ -1,5 +1,6 @@
-{ bash, checkStderr, explore, fail, haskellPackages, hsNameVersion, jq, lib,
-  mkBin, python, runCommand, withDeps, wrap, writeScript }:
+{ bash, checkStderr, fail, haskellPackages, haskellPkgNameVersion,
+  haveVar, hsNameVersion, jq, lib, mkBin, python, runCommand, withDeps,
+  writeScript }:
 with builtins;
 with lib;
 
@@ -72,12 +73,14 @@ with rec {
 
   runAstPlugin = withDeps [ testGetJson ] (mkBin {
     name   = "runAstPlugin";
-    paths  = [ getJson jq runAstPluginRaw ];
+    paths  = [ getJson haveVar jq runAstPluginRaw ];
     vars   = { CMD = "runAstPluginRaw"; };
     script = ''
       #!/usr/bin/env bash
       set -e
       set -o pipefail
+
+      haveVar nameVersion
 
       getJson | jq -c --argjson nv "$nameVersion" '. + $nv' | jq -s '.'
     '';
@@ -85,12 +88,18 @@ with rec {
 
   main = mkBin {
     name   = "dumpToNix";
-    paths  = [ bash cabal-install checkStderr fail runAstPlugin ];
+    paths  = [ bash cabal-install checkStderr fail haskellPkgNameVersion
+               runAstPlugin ];
     script = ''
       #!/usr/bin/env bash
       set -e
+      set -o pipefail
 
-      [[ -n "$pName" ]] || fail "Can't dump ASTs without pName"
+      nameVersion=$(haskellPkgNameVersion "$1")
+      export nameVersion
+
+      [[ -n "$pName" ]] || pName=$(echo "$nameVersion" | jq -r '.package')
+      export pName
 
       cp -r "$1" ./pkgDir
       chmod +w -R ./pkgDir
