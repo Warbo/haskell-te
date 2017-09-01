@@ -18,10 +18,8 @@ with rec {
 mkBin {
   name  = "python";
   paths = [ py quickspecTip tipBenchmarks.tools ];
-  vars  = {
+  vars  = nixEnv // {
     NIX_EVAL_HASKELL_PKGS = quickspecBench.customHs;
-    NIX_PATH              =
-      "nixpkgs=${toString ./..}/nix-support:real=${toString <nixpkgs>}";
 
     hsTipSetup  = hs.sampled.genInput;
     hsTipRunner = hs.sampled.runner;
@@ -29,9 +27,7 @@ mkBin {
     mlTipSetup  = ml.sampled.genInput;
     mlTipRunner = ml.sampled.runner;
 
-    qsStandaloneMkPkg  = qs.standalone.genAnnotatedPkg;
-    qsStandaloneSetup  = qs.standalone.genInput;
-    qsStandaloneRunner = qs.standalone.runner;
+    qsStandalone = callPackage ./quickspecStandalone.nix {};
 
     theoryFiles = toJSON {
       list-full  = ./list-full.smt2;

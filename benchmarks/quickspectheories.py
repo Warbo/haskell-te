@@ -5,90 +5,30 @@ from os         import chmod, getenv
 from parameters import repetitions, timeout_secs
 from sexpdata   import loads as sloads, dumps as sdumps
 from stat       import S_IRWXU, S_IRWXG, S_IRWXO
-from util       import cached, eqs_in, generate_cache, pipe, set_attributes, sort, timed_run
-
-files  = jloads(getenv('theoryFiles'))
-truths = jloads(getenv('theoryTruths'))
-args   = {
-    'rep'    : range(0, repetitions),
-    'theory' : list(set(jloads(getenv('theoryFiles' )).keys() + \
-                        jloads(getenv('theoryTruths')).keys()))
-}
+from util       import cached, generate_cache, pipe, reps, set_attributes, theories, timed_run
 
 def setup_cache():
     '''Run all repetitions on all theories up-front, to avoid expensive
     re-running of tools.'''
 
-    def readFiles(files):
-        '''Turns a dictionary of filenames into a dictionary of file content.'''
-        result = {}
-        for theory in files:
-            with open(files[theory], 'r') as f:
-                result[theory] = f.read()
-        return result
-
-    # This data is specific to a theory, but not any particular run. For example
-    # it includes the ground truth for that theory, but not the time taken by a
-    # run
-    data = {}
-    for theory in args['theory']:
-        # TODO: We can speed this up if we use nix-build to make the package
-        # (annotation should be fine as-is). That way, it will all be cached,
-        # and re-used as long as the theory file and TIP tools remain unchanged.
-        thy = {
-            'theory'      : theory,
-            'content'     : readFiles(files )[theory],
-            'conjectures' : readFiles(truths)[theory]
-        }
-
-        # Translate this theory into Haskell and extract type, arity, etc. info
-        ann_out = pipe([getenv('qsStandaloneMkPkg')], thy['content'])['stdout']
-        pkg     = jloads(ann_out)
-
-        env        = {'OUT_DIR': pkg['out_dir']}
-        annotated  = None
-        with open(pkg['annotated'], 'r') as f:
-            annotated = jloads(f.read())
-
-        # Make a Haskell program to explore this theory with QuickSpec
-        setup_out = pipe([getenv('qsStandaloneSetup')],
-                         jdumps(annotated),
-                         env=env)['stdout']
-        setup     = jloads(setup_out)
-
-        # Build the environment (GHC with all the right packages)
-        env         = pipe(['nix-build', '-E', setup['env']], env=env)['stdout']
-        thy['env']  = {'PATH' : env.strip() + '/bin:' + getenv('PATH')}
-        thy['cmd']  = [getenv('qsStandaloneRunner'), setup['runner']]
-        thy['code'] = setup['code']
-
-        data[theory] = thy
+    data = jloads(getenv('qsStandalone'))
 
     def gen(theory, rep):
         '''Performs a single repetition of a single theory.'''
         thy    = data[theory]
         result = {'theory' : theory}
 
-        result.update(timed_run(thy['cmd'], thy['code'], timeout_secs,
-                                env=thy['env']))
+        result.update(timed_run([thy['runner']], '', timeout_secs))
 
         result['analysis'] = None
         if result['success']:
-            # Discard "Depth" lines, since they're just progress info
-            eqs = map(jloads, filter(lambda l: not l.startswith('Depth') \
-                                               and l.strip(),
-                                     result['stdout'].split('\n')))
-
-            out = pipe(['precision_recall_eqs'], jdumps(eqs),
-                       env={'GROUND_TRUTH' : truths[theory],
-                            'TRUTH_SOURCE' : truths[theory]})['stdout']
-
-            result['analysis'] = jloads(out)
+            analysis           = pipe([thy['analyser']], result['stdout'])
+            result['analysis'] = jloads(analysis['stdout'])
 
         return result
 
     # Run all repetitions of all theories
-    result = generate_cache(args['theory'], gen)
+    result = generate_cache(data.keys(), gen)
 
     # Merge in the theory-specific data once, rather than copying for each run
     for theory in data:
@@ -96,8 +36,7 @@ def setup_cache():
 
     return result
 
-setup_cache.timeout = max(3600,
-                          timeout_secs * len(args['rep']) * len(args['theory']))
+setup_cache.timeout = max(3600, timeout_secs * len(reps()) * len(theories()))
 
 def track_data(cache, _):
     '''A dummy benchmark which spits out the raw data, for archiving.'''
@@ -110,12 +49,12 @@ track_data.param_names = ["dummy"]
 
 # Benchmarks
 
-def track_conjectures(cache, theory):
-    sexps = sloads('(\n{0}\n)'.format(cache[theory]['conjectures']))
+def track_ground_truth(cache, theory):
+    sexps = sloads('(\n{0}\n)'.format(cache[theory]['ground_truth']))
     return len(sexps)
 
 def track_equations(cache, rep, theory):
-    return len(eqs_in(cached(cache, theory, rep, 'stdout')))
+    return len(jloads(cached(cache, theory, rep, 'stdout')))
 
 def track_precision(cache, rep, theory):
     return cached(cache, theory, rep, 'analysis', 'precision')
@@ -128,18 +67,15 @@ def track_time(cache, rep, theory):
 
 # Assign parameters to benchmarks
 
-set_attributes([track_conjectures, track_equations, track_precision,
+set_attributes([track_ground_truth, track_equations, track_precision,
                 track_recall, track_time],
                {
                    'repeat'      : 1,
                    'number'      : 1,
-                   'params'      : reduce(lambda x, y: x + (y,),
-                                          [args[name] for name in sort(args.keys())],
-                                          ()),
-                   'param_names' : sort(args.keys())
+                   'params'      : (reps(), theories()),
+                   'param_names' : ['rep', 'theory']
                })
 
-# The available conjectures (ground truth) doesn't change across reps, so only
-# track it per theory
-track_conjectures.params      = (args['theory'],)
-track_conjectures.param_names = ['theory']
+# The ground truth doesn't change across reps, so only track it per theory
+track_ground_truth.params      = (theories())
+track_ground_truth.param_names = ['theory']

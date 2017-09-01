@@ -72,13 +72,6 @@ def sort(l):
     l.sort()
     return l
 
-def eqs_in(stdout):
-    '''Extracts any equations present in the given stdout.'''
-    def keep_line(l):
-        return l.strip() and not l.startswith('Depth')
-
-    return map(loads, filter(keep_line, stdout.split('\n')))
-
 def generate_cache(theories, f):
     '''Call the function 'f' for each repetition of each given theory, return an
     accumulated dictionary of the results.'''
@@ -97,7 +90,7 @@ def set_attributes(funcs, attrs):
         for attr in attrs:
             setattr(f, attr, attrs[attr])
 
-def tip_benchmarks(args):
+def tip_benchmarks():
     benchmarks = {
         # Store the generated data in our results, so we can inspect it and
         # reproduce the executions/analysis.'''
@@ -107,25 +100,25 @@ def tip_benchmarks(args):
 
         # All of the conjectures we wanted to find.
         'track_conjectures': lambda cache, rep, size:
-            len(cached(cache, size, rep, 'conjectures', 'wanted')),
+            len(cached(cache, size, rep, 'wanted')),
 
         # All of the wanted conjectures which were equations. QuickSpec can only
         # find equations, so this is our theoretical maximum.
         'track_conjectured_equations': lambda cache, rep, size:
             sum(map(lambda c: len(c['equation']),
-                    cached(cache, size, rep, 'conjectures', 'wanted'))),
+                    cached(cache, size, rep, 'wanted'))),
 
         # How many equations we found (in total).
         'track_equations': lambda cache, rep, size:
-            len(eqs_in(cached(cache, size, rep, 'stdout'))),
+            len(loads(cached(cache, size, rep, 'stdout'))),
 
         # Proportion of found equations which were wanted.
         'track_precision': lambda cache, rep, size:
-            cached(cache, size, rep, 'conjectures', 'precision') or 0,
+            cached(cache, size, rep, 'precision') or 0,
 
         # Proportion of wanted conjectures which were found.
         'track_recall': lambda cache, rep, size:
-            cached(cache, size, rep, 'conjectures', 'recall'),
+            cached(cache, size, rep, 'recall'),
 
         # Time taken to explore (excludes setup and analysis).
         'track_time': lambda cache, rep, size:
@@ -137,15 +130,14 @@ def tip_benchmarks(args):
     for name in benchmarks:
         benchmarks[name].func_name = name
 
-    keys = sort(args.keys())
     set_attributes(benchmarks.values(),
                    {
                        'repeat'      : 1,
                        'number'      : 1,
                        'params'      : reduce(lambda x, y: x + (y,),
-                                              [args[name] for name in keys],
+                                              [reps(), sizes()],
                                               ()),
-                       'param_names' : keys
+                       'param_names' : ['rep', 'size']
                    })
 
     # track_data isn't a "real" benchmark, so only do it once
@@ -156,47 +148,16 @@ def tip_benchmarks(args):
 
     return benchmarks
 
-def tip_setup(prefix, args, mkCmd):
-    '''Running a TE tool is expensive, so we only want to run each sample once.
-    By returning all of the results from setup_cache, each benchmark can pick
-    out the values it cares about, without having to re-run anything.
-    The returned value will appear as the first argument to each benchmark.'''
-    def setup_cache():
-        def gen(size, rep):
-            data = {}
-
-            # Choose a sample, and generate QuickSpec code for exploring it
-            sample = pipe(['choose_sample', str(size), str(rep)])['stdout']
-            data['sample'] = sample
-
-            stdout     = pipe([getenv(prefix + 'TipSetup')], sample)['stdout']
-            cmd, stdin = mkCmd(stdout)
-
-            data.update(timed_run(cmd, stdin, timeout_secs))
-
-            # Analyse the result, if we have one
-            results = 'null'
-            if data['success']:
-                # conjectures_for_sample expects encoded sample but decoded eqs
-                encoded = eqs_in(data['stdout'])
-                decoded = pipe(['decode'], dumps(encoded))['stdout']
-                results = pipe(['conjectures_for_sample'], decoded,
-                               env={'SAMPLED_NAMES' : sample})['stdout']
-
-            data['conjectures'] = loads(results)
-            return data
-
-        return generate_cache(args['size'], gen)
-    setup_cache.timeout = max(
-        3600,
-        timeout_secs * len(args['rep']) * len(args['size']))
-
-    return setup_cache
+def theories():
+    '''The standalone theories we're benchmarking (nat-simple, etc.)'''
+    return loads(getenv('qsStandalone')).keys()
 
 def sizes():
+    '''The TEBenchmark sample sizes to use.'''
     return range(1, max_size)
 
 def reps():
+    '''The repetitions to run (a list [0, 1, ...]).'''
     return range(0, repetitions)
 
 def tip_cache(cmd):
@@ -207,7 +168,9 @@ def tip_cache(cmd):
     def setup_cache():
         def gen(size, rep):
             cmds = loads(check_output([cmd],
-                                      env=dict(os.environ, SIZE=size, REP=rep)))
+                                      env=dict(environ,
+                                               SIZE = str(size),
+                                               REP  = str(rep))))
 
             result   = timed_run([cmds['runner']], '', timeout=timeout_secs)
             analysis = {}
