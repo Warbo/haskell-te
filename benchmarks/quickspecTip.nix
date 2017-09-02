@@ -1,10 +1,8 @@
-{ bash, callPackage, fail, genQuickspecRunner, haveVar, jq,
+{ bash, callPackage, fail, filterToSampled, genQuickspecRunner, haveVar, jq,
   makeHaskellPkgNixable, mkBin, nix, nixEnv, runCommand, testData,
   tipBenchmarks, withDeps, wrap }:
 
 with rec {
-  filterToSampled = callPackage ./filterToSampled.nix {};
-
   quickspecTip = mkBin {
     name   = "quickspecTip";
     paths  = [

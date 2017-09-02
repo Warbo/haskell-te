@@ -1,15 +1,14 @@
 { annotated, bash, buckets, explore, fail, format, glibcLocales, jq,
-  mlspecBench, nix-config, quickspecBench, reduce-equations, runCommand,
-  stdenv, timeout, tipBenchmarks, wrap, writeScript }:
+  mlspecBench, nix-config, reduce-equations, runCommand, stdenv, timeout,
+  tipBenchmarks, wrap, writeScript }:
 
 with builtins;
 rec {
-
   benchVars = {
     sampled = {
       runner  = wrap {
         name  = "hashspec-sampled-runner";
-        paths = [ ((import quickspecBench.augmentedHs {
+        paths = [ ((import augmentedHs {
                      hsDir = "${tipBenchmarks.tip-benchmark-haskell}";
                    }).ghcWithPackages (h: map (n: h."${n}") [
                      "quickspec" "murmur-hash" "cereal" "mlspec-helper"
@@ -79,6 +78,50 @@ rec {
     };
   };
 
+  # We use "./.." so that all of our dependencies get included
+  augmentedHs = writeScript "augmented-hs.nix" ''
+    # Provides a set of Haskell packages for use by nix-eval.
+    { hsDir }:
+    with import ${./..}/nix-support {};
+    with builtins;
+    let hsName = "tip-benchmark-sig";  # The name used by full_haskell_package
+        hsPkgs = haskellPackages.override {
+          overrides = self: super:
+            # Include existing overrides, along with our new one
+            hsOverride self super // {
+              "tip-benchmark-sig" = self.callPackage (toString (nixedHsPkg hsDir)) {};
+            };
+        };
+        # Echo "true", with our Haskell package as a dependency
+        check = stdenv.mkDerivation {
+          name = "check-for-pkg";
+          buildInputs  = [(hsPkgs.ghcWithPackages (h: [h."tip-benchmark-sig"]))];
+          buildCommand = "source $stdenv/setup; echo true > $out";
+        };
+     in assert hsDir  != ""                 || abort "Got no OUT_DIR";
+        assert hsPkgs ? "tip-benchmark-sig" || abort "hsPkgs doesn't have pkg";
+        assert import "''${check}"          || abort "Couldn't build pkg";
+        hsPkgs
+  '';
+
+  customHs = writeScript "custom-hs.nix" ''
+    # Uses OUT_DIR env var to include the package generated from smtlib data
+    (import <nixpkgs> {}).callPackage "${augmentedHs}" {
+      hsDir = builtins.getEnv "OUT_DIR";
+    }
+  '';
+
+  wrapScript = name: script: wrap {
+    inherit name script;
+    paths = [ env ];
+    vars  = nixEnv // {
+      LANG                  = "en_US.UTF-8";
+      LOCALE_ARCHIVE        = "${glibcLocales}/lib/locale/locale-archive";
+      NIX_EVAL_HASKELL_PKGS = customHs;
+      NIX_PATH              = "nixpkgs=${toString <nixpkgs>}:support=${toString ../nix-support}";
+    };
+  };
+
   inEnvScript = wrap {
     name   = "hashspecBench-inenvscript";
     paths  = [
@@ -101,15 +144,72 @@ rec {
     '';
     };
 
-  script = quickspecBench.wrapScript "hashspecBench" rawScript;
+    setUpDir = ''
+      [[ -n "$DIR" ]] || {
+        echo "No DIR given to work in, using current directory $PWD" 1>&2
+        DIR="$PWD"
+      }
+      export DIR
+    '';
+
+    mkPkgInner = wrap {
+      name  = "mkPkgInner";
+      paths = [ fail inNixedDir ];
+      vars  = {
+        MAKE_PACKAGE = wrap {
+          name   = "make-haskell-package";
+          paths  = [ tipBenchmarks.tools ];
+          script = ''
+            OUT_DIR="$PWD" full_haskell_package < "$INPUT_TIP"
+          '';
+        };
+      };
+      script = ''
+        #!/usr/bin/env bash
+        set -e
+        [[ -n "$INPUT_TIP" ]] || fail "No INPUT_TIP given, aborting"
+
+        echo "Creating Haskell package" 1>&2
+        inNixedDir "$MAKE_PACKAGE" "generated-haskell-package" ||
+          fail "Failed to create Haskell package"
+        echo "Created Haskell package" 1>&2
+      '';
+    };
+
+    getInput = ''
+      INPUT_TIP=$(pipeToNix)
+      export INPUT_TIP
+
+      echo "Input stored at '$INPUT_TIP'" 1>&2
+
+      # Initialise all of the data we need
+      OUT_DIR=$("$mkPkgInner")
+
+      export OUT_DIR
+
+      # Extract ASTs from the Haskell package, annotate and add to the Nix store. By
+      # doing this in nix-build, we get content-based caching for free.
+      STORED=$(nix-store --add "$OUT_DIR")
+      EXPR="with import <support> {}; annotated \"$STORED\""
+      ANNOTATED=$(nix-build --show-trace -E "$EXPR")
+
+      export ANNOTATED
+    '';
+
+  env = buildEnv {
+    name  = "te-env";
+    paths = [ jq nix tipBenchmarks.tools ];
+  };
+
+  script = wrapScript "hashspecBench" rawScript;
 
   rawScript = writeScript "hashspecBench" ''
     #!${bash}/bin/bash
     set -e
 
-    ${quickspecBench.setUpDir}
+    ${setUpDir}
     export TEMPDIR="$DIR"
-    ${quickspecBench.getInput}
+    ${getInput}
 
     # Explore
     export    NIXENV="import ${mlspecBench.ourEnv}"
@@ -134,7 +234,7 @@ rec {
   hs = stdenv.mkDerivation {
     name         = "hashspecBench";
     src          = script;
-    buildInputs  = [ quickspecBench.env ];
+    buildInputs  = [ env ];
     unpackPhase  = "true";  # Nothing to do
 
     doCheck      = true;

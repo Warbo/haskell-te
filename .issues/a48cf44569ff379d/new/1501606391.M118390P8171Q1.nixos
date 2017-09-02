@@ -1,8 +1,9 @@
 From: Chris Warburton
 Date: Tue, 01 Aug 2017 17:47:12 +0100
-State: new
+State: resolved
 Subject: See if our benchmark setup could be built by Nix
 Message-Id: <a48cf44569ff379d-0-artemis@nixos>
+resolution: fixed
 
 The setup_cache functions in our benchmarks are getting quite
 complicated. There's a lot this that we could probably do with Nix,

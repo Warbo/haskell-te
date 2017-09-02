@@ -6,8 +6,6 @@ with import ../nix-support {};
 with rec {
   quickspecTip = callPackage ./quickspecTip.nix {};
 
-  qs = quickspecBench.benchVars;
-
   hs = hashspecBench.benchVars;
 
   ml = mlspecBench.benchVars;
@@ -19,7 +17,7 @@ mkBin {
   name  = "python";
   paths = [ py quickspecTip tipBenchmarks.tools ];
   vars  = nixEnv // {
-    NIX_EVAL_HASKELL_PKGS = quickspecBench.customHs;
+    NIX_EVAL_HASKELL_PKGS = hashspecBench.customHs;
 
     hsTipSetup  = hs.sampled.genInput;
     hsTipRunner = hs.sampled.runner;

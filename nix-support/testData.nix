@@ -30,4 +30,15 @@ rec {
                              haskellPkgToAsts "$p" > "$out"
                            '')
                   haskellPkgs;
+
+  eqs = mapAttrs (n: asts: runCommand "eqs-of-${n}"
+                             (withNix {
+                               inherit asts;
+                               buildInputs = [ package ];
+                               pkg         = getAttr n haskellPkgs;
+                             })
+                             ''
+                               quickspecAsts "$pkg" < "$asts" > "$out"
+                             '')
+                 asts;
 }

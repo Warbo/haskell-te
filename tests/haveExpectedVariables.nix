@@ -1,58 +1,33 @@
 defs: with defs;
 
 with rec {
-  env = runCommand "theory-env"
+  runner = runCommand "list-full-runner"
     (withNix {
-      inherit (quickspecBench.benchVars.standalone)
-        genAnnotatedPkg genInput;
-      data        = ../benchmarks/list-full.smt2;
-      buildInputs = [ jq ];
+      asts        = testData.asts.list-full;
+      OUT_DIR     = nixify testData.haskellPkgs.list-full;
+      buildInputs = [ genQuickspecRunner ];
     })
     ''
-      # Convert TIP format to Haskell, extract ASTs and annotate with type info
-      RESULT=$("$genAnnotatedPkg" < "$data")
-
-         ASTS=$(echo "$RESULT" | jq -r '.annotated')
-      OUT_DIR=$(echo "$RESULT" | jq -r '.out_dir')
-
-      export OUT_DIR
-
-      # Generate a QuickSpec signature for the generated Haskell package, along
-      # with the code to explore it.
-      "$genInput" < "$ASTS" |
-        jq --arg dir "$OUT_DIR" '. + {"out_dir":$dir}' > "$out"
+      R=$(genQuickspecRunner < "$asts")
+      ln -s "$R" "$out"
     '';
 
-  code = runCommand "code.hs" { inherit env; buildInputs = [ jq ]; } ''
-    jq -r '.code' < "$env" > "$out"
+  env = runCommand "list-full-env" { inherit runner; } ''
+    grep -v '^exec ' < "$runner" > "$out"
   '';
 
-  # The 'runhaskell' command used to execute the sig generator, run inside the
-  # appropriate Nix environment (for GHC, dependencies, generated package, etc.)
-  runhaskell = wrap {
-    name   = "haveExpectedVariables-runhaskell";
-    vars   = nixEnv // {
+  code = runCommand "code.hs"
+    {
       inherit env;
-      NIX_EVAL_HASKELL_PKGS = quickspecBench.customHs;
-      NIX_PATH              = quickspecBench.innerNixPath;
-    };
-    paths  = [ jq nix ];
-    script = ''
-      #!/usr/bin/env bash
-      set -e
-       RUNNER=$(jq -r '.runner'  < "$env")
-         EXPR=$(jq -r '.env'     < "$env")
-      OUT_DIR=$(jq -r '.out_dir' < "$env")
-
-      export OUT_DIR
-
-      nix-shell --show-trace -p "$EXPR" --run "$RUNNER $*"
+      buildInputs = [ fail ];
+    }
+    ''
+      source "$env"
+      [[ -e "$HASKELL_CODE" ]] || fail "HASKELL_CODE ($HASKELL_CODE) not found"
+      ln -s "$HASKELL_CODE" "$out"
     '';
-  };
 
-  ticks = "''";
-
-  countVars = writeScript "countVars.hs" ''
+  countVars = with { ticks = "''"; }; writeScript "countVars.hs" ''
     -- TODO: We don't need all of these
     import Test.QuickSpec hiding (lists)
     import Test.QuickSpec.Signature
@@ -101,40 +76,39 @@ with rec {
   '';
 };
 {
-  askForVariables = runCommand "ask-for-vars"
-    {
-      inherit code;
-    }
-    ''
-      echo "Ensuring Haskell code requests variables for appropriate types" 1>&2
+  askForVariables = runCommand "ask-for-vars" { inherit code; } ''
+    echo "Ensuring Haskell code requests variables for appropriate types" 1>&2
 
-      # Find where we're adding variables to the signature and get their types
-      # This parsing is pretty fragile; if it breaks, it might be worth using
-      # haskell-src-exts or similar.
-      TYPES=$(grep -A 2 'MLSpec.Helper.addVars' < "$code" |
-              grep 'getArbGen'                            |
-              grep -o ':: .*\]'                           |
-              grep -o ' .*[^]]'                           |
-              grep -o '[^ ].*[^ ]'                        )
+    # Find where we're adding variables to the signature and get their types
+    # This parsing is pretty fragile; if it breaks, it might be worth using
+    # haskell-src-exts or similar.
+    TYPES=$(grep -A 2 'MLSpec.Helper.addVars' < "$code" |
+            grep 'getArbGen'                            |
+            grep -o ':: .*\]'                           |
+            grep -o ' .*[^]]'                           |
+            grep -o '[^ ].*[^ ]'                        )
 
-      for TYPE in Prelude.Integer '(A.List) Prelude.Integer'
-      do
-        echo "$TYPES" | grep -F "$TYPE" > /dev/null || {
-          echo "Didn't ask for variables of type '$TYPE'" 1>&2
-          exit 1
-        }
-      done
+    for TYPE in Prelude.Integer '(A.List) Prelude.Integer'
+    do
+      echo "$TYPES" | grep -F "$TYPE" > /dev/null || {
+        echo "Didn't ask for variables of type '$TYPE'" 1>&2
+        exit 1
+      }
+    done
 
-      echo "pass" > "$out"
-    '';
+    echo "pass" > "$out"
+  '';
 
   haveGenerators = runCommand "have-generators"
     {
-      inherit countVars runhaskell;
+      inherit countVars env;
+      buildInputs = [ genQuickspecRunner ];
     }
     ''
+      set -e
       echo "Checking that we can find Arbitrary instances" 1>&2
-      "$runhaskell" < "$countVars"
-      echo "pass"   > "$out"
+      source "$env"
+      $CMD < "$countVars"
+      echo "pass" > "$out"
     '';
 }

@@ -1,6 +1,5 @@
 defs: with defs; with builtins; with lib;
-{}
-/*FIXME: Don't use sampling
+
 with rec {
   dep = "global746970323031352f62696e5f646973747269622e736d7432706c7573";
 
@@ -14,24 +13,35 @@ with rec {
   '';
 
   commDeps = runCommand "commDeps"
-    (tipBenchmarks.cache // { buildInputs = [ tipBenchmarks.env ]; })
+    (tipBenchmarks.cache // {
+      inherit getCommDeps;
+      buildInputs = [ tipBenchmarks.env ];
+    })
     ''
-      racket "${getCommDeps}" > "$out"
+      racket "$getCommDeps" > "$out"
     '';
 
-  commDepAsts = sampling.sampleAsts commDeps;
-
-  commEqs     = sampling.quickspecSample "none" "none" commDepAsts;
-
-  commEqsJson = runCommand "comm-deps-eq-count"
+  commRunner = runCommand "commutativityExplorer"
     {
-      inherit commEqs;
-      buildInputs = [ jq package ];
+      inherit commDeps;
+      asts        = testData.asts.teBenchmark;
+      OUT_DIR     = nixify testData.haskellPkgs.teBenchmark;
+      buildInputs = [ filterToSampled genQuickspecRunner jq ];
     }
     ''
-      quickspec
-      F=$(jq -r '.stdout' < "$commEqs")
-      grep '^{' < "$F" | jq -s '.' > "$out"
+      SAMPLE=$(cat "$commDeps")
+      export SAMPLE
+
+      R=$(filterToSampled < "$asts" | genQuickspecRunner)
+      ln -s "$R" "$out"
+    '';
+
+  commEqs = runCommand "commutativityEqs.json"
+    {
+      inherit commRunner;
+    }
+    ''
+      "$commRunner" > "$out"
     '';
 
   findRep = runCommand "dep-rep"
@@ -55,12 +65,12 @@ with rec {
 
   precRec = runCommand "pr"
     {
-      inherit commEqsJson;
+      inherit commEqs;
       SAMPLED_NAMES = dep;
       buildInputs   = [ tipBenchmarks.tools ];
     }
     ''
-      decode < "$commEqsJson" | conjectures_for_sample > "$out"
+      decode < "$commEqs" | conjectures_for_sample > "$out"
     '';
 };
 {
@@ -77,52 +87,16 @@ with rec {
 
   parameterisedTypes = testRun "Can find properties of parameterised types" null
     (withNix {
-      buildInputs  = [ jq tipBenchmarks.tools ];
-
-      NIX_EVAL_HASKELL_PKGS = quickspecBench.customHs;
-      GROUND_TRUTH          = ../benchmarks/ground-truth/list-full.smt2;
-      TRUTH_SOURCE          = ../benchmarks/ground-truth/list-full.smt2;
-
-      SETUP = runCommand "setup.json"
-        (withNix {
-          inherit (quickspecBench.benchVars.standalone)
-            genAnnotatedPkg genInput;
-
-          buildInputs = [ jq ];
-          theory      = ../benchmarks/list-full.smt2;
-
-          NIX_EVAL_HASKELL_PKGS = quickspecBench.customHs;
-        })
-        ''
-          set -e
-
-          DATA=$("$genAnnotatedPkg" < "$theory")
-
-          ANNOTATED=$(echo "$DATA" | jq -r '.annotated')
-            OUT_DIR=$(echo "$DATA" | jq -r '.out_dir'  )
-
-          export OUT_DIR
-
-          "$genInput" < "$ANNOTATED" |
-            jq --arg dir "$OUT_DIR" '. + {"out_dir": $dir}' > "$out"
-        '';
+      buildInputs  = [ jq package tipBenchmarks.tools ];
+      eqs          = testData.eqs.list-full;
+      GROUND_TRUTH = ../benchmarks/ground-truth/list-full.smt2;
+      TRUTH_SOURCE = ../benchmarks/ground-truth/list-full.smt2;
     })
     ''
       set -e
+      set -o pipefail
 
-       RUNNER=$(jq -r '.runner'  < "$SETUP")
-         CODE=$(jq -r '.code'    < "$SETUP")
-          ENV=$(jq -r '.env'     < "$SETUP")
-      OUT_DIR=$(jq -r '.out_dir' < "$SETUP")
-
-      export OUT_DIR
-
-      EQS=$(echo "$CODE" | nix-shell -p "$ENV" --run "$RUNNER" |
-            grep -v '^Depth')
-
-      echo "$EQS" 1>&2
-
-      RESULT=$(echo "$EQS" | jq -s '.' | precision_recall_eqs)
+      RESULT=$(echo "$eqs" | precision_recall_eqs)
 
       echo "$RESULT" 1>&2
 
@@ -131,4 +105,3 @@ with rec {
       echo "pass" > "$out"
     '';
 }
-*/

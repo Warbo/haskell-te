@@ -1,0 +1,13 @@
+From: Chris Warburton
+Date: Fri, 01 Sep 2017 16:16:24 +0100
+Subject: Re: See if our benchmark setup could be built by Nix
+Message-Id: <a48cf44569ff379d-d74a7591b0228d2c-artemis@nixos>
+References: <a48cf44569ff379d-0-artemis@nixos>
+In-Reply-To: <a48cf44569ff379d-0-artemis@nixos>
+
+We now use Nix to build a fully-encapsulated script; when run from
+Python (e.g. with an appropriate sample size and repetition), it spits
+out two fully-encapsulated scripts: a "runner" and an "analyser". The
+Python just has to time the "runner" then send its stdout to the
+"analyser", and the result is a bunch of JSON which benchmark values can
+be pulled out of.

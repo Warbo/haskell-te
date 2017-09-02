@@ -43,7 +43,6 @@ with rec {
       echo pass > "$out"
     '';
 
-
   # Avoid packages which are known to timeout, get out-of-memory, etc.
   knownGoodPkgs = filterAttrs (n: _: !(elem n [ "nat-full" "teBenchmark" ]))
                               testData.asts;

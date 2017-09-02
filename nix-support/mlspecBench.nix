@@ -1,7 +1,6 @@
 { bash, buckets, buildEnv, cluster, ensureVars, explore, format, glibcLocales,
-  hashspecBench, haskellPackages, jq, lib, nix-config,
-  quickspecBench, reduce-equations, runCommand, runWeka, stdenv, timeout,
-  tipBenchmarks, writeScript }:
+  hashspecBench, haskellPackages, jq, lib, nix-config, reduce-equations,
+  runCommand, runWeka, stdenv, timeout, tipBenchmarks, writeScript }:
 with builtins;
 with lib;
 with {
@@ -15,7 +14,7 @@ rec {
 
       runner  = wrap {
         name  = "mlspec-sampled-runner";
-        paths = [ ((import quickspecBench.augmentedHs {
+        paths = [ ((import hashspecBench.augmentedHs {
           hsDir = "${tipBenchmarks.tip-benchmark-haskell}";
         }).ghcWithPackages (h: map (n: h."${n}") [
           "quickspec" "murmur-hash" "cereal" "mlspec-helper"
@@ -36,7 +35,7 @@ rec {
     buildEnv {
       name  = "mlspecbench-env";
       paths = [
-        ((import ${quickspecBench.customHs}).ghcWithPackages (h: [
+        ((import ${hashspecBench.customHs}).ghcWithPackages (h: [
           h.tip-benchmark-sig h.mlspec
         ]))
         runWeka
@@ -89,12 +88,43 @@ rec {
     '';
   };
 
-  script = quickspecBench.wrapScript "mlspecBench" rawScript;
+  script = hashspecBench.wrapScript "mlspecBench" rawScript;
 
-  mlGenInput = quickspecBench.mkGenInput (writeScript "gen-sig-ml" ''
-    #!/usr/bin/env bash
-    jq 'map(select(.quickspecable))'
-  '');
+  mlGenInput = wrap {
+    name   = "gen-input";
+    paths  = [ bash jq tipBenchmarks.tools ];
+    vars   = {
+      OUT_DIR   = tipBenchmarks.tip-benchmark-haskell;
+      ANNOTATED = annotated (toString tipBenchmarks.tip-benchmark-haskell);
+      filter = writeScript "filter.jq" ''
+        def mkId: {"name": .name, "package": .package, "module": .module};
+
+        def keep($id): $keepers | map(. == $id) | any;
+
+        def setQS: . + {"quickspecable": (.quickspecable and keep(mkId))};
+
+        map(setQS)
+      '';
+    };
+    script = ''
+      #!/usr/bin/env bash
+      set -e
+      set -o pipefail
+
+      # Sample some names, give the default module and package, then slurp
+      # into an array
+      echo "Running 'choose_sample $1 $2'" 1>&2
+      KEEPERS=$(choose_sample "$1" "$2" |
+                jq -R '{"name"    : .,
+                        "module"  : "A",
+                        "package" : "tip-benchmark-sig"}' |
+                jq -s '.')
+
+      # Filters the signature to only those sampled in KEEPERS
+      jq --argjson keepers "$KEEPERS" -f "$filter" < "$ANNOTATED" |
+        jq 'map(select(.quickspecable))'
+    '';
+  };
 
   mlAllInput = writeScript "all-input" ''
     [[ -f "$ANNOTATED" ]] || {
@@ -113,9 +143,9 @@ rec {
     #!${bash}/bin/bash
     set -e
 
-    ${quickspecBench.setUpDir}
+    ${hashspecBench.setUpDir}
     export TEMPDIR="$DIR"
-    ${quickspecBench.getInput}
+    ${hashspecBench.getInput}
 
     # Explore
     export    NIXENV="import ${ourEnv}"
@@ -140,7 +170,7 @@ rec {
   mls = stdenv.mkDerivation {
     name         = "mlspecBench";
     src          = script;
-    buildInputs  = [ quickspecBench.env ];
+    buildInputs  = [ hashspecBench.env ];
     unpackPhase  = "true";  # Nothing to do
 
     doCheck      = true;
