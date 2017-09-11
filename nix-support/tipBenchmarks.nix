@@ -9,8 +9,8 @@ with rec {
   fallback = fetchFromGitHub {
                owner  = "Warbo";
                repo   = "theory-exploration-benchmarks";
-               rev    = "35a8a28";
-               sha256 = "1zzy30zsvcwvn7j47pla3arxwjbcimcp8rdsqkf6lzjvfxdb1s0b";
+               rev    = "ccf838d";
+               sha256 = "1isbzv29903fh3m1sikj6gyaylq6wcw042wxna1g6k8wnlac9xjb";
              };
   path     = with tryEval <te-benchmarks>;
              if success

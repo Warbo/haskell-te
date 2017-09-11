@@ -1,0 +1,11 @@
+From: Chris Warburton
+Date: Sat, 02 Sep 2017 19:03:33 +0100
+Subject: Re: Remove the complicated nix-support/*specBench stuff
+Message-Id: <dee3112df2cc9787-dd67dc0e37fd98aa-artemis@nixos>
+References: <dee3112df2cc9787-0-artemis@nixos>
+In-Reply-To: <dee3112df2cc9787-0-artemis@nixos>
+
+Got rid of quickspecBench now. We still have hashspecBench and
+mlspecBench, but they're (a) not our current concern, and (b) are only
+used by the mlspec and hashspec benchmarks, which are current disabled
+anyway.

@@ -1,0 +1,11 @@
+From: Chris Warburton
+Date: Sat, 02 Sep 2017 18:47:35 +0100
+Subject: Re: Tease out independent components again.
+Message-Id: <bdc1e1f920a1ecfa-963c16bc84f63a41-artemis@nixos>
+References: <bdc1e1f920a1ecfa-0-artemis@nixos>
+In-Reply-To: <bdc1e1f920a1ecfa-0-artemis@nixos>
+
+Turned quickspec derivations into standalone commands. There's a bit of
+granularity and context-matching to manage (e.g. genQuickspecRunner
+needing an OUT_DIR), but that's mostly internal, and prevents us
+repeating ourselves when benchmarking.
