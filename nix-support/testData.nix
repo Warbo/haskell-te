@@ -1,4 +1,5 @@
-{ haskellPkgToAsts, lib, runCommand, tipBenchmarks, tipToHaskellPkg }:
+{ haskellPkgToAsts, lib, package, runCommand, tipBenchmarks, tipToHaskellPkg,
+  withNix }:
 
 with lib;
 rec {
