@@ -1,8 +1,11 @@
 # Custom definitions, mixed in with inherited utility packages
-args:
+allArgs:
 
 # Fetch known revisions of nixpkgs, so we're not at the mercy of system updates
 with rec {
+  stable = allArgs.stable or true;
+  args   = removeAttrs allArgs [ "stable" ];
+
   inherit (import ./nixpkgs.nix) mkNixpkgs-2016-03 mkNixpkgs-2016-09;
   defaultNixpkgs  = mkNixpkgs-2016-03;
   nixpkgs         = defaultNixpkgs args;
@@ -44,12 +47,10 @@ with rec {
   extractTarball = nixpkgs.callPackage ./extractTarball.nix {
     inherit drvFromScript;
   };
-
-  havePath = n: any (x: x.prefix == n) nixPath;
 };
 
 with (nixpkgs.callPackage ./haskellPackages.nix {
-       inherit extractTarball havePath nix-config nixFromCabal;
+       inherit extractTarball nix-config nixFromCabal stable;
        callHackage          = nixpkgs.callPackage ./callHackage.nix {};
        superHaskellPackages = nixpkgs.haskellPackages;
      });
@@ -123,6 +124,7 @@ let pkgs = rec {
                     { pkgs = nixpkgs // pkgs;                            };
 
   tipBenchmarks = callPackage ./tipBenchmarks.nix  {
+    inherit stable;
     pkgs = nixpkgs-2016-09;
   };
 
@@ -159,7 +161,7 @@ let pkgs = rec {
   runTypesScriptData = callPackage ./runTypesScript.nix {};
   runTypesScript     = runTypesScriptData.runTypesScript;
 
-  runWeka = callPackage ./runWeka.nix { inherit havePath; };
+  runWeka = callPackage ./runWeka.nix { inherit stable; };
 
   # Strips non-alphanumeric characters from a string; e.g. for use in a name
   sanitise = stringAsChars (c: if elem c (upperChars ++

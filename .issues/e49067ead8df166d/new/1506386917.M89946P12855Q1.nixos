@@ -1,0 +1,8 @@
+From: Chris Warburton
+Date: Tue, 26 Sep 2017 01:48:13 +0100
+Subject: Re: Add "useLatest" arg to defs.nix
+Message-Id: <e49067ead8df166d-f161c1c043d206df-artemis@nixos>
+References: <e49067ead8df166d-0-artemis@nixos>
+In-Reply-To: <e49067ead8df166d-0-artemis@nixos>
+
+Added 'stable' arg, and stable/unstable versions in release.nix

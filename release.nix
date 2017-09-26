@@ -1,8 +1,16 @@
 # Entry point for evaluating/building
-with {
-  pkgs = import ./nix-support {};
+with rec {
+  go = stable:
+    with {
+      pkgs = import ./nix-support { inherit stable; };
+    };
+    pkgs.stripOverrides {
+      inherit (pkgs) tests testSuite package;
+      benchmarkEnv = import ./benchmarks {};
+    };
+
+  # Only include "unstable" if we have extra Nix paths
+  unstable = with builtins.tryEval <mlspec>;
+             if success then { unstable = go false; } else {};
 };
-pkgs.stripOverrides {
-  inherit (pkgs) tests testSuite package;
-  benchmarkEnv = import ./benchmarks {};
-}
+{ stable = go true; } // unstable

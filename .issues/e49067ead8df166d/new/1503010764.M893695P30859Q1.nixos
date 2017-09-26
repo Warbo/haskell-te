@@ -1,8 +1,9 @@
 From: Chris Warburton
 Date: Thu, 17 Aug 2017 23:56:30 +0100
-State: new
+State: resolved
 Subject: Add "useLatest" arg to defs.nix
 Message-Id: <e49067ead8df166d-0-artemis@nixos>
+resolution: fixed
 
 Pass this flag into anything which uses paths, like <some-project>. If
 the flag is true, always use the path (don't even check if we have it!);

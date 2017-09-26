@@ -1,6 +1,6 @@
 { annotated, asv-nix, bash, cacheContent, callPackage, defaultClusters,
   drvFromScript, fetchFromGitHub, fetchgit, haskellPackages, jq, nix-config-src,
-  nixFromCabal, pkgs, runCommand, stdenv, writeScript }:
+  nixFromCabal, pkgs, runCommand, stable, stdenv, writeScript }:
 
 with builtins;
 with rec {
@@ -12,10 +12,7 @@ with rec {
                rev    = "ccf838d";
                sha256 = "1isbzv29903fh3m1sikj6gyaylq6wcw042wxna1g6k8wnlac9xjb";
              };
-  path     = with tryEval <te-benchmarks>;
-             if success
-                then value
-                else fallback;
+  path     = if stable then fallback else <te-benchmarks>;
   tebench  = callPackage path {
     inherit asv-nix haskellPackages nix-config-src;
     pkgsPath = with tryEval <real>; if success then value else <nixpkgs>;
