@@ -1,38 +1,21 @@
 # Custom definitions, mixed in with inherited utility packages
-allArgs:
+args:
 
-# Fetch known revisions of nixpkgs, so we're not at the mercy of system updates
-with rec {
-  stable = allArgs.stable or true;
-  args   = removeAttrs allArgs [ "stable" ];
-
-  inherit (import ./nixpkgs.nix) mkNixpkgs-2016-03 mkNixpkgs-2016-09;
-  defaultNixpkgs  = mkNixpkgs-2016-03;
-  nixpkgs         = defaultNixpkgs args;
-  nixpkgs-2016-03 = mkNixpkgs-2016-03 args;
-  nixpkgs-2016-09 = mkNixpkgs-2016-09 args;
-};
+# Fetch known revisions of nixpkgs, so our 'stable' configuration isn't at the
+# mercy of system updates
+with { stable = args.stable or true; };
+with import ./nixpkgs.nix args;
 
 # We define things in stages, to avoid everything depending on everything else
 
 # Built-in nixpkgs stuff, used as-is
-
-with builtins; with nixpkgs.lib;
-
-with { inherit (nixpkgs) buildEnv jq runCommand writeScript; };
+with builtins // nixpkgs.lib // {
+  inherit (nixpkgs) buildEnv jq runCommand writeScript;
+};
 
 # External dependencies, and the helpers needed to load them
 
-with {
-  inherit (nixpkgs.callPackage ./nixFromCabal.nix {})
-    nixFromCabal nixedHsPkg;
-
-  inherit (nixpkgs.callPackage ./nix-config.nix {
-            mkNixpkgs = mkNixpkgs-2016-09;
-          })
-    nix-config nix-config-src;
-};
-
+with nixpkgs.callPackage ./nixFromCabal.nix {};
 with rec {
   nixEnv  = (nixpkgs.callPackage ./nixEnv.nix {}) null;
 
@@ -117,6 +100,7 @@ let pkgs = rec {
   sta                   = callPackage ./sta.nix                   {};
   testData              = callPackage ./testData.nix              {};
   tipToHaskellPkg       = callPackage ./tipToHaskellPkg.nix       {};
+  tryElse               = callPackage ./tryElse.nix               {};
 
   getDepsScript = callPackage ./getDepsScript.nix
                     { inherit (haskellPackages) GetDeps;                 };

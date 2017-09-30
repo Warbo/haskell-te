@@ -1,21 +1,23 @@
 { annotated, asv-nix, bash, cacheContent, callPackage, defaultClusters,
-  drvFromScript, fetchFromGitHub, fetchgit, haskellPackages, jq, nix-config-src,
-  nixFromCabal, pkgs, runCommand, stable, stdenv, writeScript }:
+  drvFromScript, fetchFromGitHub, fetchgit, haskellPackages, jq, nix-config,
+  nix-config-src, nixFromCabal, pkgs, runCommand, stable, stdenv, tryElse,
+  writeScript }:
 
 with builtins;
 with rec {
-  inherit (nix-config) sanitiseName;
+  inherit (nix-config) latestGit sanitiseName;
 
-  fallback = fetchFromGitHub {
-               owner  = "Warbo";
-               repo   = "theory-exploration-benchmarks";
-               rev    = "ccf838d";
-               sha256 = "1isbzv29903fh3m1sikj6gyaylq6wcw042wxna1g6k8wnlac9xjb";
-             };
-  path     = if stable then fallback else <te-benchmarks>;
+  path = tryElse <te-benchmarks> (latestGit {
+    url    = http://chriswarbo.net/git/theory-exploration-benchmarks.git;
+    stable = {
+      rev    = "ccf838d";
+      sha256 = "1isbzv29903fh3m1sikj6gyaylq6wcw042wxna1g6k8wnlac9xjb";
+    };
+  });
+
   tebench  = callPackage path {
     inherit asv-nix haskellPackages nix-config-src;
-    pkgsPath = with tryEval <real>; if success then value else <nixpkgs>;
+    pkgsPath = tryElse <real> <nixpkgs>;
   };
 };
 rec {
