@@ -2,10 +2,10 @@
 
 with rec {
   stableSrc = fetchFromGitHub {
-    rev    = "76d441a";
+    rev    = "c7c36d4";
     owner  = "Warbo";
     repo   = "nix-config";
-    sha256 = "047vqfyb7qbl49hyi93vfz5dkqpz89jjscs1w5kc29hn6881v0w8";
+    sha256 = "018gyj9i002wrj3krzrv4w0lf9606142ba5ci4wy1ams48bdszbr";
   };
   config      = import "${stableSrc}/stable.nix";
   unstableSrc = (import <nixpkgs> { inherit config; }).latestNixCfg;
