@@ -1,4 +1,4 @@
-{ haskellPackages, lib, runCommand, stdenv }:
+{ cabal2nix, lib, runCommand, stdenv }:
 with builtins; with lib;
 
 # Make a Nix package definition from a Cabal project. The result is a function,
@@ -26,7 +26,7 @@ nixedHsPkg = dir:
     {
       inherit dir;
       name         = "nixFromCabal";
-      buildInputs  = [ haskellPackages.cabal2nix ];
+      buildInputs  = [ cabal2nix ];
       }
       ''
         source $stdenv/setup

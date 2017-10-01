@@ -11,11 +11,12 @@ with import ./nixpkgs.nix args;
 # Built-in nixpkgs stuff, used as-is
 with builtins // nixpkgs.lib // {
   inherit (nixpkgs) buildEnv jq runCommand writeScript;
+  inherit (nixpkgs-2016-03) cabal2nix;
 };
 
 # External dependencies, and the helpers needed to load them
 
-with nixpkgs.callPackage ./nixFromCabal.nix {};
+with nixpkgs.callPackage ./nixFromCabal.nix { inherit cabal2nix; };
 with rec {
   nixEnv  = (nixpkgs.callPackage ./nixEnv.nix {}) null;
 
@@ -43,8 +44,9 @@ with (nixpkgs.callPackage ./haskellPackages.nix {
 
 let pkgs = rec {
   # Include the above definitions
-  inherit drvFromScript extractTarball haskellPackages hsOverride nixedHsPkg
-          nixEnv nix-config nix-config-src nixFromCabal nixpkgs-2016-09 withNix;
+  inherit cabal2nix drvFromScript extractTarball haskellPackages hsOverride
+          nixedHsPkg nixEnv nix-config nix-config-src nixFromCabal
+          nixpkgs-2016-09 withNix;
 
   inherit (nixpkgs-2016-09)
     # Use newer makeWrapper for quoting changes
