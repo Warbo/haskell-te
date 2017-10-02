@@ -27,6 +27,7 @@ with rec {
 };
 rec {
   inherit (configs) nix-config-src;
+  nixpkgs-src      = default;
   nixpkgs-2016-03  = import pkgs.repo1603 args;
   nixpkgs-2016-09  = import pkgs.repo1609 args;
   nixpkgs          = import default args;

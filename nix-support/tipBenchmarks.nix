@@ -1,11 +1,11 @@
 { annotated, asv-nix, bash, cacheContent, callPackage, defaultClusters,
   drvFromScript, fetchFromGitHub, fetchgit, haskellPackages, jq, nix-config,
-  nix-config-src, nixFromCabal, pkgs, runCommand, stable, stdenv, tryElse,
-  writeScript }:
+  nix-config-src, nixFromCabal, nixpkgs-src, runCommand, stable, stdenv,
+  tryElse, writeScript }:
 
 with builtins;
 with rec {
-  inherit (nix-config) latestGit sanitiseName;
+  inherit (nix-config) latestGit;
 
   path = tryElse <te-benchmarks> (latestGit {
     url    = http://chriswarbo.net/git/theory-exploration-benchmarks.git;
@@ -17,7 +17,7 @@ with rec {
 
   tebench  = callPackage path {
     inherit asv-nix haskellPackages nix-config-src;
-    pkgsPath = tryElse <real> <nixpkgs>;
+    pkgsPath = if stable then nix-config.repo1609 else nixpkgs-src;
   };
 };
 rec {

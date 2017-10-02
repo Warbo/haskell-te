@@ -110,8 +110,7 @@ let pkgs = rec {
                     { pkgs = nixpkgs // pkgs;                            };
 
   tipBenchmarks = callPackage ./tipBenchmarks.nix  {
-    inherit stable;
-    pkgs = nixpkgs-2016-09;
+    inherit nixpkgs-src stable;
   };
 
   annotate = annotateScripts.annotate;
