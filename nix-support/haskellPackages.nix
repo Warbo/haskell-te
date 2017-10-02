@@ -8,13 +8,19 @@ with rec {
   ghcVersion = superHaskellPackages.ghc.version;
   reqVersion = "7.10.3";
 
-  hsPkgs = { cabalPath, cabalCheck, callPackage }: {
+  # Get particular Hackage revisions, when those in haskellPackages don't work
+  overrides = callPackage: mapAttrs (n: v: callPackage (callHackage n v) {}) {
+    tasty = "0.11.2.1";
+  };
+
+  # Get packages from git repos
+  hsPkgs = { cabalPath, cabalCheck, callPackage }: overrides callPackage // {
     AstPlugin = cabalCheck <ast-plugin> (fetchFromGitHub {
       owner  = "Warbo";
       repo   = "ast-plugin";
       rev    = "a04f6fef18bdd6d23d534ea4dd7c7b5b9084ad1c";
       sha256 = "1gmkv4l38vpvhg2h8dwv4gf8dq1d0lr0zxd5j9szi90xb8nl2241";
-      }) {};
+    }) {};
 
     bench  = cabalPath (extractTarball (fetchurl {
       url    = https://github.com/Gabriel439/bench/archive/1.0.1.tar.gz;
@@ -98,10 +104,6 @@ with rec {
       rev    = "4424f9a";
       sha256 = "14mn6ygr0wqy4css8wrbxd6b4qvp951xgc206x79fjfva3q6n12g";
     }) {};
-
-    tasty = callHackage "tasty" "0.11.2.1";
-
-    tasty-smallcheck =  callHackage "tasty-smallcheck" "0.8.1";
 
     weigh = cabalPath (fetchgit {
       url    = https://github.com/fpco/weigh.git;
