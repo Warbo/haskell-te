@@ -101,6 +101,8 @@ with rec {
 
     tasty = callHackage "tasty" "0.11.2.1";
 
+    tasty-smallcheck =  callHackage "tasty-smallcheck" "0.8.1";
+
     weigh = cabalPath (fetchgit {
       url    = https://github.com/fpco/weigh.git;
       rev    = "26f8e3e";
