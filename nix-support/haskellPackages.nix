@@ -5,15 +5,9 @@ with builtins;
 with lib;
 
 with rec {
-  # Get particular Hackage revisions, when those in haskellPackages don't work
-  overrides = callPackage: mapAttrs (n: v: callPackage (callHackage n v) {}) {
-    haskell-src-exts = "1.19.0";
-    pretty-show      = "1.6.12";
-    tasty            = "0.11.2.1";
-  };
+  hsPkgs = { get, hackagePkg }: {
+    tasty = hackagePkg "tasty" "0.11.2.1" {};
 
-  # Get packages from git repos
-  hsPkgs = { get }: {
     AstPlugin = get {
       path   = <ast-plugin>;
       url    = https://github.com/Warbo/ast-plugin.git;
@@ -81,7 +75,11 @@ with rec {
       url    = https://github.com/Warbo/reduce-equations.git;
       rev    = "a86199b";
       sha256 = "11dafq0zl6vj1lzybsfpryvc2rqbxxkjjy3v4ab1vb8nzhxfgna3";
-    } {};
+    } {
+      haskell-src-exts = hackagePkg "haskell-src-exts" "1.19.0" {
+        pretty-show = hackagePkg "pretty-show" "1.6.12" {};
+      };
+    };
 
     runtime-arbitrary = get {
       path   = <runtime-arbitrary>;
@@ -109,19 +107,17 @@ assert let ghcVersion = superHaskellPackages.ghc.version;
         in ghcVersion == reqVersion ||
            abort "Using GHC ${ghcVersion} (should be ${reqVersion})";
 rec {
-  hsOverride = self: super: overrides self.callPackage // hsPkgs {
+  hsOverride = self: super: hsPkgs {
+    hackagePkg = n: v: self.callPackage (callHackage n v);
+
     get = { path ? null, url, rev, sha256}:
-          with rec {
-            git = nix-config.latestGit {
-              inherit url;
-              stable = { inherit rev sha256; };
-            };
-            src = with tryEval path;
-                  if success && value != null
-                     then value
-                     else git;
-          };
-          self.callPackage (nixFromCabal (toString src) null);
+      with rec {
+        stable = { inherit rev sha256; };
+        git    = nix-config.latestGit { inherit stable url; };
+        src    = with tryEval path;
+                 if success && value != null then value else git;
+      };
+      self.callPackage (nixFromCabal (toString src) null);
   };
 
   haskellPackages = superHaskellPackages.override { overrides = hsOverride; };
