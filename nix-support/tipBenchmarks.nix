@@ -5,9 +5,7 @@
 
 with builtins;
 with rec {
-  inherit (nix-config) latestGit;
-
-  path = tryElse <te-benchmarks> (latestGit {
+  path = tryElse <te-benchmarks> (nix-config.latestGit {
     url    = http://chriswarbo.net/git/theory-exploration-benchmarks.git;
     stable = {
       rev    = "ccf838d";
@@ -17,7 +15,8 @@ with rec {
 
   tebench  = callPackage path {
     inherit asv-nix haskellPackages nix-config-src;
-    pkgsPath = if stable then nix-config.repo1609 else nixpkgs-src;
+    # Nixpkgs 17.03 disables Racket on i686, so always use 16.09 (for now)
+    pkgsPath = nix-config.repo1609;
   };
 };
 rec {
