@@ -65,7 +65,7 @@ let pkgs = rec {
     AstPlugin GetDeps ML4HSFE mlspec reduce-equations;
 
   inherit (callPackage ./runBenchmark.nix {})
-          runCmd checkHsEnv checkStderr;
+          runCmd checkStderr;
 
   inherit (callPackage ./test-defs.nix {})
           runTestInDrv testAll testDbg testDrvString testFiles testMsg
@@ -78,6 +78,7 @@ let pkgs = rec {
   benchmarkEnv          = callPackage ./benchmarkEnv.nix          {};
   buckets               = callPackage ./buckets.nix               {};
   cacheContent          = callPackage ./cacheContent.nix          {};
+  checkHsEnv            = callPackage ./checkHsEnv.nix            {};
   cluster               = callPackage ./cluster.nix               {};
   dumpToNixScripts      = callPackage ./dumpToNix.nix             {};
   explore               = callPackage ./explore.nix               {};
@@ -142,6 +143,8 @@ let pkgs = rec {
   testSuite = runCommand "haskell-te-tests"
                 { deps = collect isDerivation tests; }
                 ''echo "true" > "$out"'';
+
+  unlines = concatStringSep "\n";
 };
 
 in nixpkgs // pkgs
