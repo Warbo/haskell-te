@@ -46,7 +46,7 @@ let pkgs = rec {
   # Include the above definitions
   inherit cabal2nix drvFromScript extractTarball haskellPackages hsOverride
           nixedHsPkg nixEnv nix-config nix-config-src nixFromCabal
-          nixpkgs-2016-09 withNix;
+          nixpkgs-2016-09 nixpkgs-src stable withNix;
 
   inherit (nixpkgs-2016-09)
     # Use newer makeWrapper for quoting changes
@@ -101,6 +101,7 @@ let pkgs = rec {
   runTypes              = callPackage ./runTypes.nix              {};
   sta                   = callPackage ./sta.nix                   {};
   testData              = callPackage ./testData.nix              {};
+  tipBenchmarks         = callPackage ./tipBenchmarks.nix         {};
   tipToHaskellPkg       = callPackage ./tipToHaskellPkg.nix       {};
   tryElse               = callPackage ./tryElse.nix               {};
 
@@ -108,10 +109,6 @@ let pkgs = rec {
                     { inherit (haskellPackages) GetDeps;                 };
   tests         = callPackage ./tests.nix
                     { pkgs = nixpkgs // pkgs;                            };
-
-  tipBenchmarks = callPackage ./tipBenchmarks.nix  {
-    inherit nixpkgs-src stable;
-  };
 
   annotate = annotateScripts.annotate;
 
