@@ -118,18 +118,9 @@ let pkgs = rec {
     pkgSrc = nixedHsPkg pkgDir;
   };
 
-  callPackage = nixpkgs.newScope pkgs;
-
-  dumpToNix = dumpToNixScripts.dumpToNix;
-
-  runTypesScript     = runTypesScriptData.runTypesScript;
-
-
-  strip = s: let unpre = removePrefix "\n" (removePrefix " " s);
-                 unsuf = removeSuffix "\n" (removeSuffix " " unpre);
-              in if unsuf == s
-                    then s
-                    else strip unsuf;
+  callPackage    = nixpkgs.newScope pkgs;
+  dumpToNix      = dumpToNixScripts.dumpToNix;
+  runTypesScript = runTypesScriptData.runTypesScript;
 
   tests     = callPackage ./tests.nix { pkgs = nixpkgs // pkgs;  };
 
