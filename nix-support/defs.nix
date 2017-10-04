@@ -72,16 +72,19 @@ let pkgs = rec {
           testPackages testRec testRun testWrap;
 
   annotateRawAstsFrom   = callPackage ./annotateRawAstsFrom.nix   {};
+  annotateScripts       = callPackage ./annotate.nix              {};
   asv-nix               = callPackage ./asv-nix.nix               {};
   bashEscape            = callPackage ./bashEscape.nix            {};
   benchmarkEnv          = callPackage ./benchmarkEnv.nix          {};
   buckets               = callPackage ./buckets.nix               {};
   cacheContent          = callPackage ./cacheContent.nix          {};
   cluster               = callPackage ./cluster.nix               {};
+  dumpToNixScripts      = callPackage ./dumpToNix.nix             {};
   explore               = callPackage ./explore.nix               {};
   filterToSampled       = callPackage ./filterToSampled.nix       {};
   format                = callPackage ./format.nix                {};
   genQuickspecRunner    = callPackage ./genQuickspecRunner.nix    {};
+  getDepsScript         = callPackage ./getDepsScript.nix         {};
   hashspecBench         = callPackage ./hashspecBench.nix         {};
   haskellPkgNameVersion = callPackage ./haskellPkgNameVersion.nix {};
   haskellPkgToAsts      = callPackage ./haskellPkgToAsts.nix      {};
@@ -99,16 +102,13 @@ let pkgs = rec {
   quickspecAsts         = callPackage ./quickspecAsts.nix         {};
   runScript             = callPackage ./runScript.nix             {};
   runTypes              = callPackage ./runTypes.nix              {};
+  runTypesScriptData    = callPackage ./runTypesScript.nix        {};
+  runWeka               = callPackage ./runWeka.nix               {};
   sta                   = callPackage ./sta.nix                   {};
   testData              = callPackage ./testData.nix              {};
   tipBenchmarks         = callPackage ./tipBenchmarks.nix         {};
   tipToHaskellPkg       = callPackage ./tipToHaskellPkg.nix       {};
   tryElse               = callPackage ./tryElse.nix               {};
-
-  getDepsScript = callPackage ./getDepsScript.nix
-                    { inherit (haskellPackages) GetDeps;                 };
-  tests         = callPackage ./tests.nix
-                    { pkgs = nixpkgs // pkgs;                            };
 
   annotate = annotateScripts.annotate;
 
@@ -118,23 +118,17 @@ let pkgs = rec {
     pkgSrc = nixedHsPkg pkgDir;
   };
 
-  annotateScripts = callPackage ./annotate.nix {};
-
   callPackage = nixpkgs.newScope pkgs;
 
+  dumpToNix = dumpToNixScripts.dumpToNix;
 
-  dumpToNixScripts = callPackage ./dumpToNix.nix {};
-  dumpToNix        = dumpToNixScripts.dumpToNix;
 
 
   haskellPackageNames = writeScript
                           "haskell-names"
                           (concatStringsSep "\n" (attrNames haskellPackages));
 
-  runTypesScriptData = callPackage ./runTypesScript.nix {};
   runTypesScript     = runTypesScriptData.runTypesScript;
-
-  runWeka = callPackage ./runWeka.nix { inherit stable; };
 
   # Strips non-alphanumeric characters from a string; e.g. for use in a name
   sanitise = stringAsChars (c: if elem c (upperChars ++
@@ -148,6 +142,8 @@ let pkgs = rec {
               in if unsuf == s
                     then s
                     else strip unsuf;
+
+  tests     = callPackage ./tests.nix { pkgs = nixpkgs // pkgs;  };
 
   testSuite = runCommand "haskell-te-tests"
                 { deps = collect isDerivation tests; }
