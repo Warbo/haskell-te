@@ -1,58 +1,48 @@
-# Custom definitions, mixed in with inherited utility packages
 args:
 
 # Fetch known revisions of nixpkgs, so our 'stable' configuration isn't at the
 # mercy of system updates
-with { stable = args.stable or true; };
 with import ./nixpkgs.nix args;
+with nixpkgs.lib;
+with builtins;
 
-# We define things in stages, to avoid everything depending on everything else
-
-# Built-in nixpkgs stuff, used as-is
-with builtins // nixpkgs.lib // {
-  inherit (nixpkgs) buildEnv jq runCommand writeScript;
-  inherit (nixpkgs-2016-03) cabal2nix;
-};
-
-# External dependencies, and the helpers needed to load them
-
-with nixpkgs.callPackage ./nixFromCabal.nix { inherit cabal2nix; };
-with rec {
-  nixEnv  = (nixpkgs.callPackage ./nixEnv.nix {}) null;
-
-  withNix = nixpkgs.callPackage ./withNix.nix {
-    inherit nixEnv;
-  };
-
-  drvFromScript = nixpkgs.callPackage ./drvFromScript.nix  {
-    inherit withNix;
-  };
-
-  extractTarball = nixpkgs.callPackage ./extractTarball.nix {
-    inherit drvFromScript;
-  };
-};
-
-with (nixpkgs.callPackage ./haskellPackages.nix {
-       inherit extractTarball nix-config nixFromCabal stable;
-       callHackage          = nixpkgs.callPackage ./callHackage.nix {};
-       superHaskellPackages = nixpkgs.haskellPackages;
-     });
-
+# All of our "global" definitions live here (i.e. everything that's used in more
+# than one place). Note that care should be taken to avoid infinite loops, since
+# 'callPackage' gets arguments from 'self', which is the set we're defining!
 fix (self: rec {
-  # Include the above definitions
-  inherit cabal2nix drvFromScript extractTarball haskellPackages hsOverride
-          nixedHsPkg nixEnv nix-config nix-config-src nixFromCabal
-          nixpkgs-2016-09 nixpkgs-src stable withNix;
+  # Bring in some stuff as-is from nixpkgs
+  inherit (nixpkgs)
+    bash buildEnv cabal-install glibcLocales jq lib runCommand utillinux
+    writeScript;
 
-  inherit (nixpkgs) lib;
+  # These packages have hard-coded versions, since newer ones are known to be
+  # incompatible
+
+  inherit (nixpkgs-2016-03)
+    # Args differ in new versions, which breaks ./haskellPackages.nix scripts
+    cabal2nix;
 
   inherit (nixpkgs-2016-09)
     # Use newer makeWrapper for quoting changes
     makeWrapper
 
-    # Use newer Racket for contract definitions
+    # Old versions don't have the needed contracts, new ones don't build on i686
     racket;
+
+
+  inherit (nixpkgs.callPackage ./nixFromCabal.nix { inherit cabal2nix; })
+    nixedHsPkg nixFromCabal;
+
+  # We have many custom Haskell packages, and also need particular versions of
+  # regular Haskell packages in order to satisfy dependencies.
+  inherit (callPackage ./haskellPackages.nix {
+            callHackage          = nixpkgs.callPackage ./callHackage.nix {};
+            superHaskellPackages = nixpkgs.haskellPackages;
+          })
+    haskellPackages hsOverride;
+
+  # Include the above definitions
+  inherit nix-config nix-config-src nixpkgs-2016-09 nixpkgs-src;
 
   inherit (nix-config)
     allDrvsIn attrsToDirs backtrace fail inNixedDir mkBin nixListToBashArray
@@ -79,6 +69,7 @@ fix (self: rec {
   cluster               = callPackage ./cluster.nix               {};
   dumpToNixScripts      = callPackage ./dumpToNix.nix             {};
   explore               = callPackage ./explore.nix               {};
+  extractTarball        = callPackage ./extractTarball.nix        {};
   filterToSampled       = callPackage ./filterToSampled.nix       {};
   format                = callPackage ./format.nix                {};
   genQuickspecRunner    = callPackage ./genQuickspecRunner.nix    {};
@@ -119,5 +110,10 @@ fix (self: rec {
   callPackage    = nixpkgs.newScope self;
   dumpToNix      = dumpToNixScripts.dumpToNix;
   runTypesScript = runTypesScriptData.runTypesScript;
+  stable         = args.stable or true;
   unlines        = concatStringsSep "\n";
+
+  drvFromScript =  nixpkgs.callPackage ./drvFromScript.nix { inherit withNix; };
+  nixEnv        = (nixpkgs.callPackage ./nixEnv.nix        {}) null;
+  withNix       =  nixpkgs.callPackage ./withNix.nix       { inherit nixEnv;  };
 })
