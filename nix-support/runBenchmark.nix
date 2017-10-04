@@ -96,52 +96,55 @@ rec {
                 done < <(echo "$INPUT" | "${extractionScript}" | sort -u | grep '^.')
               '';
 
-     in writeScript "checkHsEnv" ''
-          #!/usr/bin/env bash
-          set -e
-          set -o pipefail
+     in wrap {
+          name   = "checkHsEnv";
+          script = ''
+            #!/usr/bin/env bash
+            set -e
+            set -o pipefail
 
-          function ensurePkg {
-            # Skip empty lines
-            echo "$1" | grep '[a-zA-Z_]' > /dev/null || return 0
+            function ensurePkg {
+              # Skip empty lines
+              echo "$1" | grep '[a-zA-Z_]' > /dev/null || return 0
 
-            if ghc-pkg list "$1" | grep "$1" > /dev/null
+              if ghc-pkg list "$1" | grep "$1" > /dev/null
+              then
+                return 0
+              fi
+
+              echo "Aborting. Didn't find Haskell package '$1' in" 1>&2
+              ghc-pkg list 1>&2
+              exit 1
+            }
+
+            # We must have ghc-pkg, or else we can't even check the others
+            command -v "ghc-pkg" > /dev/null 2>&1 || {
+              echo "No ghc-pkg command in environment" 1>&2
+              exit 1
+            }
+
+            # '|| true' to appease 'set -e' when we have no input
+            INPUT=""
+            [ -t 0 ] || INPUT=$(sort -u | grep "^." | cut -c1-128) || true
+
+            if [[ -n "$INPUT" ]]
             then
-              return 0
+              while read -r PKG
+              do
+                ensurePkg "$PKG"
+              done < <(echo "$INPUT"    |
+                       grep '[a-zA-Z_]' |
+                       "${findHsPkgReferences}")
             fi
 
-            echo "Aborting. Didn't find Haskell package '$1' in" 1>&2
-            ghc-pkg list 1>&2
-            exit 1
-          }
-
-          # We must have ghc-pkg, or else we can't even check the others
-          command -v "ghc-pkg" > /dev/null 2>&1 || {
-            echo "No ghc-pkg command in environment" 1>&2
-            exit 1
-          }
-
-          # '|| true' to appease 'set -e' when we have no input
-          INPUT=""
-          [ -t 0 ] || INPUT=$(sort -u | grep "^." | cut -c1-128) || true
-
-          if [[ -n "$INPUT" ]]
-          then
             while read -r PKG
             do
               ensurePkg "$PKG"
-            done < <(echo "$INPUT"    |
-                     grep '[a-zA-Z_]' |
-                     "${findHsPkgReferences}")
-          fi
+            done < <(echo "${concatStringsSep "\n" allGiven}")
 
-          while read -r PKG
-          do
-            ensurePkg "$PKG"
-          done < <(echo "${concatStringsSep "\n" allGiven}")
-
-          exit 0
-        '';
+            exit 0
+          '';
+        };
 
   # Run commands with extra info for debugging and reproducability:
   #  - Store the given command, arguments, stdin, stdout and stderr
