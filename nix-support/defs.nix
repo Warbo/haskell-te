@@ -126,14 +126,6 @@ let pkgs = rec {
   dumpToNixScripts = callPackage ./dumpToNix.nix {};
   dumpToNix        = dumpToNixScripts.dumpToNix;
 
-  ensureVars = vars: concatStringsSep "\n"
-                       (map (v: ''
-                                  [[ -n "${"$" + v}" ]] || {
-                                    echo "Required variable '${v}' is empty" 1>&2
-                                    exit 2
-                                  }
-                                '')
-                            vars);
 
   haskellPackageNames = writeScript
                           "haskell-names"

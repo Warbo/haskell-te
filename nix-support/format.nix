@@ -1,4 +1,4 @@
-{ drvFromScript, ensureVars, lib, writeScript }:
+{ drvFromScript, lib, writeScript }:
 with builtins;
 with lib;
 

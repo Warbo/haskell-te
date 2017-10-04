@@ -1,4 +1,4 @@
-{ bash, buckets, buildEnv, cluster, ensureVars, explore, format, glibcLocales,
+{ bash, buckets, buildEnv, cluster, explore, format, glibcLocales,
   hashspecBench, haskellPackages, jq, lib, nix-config, reduce-equations,
   runCommand, runWeka, stdenv, timeout, tipBenchmarks, writeScript }:
 with builtins;
