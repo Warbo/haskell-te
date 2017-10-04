@@ -4,6 +4,8 @@
 with builtins; with lib;
 
 rec {
+  unlines = concatStringSep "\n";
+
   # A quick and dirty sanity check
   checkStderr = mkBin {
     name   = "checkStderr";
@@ -61,43 +63,50 @@ rec {
   };
 
   # Check that the required Haskell packages are found in the environment
-  checkHsEnv = more: wrap {
+  checkHsEnv = extra: wrap {
     name   = "checkHsEnv";
     vars   = {
-      allGiven = concatStringsSep "\n" (more ++ explore.extra-haskell-packages);
+      allGiven = unlines (extra ++ explore.extra-haskell-packages);
 
-      findHsPkgReferences =
-        let extractionScript = writeScript "find-references" ''
-              # Allow package names to be given directly, one per line (limit to 128
-              # chars to avoid craziness)
-              INPUT=$(cat)
-              echo "$INPUT" | cut -c1-128
+      findHsPkgReferences = wrap {
+        name   = "unique-references";
+        vars   = {
+          hsPkgNames = writeScript "haskell-names"
+                         (unlines (attrNames haskellPackages));
 
-              # Take package names from JSON fields. These include:
-              #
-              #  - Objects with a 'package' field
-              #  - Arrays of such objects
-              #  - Arrays of arrays of such objects
-              #
-              # We should be able to ignore dependencies, as they'll be brought in
-              # automatically.
-              FLATTEN='if type == "array" then .[] else .'
-              echo "$INPUT" | jq -r "$FLATTEN | $FLATTEN | .package" 2> /dev/null ||
-                true
-            '';
+          extractionScript = writeScript "find-references" ''
+            #!/usr/bin/env bash
+            set -e
 
-            hsPkgNames = writeScript "haskell-names"
-                           (concatStringsSep "\n" (attrNames haskellPackages));
-         in writeScript "unique-references" ''
-              INPUT=$(cat | grep '[a-zA-Z_]')
-              while read -r NAME
-              do
-                if grep -xF "$NAME" < "${hsPkgNames}" > /dev/null
-                then
-                  echo "$NAME"
-                fi
-              done < <(echo "$INPUT" | "${extractionScript}" | sort -u | grep '^.')
-            '';
+            # Allow package names to be given directly, one per line (limit to
+            # 128 chars to avoid craziness)
+            GOT=$(cat)
+            echo "$GOT" | cut -c1-128
+
+            # Take package names from JSON fields. These include:
+            #
+            #  - Objects with a 'package' field
+            #  - Arrays of such objects
+            #  - Arrays of arrays of such objects
+            #
+            # We should be able to ignore dependencies, as they'll be brought in
+            # automatically.
+            FLATTEN='if type == "array" then .[] else .'
+            echo "$GOT" | jq -r "$FLATTEN | $FLATTEN | .package" 2> /dev/null ||
+              true
+          '';
+        };
+        script = ''
+          INPUT=$(cat | grep '[a-zA-Z_]')
+          while read -r NAME
+          do
+            if grep -xF "$NAME" < "$hsPkgNames" > /dev/null
+            then
+              echo "$NAME"
+            fi
+          done < <(echo "$INPUT" | "$extractionScript" | sort -u | grep '^.')
+        '';
+      };
     };
     script = ''
       #!/usr/bin/env bash
