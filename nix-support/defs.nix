@@ -1,15 +1,27 @@
-args:
-
-# Fetch known revisions of nixpkgs, so our 'stable' configuration isn't at the
-# mercy of system updates
-with import ./nixpkgs.nix args;
-with nixpkgs.lib;
-with builtins;
-
 # All of our "global" definitions live here (i.e. everything that's used in more
 # than one place). Note that care should be taken to avoid infinite loops, since
 # 'callPackage' gets arguments from 'self', which is the set we're defining!
+{
+  lib    ? (import <nixpkgs> {}).lib,
+  stable ? true,
+  ...
+}@args:
+
+with builtins;
+with lib;
+
 fix (self: rec {
+  # Various versions of nixpkgs from which to get our packages
+  inherit (import ./nixpkgs.nix args)
+    # Whichever nixpkgs we're using by default (depending on 'stable')
+    nixpkgs nixpkgs-src
+
+    # Fixed releases of nixpkgs, when thedefaults n
+    nixpkgs-2016-03 nixpkgs-2016-09
+
+    # Default nixpkgs, overridden with helper functions and packages
+    nix-config nix-config-src;
+
   # Bring in some stuff as-is from nixpkgs
   inherit (nixpkgs)
     bash buildEnv cabal-install glibcLocales jq lib runCommand utillinux
@@ -29,8 +41,7 @@ fix (self: rec {
     # Old versions don't have the needed contracts, new ones don't build on i686
     racket;
 
-
-  inherit (nixpkgs.callPackage ./nixFromCabal.nix { inherit cabal2nix; })
+  inherit (callPackage ./nixFromCabal.nix { inherit cabal2nix; })
     nixedHsPkg nixFromCabal;
 
   # We have many custom Haskell packages, and also need particular versions of
@@ -40,9 +51,6 @@ fix (self: rec {
             superHaskellPackages = nixpkgs.haskellPackages;
           })
     haskellPackages hsOverride;
-
-  # Include the above definitions
-  inherit nix-config nix-config-src nixpkgs-2016-09 nixpkgs-src;
 
   inherit (nix-config)
     allDrvsIn attrsToDirs backtrace fail inNixedDir mkBin nixListToBashArray
