@@ -138,9 +138,9 @@ rec {
          ${concatStringsSep "\n" (map (n: "unset " + n) (attrNames env))}
 
          # Run with the given arguments and check stderr for error messages
-         "$cmd" "''${ARGS[@]}" > "$out" 2> >(checkStderr)
+         "$cmd" "''${ARGS[@]}" 2> >(checkStderr)
          CODE="$?"
-         sleep 1  # For checkStderr (hacky and racy)
+         sleep 1  # For checkStderr (FIXME: hacky and racy)
          exit "$?"
        '';
     };
