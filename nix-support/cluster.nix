@@ -1,9 +1,9 @@
-{ bash, ML4HSFE, wrap }:
+{ bash, ML4HSFE, runWeka, wrap }:
 
 {
   clusterScript = wrap {
     name   = "cluster";
-    paths  = [ bash ML4HSFE ];
+    paths  = [ bash ML4HSFE runWeka ];
     script = ''
       #!/usr/bin/env bash
       set -e
