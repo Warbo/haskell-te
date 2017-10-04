@@ -122,12 +122,6 @@ let pkgs = rec {
 
   dumpToNix = dumpToNixScripts.dumpToNix;
 
-
-
-  haskellPackageNames = writeScript
-                          "haskell-names"
-                          (concatStringsSep "\n" (attrNames haskellPackages));
-
   runTypesScript     = runTypesScriptData.runTypesScript;
 
   # Strips non-alphanumeric characters from a string; e.g. for use in a name

@@ -1,5 +1,5 @@
-{ checkHsEnv, drvFromScript, haskellPackageNames, haskellPackages, jq, lib,
-  mkBin, mlspec, pkgName, timeout, writeScript }:
+{ checkHsEnv, drvFromScript, haskellPackages, jq, lib, mkBin, mlspec, pkgName,
+  timeout, writeScript }:
 with builtins;
 with lib;
 with rec {
@@ -52,11 +52,14 @@ findHsPkgReferences =
         echo "$INPUT" | jq -r "$FLATTEN | $FLATTEN | .package" 2> /dev/null ||
           true
       '';
+
+      hsPkgNames = writeScript "haskell-names"
+                     (concatStringsSep "\n" (attrNames haskellPackages));
    in writeScript "unique-references" ''
         INPUT=$(cat | grep '[a-zA-Z_]')
         while read -r NAME
         do
-          if grep -xF "$NAME" < "${haskellPackageNames}" > /dev/null
+          if grep -xF "$NAME" < "${hsPkgNames}" > /dev/null
           then
             echo "$NAME"
           fi
