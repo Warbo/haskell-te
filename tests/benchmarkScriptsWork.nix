@@ -1,42 +1,33 @@
 defs: with defs;
 with builtins;
 with lib;
+with {
+  testFieldFile = { given, input }:
+    testRun "Checking script output" null
+      {
+        expect = "hello world";
+        found  = drvFromScript
+          {
+            inherit input;
+            script      = runCmd given;
+            passAsFile  = [ "script" ];
+          }
+          ''
+            chmod +x "$scriptPath"
+            echo "$input" | "$scriptPath" > "$out"
+          '';
+      }
+      ''
+        F=$(cat < "$found")
+        echo "F: $F" 1>&2
 
-let result = script: input: drvFromScript {
-                       inherit script input;
-                       passAsFile  = [ "script" ];
-                       buildInputs = explore.extractedEnv {};
-                     }
-                     ''
-                       chmod +x "$scriptPath"
-                       echo "$input" | "$scriptPath" > "$out"
-                     '';
+        GOT=$(cat "$F")
+        echo -e "GOT: $GOT\nEXPECT: $expect" 1>&2
 
-    runResult = result (runCmd { cmd   = "echo";
-                                 args  = ["hello" "world"]; })
-                        "";
-
-    runCat = result (runCmd { cmd = "cat"; })
-                    "hello world";
-
-    checkCat = found: testFieldFile found "hello world";
-
-    testFieldFile = found: expect:
-      testRun "Checking script output" null
-              { inherit expect found; } ''
-                F=$(cat < "$found")
-                echo "F: $F" 1>&2
-
-                GOT=$(cat "$F")
-                echo -e "GOT: $GOT\nEXPECT: $expect" 1>&2
-
-                [[ "x$GOT" = "x$expect" ]] || exit 1
-              '';
-
-    check = found: {
-      stdout = testFieldFile found "hello world";
-    };
- in {
-      echo  = check runResult;
-      cat   = checkCat runCat;
-    }
+        [[ "x$GOT" = "x$expect" ]] || exit 1
+      '';
+};
+mapAttrs (_: testFieldFile) {
+  echo = { given = { cmd = "echo"; args = ["hello" "world"]; }; input = ""; };
+  cat  = { given = { cmd = "cat"; }; input = "hello world"; };
+}

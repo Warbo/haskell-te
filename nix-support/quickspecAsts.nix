@@ -50,11 +50,11 @@ with rec {
   testAsts = mapAttrs
     (n: asts: runCommand "test-quickspecasts-${n}"
       (nixEnv // {
-        inherit asts;
+        inherit asts n;
         buildInputs = [ fail jq quickspecAsts ];
         pkg         = getAttr n testData.haskellPkgs;
         MAX_SECS    = "180";
-        MAX_KB      = "1000000";
+        MAX_KB      = "2000000";
       })
       ''
         BENCH_OUT=$(quickspecAsts "$pkg" < "$asts" 2> >(tee stderr 1>&2)) ||

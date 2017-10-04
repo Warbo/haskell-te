@@ -139,6 +139,9 @@ rec {
 
          # Run with the given arguments and check stderr for error messages
          "$cmd" "''${ARGS[@]}" > "$out" 2> >(checkStderr)
+         CODE="$?"
+         sleep 1  # For checkStderr (hacky and racy)
+         exit "$?"
        '';
     };
 }
