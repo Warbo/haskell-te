@@ -1,17 +1,25 @@
-# All of the magic happens in ./nix-support, including a bunch of implementation
-# details. Here we extract a set of "exports" to act as our external API.
-with builtins;
-with {
-  allDefs = import ./nix-support {};
-};
-{
-  # We still allow access to our internals, but warn those who rely on it
-  allDefs = trace ''
-    WARNING: Delving into implementation details of haskell-te. If possible,
-    consider sticking to the stable API; if your use-case isn't supported, the
-    API can be extended.
-  '' allDefs;
+# Set 'bypassPublicApi' to get access to all of our implementation details, but
+# keep in mind that we make no guarantees about their stability.
+{ args ? {}, bypassPublicApi ? false }:
 
-  # Our stable API
-  inherit (allDefs) buckets package testSuite tipBenchmarks;
-}
+with rec {
+  # Implementation details
+  pkgs = import ./nix-support args;
+
+  # Used for general performance testing, as well as formal evaluation
+  benchmarkEnv = import ./benchmarks { inherit pkgs; };
+
+  # Integration tests (unit tests should ideally be baked into derivations)
+  tests = import ./tests { inherit pkgs; };
+
+  # Only builds successfully if all tests pass
+  testSuite = with pkgs; withDeps (allDrvsIn tests) nothing;
+
+  # Provides our exploration scripts. Encourage users to run the test suite, but
+  # also provide an escape hatch for those who want it (e.g. for debugging).
+  packageUntested = pkgs.package;
+  package         = pkgs.withDeps [ testSuite ] packageUntested;
+};
+if bypassPublicApi
+   then { inherit benchmarkEnv packageUntested package pkgs tests testSuite; }
+   else package

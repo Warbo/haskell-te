@@ -1,10 +1,13 @@
 # Entry point for evaluating/building
 with rec {
   go = stable:
-    with { pkgs = import ./nix-support { inherit stable; }; };
+    with import ./. {
+      args            = { inherit stable; };
+      bypassPublicApi = true;
+    };
+    # Remove unbuildable 'override' and 'overrideDerivation' attributes
     pkgs.stripOverrides {
-      inherit (pkgs) tests testSuite package;
-      benchmarkEnv = import ./benchmarks {};
+      inherit benchmarkEnv packageUntested package tests testSuite;
     };
 };
 {
