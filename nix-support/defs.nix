@@ -58,14 +58,11 @@ let pkgs = rec {
   # Useful for setting dependencies, variables, etc. of scripts
   inherit (nix-config)
     attrsToDirs backtrace fail inNixedDir mkBin nixListToBashArray pipeToNix
-    reverse stripOverrides timeout unpack withDeps wrap;
+    reverse sanitiseName stripOverrides timeout unpack withDeps wrap;
 
   # These provide executables
   inherit (haskellPackages)
     AstPlugin GetDeps ML4HSFE mlspec reduce-equations;
-
-  inherit (callPackage ./runBenchmark.nix {})
-          runCmd checkStderr;
 
   inherit (callPackage ./test-defs.nix {})
           runTestInDrv testAll testDbg testDrvString testFiles testMsg
@@ -79,6 +76,7 @@ let pkgs = rec {
   buckets               = callPackage ./buckets.nix               {};
   cacheContent          = callPackage ./cacheContent.nix          {};
   checkHsEnv            = callPackage ./checkHsEnv.nix            {};
+  checkStderr           = callPackage ./checkStderr.nix           {};
   cluster               = callPackage ./cluster.nix               {};
   dumpToNixScripts      = callPackage ./dumpToNix.nix             {};
   explore               = callPackage ./explore.nix               {};
@@ -101,6 +99,7 @@ let pkgs = rec {
   pkgName               = callPackage ./pkgName.nix               {};
   quickspec             = callPackage ./quickspec.nix             {};
   quickspecAsts         = callPackage ./quickspecAsts.nix         {};
+  runCmd                = callPackage ./runBenchmark.nix          {};
   runScript             = callPackage ./runScript.nix             {};
   runTypes              = callPackage ./runTypes.nix              {};
   runTypesScriptData    = callPackage ./runTypesScript.nix        {};
@@ -125,12 +124,6 @@ let pkgs = rec {
 
   runTypesScript     = runTypesScriptData.runTypesScript;
 
-  # Strips non-alphanumeric characters from a string; e.g. for use in a name
-  sanitise = stringAsChars (c: if elem c (upperChars ++
-                                          lowerChars ++
-                                          stringToCharacters "0123456789")
-                                  then c
-                                  else "");
 
   strip = s: let unpre = removePrefix "\n" (removePrefix " " s);
                  unsuf = removeSuffix "\n" (removeSuffix " " unpre);
@@ -144,7 +137,7 @@ let pkgs = rec {
                 { deps = collect isDerivation tests; }
                 ''echo "true" > "$out"'';
 
-  unlines = concatStringSep "\n";
+  unlines = concatStringsSep "\n";
 };
 
 in nixpkgs // pkgs
