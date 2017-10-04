@@ -125,7 +125,6 @@ let pkgs = rec {
 
   callPackage = nixpkgs.newScope pkgs;
 
-  defaultClusters = [ 1 2 4 ];
 
   dumpToNixScripts = callPackage ./dumpToNix.nix {};
   dumpToNix        = dumpToNixScripts.dumpToNix;
