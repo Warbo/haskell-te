@@ -39,14 +39,13 @@ with (nixpkgs.callPackage ./haskellPackages.nix {
        superHaskellPackages = nixpkgs.haskellPackages;
      });
 
-# Inherit from the result, so that haskellPackages.override works on the
-# available packages, rather than the arguments to this callPackage invocation
-
-let pkgs = rec {
+fix (self: rec {
   # Include the above definitions
   inherit cabal2nix drvFromScript extractTarball haskellPackages hsOverride
           nixedHsPkg nixEnv nix-config nix-config-src nixFromCabal
           nixpkgs-2016-09 nixpkgs-src stable withNix;
+
+  inherit (nixpkgs) lib;
 
   inherit (nixpkgs-2016-09)
     # Use newer makeWrapper for quoting changes
@@ -55,10 +54,10 @@ let pkgs = rec {
     # Use newer Racket for contract definitions
     racket;
 
-  # Useful for setting dependencies, variables, etc. of scripts
   inherit (nix-config)
-    attrsToDirs backtrace fail inNixedDir mkBin nixListToBashArray pipeToNix
-    reverse sanitiseName stripOverrides timeout unpack withDeps wrap;
+    allDrvsIn attrsToDirs backtrace fail inNixedDir mkBin nixListToBashArray
+    nothing pipeToNix reverse sanitiseName stripOverrides timeout unpack
+    withDeps wrap;
 
   # These provide executables
   inherit (haskellPackages)
@@ -110,25 +109,15 @@ let pkgs = rec {
   tipToHaskellPkg       = callPackage ./tipToHaskellPkg.nix       {};
   tryElse               = callPackage ./tryElse.nix               {};
 
-  annotate = annotateScripts.annotate;
-
   annotated = pkgDir: annotate rec {
     pkg    = { name = "dummy"; };
     asts   = dumpToNix { pkgDir = pkgSrc; };
     pkgSrc = nixedHsPkg pkgDir;
   };
 
-  callPackage    = nixpkgs.newScope pkgs;
+  annotate       = annotateScripts.annotate;
+  callPackage    = nixpkgs.newScope self;
   dumpToNix      = dumpToNixScripts.dumpToNix;
   runTypesScript = runTypesScriptData.runTypesScript;
-
-  tests     = callPackage ./tests.nix { pkgs = nixpkgs // pkgs;  };
-
-  testSuite = runCommand "haskell-te-tests"
-                { deps = collect isDerivation tests; }
-                ''echo "true" > "$out"'';
-
-  unlines = concatStringsSep "\n";
-};
-
-in nixpkgs // pkgs
+  unlines        = concatStringsSep "\n";
+})
