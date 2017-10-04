@@ -33,39 +33,6 @@ explore-theories = mkBin {
   '';
 };
 
-findHsPkgReferences =
-  let extractionScript = writeScript "find-references" ''
-        # Allow package names to be given directly, one per line (limit to 128
-        # chars to avoid craziness)
-        INPUT=$(cat)
-        echo "$INPUT" | cut -c1-128
-
-        # Take package names from JSON fields. These include:
-        #
-        #  - Objects with a 'package' field
-        #  - Arrays of such objects
-        #  - Arrays of arrays of such objects
-        #
-        # We should be able to ignore dependencies, as they'll be brought in
-        # automatically.
-        FLATTEN='if type == "array" then .[] else .'
-        echo "$INPUT" | jq -r "$FLATTEN | $FLATTEN | .package" 2> /dev/null ||
-          true
-      '';
-
-      hsPkgNames = writeScript "haskell-names"
-                     (concatStringsSep "\n" (attrNames haskellPackages));
-   in writeScript "unique-references" ''
-        INPUT=$(cat | grep '[a-zA-Z_]')
-        while read -r NAME
-        do
-          if grep -xF "$NAME" < "${hsPkgNames}" > /dev/null
-          then
-            echo "$NAME"
-          fi
-        done < <(echo "$INPUT" | "${extractionScript}" | sort -u | grep '^.')
-      '';
-
 hsPkgsInEnv = env: names:
   drvFromScript env ''
     "${checkHsEnv names}" || exit 1
@@ -129,5 +96,5 @@ exploreEnv = [ (haskellPackages.ghcWithPackages (h: map (n: h."${n}")
 };
 {
   inherit extra-haskell-packages explore-theories exploreEnv
-          extractedEnv findHsPkgReferences;
+          extractedEnv;
 }
