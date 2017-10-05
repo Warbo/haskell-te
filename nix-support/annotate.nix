@@ -204,7 +204,7 @@ with rec {
       file = annotateDbScript;
     };
 
-    env = if haskellPackages ? pkg.name
+    env = if hasAttr pkg.name haskellPackages
              then { extraHs    = [ pkg.name ];
                     standalone = null; }
              else { extraHs    = [];

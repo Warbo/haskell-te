@@ -72,7 +72,7 @@ extractedEnv = { extraPkgs ? [], extraHs ? [], standalone ? null, f ? null }:
                    };
       extracted = [];
       hsNames = unique (map pkgName (extracted ++ extra-haskell-packages ++ extraHs));
-      hsPkgs  = h: (concatMap (n: if haskellPackages ? "${n}"
+      hsPkgs  = h: (concatMap (n: if hasAttr n haskellPackages
                                      then [ h."${n}" ]
                                      else [          ])
                               hsNames) ++ attrs.pkgs h;

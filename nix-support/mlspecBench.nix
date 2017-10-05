@@ -1,6 +1,6 @@
 { bash, buckets, buildEnv, cluster, explore, format, glibcLocales,
-  hashspecBench, haskellPackages, jq, lib, nix-config, reduce-equations,
-  runCommand, runWeka, stdenv, timeout, tipBenchmarks, writeScript }:
+  hashspecBench, jq, lib, nix-config, reduce-equations, runCommand, runWeka,
+  stdenv, timeout, tipBenchmarks, writeScript }:
 with builtins;
 with lib;
 with {

@@ -14,6 +14,7 @@ with rec {
 
   tebench  = callPackage path {
     inherit asv-nix haskellPackages nix-config-src;
+
     # Nixpkgs 17.03 disables Racket on i686, so always use 16.09 (for now)
     pkgsPath = nix-config.repo1609;
   };
