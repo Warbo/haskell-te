@@ -1,5 +1,8 @@
 { bash, checkStderr, explore, fail, getDepsScript, haskellPackages, jq, mkBin,
   runCommand, runTypesScript, utillinux, wrap }:
+{ bash, checkStderr, dumpToNix, explore, fail, getDepsScript, haskellPackages,
+  jq, mkBin, nixedHsPkg, runCommand, runTypesScript, runTypesScriptData,
+  utillinux, wrap }:
 
 with builtins;
 
@@ -212,6 +215,25 @@ with rec {
                                     then pkg.srcNixed
                                     else pkgSrc; };
   };
+
+  annotate = { asts, pkg, pkgSrc ? null }:
+    with helpers { inherit pkg pkgSrc; };
+      runCommand "annotate"
+        {
+          buildInputs = explore.extractedEnv (env // { f = asts; }) ++
+                        [ annotateScript ];
+          inherit asts;
+          typesScript = runTypesScript {
+            pkgSrc = if pkg ? srcNixed
+                        then pkg.srcNixed
+                        else pkgSrc;
+          };
+        }
+        ''
+          set -e
+
+          annotate < "$asts" > "$out"
+        '';
 };
 
 rec {
@@ -226,22 +248,22 @@ rec {
     '';
   };
 
-  annotate = { asts, pkg, pkgSrc ? null }:
-    with helpers { inherit pkg pkgSrc; };
-    runCommand "annotate"
-      {
-        buildInputs = explore.extractedEnv (env // { f = asts; }) ++
-                      [ annotateScript ];
-        inherit asts;
-        typesScript = runTypesScript {
-          pkgSrc = if pkg ? srcNixed
-                      then pkg.srcNixed
-                      else pkgSrc;
-        };
-      }
-      ''
-        set -e
+  annotated = pkgDir: annotate rec {
+    pkg    = { name = "dummy"; };
+    asts   = dumpToNix { pkgDir = pkgSrc; };
+    pkgSrc = nixedHsPkg pkgDir;
+  };
+  
+  annotateRawAstsFrom = mkBin {
+    name   = "annotateRawAstsFrom";
+    paths  = [ annotateScript bash ];
+    vars   = { typesScript = runTypesScriptData.script; };
+    script = ''
+      #!/usr/bin/env bash
+      pkgSrc=$(readlink -f "$1")
+      export pkgSrc
 
-        annotate < "$asts" > "$out"
-      '';
+      annotate
+    '';
+  };
 }

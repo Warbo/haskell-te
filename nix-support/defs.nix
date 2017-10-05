@@ -24,7 +24,7 @@ fix (self: rec {
 
   # Regular dependencies, used as-is
   inherit (nixpkgs)
-    bash buildEnv cabal-install glibcLocales jq lib runCommand utillinux
+    bash buildEnv cabal-install glibcLocales jq lib runCommand stdenv utillinux
     writeScript;
 
   # Fixed versions to avoid known breakages
@@ -52,8 +52,8 @@ fix (self: rec {
   inherit (testDefs)
     runTestInDrv testAll testDbg testDrvString testFiles testMsg testPackages
     testRec testRun testWrap;
-  inherit (annotateScripts)
-    annotate;
+  inherit (callPackage ./annotate.nix {})
+    annotated annotateRawAstsFrom;
   inherit (dumpToNixScripts)
     dumpToNix;
   inherit (runTypesScriptData)
@@ -63,9 +63,6 @@ fix (self: rec {
   # argument values from the 'self' attrset.
   callPackage = nixpkgs.callPackage ./callPackage.nix { inherit self; };
 
-  annotated             = callPackage ./annotated.nix {};
-  annotateRawAstsFrom   = callPackage ./annotateRawAstsFrom.nix   {};
-  annotateScripts       = callPackage ./annotate.nix              {};
   asv-nix               = callPackage ./asv-nix.nix               {};
   bashEscape            = callPackage ./bashEscape.nix            {};
   benchmarkEnv          = callPackage ./benchmarkEnv.nix          {};
