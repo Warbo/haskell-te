@@ -1,14 +1,19 @@
-{ fetchFromGitHub, stable }:
+{ fetchFromGitHub, stable, tryElse }:
 
 with rec {
+  inherit (import (tryElse <real> <nixpkgs>) { inherit config; }) latestGit;
+
+  config    = import "${stableSrc}/stable.nix";
   stableSrc = fetchFromGitHub {
-    rev    = "c7c36d4";
+    rev    = "8abcf84";
     owner  = "Warbo";
     repo   = "nix-config";
-    sha256 = "018gyj9i002wrj3krzrv4w0lf9606142ba5ci4wy1ams48bdszbr";
+    sha256 = "0cjh7y1z8wfm542yrwnhaj81yikf05va7ahlg195jqf5vqj6m4yd";
   };
-  config      = import "${stableSrc}/stable.nix";
-  unstableSrc = (import <nixpkgs> { inherit config; }).latestNixCfg;
+  unstableSrc = latestGit {
+    url    = http://chriswarbo.net/git/nix-config.git;
+    stable = { unsafeSkip = true; };
+  };
 };
 
 {

@@ -43,8 +43,8 @@ fix (self: rec {
 
   inherit (nix-config)
     allDrvsIn attrsToDirs backtrace fail inNixedDir mkBin nixListToBashArray
-    nothing pipeToNix reverse sanitiseName stripOverrides timeout unpack
-    withDeps wrap;
+    nothing pipeToNix reverse sanitiseName stable stripOverrides timeout unlines
+    unpack withDeps wrap;
 
   # These provide executables
   inherit (haskellPackages)
@@ -115,8 +115,5 @@ fix (self: rec {
   tipBenchmarks         = callPackage ./tipBenchmarks.nix         {};
   tipToHaskellPkg       = callPackage ./tipToHaskellPkg.nix       {};
   tryElse               = callPackage ./tryElse.nix               {};
-  stable          = args.stable or true;
-  unlines         = concatStringsSep "\n";
-
   withNix               = callPackage ./withNix.nix               {};
 })
