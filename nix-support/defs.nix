@@ -2,7 +2,7 @@
 # than one place). Note that care should be taken to avoid infinite loops, since
 # 'callPackage' gets arguments from 'self', which is the set we're defining!
 {
-  lib    ? (import <nixpkgs> {}).lib,
+  lib    ? (import (import ./path.nix {}) {}).lib,
   stable ? true,
   ...
 }@args:

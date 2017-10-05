@@ -11,12 +11,11 @@ with rec {
 
   # If we have a <real> path, use that as the source of fetchFromGitHub, to
   # prevent an infinite loop. Otherwise use <nixpkgs> as normal.
-  path = tryElse <real> <nixpkgs>;
+  path = import ./path.nix {};
 
   # nix-config defines a bunch of stable package sets we can use
   configs = (import path { config = {}; }).callPackage ./nix-config.nix {
-    inherit stable;
-    tryElse = import ./tryElse.nix {};
+    inherit path stable;
   };
   config  = configs.nix-config;
 

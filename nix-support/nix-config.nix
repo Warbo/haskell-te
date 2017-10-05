@@ -1,7 +1,7 @@
-{ fetchFromGitHub, stable, tryElse }:
+{ fetchFromGitHub, path, stable }:
 
 with rec {
-  inherit (import (tryElse <real> <nixpkgs>) { inherit config; }) latestGit;
+  inherit (import path { inherit config; }) latestGit;
 
   config    = import "${stableSrc}/stable.nix";
   stableSrc = fetchFromGitHub {
