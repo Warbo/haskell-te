@@ -77,8 +77,8 @@ fix (self: rec {
   genQuickspecRunner    = callPackage ./genQuickspecRunner.nix    {};
   getDepsScript         = callPackage ./getDepsScript.nix         {};
   hashspecBench         = callPackage ./hashspecBench.nix         {};
+  haskellPackages       = callPackage ./haskellPackages.nix       {};
   haskellPkgNameVersion = callPackage ./haskellPkgNameVersion.nix {};
-  haskellPkgs           = callPackage ./haskellPackages.nix       {};
   haskellPkgToAsts      = callPackage ./haskellPkgToAsts.nix      {};
   haskellPkgToRawAsts   = callPackage ./haskellPkgToRawAsts.nix   {};
   haveVar               = callPackage ./haveVar.nix               {};
@@ -88,6 +88,7 @@ fix (self: rec {
   makeHaskellPkgNixable = callPackage ./makeHaskellPkgNixable.nix {};
   mlspecBench           = callPackage ./mlspecBench.nix           {};
   nixedHsPkg            = callPackage ./nixedHsPkg.nix            {};
+  nixEnv                = callPackage ./nixEnv.nix                {};
   nixFromCabal          = callPackage ./nixFromCabal.nix          {};
   nixify                = callPackage ./nixify.nix                {};
   package               = callPackage ./package.nix               {};
@@ -115,11 +116,9 @@ fix (self: rec {
 
   annotate        = annotateScripts.annotate;
   dumpToNix       = dumpToNixScripts.dumpToNix;
-  haskellPackages = head haskellPkgs;
   runTypesScript  = runTypesScriptData.runTypesScript;
   stable          = args.stable or true;
   unlines         = concatStringsSep "\n";
 
-  nixEnv        = (nixpkgs.callPackage ./nixEnv.nix        {}) null;
   withNix       =  nixpkgs.callPackage ./withNix.nix       { inherit nixEnv;  };
 })

@@ -8,5 +8,7 @@ with builtins // {
 assert ghcVersion == reqVersion ||
        abort "Using GHC ${ghcVersion} (should be ${reqVersion})";
 
-# We return a list to prevent 'makeOverridable' breaking our overrides
-[ (nixpkgs.haskellPackages.override { overrides = hsOverride; }) ]
+{
+  value = nixpkgs.haskellPackages.override { overrides = hsOverride; };
+  removeOverrides = true;  # Otherwise they'd mess up the Haskell overrides
+}

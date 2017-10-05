@@ -29,12 +29,13 @@ with rec {
   '';
 };
 
-# Return a thunk, to prevent callPackage polluting our attrset with
-# "overrideDerivation" and friends.
-_: {
-   NIX_PATH   = concatStringsSep ":" pathParts;
+{
+  value = {
+    NIX_PATH   = concatStringsSep ":" pathParts;
 
-   NIX_REMOTE = if remoteGiven == ""
-                   then remoteForce   # Nix is writable, or we need to force
-                   else remoteGiven;  # Propagate the existing value
+    NIX_REMOTE = if remoteGiven == ""
+                    then remoteForce   # Nix is writable, or we need to force
+                    else remoteGiven;  # Propagate the existing value
+  };
+  removeOverrides = true;  # Since they can't be serialised into an environment
 }
