@@ -1,21 +1,19 @@
 defs: with defs;
 
-let
-
-input = "${toString ./exploreTheoriesExamples}/hastily.formatted.1";
-
-env = { buildInputs = explore.extractedEnv { f = input; } ++
-                      [ explore.explore-theories ]; };
-
-cmd = ''
-  set -e
-
-  OUTPUT=$(explore-theories "${input}" 2>&1) || {
-    echo "Failed to explore 'hastily':\n$OUTPUT" 1>&2
-    exit 1
+with { f = "${toString ./exploreTheoriesExamples}/hastily.formatted.1"; };
+runCommand "exploreExitSuccess"
+  {
+    inherit f;
+    buildInputs = explore.extractedEnv { inherit f; } ++
+                  [ explore.explore-theories ];
   }
+  ''
+    set -e
 
-  touch "$out"
-'';
+    OUTPUT=$(explore-theories "$f" 2>&1) || {
+      echo -e "Failed to explore 'hastily' ($OUTPUT)" 1>&2
+      exit 1
+    }
 
-in drvFromScript env cmd
+    mkdir "$out"
+  ''

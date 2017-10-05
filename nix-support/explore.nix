@@ -1,13 +1,14 @@
-{ checkHsEnv, drvFromScript, haskellPackages, jq, lib, mkBin, mlspec, pkgName,
-  timeout, writeScript }:
+{ checkHsEnv, haskellPackages, jq, lib, mkBin, mlspec, nix, nixEnv, pkgName,
+  runCommand, timeout, withDeps, writeScript }:
 with builtins;
 with lib;
 with rec {
 
 explore-theories = mkBin {
   name   = "explore-theories";
-  paths  = [ jq timeout ];
-  script =  ''
+  paths  = [ jq timeout mlspec nix ];
+  vars   = nixEnv;
+  script = ''
     #!/usr/bin/env bash
     set -e
     set -o pipefail
@@ -33,9 +34,10 @@ explore-theories = mkBin {
   '';
 };
 
-hsPkgsInEnv = env: names:
-  drvFromScript env ''
-    "${checkHsEnv names}" || exit 1
+hsPkgsInEnv = env: names: runCommand "checkIfHsPkgsInEnv"
+  (env // { cmd = checkHsEnv names; })
+  ''
+    "$cmd" || exit 1
     echo "true" > "$out"
   '';
 
@@ -54,35 +56,24 @@ hsPkgsInEnv = env: names:
 #  - The contents of the 'extraPkgs' argument; use '[]' for none
 #
 extractedEnv = { extraPkgs ? [], extraHs ? [], standalone ? null, f ? null }:
-      # Use a variety of extra settings when 'standalone' is given
-  let attrs   = if standalone != null &&
-                   pathExists (unsafeDiscardStringContext
-                                 "${toString standalone}/default.nix")
-                   then trace "Including '${toString standalone}'" rec {
-                     pkg   = h: h.callPackage (import standalone) {};
-                     pkgs  = h: if elem name hsNames
-                                   then []
-                                   else [ (pkg h) ];
-                     name  = pkgName (pkg haskellPackages).name;
-                     names = [ name ];
-                   }
-                   else {
-                     pkgs  = h: [];
-                     names = [];
-                   };
-      extracted = [];
-      hsNames = unique (map pkgName (extracted ++ extra-haskell-packages ++ extraHs));
-      hsPkgs  = h: (concatMap (n: if hasAttr n haskellPackages
-                                     then [ h."${n}" ]
-                                     else [          ])
-                              hsNames) ++ attrs.pkgs h;
-      ps      = [ (haskellPackages.ghcWithPackages hsPkgs) ] ++
-                extra-packages ++ extraPkgs;
-      # Checks whether all required Haskell packages are found. We add this to
-      # our result, so that the environment will be checked during dependency
-      # building
-      check   = hsPkgsInEnv { buildInputs = ps; } (hsNames ++ attrs.names);
-   in ps ++ [ check ];
+  with rec {
+    names     = if standalone == null then [] else [ name ];
+    pkgs      = h: if standalone == null || elem name hsNames
+                      then []
+                      else [ (pkg h) ];
+    name      = assert standalone != null; pkgName (pkg haskellPackages).name;
+    pkg       = assert standalone != null; h: h.callPackage (import standalone) {};
+    extras    = extra-packages ++ extraPkgs;
+    hsNames   = unique (map pkgName (extra-haskell-packages ++ extraHs));
+    ghcEnv    = haskellPackages.ghcWithPackages (h: pkgs h ++ (concatMap
+                  (n: if hasAttr n haskellPackages
+                         then [ (getAttr n h) ]
+                         else [])
+                  hsNames));
+    check     = hsPkgsInEnv { buildInputs = [ ghcEnv ] ++ extras; }
+                            (hsNames ++ names);
+  };
+  [ (withDeps [ check ] ghcEnv) ] ++ extras;
 
 # Haskell packages required for MLSpec
 extra-haskell-packages = [ "mlspec" "mlspec-helper" "runtime-arbitrary"
