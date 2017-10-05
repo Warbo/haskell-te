@@ -22,7 +22,7 @@ with rec {
 rec {
   inherit path;
   inherit (tebench) tip-benchmarks cache env tools tip-benchmark-smtlib;
-  annotatedAsts         = annotated tip-benchmark-haskell;
+  annotatedAsts         = annotated { pkgDir = tip-benchmark-haskell; };
   pkg                   = haskellPackages.callPackage pkgDef {};
   pkgDef                = nixFromCabal (toString tip-benchmark-haskell) null;
   tip-benchmark-haskell = cacheContent "cached-benchmark-haskell"

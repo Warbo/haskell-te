@@ -1,5 +1,3 @@
-{ bash, checkStderr, explore, fail, getDepsScript, haskellPackages, jq, mkBin,
-  runCommand, runTypesScript, utillinux, wrap }:
 { bash, checkStderr, dumpToNix, explore, fail, getDepsScript, haskellPackages,
   jq, mkBin, nixedHsPkg, runCommand, runTypesScript, runTypesScriptData,
   utillinux, wrap }:
@@ -195,48 +193,6 @@ with rec {
     '';
   };
 
-  helpers = { pkg, pkgSrc }: {
-    annotateDb = wrap {
-      vars = {
-        typesScript = runTypesScript {
-          pkgSrc = if pkg ? srcNixed
-                      then pkg.srcNixed
-                      else pkgSrc;
-        };
-      };
-      file = annotateDbScript;
-    };
-
-    env = if hasAttr pkg.name haskellPackages
-             then { extraHs    = [ pkg.name ];
-                    standalone = null; }
-             else { extraHs    = [];
-                    standalone = if pkg ? srcNixed
-                                    then pkg.srcNixed
-                                    else pkgSrc; };
-  };
-
-  annotate = { asts, pkg, pkgSrc ? null }:
-    with helpers { inherit pkg pkgSrc; };
-      runCommand "annotate"
-        {
-          buildInputs = explore.extractedEnv (env // { f = asts; }) ++
-                        [ annotateScript ];
-          inherit asts;
-          typesScript = runTypesScript {
-            pkgSrc = if pkg ? srcNixed
-                        then pkg.srcNixed
-                        else pkgSrc;
-          };
-        }
-        ''
-          set -e
-
-          annotate < "$asts" > "$out"
-        '';
-};
-
-rec {
   annotateScript = mkBin {
     name   = "annotate";
     paths  = [ bash checkStderr fail ];
@@ -245,15 +201,49 @@ rec {
       #!/usr/bin/env bash
       [[ -n "$typesScript" ]] || fail "No typesScript set"
       "$annotateDb" 2> >(checkStderr)
+
+      # Give checkStderr some time to process (hacky and racy)
+      CODE="$?"
+      sleep 1
+      exit "$CODE"
     '';
   };
+};
 
-  annotated = pkgDir: annotate rec {
-    pkg    = { name = "dummy"; };
-    asts   = dumpToNix { pkgDir = pkgSrc; };
-    pkgSrc = nixedHsPkg pkgDir;
-  };
-  
+rec {
+  annotated = {
+    asts   ? null,
+    name   ? null,
+    pkg    ? null,
+    pkgDir ? null,
+    pkgSrc ? null
+  }:
+    assert pkgSrc == null -> pkgDir != null ||
+           abort "'annotated' needs a pkgSrc or a pkgDir";
+    with rec {
+      elseNull    = x: y: if x == null then y else x;
+      realName    = elseNull name   (pkg.name or "dummy");
+      realPkgSrc  = elseNull pkgSrc (nixedHsPkg pkgDir);
+      f           = elseNull asts   (dumpToNix { pkgDir = realPkgSrc; });
+      srcFallback = pkg.srcNixed or realPkgSrc;
+      inNix       = hasAttr realName haskellPackages;
+      env         = explore.extractedEnv {
+        inherit f;
+        extraHs    = if inNix then [ realName ] else [];
+        standalone = if inNix then null         else srcFallback;
+      };
+    };
+    runCommand "annotate"
+      {
+        inherit f;
+        buildInputs = env ++ [ annotateScript ];
+        typesScript = runTypesScript { pkgSrc = srcFallback; };
+      }
+      ''
+        set -e
+        annotate < "$f" > "$out"
+      '';
+
   annotateRawAstsFrom = mkBin {
     name   = "annotateRawAstsFrom";
     paths  = [ annotateScript bash ];

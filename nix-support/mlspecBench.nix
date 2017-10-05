@@ -95,7 +95,9 @@ rec {
     paths  = [ bash jq tipBenchmarks.tools ];
     vars   = {
       OUT_DIR   = tipBenchmarks.tip-benchmark-haskell;
-      ANNOTATED = annotated (toString tipBenchmarks.tip-benchmark-haskell);
+      ANNOTATED = annotated {
+        pkgDir = toString tipBenchmarks.tip-benchmark-haskell;
+      };
       filter = writeScript "filter.jq" ''
         def mkId: {"name": .name, "package": .package, "module": .module};
 

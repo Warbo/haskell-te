@@ -44,7 +44,9 @@ rec {
         vars  = {
           OUT_DIR   = tipBenchmarks.tip-benchmark-haskell;
 
-          ANNOTATED = annotated (toString tipBenchmarks.tip-benchmark-haskell);
+          ANNOTATED = annotated {
+            pkgDir = toString tipBenchmarks.tip-benchmark-haskell;
+          };
 
           FILTER = writeScript "filter.jq" ''
             def mkId: {"name": .name, "package": .package, "module": .module};
@@ -190,7 +192,7 @@ rec {
       # Extract ASTs from the Haskell package, annotate and add to the Nix store. By
       # doing this in nix-build, we get content-based caching for free.
       STORED=$(nix-store --add "$OUT_DIR")
-      EXPR="with import <support> {}; annotated \"$STORED\""
+      EXPR="with import <support> {}; annotated { pkgDir = \"$STORED\"; }"
       ANNOTATED=$(nix-build --show-trace -E "$EXPR")
 
       export ANNOTATED

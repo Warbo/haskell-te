@@ -16,6 +16,7 @@ with rec {
   # nix-config defines a bunch of stable package sets we can use
   configs = (import path { config = {}; }).callPackage ./nix-config.nix {
     inherit stable;
+    tryElse = import ./tryElse.nix {};
   };
   config  = configs.nix-config;
 

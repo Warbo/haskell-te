@@ -8,7 +8,7 @@ with rec {
     cp -r hsPkg "$out"
   '';
   nixed       = nixedHsPkg "${hsPkg}";
-  annotations = annotated  "${nixed}";
+  annotations = annotated  { pkgDir = "${nixed}"; };
 };
 
 testRun "Have types for ASTs" { inherit annotations nixed; }

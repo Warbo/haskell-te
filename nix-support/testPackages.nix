@@ -1,4 +1,4 @@
-{ annotate, cluster, dumpToNix, haskellPackages, lib, nixedHsPkg, package,
+{ annotated, cluster, dumpToNix, haskellPackages, lib, nixedHsPkg, package,
   runCommand, unpack }:
 
 with builtins;
@@ -16,11 +16,7 @@ with rec {
 
     dump = dumpToNix { pkgDir = src; };
 
-    asts = annotate  {
-      inherit pkg;
-      asts   = dump;
-      pkgSrc = src;
-    };
+    asts = annotated { inherit name; pkgDir = unpack pkg.src; };
 
     eqs = runCommand "eqs-of-${name}"
       {

@@ -39,12 +39,13 @@ fix (self: rec {
     # Old versions don't have the needed contracts, new ones don't build on i686
     racket;
 
+  # Helper functions, etc.
   inherit (nix-config)
     allDrvsIn attrsToDirs backtrace fail inNixedDir mkBin nixListToBashArray
     nothing pipeToNix reverse sanitiseName stable stripOverrides timeout unlines
     unpack withDeps wrap;
 
-  # These provide executables
+  # These are useful as standalone packages, since they provide executables
   inherit (haskellPackages)
     AstPlugin GetDeps ML4HSFE mlspec reduce-equations;
 
