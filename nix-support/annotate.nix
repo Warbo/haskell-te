@@ -211,33 +211,21 @@ with rec {
 };
 
 rec {
-  annotated = {
-    asts   ? null,
-    name   ? null,
-    pkg    ? null,
-    pkgDir ? null,
-    pkgSrc ? null
-  }:
-    assert pkgSrc == null -> pkgDir != null ||
-           abort "'annotated' needs a pkgSrc or a pkgDir";
+  annotated = { pkgDir }:
     with rec {
-      elseNull    = x: y: if x == null then y else x;
-      realName    = elseNull name   (pkg.name or "dummy");
-      realPkgSrc  = elseNull pkgSrc (nixedHsPkg pkgDir);
-      f           = elseNull asts   (dumpToNix { pkgDir = realPkgSrc; });
-      srcFallback = pkg.srcNixed or realPkgSrc;
-      inNix       = hasAttr realName haskellPackages;
-      env         = explore.extractedEnv {
+      pkgSrc   = nixedHsPkg pkgDir;
+      f        = dumpToNix { pkgDir = pkgSrc; };
+      env      = explore.extractedEnv {
         inherit f;
-        extraHs    = if inNix then [ realName ] else [];
-        standalone = if inNix then null         else srcFallback;
+        extraHs    = [];
+        standalone = pkgSrc;
       };
     };
     runCommand "annotate"
       {
         inherit f;
         buildInputs = env ++ [ annotateScript ];
-        typesScript = runTypesScript { pkgSrc = srcFallback; };
+        typesScript = runTypesScript { inherit pkgSrc; };
       }
       ''
         set -e

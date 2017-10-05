@@ -16,7 +16,7 @@ with rec {
 
     dump = dumpToNix { pkgDir = src; };
 
-    asts = annotated { inherit name; pkgDir = unpack pkg.src; };
+    asts = annotated { pkgDir = unpack pkg.src; };
 
     eqs = runCommand "eqs-of-${name}"
       {
