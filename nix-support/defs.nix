@@ -54,6 +54,9 @@ fix (self: rec {
     runTestInDrv testAll testDbg testDrvString testFiles testMsg testPackages
     testRec testRun testWrap;
 
+  # Imports a file and calls the function it contains, automatically looking up
+  # argument values from the 'self' attrset.
+  callPackage = nixpkgs.callPackage ./callPackage.nix { inherit self; };
   annotateRawAstsFrom   = callPackage ./annotateRawAstsFrom.nix   {};
   annotateScripts       = callPackage ./annotate.nix              {};
   asv-nix               = callPackage ./asv-nix.nix               {};
@@ -111,7 +114,6 @@ fix (self: rec {
   };
 
   annotate        = annotateScripts.annotate;
-  callPackage     = nixpkgs.newScope self;
   dumpToNix       = dumpToNixScripts.dumpToNix;
   haskellPackages = head haskellPkgs;
   runTypesScript  = runTypesScriptData.runTypesScript;
