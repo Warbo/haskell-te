@@ -16,26 +16,24 @@ fix (self: rec {
     # Whichever nixpkgs we're using by default (depending on 'stable')
     nixpkgs nixpkgs-src
 
-    # Fixed releases of nixpkgs, when thedefaults n
+    # Fixed releases of nixpkgs. Useful for avoiding known incompatibilities.
     nixpkgs-2016-03 nixpkgs-2016-09
 
     # Default nixpkgs, overridden with helper functions and packages
     nix-config nix-config-src;
 
-  # Bring in some stuff as-is from nixpkgs
+  # Regular dependencies, used as-is
   inherit (nixpkgs)
     bash buildEnv cabal-install glibcLocales jq lib runCommand utillinux
     writeScript;
 
-  # These packages have hard-coded versions, since newer ones are known to be
-  # incompatible
-
+  # Fixed versions to avoid known breakages
   inherit (nixpkgs-2016-03)
     # Args differ in new versions, which breaks ./haskellPackages.nix scripts
     cabal2nix;
 
   inherit (nixpkgs-2016-09)
-    # Use newer makeWrapper for quoting changes
+    # The quoting is different in other versions, which breaks e.g. wrap
     makeWrapper
 
     # Old versions don't have the needed contracts, new ones don't build on i686
@@ -50,6 +48,7 @@ fix (self: rec {
   inherit (haskellPackages)
     AstPlugin GetDeps ML4HSFE mlspec reduce-equations;
 
+  # Cases where we want both the attribute set and its attributes available
   inherit (testDefs)
     runTestInDrv testAll testDbg testDrvString testFiles testMsg testPackages
     testRec testRun testWrap;
