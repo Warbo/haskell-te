@@ -41,17 +41,6 @@ fix (self: rec {
     # Old versions don't have the needed contracts, new ones don't build on i686
     racket;
 
-  inherit (callPackage ./nixFromCabal.nix { inherit cabal2nix; })
-    nixedHsPkg nixFromCabal;
-
-  # We have many custom Haskell packages, and also need particular versions of
-  # regular Haskell packages in order to satisfy dependencies.
-  inherit (callPackage ./haskellPackages.nix {
-            callHackage          = nixpkgs.callPackage ./callHackage.nix {};
-            superHaskellPackages = nixpkgs.haskellPackages;
-          })
-    haskellPackages hsOverride;
-
   inherit (nix-config)
     allDrvsIn attrsToDirs backtrace fail inNixedDir mkBin nixListToBashArray
     nothing pipeToNix reverse sanitiseName stripOverrides timeout unpack
@@ -61,9 +50,9 @@ fix (self: rec {
   inherit (haskellPackages)
     AstPlugin GetDeps ML4HSFE mlspec reduce-equations;
 
-  inherit (callPackage ./test-defs.nix {})
-          runTestInDrv testAll testDbg testDrvString testFiles testMsg
-          testPackages testRec testRun testWrap;
+  inherit (testDefs)
+    runTestInDrv testAll testDbg testDrvString testFiles testMsg testPackages
+    testRec testRun testWrap;
 
   annotateRawAstsFrom   = callPackage ./annotateRawAstsFrom.nix   {};
   annotateScripts       = callPackage ./annotate.nix              {};
@@ -72,9 +61,11 @@ fix (self: rec {
   benchmarkEnv          = callPackage ./benchmarkEnv.nix          {};
   buckets               = callPackage ./buckets.nix               {};
   cacheContent          = callPackage ./cacheContent.nix          {};
+  callHackage           = callPackage ./callHackage.nix           {};
   checkHsEnv            = callPackage ./checkHsEnv.nix            {};
   checkStderr           = callPackage ./checkStderr.nix           {};
   cluster               = callPackage ./cluster.nix               {};
+  drvFromScript         = callPackage ./drvFromScript.nix         {};
   dumpToNixScripts      = callPackage ./dumpToNix.nix             {};
   explore               = callPackage ./explore.nix               {};
   extractTarball        = callPackage ./extractTarball.nix        {};
@@ -84,13 +75,17 @@ fix (self: rec {
   getDepsScript         = callPackage ./getDepsScript.nix         {};
   hashspecBench         = callPackage ./hashspecBench.nix         {};
   haskellPkgNameVersion = callPackage ./haskellPkgNameVersion.nix {};
+  haskellPkgs           = callPackage ./haskellPackages.nix       {};
   haskellPkgToAsts      = callPackage ./haskellPkgToAsts.nix      {};
   haskellPkgToRawAsts   = callPackage ./haskellPkgToRawAsts.nix   {};
   haveVar               = callPackage ./haveVar.nix               {};
   hsNameVersion         = callPackage ./hsNameVersion.nix         {};
+  hsOverride            = callPackage ./hsOverride.nix            {};
   importDir             = callPackage ./importDir.nix             {};
   makeHaskellPkgNixable = callPackage ./makeHaskellPkgNixable.nix {};
   mlspecBench           = callPackage ./mlspecBench.nix           {};
+  nixedHsPkg            = callPackage ./nixedHsPkg.nix            {};
+  nixFromCabal          = callPackage ./nixFromCabal.nix          {};
   nixify                = callPackage ./nixify.nix                {};
   package               = callPackage ./package.nix               {};
   parseJSON             = callPackage ./parseJSON.nix             {};
@@ -104,6 +99,7 @@ fix (self: rec {
   runWeka               = callPackage ./runWeka.nix               {};
   sta                   = callPackage ./sta.nix                   {};
   testData              = callPackage ./testData.nix              {};
+  testDefs              = callPackage ./test-defs.nix             {};
   tipBenchmarks         = callPackage ./tipBenchmarks.nix         {};
   tipToHaskellPkg       = callPackage ./tipToHaskellPkg.nix       {};
   tryElse               = callPackage ./tryElse.nix               {};
@@ -114,14 +110,14 @@ fix (self: rec {
     pkgSrc = nixedHsPkg pkgDir;
   };
 
-  annotate       = annotateScripts.annotate;
-  callPackage    = nixpkgs.newScope self;
-  dumpToNix      = dumpToNixScripts.dumpToNix;
-  runTypesScript = runTypesScriptData.runTypesScript;
-  stable         = args.stable or true;
-  unlines        = concatStringsSep "\n";
+  annotate        = annotateScripts.annotate;
+  callPackage     = nixpkgs.newScope self;
+  dumpToNix       = dumpToNixScripts.dumpToNix;
+  haskellPackages = head haskellPkgs;
+  runTypesScript  = runTypesScriptData.runTypesScript;
+  stable          = args.stable or true;
+  unlines         = concatStringsSep "\n";
 
-  drvFromScript =  nixpkgs.callPackage ./drvFromScript.nix { inherit withNix; };
   nixEnv        = (nixpkgs.callPackage ./nixEnv.nix        {}) null;
   withNix       =  nixpkgs.callPackage ./withNix.nix       { inherit nixEnv;  };
 })

@@ -1,4 +1,4 @@
-{ cabal2nix, lib, runCommand, stdenv }:
+{ lib, nixedHsPkg }:
 with builtins; with lib;
 
 # Make a Nix package definition from a Cabal project. The result is a function,
@@ -15,47 +15,9 @@ with builtins; with lib;
 # the package definition, but also preserves all of the named arguments required
 # for "haskellPackages.callPackage" to work.
 
-rec {
-
-nixedHsPkg = dir:
-
-  assert typeOf dir == "path" || isString dir || isDerivation dir ||
-         abort "nixedHsPkg: dir should be str|path|drv, given '${typeOf dir}'";
-
-  runCommand "nixedHsPkg"
-    {
-      inherit dir;
-      name         = "nixFromCabal";
-      buildInputs  = [ cabal2nix ];
-      }
-      ''
-        source $stdenv/setup
-
-        echo "Source is '$dir'" 1>&2
-        cp -r "$dir" ./source-"$name"
-        pushd ./source-* > /dev/null
-
-        echo "Setting permissions" 1>&2
-        chmod +w . -R # We need this if dir has come from the store
-
-        echo "Cleaning up unnecessary files" 1>&2
-        rm -rf ".git" || true
-
-        echo "Creating 'default.nix'" 1>&2
-        touch default.nix
-        chmod +w default.nix
-
-        echo "Generating package definition" 1>&2
-        cabal2nix ./. > default.nix
-        echo "Finished generating" 1>&2
-        popd > /dev/null
-
-        echo "Adding to store" 1>&2
-        cp -r ./source-* "$out"
-      '';
-
-nixFromCabal = dir: f:
-let result = import (toString (nixedHsPkg dir));
+dir: f:
+  with rec {
+    result = import (toString (nixedHsPkg dir));
 
     # Support an "inner-composition" of "f" and "result", which behaves like
     # "args: f (result args)" but has explicit named arguments, to allow
@@ -64,8 +26,8 @@ let result = import (toString (nixedHsPkg dir));
     # Build a string "a,b,c" for the arguments of "result" which don't have
     # defaults
     resultArgs = functionArgs result;
-    required   = filter (n: !resultArgs."${n}") (attrNames resultArgs);
-    arglist    = lib.concatStrings (lib.intersperse "," required);
+    required   = filter (n: !(getAttr n resultArgs)) (attrNames resultArgs);
+    arglist    = concatStringsSep "," required;
 
     # Strip the dependencies off our strings, so they can be embedded
     arglistF   = unsafeDiscardStringContext arglist;
@@ -75,14 +37,12 @@ let result = import (toString (nixedHsPkg dir));
     compose = toFile "cabal-compose.nix" ''
       f: g: args@{${arglistF}}: f (g args)
     '';
-in
+  };
 
-# If we've been given a function "f", compose it with "result" using our
-# special-purpose function
-assert f == null || isFunction f ||
-       abort "nixFromCabal: f should be null or function, given '${typeOf f}'";
+  # If we've been given a function "f", compose it with "result" using our
+  # special-purpose function
+  assert f == null || isFunction f ||
+         abort "nixFromCabal: f should be null or function, given ${typeOf f}";
 
-if f == null then result
-             else import compose f result;
-
-}
+  if f == null then result
+               else import compose f result
