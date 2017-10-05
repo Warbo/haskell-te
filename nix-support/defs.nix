@@ -53,10 +53,18 @@ fix (self: rec {
   inherit (testDefs)
     runTestInDrv testAll testDbg testDrvString testFiles testMsg testPackages
     testRec testRun testWrap;
+  inherit (annotateScripts)
+    annotate;
+  inherit (dumpToNixScripts)
+    dumpToNix;
+  inherit (runTypesScriptData)
+    runTypesScript;
 
   # Imports a file and calls the function it contains, automatically looking up
   # argument values from the 'self' attrset.
   callPackage = nixpkgs.callPackage ./callPackage.nix { inherit self; };
+
+  annotated             = callPackage ./annotated.nix {};
   annotateRawAstsFrom   = callPackage ./annotateRawAstsFrom.nix   {};
   annotateScripts       = callPackage ./annotate.nix              {};
   asv-nix               = callPackage ./asv-nix.nix               {};
@@ -107,18 +115,8 @@ fix (self: rec {
   tipBenchmarks         = callPackage ./tipBenchmarks.nix         {};
   tipToHaskellPkg       = callPackage ./tipToHaskellPkg.nix       {};
   tryElse               = callPackage ./tryElse.nix               {};
-
-  annotated = pkgDir: annotate rec {
-    pkg    = { name = "dummy"; };
-    asts   = dumpToNix { pkgDir = pkgSrc; };
-    pkgSrc = nixedHsPkg pkgDir;
-  };
-
-  annotate        = annotateScripts.annotate;
-  dumpToNix       = dumpToNixScripts.dumpToNix;
-  runTypesScript  = runTypesScriptData.runTypesScript;
   stable          = args.stable or true;
   unlines         = concatStringsSep "\n";
 
-  withNix       =  nixpkgs.callPackage ./withNix.nix       { inherit nixEnv;  };
+  withNix               = callPackage ./withNix.nix               {};
 })
