@@ -1,12 +1,16 @@
-{ checkHsEnv, haskellPackages, jq, lib, mkBin, mlspec, nix, nixEnv, pkgName,
-  runCommand, timeout, withDeps, writeScript }:
+{ allDrvsIn, checkHsEnv, fail, haskellPackages, jq, lib, mkBin, mlspec, nix,
+  nixEnv, pkgName, runCommand, timeout, withDeps, writeScript }:
 with builtins;
 with lib;
 with rec {
 
-explore-theories = mkBin {
+explore-theories = withDeps
+  ([ explore-exit-success ] ++ allDrvsIn explore-finds-equations)
+  explore-theories-untested;
+
+explore-theories-untested = mkBin {
   name   = "explore-theories";
-  paths  = [ jq timeout mlspec nix ];
+  paths  = [ fail jq timeout mlspec nix ];
   vars   = nixEnv;
   script = ''
     #!/usr/bin/env bash
@@ -18,15 +22,16 @@ explore-theories = mkBin {
     }
 
     function checkForErrors {
+      ERR=0
       while read -r LINE
       do
         echo "$LINE"
         if echo "$LINE" | grep "No instance for" > /dev/null
         then
-          echo "Haskell error, aborting" 1>&2
-          exit 1
+          ERR=1
         fi
       done
+      [[ "$ERR" -eq 0 ]] || fail "Haskell error, aborting"
     }
 
     # limit time/memory using 'timeout'
@@ -84,6 +89,86 @@ extra-packages = [ jq ];
 exploreEnv = [ (haskellPackages.ghcWithPackages (h: map (n: h."${n}")
                                                     extra-haskell-packages)) ] ++
              extra-packages;
+
+explore-exit-success =
+  with { f = ../tests/exploreTheoriesExamples/hastily.formatted.1; };
+  runCommand "exploreExitSuccess"
+    {
+      inherit f;
+      buildInputs = extractedEnv { inherit f; } ++
+                    [ explore-theories-untested fail ];
+    }
+    ''
+      set -e
+
+      OUTPUT=$(explore-theories "$f" 2>&1) ||
+        fail "Failed to explore 'hastily' ($OUTPUT)"
+
+      mkdir "$out"
+    '';
+
+explore-finds-equations =
+  with rec {
+    path           = ../tests/exploreTheoriesExamples;
+    files          = mapAttrs (f: _: "${path}/${f}") (readDir path);
+    foundEquations = name: f: runCommand "explore-test-${name}"
+      {
+        buildInputs = extractedEnv { inherit f; } ++
+                      [ explore-theories-untested ];
+        inherit f;
+      }
+      ''
+        set -e
+        set -o pipefail
+
+        function finish {
+          if [[ -e sout ]]
+          then
+            echo -e "\n\nstdout:\n\n" 1>&2
+            cat sout                  1>&2
+          else
+            echo "No stdout produced" 1>&2
+          fi
+
+          if [[ -e serr ]]
+          then
+            echo -e "\n\nstderr:\n\n" 1>&2
+            cat serr                  1>&2
+          else
+            echo "No stderr produced" 1>&2
+          fi
+
+          echo "COUNT: $COUNT" 1>&2
+        }
+        trap finish EXIT
+
+        echo "Exploring '$f'" 1>&2
+        explore-theories < "$f" 1> sout 2> serr || {
+          echo -e "Failed to explore '$f'"
+          exit 2
+        }
+
+        if grep "No clusters found" < serr
+        then
+          echo "No clusters found by MLSpec (did it receive any input?)" 1>&2
+          exit 3
+        fi
+
+        COUNT=$(jq 'length' < sout)
+
+        if [[ "$COUNT" -eq 0 ]]
+        then
+          echo -e "Couldn't find any equations in output of '$f'" 1>&2
+          exit 0
+        else
+          echo "Found '$COUNT' equations for '$f'" 1>&2
+          exit 0
+        fi
+
+        mkdir "$out"
+      '';
+  };
+  mapAttrs foundEquations files;
 };
 {
   inherit extra-haskell-packages explore-theories exploreEnv
