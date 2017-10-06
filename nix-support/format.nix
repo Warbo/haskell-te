@@ -1,4 +1,4 @@
-{ drvFromScript, lib, writeScript }:
+{ drvFromScript, fail, jq, lib, wrap, writeScript }:
 with builtins;
 with lib;
 
@@ -11,43 +11,51 @@ rec {
     "${fromStdin}" < "$clusters"
   '';
 
-  fromStdin = writeScript "format-stdin" ''
-    set -e
-    set -o pipefail
+  fromStdin = wrap {
+    name   = "format-stdin";
+    paths  = [ fail jq ];
+    vars   = {
+      FILTER =
+        "map(select(.cluster == $cl and .type != null and .quickspecable))";
+    };
+    script = ''
+      set -e
+      set -o pipefail
+      [[ -n "$clCount" ]] || fail "No clCount given, aborting"
 
-    INPUT=$(cat)
+      INPUT=$(cat)
 
-    # Select entries which have a "cluster" attribute matching the given number,
-    # a non-null "type" attribute and a true "quickspecable" attribute.
-    FILTER='map(select(.cluster == $cls and .type != null and .quickspecable))'
-    function clusterContent {
-      echo "$INPUT" | jq -c --argjson cls "$1" "$FILTER | map(del(.features))"
-    }
+      # Select entries which have a "cluster" attribute matching the given
+      # number, a non-null "type" attribute and a true "quickspecable" attribute
+      function clusterContent {
+        echo "$INPUT" | jq -c --argjson cl "$1" "$FILTER | map(del(.features))"
+      }
 
-    function postProcess {
-      if [[ -n "$SIMPLE" ]]
-      then
-        jq -s '.'
-      else
-        cat
-      fi
-    }
+      function postProcess {
+        if [[ -n "$SIMPLE" ]]
+        then
+          jq -s '.'
+        else
+          cat
+        fi
+      }
 
-    for CLUSTER in $(seq 1 "$clCount")
-    do
-      # Work out the relevant output path; we use "$out1" "$out2", etc. to avoid
-      # clashing with bash's argument names "$1", "$2", etc.
-      if [[ -n "$SIMPLE" ]]
-      then
-        clusterContent "$CLUSTER"
-      else
-        outPath=$(eval echo "\$out$CLUSTER")
+      for CLUSTER in $(seq 1 "$clCount")
+      do
+        # Work out the relevant output path; we use "$out1" "$out2", etc. to
+        # avoid clashing with bash's argument names "$1", "$2", etc.
+        if [[ -n "$SIMPLE" ]]
+        then
+          clusterContent "$CLUSTER"
+        else
+          outPath=$(eval echo "\$out$CLUSTER")
 
-        # Store the cluster's content at this path
-        clusterContent "$CLUSTER" > "$outPath"
-      fi
-    done | postProcess
-  '';
+          # Store the cluster's content at this path
+          clusterContent "$CLUSTER" > "$outPath"
+        fi
+      done | postProcess
+    '';
+  };
 
   format = clusterCount: clusters:
     let cCount = fromJSON clusterCount;
