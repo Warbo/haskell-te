@@ -58,8 +58,8 @@ with rec {
     mlspec-helper = get {
       path   = <mlspec-helper>;
       url    = https://github.com/Warbo/mlspec-helper.git;
-      rev    = "1bf9c32";
-      sha256 = "119kb41gv9v2fs1wgvjpr4skz5bbmp2apgllmxbxw4zw3xww1rlr";
+      rev    = "d794706";
+      sha256 = "1vaniwziqq0w1ajrabxbyf76iqplk7c765z13k5kpndhmqmsga5r";
     } {};
 
     nix-eval = get {
