@@ -24,7 +24,8 @@ let deps = [
     usable = msg: x: testRun msg null {} ''
       set -e
       echo "Checking if package directory '${x}' exists" 1>&2
-      [[ -d "${x}" ]] || exit 1
+      Y=$(readlink -f '${x}')
+      [[ -d "$Y" ]] || exit 1
     '';
 in {
   pkg  = usable "Usable package" pkg;

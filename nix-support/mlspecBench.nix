@@ -1,4 +1,4 @@
-{ bash, buckets, buildEnv, cluster, explore, format, glibcLocales,
+{ bash, buckets, buildEnv, cluster, explore, fail, format, glibcLocales,
   hashspecBench, jq, lib, nix-config, reduce-equations, runCommand, runWeka,
   stdenv, timeout, tipBenchmarks, writeScript }:
 with builtins;
@@ -128,18 +128,26 @@ rec {
     '';
   };
 
-  mlAllInput = writeScript "all-input" ''
-    [[ -f "$ANNOTATED" ]] || {
-      echo "Got no ANNOTATED" 1>&2
-      exit 1
-    }
-    [[ -d "$OUT_DIR" ]] || {
-      echo "Got no OUT_DIR" 1>&2
-      exit 1
-    }
+  mlAllInput = wrap {
+    name   = "all-input";
+    paths  = [ fail ];
+    script = ''
+      #!/usr/bin/env bash
+      set -e
 
-    cat "$ANNOTATED"
-  '';
+      [[ -n "$ANNOTATED" ]] || fail "Got no ANNOTATED"
+
+      ANN_F=$(readlink -f ANNOTATED)
+      [[ -f "$ANN_F" ]] || fail "Annotated '$ANNOTATED' isn't a file (or link)"
+
+      [[ -n "$OUT_DIR" ]] || fail "Got no OUT_DIR"
+
+      OUT_D=$(readlink -f "$OUT_DIR")
+      [[ -d "$OUT_D" ]] || fail "OUT_DIR '$OUT_DIR' isn't a dir (or link)"
+
+      cat "$ANNOTATED"
+    '';
+  };
 
   rawScript = writeScript "mlspecBench" ''
     #!${bash}/bin/bash

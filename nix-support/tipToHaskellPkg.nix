@@ -15,7 +15,7 @@ with rec {
 
   tipToHaskellPkg = mkBin {
     name   = "tipToHaskellPkg";
-    paths  = [ bash genPkgHere inNixedDir  ];
+    paths  = [ bash genPkgHere inNixedDir ];
     script = ''
       #!/usr/bin/env bash
       inNixedDir genPkgHere "haskellPkgGeneratedFromTip"
@@ -42,7 +42,8 @@ with rec {
         D=$(tipToHaskellPkg < "$f") || fail "tipToHaskellPkg failed"
 
         [[ -n "$D" ]] || fail "Got no output"
-        [[ -d "$D" ]] || fail "Resulting directory '$D' doesn't exist"
+        Z=$(readlink -f "$D")
+        [[ -d "$Z" ]] || fail "Result '$D' ($Z) isn't directory"
 
         echo "Result is '$D'" 1>&2
 

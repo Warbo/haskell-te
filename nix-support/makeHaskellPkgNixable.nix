@@ -70,9 +70,9 @@ with rec {
       set -e
       set -o pipefail
 
-      if [[ -d "$1" ]]
+      DIR=$(readlink -f "$1")
+      if [[ -d "$DIR" ]]
       then
-        DIR=$(readlink -f "$1")
         hasCabalFile "$DIR" || fail "Need .cabal file, aborting"
         if [[ -e "$DIR/default.nix" ]]
         then
@@ -81,7 +81,7 @@ with rec {
           DIR="$DIR" inNixedDir addNixFile "withAddedNixFile"
         fi
       else
-        fail "Not a directory '$1'"
+        fail "Not a directory (or symlink) '$1'"
       fi
     '';
   };
@@ -100,9 +100,10 @@ with rec {
 
         X=$(makeHaskellPkgNixable "$p") || fail "Package $n failed"
         [[ -n "$X" ]] || fail "No output for package $n"
-        [[ -d "$X" ]] || fail "Didn't make nixified dir for $n: '$X'"
+        Y=$(readlink -f "$X")
+        [[ -d "$Y" ]] || fail "Didn't make nixified dir for $n: '$X' ($Y)"
 
-        T=$(F="$X" nix-instantiate --show-trace --eval -E "$expr") ||
+        T=$(F="$Y" nix-instantiate --show-trace --eval -E "$expr") ||
           fail "Output for $n didn't parse"
         [[ "x$T" = 'x"lambda"' ]] || fail "Expr type of $n was '$T'"
 

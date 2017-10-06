@@ -5,14 +5,16 @@ with lib;
 with rec {
   quickspec = mkBin {
     name   = "quickspec";
-    paths  = [ bash haskellPkgToAsts jq makeHaskellPkgNixable quickspecAsts ];
+    paths  = [ bash fail haskellPkgToAsts jq makeHaskellPkgNixable
+               quickspecAsts ];
     script = ''
       #!/usr/bin/env bash
       set -e
       set -o pipefail
 
       [[ -n "$1" ]] || fail "quickspec needs a dir as argument"
-      [[ -d "$1" ]] || fail "quickspec arg '$1' isn't a directory"
+      D_ARG=$(readlink -f "$1")
+      [[ -d "$D_ARG" ]] || fail "quickspec arg '$1' isn't a directory (or link)"
 
       DIR=$(makeHaskellPkgNixable "$1") || fail "Couldn't nixify '$1'"
       haskellPkgToAsts "$DIR" | quickspecAsts "$DIR"
