@@ -1,8 +1,10 @@
 { bash, checkStderr, dumpToNix, explore, fail, GetDeps, getDepsScript,
-  haskellPackages, jq, mkBin, nixedHsPkg, pkgName, runCommand, runTypesScript,
-  runTypesScriptData, testPackageNames, unpack, utillinux, withDeps, wrap }:
+  haskellPackages, jq, lib, mkBin, nixedHsPkg, pkgName, runCommand,
+  runTypesScript, runTypesScriptData, testPackageNames, unpack, utillinux,
+  withDeps, wrap }:
 
 with builtins;
+with lib;
 
 with rec {
   getArities = mkBin {
@@ -193,8 +195,7 @@ with rec {
     '';
   };
 
-  annotateScript = withDeps (map testAstsLabelled testPackageNames)
-                            annotateScript-untested;
+  annotateScript = withDeps tests annotateScript-untested;
 
   annotateScript-untested = mkBin {
     name   = "annotate";
@@ -211,6 +212,9 @@ with rec {
       exit "$CODE"
     '';
   };
+
+  tests =       map testAstsLabelled  testPackageNames ++
+          concatMap testAstsHaveField testPackageNames;
 
   testAstsLabelled = attr:
     with { pkg = getAttr attr haskellPackages; };
@@ -231,6 +235,21 @@ with rec {
         done
         mkdir "$out"
       '';
+
+  testAstsHaveField = attr: map (f: runCommand "${attr}-asts-have-${f}"
+    {
+      asts        = annotatedWith annotateScript-untested {
+                      pkgDir = unpack (getAttr attr haskellPackages).src;
+                    };
+      buildInputs = [ fail jq ];
+    }
+    ''
+      set -e
+      jq -e 'map(has("${f}")) | all' < "$asts" || fail "No '$f' field found"
+      mkdir "$out"
+    '')
+    [ "package" "module" "name" "ast" "type" "arity" "quickspecable"
+      "hashable" ];
 
   annotatedWith = annotateScript: { pkgDir }:
     with rec {
