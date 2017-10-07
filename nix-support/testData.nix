@@ -1,5 +1,5 @@
-{ haskellPkgToAsts, lib, package, runCommand, tipBenchmarks, tipToHaskellPkg,
-  withNix }:
+{ fail, haskellPkgToAsts, lib, package, runCommand, tipBenchmarks,
+  tipToHaskellPkg, withNix }:
 
 with lib;
 rec {
@@ -14,11 +14,16 @@ rec {
   haskellPkgs = (mapAttrs (n: f: runCommand "haskell-pkg-of-${n}"
                                    {
                                      inherit f;
-                                     buildInputs = [ tipToHaskellPkg ];
+                                     buildInputs = [ fail tipToHaskellPkg ];
                                    }
                                    ''
                                      D=$(tipToHaskellPkg < "$f")
-                                     ln -s "$D" "$out"
+                                     [[ -e "$D" ]] || fail "'$D' doesn't exist"
+
+                                     X=$(readlink -f "$D")
+                                     [[ -d "$X" ]] || fail "'$X' isn't dir"
+
+                                     ln -s "$X" "$out"
                                    '')
                           tip) // { testPackage = ../tests/testPackage; };
 
