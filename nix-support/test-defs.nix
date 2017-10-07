@@ -113,6 +113,8 @@ rec {
 
   testPackages = callPackage ./testPackages.nix {};
 
+  testPackageNames = callPackage ./testPackageNames.nix {};
+
   # Build the contents of a Nix file, using nix-build. This lets us use Nix to
   # write our tests, whilst maintaining an eval-time/build-time separation.
   runTestInDrv = testPath: extraArgs:

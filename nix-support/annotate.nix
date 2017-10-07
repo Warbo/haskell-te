@@ -1,6 +1,6 @@
-{ bash, checkStderr, dumpToNix, explore, fail, getDepsScript, haskellPackages,
-  jq, mkBin, nixedHsPkg, runCommand, runTypesScript, runTypesScriptData,
-  utillinux, wrap }:
+{ bash, checkStderr, dumpToNix, explore, fail, GetDeps, getDepsScript,
+  haskellPackages, jq, mkBin, nixedHsPkg, pkgName, runCommand, runTypesScript,
+  runTypesScriptData, testPackageNames, unpack, utillinux, withDeps, wrap }:
 
 with builtins;
 
@@ -193,7 +193,10 @@ with rec {
     '';
   };
 
-  annotateScript = mkBin {
+  annotateScript = withDeps (map testAstsLabelled testPackageNames)
+                            annotateScript-untested;
+
+  annotateScript-untested = mkBin {
     name   = "annotate";
     paths  = [ bash checkStderr fail ];
     vars   = { annotateDb = annotateDbScript; };
@@ -208,16 +211,33 @@ with rec {
       exit "$CODE"
     '';
   };
-};
 
-rec {
-  annotated = { pkgDir }:
+  testAstsLabelled = attr:
+    with { pkg = getAttr attr haskellPackages; };
+    runCommand "test-asts-are-labelled"
+      {
+        asts        = annotatedWith annotateScript-untested {
+                        pkgDir = unpack pkg.src;
+                      };
+        buildInputs = [ fail GetDeps jq utillinux ];
+        pkgName     = pkgName pkg.name;
+      }
+      ''
+        set -e
+
+        jq -cr '.[] | .package' < "$asts" | while read -r LINE
+        do
+          [[ "x$LINE" = "x$pkgName" ]] || fail "Unlabelled: '$pkgName' '$LINE'"
+        done
+        mkdir "$out"
+      '';
+
+  annotatedWith = annotateScript: { pkgDir }:
     with rec {
       pkgSrc   = nixedHsPkg pkgDir;
       f        = dumpToNix { pkgDir = pkgSrc; };
       env      = explore.extractedEnv {
         inherit f;
-        extraHs    = [];
         standalone = pkgSrc;
       };
     };
@@ -231,6 +251,10 @@ rec {
         set -e
         annotate < "$f" > "$out"
       '';
+};
+
+rec {
+  annotated = annotatedWith annotateScript;
 
   annotateRawAstsFrom = mkBin {
     name   = "annotateRawAstsFrom";
