@@ -18,7 +18,7 @@ with rec {
     '';
   };
 
-  clustersHaveFields = attr:
+  test = attr:
     with rec {
       pkg       = getAttr attr haskellPackages;
       asts      = annotated { pkgDir = unpack pkg.src; };
@@ -30,26 +30,29 @@ with rec {
         ''
           "$cmd" < "$asts" > "$out"
         '';
+
+      clustersHaveFields = runCommand "clustersHaveFields-for-${pkg.name}"
+        {
+          inherit clustered;
+          buildInputs = [ fail jq ];
+        }
+        ''
+          set -e
+          jq -e 'length | . > 0' < "$clustered" || fail "No clusters"
+
+          for field in arity name module type package ast features cluster \
+                       quickspecable
+          do
+            jq -e "map(has(\"$field\")) | all" < "$clustered"
+          done
+
+          mkdir "$out"
+        '';
     };
-    runCommand "clustersHaveFields-for-${pkg.name}"
-      {
-        inherit clustered;
-        buildInputs = [ fail jq ];
-      }
-      ''
-        set -e
-        jq -e 'length | . > 0' < "$clustered" || fail "No clusters"
+    [ clustersHaveFields haveCluster ];
 
-        for field in arity name module type package ast features cluster \
-                     quickspecable
-        do
-          jq -e "map(has(\"$field\")) | all" < "$clustered"
-        done
-
-        mkdir "$out"
-      '';
+  tests = concatMap test testPackageNames;
 };
 {
-  clusterScript = withDeps (map clustersHaveFields testPackageNames)
-                           clusterScript-untested;
+  clusterScript = withDeps tests clusterScript-untested;
 }
