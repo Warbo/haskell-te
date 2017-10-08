@@ -195,7 +195,8 @@ with rec {
     '';
   };
 
-  annotateScript = withDeps tests annotateScript-untested;
+  annotateScript = withDeps (concatMap testsFor testPackageNames)
+                            annotateScript-untested;
 
   annotateScript-untested = mkBin {
     name   = "annotate";
@@ -213,43 +214,77 @@ with rec {
     '';
   };
 
-  tests =       map testAstsLabelled  testPackageNames ++
-          concatMap testAstsHaveField testPackageNames;
+  testsFor = attr:
+    with rec {
+      pkg  = getAttr attr haskellPackages;
+      asts = annotatedWith annotateScript-untested { pkgDir = unpack pkg.src; };
 
-  testAstsLabelled = attr:
-    with { pkg = getAttr attr haskellPackages; };
-    runCommand "test-asts-are-labelled"
-      {
-        asts        = annotatedWith annotateScript-untested {
-                        pkgDir = unpack pkg.src;
-                      };
-        buildInputs = [ fail GetDeps jq utillinux ];
-        pkgName     = pkgName pkg.name;
-      }
-      ''
-        set -e
+      annotatedExists = runCommand "annotatedExists"
+        {
+          inherit asts;
+          buildInputs = [ fail ];
+        }
+        ''
+          set -e
+          [[ -e "$asts" ]] || fail "annotated '$asts' doesn't exist"
+          mkdir "$out"
+        '';
 
-        jq -cr '.[] | .package' < "$asts" | while read -r LINE
-        do
-          [[ "x$LINE" = "x$pkgName" ]] || fail "Unlabelled: '$pkgName' '$LINE'"
-        done
-        mkdir "$out"
-      '';
+      haveAsts = runCommand "test-have-asts"
+        {
+          inherit asts;
+          buildInputs = [ fail jq ];
+        }
+        ''
+          set -e
+          jq -e 'length | . > 0' < "$asts" || fail "Empty ASTs"
+          mkdir "$out"
+        '';
 
-  testAstsHaveField = attr: map (f: runCommand "${attr}-asts-have-${f}"
-    {
-      asts        = annotatedWith annotateScript-untested {
-                      pkgDir = unpack (getAttr attr haskellPackages).src;
-                    };
-      buildInputs = [ fail jq ];
-    }
-    ''
-      set -e
-      jq -e 'map(has("${f}")) | all' < "$asts" || fail "No '$f' field found"
-      mkdir "$out"
-    '')
-    [ "package" "module" "name" "ast" "type" "arity" "quickspecable"
-      "hashable" ];
+      astsLabelled = runCommand "test-asts-are-labelled"
+        {
+          inherit asts;
+          buildInputs = [ fail GetDeps jq utillinux ];
+          pkgName     = pkgName pkg.name;
+        }
+        ''
+          set -e
+          jq -cr '.[] | .package' < "$asts" | while read -r LINE
+          do
+            [[ "x$LINE" = "x$pkgName" ]] || fail "Unlabelled: '$pkgName' '$LINE'"
+          done
+          mkdir "$out"
+        '';
+
+      astsHaveField = map (f: runCommand "${attr}-asts-have-${f}"
+        {
+          inherit asts;
+          buildInputs = [ fail jq ];
+        }
+        ''
+          set -e
+          jq -e 'map(has("${f}")) | all' < "$asts" || fail "No '$f' field found"
+          mkdir "$out"
+        '')
+        [ "package" "module" "name" "ast" "type" "arity" "quickspecable"
+          "hashable" ];
+
+      noCoreNames = runCommand "no-core-names"
+        {
+          inherit asts;
+          buildInputs = [ fail jq ];
+        }
+        ''
+          set -e
+          if jq -cr '.[] | .name' < "$asts" | grep -cF ".$"
+          then
+            fail "Found core names in '$asts'"
+          fi
+          mkdir "$out"
+        '';
+    };
+    astsHaveField ++
+      [ annotatedExists astsHaveField astsLabelled haveAsts noCoreNames ];
 
   annotatedWith = annotateScript: { pkgDir }:
     with rec {
