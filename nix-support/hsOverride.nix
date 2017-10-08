@@ -86,7 +86,7 @@ with rec {
       path   = <runtime-arbitrary>;
       repo   = "runtime-arbitrary";
       rev    = "5b7ff2f";
-      sha256 = "11gnfmz48vxvf42xs9255r51vbv1sjghvzi60gcrpx3jk38d2gyb";
+      sha256 = "06kpz8vmc4xslnx2863h1fwp99z7flpr66ichmz7x2fafys8gvda";
     } {};
 
     spoon = get {
