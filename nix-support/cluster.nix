@@ -1,7 +1,8 @@
-{ annotated, bash, fail, haskellPackages,jq,  ML4HSFE, runCommand, runWeka,
+{ annotated, bash, fail, haskellPackages,jq, lib, ML4HSFE, runCommand, runWeka,
   testPackageNames, unpack, withDeps, wrap }:
 
 with builtins;
+with lib;
 with rec {
   clusterScript-untested = wrap {
     name   = "cluster";
@@ -49,7 +50,7 @@ with rec {
           mkdir "$out"
         '';
     };
-    [ clustersHaveFields haveCluster ];
+    [ clustersHaveFields ];
 
   tests = concatMap test testPackageNames;
 };
