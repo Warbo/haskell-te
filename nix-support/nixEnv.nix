@@ -36,20 +36,27 @@ with rec {
     }
     ''
       set -e
+
+      function go {
+        nix-instantiate --eval \
+                        -E "with builtins // { x = import <nixpkgs> {}; }; $1"
+      }
+
       echo "Checking <nixpkgs> gets overridden" 1>&2
-      RESULT=$(nix-instantiate --eval -E '<nixpkgs>')
+      RESULT=$(go '<nixpkgs>')
       echo "$RESULT" | grep "nix-support" > /dev/null ||
         fail "Didn't see 'nix-support' in <nixpkgs> ($RESULT)"
 
       echo "Checking <nixpkgs> isn't polluted by ~/.nixpkgs/config.nix" 1>&2
-      nix-instantiate --eval \
-                      -E 'with builtins;
-                          assert !((import <nixpkgs> {}) ?
-                                     warbo-utilities); true'
-      nix-instantiate --eval \
-                      -E 'with builtins;
-                          assert !((import <nixpkgs> {}).haskellPackages ?
-                                     haskell-example); true'
+      go 'assert !(x                 ? warbo-utilities); true'
+      go 'assert !(x.haskellPackages ? haskell-example); true'
+
+      echo "Checking <nixpkgs> has our custom definitions" 1>&2
+      go 'assert x ? mlspec; true'
+      for P in bench mlspec mlspec-helper nix-eval runtime-arbitrary weigh
+      do
+        go "assert x.haskellPackages ? $P; true"
+      done
 
       echo "$NIX_PATH" | jq -R '.' > "$out"
     '';
