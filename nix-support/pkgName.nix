@@ -16,6 +16,12 @@ with rec {
   stripEndNums = xs: reverse (stripNums (reverse xs));
 
   stripVersion = s: concatStringsSep "-" (stripEndNums (splitString "-" s));
+
+  testExpect = "list-extras";
+  testInput  = "list-extras-0.4.1.4";
+  testOutput = stripVersion testInput;
 };
 
+assert testOutput == testExpect ||
+       abort { inherit testExpect testInput testOutput; };
 stripVersion
