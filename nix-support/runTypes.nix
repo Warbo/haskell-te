@@ -1,4 +1,4 @@
-{ drvFromScript, runTypesScript, GetDeps }:
+{ drvFromScript, runTypesScript }:
 asts: { pkgSrc }:
 
 drvFromScript { inherit asts; } ''
