@@ -2,10 +2,11 @@
   quickspecAsts, stdenv, tipBenchmarks }:
 
 buildEnv {
-  name  = "haskell-te";
+  name  = "haskell-theory-exploration";
   paths = [
     quickspec
     quickspecAsts
     haskellPkgToAsts
+    mlspecBench.mls
   ];
 }
