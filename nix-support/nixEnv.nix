@@ -1,5 +1,5 @@
 # Env vars required for using Nix commands inside builders
-{ lib, nix, runCommand }:
+{ fail, jq, lib, nix, runCommand }:
 
 with builtins;
 with lib;
@@ -27,15 +27,31 @@ with rec {
       printf '"daemon"'        > "$out"
     fi
   '';
+
+  checkPath = runCommand "try-nix-path.nix"
+    {
+      inherit NIX_REMOTE;
+      NIX_PATH    = concatStringsSep ":" pathParts;
+      buildInputs = [ fail jq nix ];
+    }
+    ''
+      set -e
+      RESULT=$(nix-instantiate --eval -E '<nixpkgs>')
+      echo "$RESULT" | grep "nix-support" > /dev/null ||
+        fail "Didn't see 'nix-support' in <nixpkgs> ($RESULT)"
+
+      echo "$NIX_PATH" | jq -R '.' > "$out"
+    '';
+
+  NIX_REMOTE = if remoteGiven == ""
+                  then remoteForce   # Nix is writable, or we need to force
+                  else remoteGiven;  # Propagate the existing value
 };
 
 {
   value = {
-    NIX_PATH   = concatStringsSep ":" pathParts;
-
-    NIX_REMOTE = if remoteGiven == ""
-                    then remoteForce   # Nix is writable, or we need to force
-                    else remoteGiven;  # Propagate the existing value
+    inherit NIX_REMOTE;
+    NIX_PATH = import checkPath;
   };
   removeOverrides = true;  # Since they can't be serialised into an environment
 }
