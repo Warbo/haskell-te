@@ -60,7 +60,7 @@ with rec {
         inherit pkg;
         buildInputs = [ fail jq quickspec ];
         MAX_SECS    = "180";
-        MAX_KB      = "1000000";
+        MAX_KB      = "3000000";
       })
       ''
         BENCH_OUT=$(quickspec "$pkg" 2> >(tee stderr 1>&2)) ||
