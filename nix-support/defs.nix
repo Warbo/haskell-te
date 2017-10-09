@@ -101,7 +101,6 @@ fix (self: rec {
   pkgName               = callPackage ./pkgName.nix               {};
   quickspec             = callPackage ./quickspec.nix             {};
   quickspecAsts         = callPackage ./quickspecAsts.nix         {};
-  runCmd                = callPackage ./runBenchmark.nix          {};
   runScript             = callPackage ./runScript.nix             {};
   runTypes              = callPackage ./runTypes.nix              {};
   runTypesScriptData    = callPackage ./runTypesScript.nix        {};
