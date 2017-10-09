@@ -1,4 +1,4 @@
-{ annotated, bash, buckets, explore, fail, format, glibcLocales, jq,
+{ annotated, bash, buckets, buildEnv, explore, fail, format, glibcLocales, jq,
   mlspecBench, nixEnv, nix-config, reduce-equations, runCommand, stdenv,
   timeout, tipBenchmarks, wrap, writeScript }:
 
