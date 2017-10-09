@@ -159,10 +159,8 @@ explore-finds-equations =
         if [[ "$COUNT" -eq 0 ]]
         then
           echo -e "Couldn't find any equations in output of '$f'" 1>&2
-          exit 0
         else
           echo "Found '$COUNT' equations for '$f'" 1>&2
-          exit 0
         fi
 
         mkdir "$out"
