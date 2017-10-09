@@ -1,6 +1,6 @@
 { annotated, bash, buckets, explore, fail, format, glibcLocales, jq,
-  mlspecBench, nix-config, reduce-equations, runCommand, stdenv, timeout,
-  tipBenchmarks, wrap, writeScript }:
+  mlspecBench, nixEnv, nix-config, reduce-equations, runCommand, stdenv,
+  timeout, tipBenchmarks, wrap, writeScript }:
 
 with builtins;
 rec {
