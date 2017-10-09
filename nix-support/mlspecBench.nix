@@ -1,6 +1,6 @@
-{ bash, buckets, buildEnv, cluster, explore, fail, format, glibcLocales,
-  hashspecBench, jq, lib, nix-config, reduce-equations, runCommand, runWeka,
-  stdenv, timeout, tipBenchmarks, writeScript }:
+{ annotated, bash, buckets, buildEnv, cluster, explore, fail, format,
+  glibcLocales, hashspecBench, jq, lib, mkBin, nix-config, reduce-equations,
+  runCommand, runWeka, stdenv, timeout, tipBenchmarks, writeScript }:
 with builtins;
 with lib;
 with {
@@ -177,19 +177,8 @@ rec {
     fi
   '';
 
-  mls = stdenv.mkDerivation {
-    name         = "mlspecBench";
-    src          = script;
-    buildInputs  = [ hashspecBench.env ];
-    unpackPhase  = "true";  # Nothing to do
-
-    doCheck      = true;
-    checkPhase   = ''
-      true
-    '';
-    installPhase = ''
-      mkdir -p "$out/bin"
-      cp "$src" "$out/bin/mlspecBench"
-    '';
+  mls = mkBin {
+    name = "mlspecBench";
+    file = script;
   };
 }
