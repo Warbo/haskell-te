@@ -1,5 +1,5 @@
 { allDrvsIn, checkHsEnv, fail, haskellPackages, jq, lib, mkBin, mlspec, nix,
-  nixEnv, pkgName, runCommand, timeout, withDeps, writeScript }:
+  nixEnv, pkgName, runCommand, sanitiseName, timeout, withDeps, writeScript }:
 with builtins;
 with lib;
 with rec {
@@ -89,7 +89,7 @@ extra-packages = [ jq ];
 
 exploreEnv = extra-packages ++ [
   (haskellPackages.ghcWithPackages (h: map (n: getAttr n h)
-                                   extra-haskell-packages))
+                                           extra-haskell-packages))
 ];
 
 explore-exit-success =
@@ -174,7 +174,7 @@ explore-no-dupes =
   with rec {
     path       = toString ../tests/exploreTheoriesExamples;
     files      = map (f: "${path}/${f}") (attrNames (readDir path));
-    noDupesFor = f: runCommand "no-dupes-for-${f}"
+    noDupesFor = f: runCommand "no-dupes-for-${sanitiseName f}"
       {
         inherit f;
         buildInputs = extractedEnv {} ++ [ fail explore-theories-untested ];
