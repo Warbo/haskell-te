@@ -47,7 +47,7 @@ fix (self: rec {
 
   # These are useful as standalone packages, since they provide executables
   inherit (haskellPackages)
-    AstPlugin GetDeps mlspec reduce-equations;
+    AstPlugin GetDeps mlspec;
 
   # Cases where we want both the attribute set and its attributes available
   inherit (testDefs)
@@ -102,6 +102,7 @@ fix (self: rec {
   pkgName               = callPackage ./pkgName.nix               {};
   quickspec             = callPackage ./quickspec.nix             {};
   quickspecAsts         = callPackage ./quickspecAsts.nix         {};
+  reduce-equations      = callPackage ./reduce-equations.nix      {};
   runScript             = callPackage ./runScript.nix             {};
   runTypes              = callPackage ./runTypes.nix              {};
   runTypesScriptData    = callPackage ./runTypesScript.nix        {};
