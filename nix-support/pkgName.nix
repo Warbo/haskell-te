@@ -23,5 +23,5 @@ with rec {
 };
 
 assert testOutput == testExpect ||
-       abort { inherit testExpect testInput testOutput; };
+       abort (toJSON { inherit testExpect testInput testOutput; });
 stripVersion
