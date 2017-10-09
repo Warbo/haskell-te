@@ -5,10 +5,10 @@ with rec {
 
   config    = import "${stableSrc}/stable.nix";
   stableSrc = fetchFromGitHub {
-    rev    = "8abcf84";
+    rev    = "5ce17f9";
     owner  = "Warbo";
     repo   = "nix-config";
-    sha256 = "0cjh7y1z8wfm542yrwnhaj81yikf05va7ahlg195jqf5vqj6m4yd";
+    sha256 = "038biw9nqsp8swbdzw0lnkxx83ii16bp97hhjypq02vz8rn2x4zj";
   };
   unstableSrc = latestGit {
     url    = http://chriswarbo.net/git/nix-config.git;
