@@ -47,7 +47,7 @@ fix (self: rec {
 
   # These are useful as standalone packages, since they provide executables
   inherit (haskellPackages)
-    AstPlugin GetDeps ML4HSFE mlspec reduce-equations;
+    AstPlugin GetDeps mlspec reduce-equations;
 
   # Cases where we want both the attribute set and its attributes available
   inherit (testDefs)
@@ -91,6 +91,7 @@ fix (self: rec {
   hsOverride            = callPackage ./hsOverride.nix            {};
   importDir             = callPackage ./importDir.nix             {};
   makeHaskellPkgNixable = callPackage ./makeHaskellPkgNixable.nix {};
+  ML4HSFE               = callPackage ./ML4HSFE.nix               {};
   mlspecBench           = callPackage ./mlspecBench.nix           {};
   nixedHsPkg            = callPackage ./nixedHsPkg.nix            {};
   nixEnv                = callPackage ./nixEnv.nix                {};
