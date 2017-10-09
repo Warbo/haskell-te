@@ -86,9 +86,27 @@ extra-haskell-packages = [ "mlspec" "mlspec-helper" "runtime-arbitrary"
 
 extra-packages = [ jq ];
 
-exploreEnv = [ (haskellPackages.ghcWithPackages (h: map (n: h."${n}")
-                                                    extra-haskell-packages)) ] ++
-             extra-packages;
+exploreEnv =
+  with rec {
+    # The "actual" buildInputs we want
+    buildInputs = extra-packages ++ [
+      (haskellPackages.ghcWithPackages (h: map (n:getAttr n h)
+                                       extra-haskell-packages))
+    ];
+
+    # Checks that the environment actually works (nested Haskell nonsense, etc.)
+    test = runCommand "explore-env-test" { inherit buildInputs; } ''
+      set -e
+      "${checkHsEnv [                                    ]}" || exit 1
+      "${checkHsEnv ["text"                              ]}" || exit 2
+      "${checkHsEnv ["text" "containers"                 ]}" || exit 3
+      "${checkHsEnv ["text" "containers" "parsec"        ]}" || exit 4
+      "${checkHsEnv ["text" "containers" "parsec" "aeson"]}" || exit 5
+      mkdir "$out"
+    '';
+  };
+  # Include the test, so that it will be checked
+  [ test ] ++ buildInputs;
 
 explore-exit-success =
   with { f = ../tests/exploreTheoriesExamples/hastily.formatted.1; };
