@@ -174,7 +174,7 @@ explore-no-dupes =
   with rec {
     path       = toString ../tests/exploreTheoriesExamples;
     files      = map (f: "${path}/${f}") (attrNames (readDir path));
-    noDupesFor = f: runCommand "no-dupes-for-${sanitiseName f}"
+    noDupesFor = f: runCommand "no-dupes-for-${sanitiseName (baseNameOf f)}"
       {
         inherit f;
         buildInputs = extractedEnv {} ++ [ fail explore-theories-untested ];
