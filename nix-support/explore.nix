@@ -5,7 +5,9 @@ with lib;
 with rec {
 
 explore-theories = withDeps
-  ([ explore-exit-success ] ++ allDrvsIn explore-finds-equations)
+  (explore-no-dupes ++ allDrvsIn explore-finds-equations ++ [
+    explore-exit-success
+  ])
   explore-theories-untested;
 
 explore-theories-untested = mkBin {
@@ -39,12 +41,11 @@ explore-theories-untested = mkBin {
   '';
 };
 
-hsPkgsInEnv = env: names: runCommand "checkIfHsPkgsInEnv"
-  (env // { cmd = checkHsEnv names; })
-  ''
-    "$cmd" || exit 1
-    echo "true" > "$out"
-  '';
+hsPkgsInEnv = env: names: runCommand "checkIfHsPkgsInEnv" env ''
+  set -e
+  "${checkHsEnv names}"
+  echo "true" > "$out"
+'';
 
 # Make a list of packages suitable for a 'buildInputs' field. We treat Haskell
 # packages separately from everything else. The Haskell packages will include:
@@ -185,6 +186,41 @@ explore-finds-equations =
       '';
   };
   mapAttrs foundEquations files;
+
+explore-no-dupes =
+  with rec {
+    path       = toString ../tests/exploreTheoriesExamples;
+    files      = map (f: "${path}/${f}") (attrNames (readDir path));
+    noDupesFor = f: runCommand "no-dupes-for-${f}"
+      {
+        inherit f;
+        buildInputs = extractedEnv {} ++ [ fail explore-theories-untested ];
+      }
+      ''
+        set -e
+        set -o pipefail
+
+        function noDupes {
+          echo "Removing dupes" 1>&2
+          DUPES=$(grep "^building path.*repo-head" |
+                  sed -e 's/.*head-//g'            |
+                  sort                             |
+                  uniq -D) || DUPES=""
+          [[ -z "$DUPES" ]] || {
+            echo "Made redundant package lookups: $DUPES" 1>&2
+            exit 1
+          }
+        }
+
+        echo "Exploring '$f'" 1>&2
+        OUTPUT=$(explore-theories < "$f" 2>&1) ||
+          fail "Failed to explore '$f'\nOUTPUT:\n\n$OUTPUT\n\n"
+
+        echo "$OUTPUT" | noDupes
+        mkdir "$out"
+      '';
+  };
+  map noDupesFor files;
 };
 {
   inherit extra-haskell-packages explore-theories exploreEnv
