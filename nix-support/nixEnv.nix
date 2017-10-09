@@ -36,9 +36,20 @@ with rec {
     }
     ''
       set -e
+      echo "Checking <nixpkgs> gets overridden" 1>&2
       RESULT=$(nix-instantiate --eval -E '<nixpkgs>')
       echo "$RESULT" | grep "nix-support" > /dev/null ||
         fail "Didn't see 'nix-support' in <nixpkgs> ($RESULT)"
+
+      echo "Checking <nixpkgs> isn't polluted by ~/.nixpkgs/config.nix" 1>&2
+      nix-instantiate --eval \
+                      -E 'with builtins;
+                          assert !((import <nixpkgs> {}) ?
+                                     warbo-utilities); true'
+      nix-instantiate --eval \
+                      -E 'with builtins;
+                          assert !((import <nixpkgs> {}).haskellPackages ?
+                                     haskell-example); true'
 
       echo "$NIX_PATH" | jq -R '.' > "$out"
     '';
