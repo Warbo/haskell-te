@@ -244,7 +244,7 @@ with rec {
       astsLabelled = runCommand "test-asts-are-labelled"
         {
           inherit asts;
-          buildInputs = [ fail GetDeps jq utillinux ];
+          buildInputs = [ fail jq ];
           pkgName     = pkgName pkg.name;
         }
         ''
