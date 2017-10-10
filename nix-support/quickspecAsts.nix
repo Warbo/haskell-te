@@ -75,11 +75,12 @@ with rec {
       name = pkg.name;
       eqs  = runCommand "eqs-of-${name}"
         {
-          inherit asts;
+          asts        = annotated { pkgDir = unpack pkg.src; };
           buildInputs = [ quickspecAsts ];
-          OUT_DIR     = src;
+          OUT_DIR     = nixedHsPkg (unpack pkg.src);
         }
         ''
+          set -e
           quickspecAsts < "$asts" > "$out"
         '';
 
