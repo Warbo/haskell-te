@@ -97,12 +97,6 @@ rec {
                        abort "testRun message not string ${info}";
                 drvFromScript (env // envOverride) buildCommand;
 
-  testDrvString = expect: d: msg: testRun msg null { inherit d expect; } ''
-                       O=$(cat "$d")
-                       echo -e "d: $d, O: $O, expect: $expect" 1>&2
-                       [[ "x$O" = "x$expect" ]] || exit 1
-                     '';
-
   testFiles = fs: msg: script: testRun msg null { inherit fs script; } ''
                   for F in $fs
                   do
