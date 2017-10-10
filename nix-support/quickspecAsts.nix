@@ -84,6 +84,17 @@ with rec {
           quickspecAsts < "$asts" > "$out"
         '';
 
+      haveEqs = runCommand "haveEquations-${name}"
+        {
+          inherit eqs;
+          buildInputs = [ jq ];
+        }
+        ''
+          set -e
+          jq -e 'type == "array"'            < "$eqs" >> "$out"
+          jq -e 'map(has("relation")) | all' < "$eqs" >> "$out"
+        '';
+
       foundEqs = runCommand "${name}-eqs-found"
         {
           inherit eqs;
@@ -95,7 +106,7 @@ with rec {
           mkdir "$out"
         '';
     };
-    [ foundEqs ];
+    [ foundEqs haveEqs ];
 
   checks = attrValues testAsts ++ map moreTests testPackageNames ++ [
     testGarbage
