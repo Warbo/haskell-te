@@ -69,7 +69,36 @@ with rec {
     '')
     knownGoodPkgs;
 
-  checks = [ testGarbage ] ++ attrValues testAsts;
+  moreTests = attr:
+    with rec {
+      pkg  = getAttr attr haskellPackages;
+      name = pkg.name;
+      eqs  = runCommand "eqs-of-${name}"
+        {
+          inherit asts;
+          buildInputs = [ quickspecAsts ];
+          OUT_DIR     = src;
+        }
+        ''
+          quickspecAsts < "$asts" > "$out"
+        '';
+
+      foundEqs = runCommand "${name}-eqs-found"
+        {
+          inherit eqs;
+          buildInputs = [ jq ];
+        }
+        ''
+          set -e
+          jq -e 'length | . > 0' < "$eqs"
+          mkdir "$out"
+        '';
+    };
+    [ foundEqs ];
+
+  checks = attrValues testAsts ++ map moreTests testPackageNames ++ [
+    testGarbage
+  ];
 };
 
 withDeps checks quickspecAsts
