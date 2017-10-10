@@ -323,10 +323,20 @@ with rec {
           fi
           mkdir "$out"
         '';
+
+      haveDependencies = runCommand "haveDeps-${pkg.name}"
+        {
+          inherit asts;
+          buildInputs = [ jq ];
+        }
+        ''
+          set -e
+          jq -e 'map(has("dependencies")) | all' < "$asts" > "$out"
+        '';
     };
     astsHaveField ++ [
       annotatedExists astsHaveField astsLabelled dependencyNameVersions getTypes
-      haveAsts noCoreNames
+      haveAsts haveDependencies noCoreNames
     ];
 
   annotatedWith = annotateScript: { pkgDir }:
