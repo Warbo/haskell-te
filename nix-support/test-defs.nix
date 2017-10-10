@@ -17,9 +17,6 @@ rec {
                                     then c
                                     else "");
 
-  testAll = tests: assert areTests tests;
-                   testWrap tests "Collected tests";
-
   # Create a new test out of other ones; this lets us assign a 'higher level'
   # meaning to some results, e.g. 'tests' might be 'foo contains x',
   # 'foo contains y', 'foo contains z', whilst 'msg' might be
