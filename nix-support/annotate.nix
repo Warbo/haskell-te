@@ -281,9 +281,34 @@ with rec {
           fi
           mkdir "$out"
         '';
+
+      getTypes = runCommand "have-types-for-asts"
+        {
+          annotations = annotatedWith annotateScript-untested {
+            pkgDir =  toString (nixedHsPkg (toString runCommand "hsPkg"
+              {
+                buildInputs = tipBenchmarks.tools;
+                example     = ../benchmarks/nat-simple.smt2;
+              }
+              ''
+                set -e
+                mkdir hsPkg
+                export OUT_DIR="$PWD/hsPkg"
+                full_haskell_package < "$example"
+                cp -r hsPkg "$out"
+              ''));
+          };
+          buildInputs = [ jq ];
+        }
+        ''
+          set -e
+          jq -e 'map(has("type") and .type != null) | any' < "$annotations"
+          mkdir "$out"
+        '';
     };
-    astsHaveField ++
-      [ annotatedExists astsHaveField astsLabelled haveAsts noCoreNames ];
+    astsHaveField ++ [
+      annotatedExists astsHaveField astsLabelled getTypes haveAsts noCoreNames
+    ];
 
   annotatedWith = annotateScript: { pkgDir }:
     with rec {
