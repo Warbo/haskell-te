@@ -1,7 +1,8 @@
-{ annotated, cabal-install, glibcLocales, haskellPackages, jq, nixedHsPkg,
-  quickspecAsts, runCommand, testPackageNames, unpack, withDeps }:
+{ annotated, cabal-install, glibcLocales, haskellPackages, jq, lib, nixedHsPkg,
+  quickspecAsts, runCommand, testData, unpack, withDeps }:
 
 with builtins;
+with lib;
 with rec {
   inherit (haskellPackages) reduce-equations;
 
@@ -34,9 +35,8 @@ with rec {
       mkdir "$out"
     '';
 
-  checkGetEqs = attr:
+  checkGetEqs = attr: pkg:
     with rec {
-      pkg  = getAttr attr haskellPackages;
       name = pkg.name;
       eqs  = runCommand "eqs-of-${name}"
         {
@@ -62,5 +62,6 @@ with rec {
       '';
 };
 
-withDeps ([ testSuite ] ++ map checkGetEqs testPackageNames)
+withDeps ([ testSuite ] ++ attrValues (mapAttrs checkGetEqs
+                                                testData.haskellDrvs))
          reduce-equations
