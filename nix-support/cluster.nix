@@ -49,8 +49,26 @@ with rec {
 
           mkdir "$out"
         '';
+
+      featuresConform = runCommand "features-conform-${attr}"
+        {
+          inherit clustered;
+          buildInputs = [ fail jq ];
+        }
+        ''
+          set -e
+
+          FEATURELENGTHS=$(jq -r '.[] | .features | length' < "$clustered")
+          COUNT=$(echo "$FEATURELENGTHS" | head -n 1)
+          echo "$FEATURELENGTHS" | while read -r LINE
+          do
+            [[ "$LINE" -eq "$COUNT" ]] ||
+              fail "Found '$LINE' features, was expecting '$COUNT'"
+          done
+          mkdir "$out"
+        '';
     };
-    [ clustersHaveFields ];
+    [ clustersHaveFields featuresConform ];
 
   tests = concatMap test testPackageNames;
 };
