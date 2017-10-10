@@ -67,8 +67,30 @@ with rec {
           done
           mkdir "$out"
         '';
+
+      haveAllClusters = runCommand "haveAllClusters-${attr}"
+        {
+          inherit asts;
+          inherit (pkg) name;
+          buildInputs = [ fail jq ];
+          cluster     = clusterScript-untested;
+        }
+        ''
+          for CLUSTERS in 1 2 3
+          do
+            export CLUSTERS
+            RESULT=$("$cluster" < "$asts")
+            FOUND=$(echo "$RESULT" | jq '.[] | .cluster')
+            for NUM in $(seq 1 "$CLUSTERS")
+            do
+              echo "$FOUND" | grep "^$NUM$" > /dev/null || fail \
+                "Clustering '$name' into '$CLUSTERS' clusters, '$NUM' was empty"
+            done
+          done
+          mkdir "$out"
+        '';
     };
-    [ clustersHaveFields featuresConform ];
+    [ clustersHaveFields featuresConform haveAllClusters ];
 
   tests = concatMap test testPackageNames;
 };
