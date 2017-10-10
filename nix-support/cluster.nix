@@ -1,5 +1,5 @@
 { annotated, bash, fail, haskellPackages,jq, lib, ML4HSFE, runCommand, runWeka,
-  testPackageNames, unpack, withDeps, wrap }:
+  testData, unpack, withDeps, wrap }:
 
 with builtins;
 with lib;
@@ -19,10 +19,9 @@ with rec {
     '';
   };
 
-  test = attr:
+  test = attr: pkg:
     with rec {
-      pkg       = getAttr attr haskellPackages;
-      asts      = annotated { pkgDir = unpack pkg.src; };
+      asts      = getAttr attr testData.asts;
       clustered = runCommand "cluster"
         {
           inherit asts;
@@ -92,7 +91,7 @@ with rec {
     };
     [ clustersHaveFields featuresConform haveAllClusters ];
 
-  tests = concatMap test testPackageNames;
+  tests = concatLists (attrValues (mapAttrs test testData.haskellDrvs));
 };
 
 withDeps tests clusterScript-untested

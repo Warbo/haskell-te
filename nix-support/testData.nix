@@ -1,4 +1,5 @@
-{ fail, haskellPkgToAsts, lib, package, runCommand, tipBenchmarks,
+{ fail, haskellPackages, haskellPkgToAsts, lib, makeHaskellPkgNixable,
+  nixedHsPkg, package, runCommand, testPackageNames, tipBenchmarks,
   tipToHaskellPkg, withNix }:
 
 with lib;
@@ -11,32 +12,48 @@ rec {
     teBenchmark = tipBenchmarks.tip-benchmark-smtlib;
   };
 
-  haskellPkgs = (mapAttrs (n: f: runCommand "haskell-pkg-of-${n}"
-                                   {
-                                     inherit f;
-                                     buildInputs = [ fail tipToHaskellPkg ];
-                                   }
-                                   ''
-                                     D=$(tipToHaskellPkg < "$f")
-                                     [[ -e "$D" ]] || fail "'$D' doesn't exist"
+  haskellPkgs = mapAttrs (n: f: runCommand "haskell-pkg-of-${n}"
+    {
+      inherit f;
+      buildInputs = [ fail tipToHaskellPkg ];
+    }
+    ''
+      D=$(tipToHaskellPkg < "$f")
+      [[ -e "$D" ]] || fail "'$D' doesn't exist"
 
-                                     X=$(readlink -f "$D")
-                                     [[ -d "$X" ]] || fail "'$X' isn't dir"
+      X=$(readlink -f "$D")
+      [[ -d "$X" ]] || fail "'$X' isn't dir"
 
-                                     ln -s "$X" "$out"
-                                   '')
-                          tip) // { testPackage = ../tests/testPackage; };
+      ln -s "$X" "$out"
+    '')
+    tip // { testPackage = ../tests/testPackage; };
 
-  asts = mapAttrs (n: p: runCommand "asts-of-${n}"
+  haskellDrvs = mapAttrs (_: dir: haskellPackages.callPackage (nixedHsPkg dir)
+                                                              {})
+                         haskellPkgs //
+                genAttrs testPackageNames
+                         (attr: getAttr attr haskellPackages);
+
+  asts = mapAttrs (n: drv: runCommand "asts-of-${n}"
                            {
-                             inherit p;
+                             inherit (drv) src;
                              buildInputs = [ haskellPkgToAsts ];
                            }
                            ''
-                             haskellPkgToAsts "$p" > "$out"
+                             haskellPkgToAsts "$src" > "$out"
                            '')
-                  haskellPkgs;
-
+                  haskellDrvs;
+/*
+  clustered = mapAttrs (n: a: runCommand "cluster"
+                                {
+                                  asts = getAttr n asts;
+                                  cmd  = cluster;
+                                }
+                                ''
+                                  "$cmd" < "$asts" > "$out"
+                                '')
+                       asts;
+*/
   eqs = mapAttrs (n: asts: runCommand "eqs-of-${n}"
                              (withNix {
                                inherit asts;

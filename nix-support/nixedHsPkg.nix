@@ -12,11 +12,10 @@ dir:
       buildInputs  = [ cabal2nix ];
     }
     ''
-      source $stdenv/setup
-
       echo "Source is '$dir'" 1>&2
-      cp -r "$dir" ./source-"$name"
-      pushd ./source-* > /dev/null
+      target=$(readlink -f "$dir")
+      cp -r "$target" ./source
+      pushd ./source > /dev/null
         echo "Setting permissions" 1>&2
         chmod +w . -R # We need this if dir has come from the Nix store
         echo "Cleaning up unnecessary files" 1>&2
@@ -30,7 +29,5 @@ dir:
         cabal2nix ./. > default.nix
         echo "Finished generating" 1>&2
       popd > /dev/null
-
-      echo "Adding to store" 1>&2
-      cp -r ./source-* "$out"
+      cp -r ./source "$out"
     ''

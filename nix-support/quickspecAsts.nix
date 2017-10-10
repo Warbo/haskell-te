@@ -53,7 +53,7 @@ with rec {
       (nixEnv // {
         inherit asts n;
         buildInputs = [ fail jq quickspecAsts ];
-        pkg         = getAttr n testData.haskellPkgs;
+        pkg         = getAttr n testData.haskellDrvs;
         MAX_SECS    = "180";
         MAX_KB      = "2000000";
       })
