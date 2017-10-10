@@ -52,7 +52,7 @@ with rec {
       go 'assert !(x.haskellPackages ? haskell-example); true'
 
       echo "Checking <nixpkgs> has our custom definitions" 1>&2
-      go 'assert x ? mlspec; true'
+      go 'assert x ? wrap; true'
       for P in bench mlspec mlspec-helper nix-eval runtime-arbitrary weigh
       do
         go "assert x.haskellPackages ? $P; true"

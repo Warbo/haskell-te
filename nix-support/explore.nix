@@ -1,5 +1,5 @@
-{ allDrvsIn, checkHsEnv, fail, haskellPackages, jq, lib, mkBin, mlspec, nix,
-  nixEnv, pkgName, runCommand, sanitiseName, timeout, withDeps, writeScript }:
+{ allDrvsIn, checkHsEnv, fail, haskellPackages, jq, lib, mkBin, nix, nixEnv,
+  pkgName, runCommand, sanitiseName, timeout, withDeps, writeScript }:
 with builtins;
 with lib;
 with rec {
@@ -12,7 +12,7 @@ explore-theories = withDeps
 
 explore-theories-untested = mkBin {
   name   = "explore-theories";
-  paths  = [ fail jq timeout mlspec nix ];
+  paths  = [ fail jq timeout haskellPackages.mlspec nix ];
   vars   = nixEnv;
   script = ''
     #!/usr/bin/env bash

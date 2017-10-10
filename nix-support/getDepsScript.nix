@@ -1,8 +1,8 @@
-{ bash, GetDeps, jq, mkBin, utillinux }:
+{ bash, haskellPackages, jq, mkBin, utillinux }:
 
 mkBin {
   name   = "getDepsScript";
-  paths  = [ bash jq GetDeps utillinux ];
+  paths  = [ bash jq haskellPackages.GetDeps utillinux ];
   script = ''
     #!/usr/bin/env bash
     set -e

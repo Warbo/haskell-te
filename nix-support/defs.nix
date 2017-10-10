@@ -45,10 +45,6 @@ fix (self: rec {
     nothing pipeToNix reverse sanitiseName stable stripOverrides timeout unlines
     unpack withDeps wrap;
 
-  # These are useful as standalone packages, since they provide executables
-  inherit (haskellPackages)
-    AstPlugin GetDeps mlspec;
-
   # Cases where we want both the attribute set and its attributes available
   inherit (testDefs)
     runTestInDrv testAll testDbg testDrvString testFiles testMsg testPackages

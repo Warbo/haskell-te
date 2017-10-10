@@ -1,7 +1,6 @@
-{ bash, checkStderr, dumpToNix, explore, fail, GetDeps, getDepsScript,
-  haskellPackages, jq, lib, mkBin, nixedHsPkg, pkgName, runCommand,
-  runTypesScript, runTypesScriptData, testPackageNames, unpack, utillinux,
-  withDeps, wrap }:
+{ bash, checkStderr, dumpToNix, explore, fail, getDepsScript, haskellPackages,
+  jq, lib, mkBin, nixedHsPkg, pkgName, runCommand, runTypesScript,
+  runTypesScriptData, testPackageNames, unpack, utillinux, withDeps, wrap }:
 
 with builtins;
 with lib;
