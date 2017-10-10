@@ -111,8 +111,6 @@ rec {
                   exit 0
                 '';
 
-  testPackages = callPackage ./testPackages.nix {};
-
   testPackageNames = callPackage ./testPackageNames.nix {};
 
   # Build the contents of a Nix file, using nix-build. This lets us use Nix to
