@@ -1,6 +1,6 @@
 { bash, checkStderr, dumpToNix, explore, fail, getDepsScript, haskellPackages,
   jq, lib, mkBin, nixedHsPkg, pkgName, runCommand, runTypesScript,
-  runTypesScriptData, testPackageNames, unpack, utillinux, withDeps, wrap }:
+  runTypesScriptData, testData, unpack, utillinux, withDeps, wrap }:
 
 with builtins;
 with lib;
@@ -194,7 +194,8 @@ with rec {
     '';
   };
 
-  annotateScript = withDeps (concatMap testsFor testPackageNames)
+  annotateScript = withDeps (concatLists (attrValues
+                              (mapAttrs testsFor testData.haskellDrvs)))
                             annotateScript-untested;
 
   annotateScript-untested = mkBin {
@@ -213,11 +214,9 @@ with rec {
     '';
   };
 
-  testsFor = attr:
+  testsFor = attr: pkg:
     with rec {
-      pkg  = getAttr attr haskellPackages;
       asts = annotatedWith annotateScript-untested { pkgDir = unpack pkg.src; };
-
       annotatedExists = runCommand "annotatedExists"
         {
           inherit asts;
