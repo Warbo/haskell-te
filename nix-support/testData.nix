@@ -1,5 +1,6 @@
 { fail, haskellPackages, haskellPkgToAsts, lib, makeHaskellPkgNixable,
-  nixedHsPkg, package, runCommand, tipBenchmarks, tipToHaskellPkg, withNix }:
+  nixedHsPkg, package, runCommand, tipBenchmarks, tipToHaskellPkg, unpack,
+  withNix }:
 
 with lib;
 rec {
@@ -35,7 +36,7 @@ rec {
 
   asts = mapAttrs (n: drv: runCommand "asts-of-${n}"
                            {
-                             inherit (drv) src;
+                             src         = unpack drv.src;
                              buildInputs = [ haskellPkgToAsts ];
                            }
                            ''
