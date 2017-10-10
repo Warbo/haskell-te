@@ -17,14 +17,6 @@ rec {
                                     then c
                                     else "");
 
-  testDbg = cond: msg: dbg:
-              let info = toJSON { inherit cond msg dbg; };
-               in assert isBool cond ||
-                         abort "testDbg condition not bool ${info}";
-                  testRun msg dbg {} ''
-                    exit ${if cond then "0" else "1"}
-                  '';
-
   testRun = msg: dbg: envOverride: script:
             assert isString msg;
             assert isString script;
