@@ -333,10 +333,37 @@ with rec {
           set -e
           jq -e 'map(has("dependencies")) | all' < "$asts" > "$out"
         '';
+
+      namesUnversioned = runCommand "names-unversioned-${attr}"
+        {
+          F           = asts;
+          buildInputs = [ fail jq ];
+          pkgName     = pkg.name;
+        }
+        ''
+          set -e
+
+          function assertNoVersions {
+            if grep -- "-[0-9][0-9.]*$" > /dev/null
+            then
+              fail "Versions found in package names of $1$pkgName"
+            fi
+          }
+
+          [[ -e "$F" ]] || fail "Couldn't find file '$F'"
+
+          jq -rc '.[] | .package'                       < "$F" |
+            assertNoVersions ""
+
+          jq -rc '.[] | .dependencies | .[] | .package' < "$F" |
+            assertNoVersions "dependencies of "
+
+          mkdir "$out"
+        '';
     };
     astsHaveField ++ [
       annotatedExists astsHaveField astsLabelled dependencyNameVersions getTypes
-      haveAsts haveDependencies noCoreNames
+      haveAsts haveDependencies namesUnversioned noCoreNames
     ];
 
   annotatedWith = annotateScript: { pkgDir }:
