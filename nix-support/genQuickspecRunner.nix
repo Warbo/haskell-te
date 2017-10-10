@@ -27,13 +27,15 @@ with rec {
         main = do
           projects <- getProjects <$> getContents
           let t = case projects of
-            [t] -> t
-            _   -> error ("Got " ++ show (length projects) ++ " projects")
+                       [t] -> t
+                       _   -> let l = show (length projects)
+                               in error ("Got " ++ l ++ " projects")
 
           rendered <- renderTheory t
           let (ts, x) = case rendered of
-            Nothing      -> error ("Failed to render " ++ show t)
-            Just (ts, x) -> (ts, x)
+                             Just (ts, x) -> (ts, x)
+                             Nothing      -> let msg = "Failed to render "
+                                              in error (msg ++ show t)
 
           BS.putStrLn (encode (object [
               "runner" .= unwords ("runhaskell" : flagsOf x),
