@@ -74,7 +74,7 @@ with rec {
     '';
 };
 {
-  commutativity = testRun "Can find commutativity" null
+  commutativity = runCommand "can-find-commutativity"
     {
       inherit precRec;
       buildInputs = [ jq ];
@@ -83,11 +83,12 @@ with rec {
       set -e
       jq -e '.precision | . > 0' < "$precRec"
       jq -e '.recall    | . > 0' < "$precRec"
+      mkdir "$out"
     '';
 
-  parameterisedTypes = testRun "Can find properties of parameterised types" null
+  parameterisedTypes = runCommand "can-find-properties-of-parameterised-types"
     (withNix {
-      buildInputs  = [ jq package tipBenchmarks.tools ];
+      buildInputs  = [ fail jq package tipBenchmarks.tools ];
       eqs          = testData.eqs.list-full;
       GROUND_TRUTH = ../benchmarks/ground-truth/list-full.smt2;
       TRUTH_SOURCE = ../benchmarks/ground-truth/list-full.smt2;
@@ -95,13 +96,8 @@ with rec {
     ''
       set -e
       set -o pipefail
-
       RESULT=$(echo "$eqs" | precision_recall_eqs)
-
-      echo "$RESULT" 1>&2
-
-      echo "$RESULT" | jq -e '.recall | . > 0' 1>&2
-
-      echo "pass" > "$out"
+      echo "$RESULT" | jq -e '.recall | . > 0' || fail "No recall"
+      mkdir "$out"
     '';
 }
