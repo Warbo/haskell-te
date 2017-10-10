@@ -110,16 +110,4 @@ rec {
                   done
                   exit 0
                 '';
-
-  # Build the contents of a Nix file, using nix-build. This lets us use Nix to
-  # write our tests, whilst maintaining an eval-time/build-time separation.
-  runTestInDrv = testPath: extraArgs:
-    let allArgs = ["(import ./nix-support {})"] ++ extraArgs;
-        argStr  = concatStringsSep " " allArgs;
-     in drvFromScript { inherit testPath argStr; } ''
-          cd "${./..}"
-          nix-build --show-trace --no-out-link \
-                    -E "import ./$testPath $argStr" || exit 1
-          touch "$out"
-        '';
 }
