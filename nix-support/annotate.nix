@@ -305,9 +305,28 @@ with rec {
           jq -e 'map(has("type") and .type != null) | any' < "$annotations"
           mkdir "$out"
         '';
+
+      dependencyNameVersions = runCommand "dependency-name-versions"
+        {
+          inherit asts;
+          pName       = pkg.name;
+          buildInputs = [ fail jq ]; }
+        ''
+          set -e
+          DEPS=$(jq -cr '.[] | .dependencies | .[] | .package' < "$asts" |
+                 sort -u) ||
+            fail "Couldn't get packages of '$pName' dependencies" 1>&2
+
+          if echo "$DEPS" | grep -- "-[0-9][0-9.]*$" > /dev/null
+          then
+            fail "Deps of '$pkgName' have versions in package IDs:\n$DEPS" 1>&2
+          fi
+          mkdir "$out"
+        '';
     };
     astsHaveField ++ [
-      annotatedExists astsHaveField astsLabelled getTypes haveAsts noCoreNames
+      annotatedExists astsHaveField astsLabelled dependencyNameVersions getTypes
+      haveAsts noCoreNames
     ];
 
   annotatedWith = annotateScript: { pkgDir }:
