@@ -17,24 +17,6 @@ rec {
                                     then c
                                     else "");
 
-  # Create a new test out of other ones; this lets us assign a 'higher level'
-  # meaning to some results, e.g. 'tests' might be 'foo contains x',
-  # 'foo contains y', 'foo contains z', whilst 'msg' might be
-  # 'foo has all required fields'
-  testWrap = tests: msg:
-               assert areTests tests ||
-                      abort "testWrap ${toJSON { inherit tests msg; }}";
-               # If there are any raw booleans in 'tests', turn them into
-               # trivial derivations
-               let testDrvs = map (t: if isBool t
-                                         then testMsg t "Unknown test"
-                                         else assert isAttrs t; t)
-                                  tests;
-                in testRun msg null { buildInputs = testDrvs; } ''
-                     # Always pass; failure is triggered by our buildInputs
-                     exit 0
-                   '';
-
   testMsg = cond: msg:
               let info = toJSON { inherit cond msg; };
                in assert isBool   cond ||
