@@ -96,12 +96,4 @@ rec {
              in assert isString msg ||
                        abort "testRun message not string ${info}";
                 drvFromScript (env // envOverride) buildCommand;
-
-  testFiles = fs: msg: script: testRun msg null { inherit fs script; } ''
-                  for F in $fs
-                  do
-                    "$script" "$F" || exit 1
-                  done
-                  exit 0
-                '';
 }
