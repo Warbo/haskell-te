@@ -1,6 +1,6 @@
 { annotated, bash, fail, genQuickspecRunner, glibcLocales, haskellPackages,
   haskellPkgNameVersion, jq, lib, makeHaskellPkgNixable, mkBin, nixedHsPkg,
-  nixEnv, runCommand, testData, testPackageNames, unpack, withDeps }:
+  nixEnv, runCommand, testData, unpack, withDeps }:
 
 with lib;
 with rec {
@@ -70,9 +70,8 @@ with rec {
     '')
     knownGoodPkgs;
 
-  moreTests = attr:
+  moreTests = attr: pkg:
     with rec {
-      pkg  = getAttr attr haskellPackages;
       name = pkg.name;
       eqs  = runCommand "eqs-of-${name}"
         {
@@ -109,9 +108,9 @@ with rec {
     };
     [ foundEqs haveEqs ];
 
-  checks = attrValues testAsts ++ map moreTests testPackageNames ++ [
-    testGarbage
-  ];
+  checks = attrValues testAsts                                  ++
+           attrValues (mapAttrs moreTests testData.haskellDrvs) ++
+           [ testGarbage ];
 };
 
 withDeps checks quickspecAsts
