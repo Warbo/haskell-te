@@ -1,6 +1,6 @@
-{ annotated, asv-nix, bash, cacheContent, callPackage, fetchFromGitHub,
-  fetchgit, haskellPackages, jq, nix-config, nix-config-src, nixFromCabal,
-  nixpkgs-src, runCommand, stable, stdenv, tryElse, writeScript }:
+{ annotated, asv-nix, bash, callPackage, fetchFromGitHub, fetchgit,
+  haskellPackages, jq, nix-config, nix-config-src, nixFromCabal, nixpkgs-src,
+  runCommand, stable, stdenv, tryElse, writeScript }:
 
 with builtins;
 with rec {
@@ -21,10 +21,9 @@ with rec {
 };
 rec {
   inherit path;
-  inherit (tebench) tip-benchmarks cache env tools tip-benchmark-smtlib;
-  annotatedAsts         = annotated { pkgDir = tip-benchmark-haskell; };
-  pkg                   = haskellPackages.callPackage pkgDef {};
-  pkgDef                = nixFromCabal (toString tip-benchmark-haskell) null;
-  tip-benchmark-haskell = cacheContent "cached-benchmark-haskell"
-                                       tebench.tip-benchmark-haskell;
+  inherit (tebench)
+    tip-benchmarks cache env tools tip-benchmark-haskell tip-benchmark-smtlib;
+  annotatedAsts = annotated { pkgDir = tip-benchmark-haskell; };
+  pkg           = haskellPackages.callPackage pkgDef {};
+  pkgDef        = nixFromCabal (toString tip-benchmark-haskell) null;
 }

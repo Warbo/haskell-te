@@ -64,7 +64,6 @@ fix (self: rec {
   bashEscape            = callPackage ./bashEscape.nix            {};
   benchmarkEnv          = callPackage ./benchmarkEnv.nix          {};
   buckets               = callPackage ./buckets.nix               {};
-  cacheContent          = callPackage ./cacheContent.nix          {};
   callHackage           = callPackage ./callHackage.nix           {};
   checkHsEnv            = callPackage ./checkHsEnv.nix            {};
   checkStderr           = callPackage ./checkStderr.nix           {};
