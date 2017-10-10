@@ -20,16 +20,6 @@ rec {
   testAll = tests: assert areTests tests;
                    testWrap tests "Collected tests";
 
-  testRec = s: if isAttrs s
-                  then if s ? type && s.type == "derivation"
-                          then s
-                          else testAll (map (n: testWrap [(testRec s."${n}")]
-                                                         "Attribute ${n}")
-                                            (attrNames s))
-                  else if isList s
-                          then testAll (map testRec s)
-                          else abort "Don't know how to test ${toJSON s}";
-
   # Create a new test out of other ones; this lets us assign a 'higher level'
   # meaning to some results, e.g. 'tests' might be 'foo contains x',
   # 'foo contains y', 'foo contains z', whilst 'msg' might be
