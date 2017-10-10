@@ -101,7 +101,6 @@ fix (self: rec {
   runWeka               = callPackage ./runWeka.nix               {};
   sta                   = callPackage ./sta.nix                   {};
   testData              = callPackage ./testData.nix              {};
-  testDefs              = callPackage ./test-defs.nix             {};
   tipBenchmarks         = callPackage ./tipBenchmarks.nix         {};
   tipToHaskellPkg       = callPackage ./tipToHaskellPkg.nix       {};
   tryElse               = callPackage ./tryElse.nix               {};
