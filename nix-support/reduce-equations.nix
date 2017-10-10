@@ -1,5 +1,5 @@
-{ cabal-install, glibcLocales, haskellPackages, runCommand, testPackageNames,
-  withDeps }:
+{ annotated, cabal-install, glibcLocales, haskellPackages, jq, nixedHsPkg,
+  quickspecAsts, runCommand, testPackageNames, unpack, withDeps }:
 
 with builtins;
 with rec {

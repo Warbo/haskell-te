@@ -1,5 +1,6 @@
-{ bash, fail, genQuickspecRunner, glibcLocales, haskellPkgNameVersion, jq, lib,
-  makeHaskellPkgNixable, mkBin, nixEnv, runCommand, testData, withDeps }:
+{ annotated, bash, fail, genQuickspecRunner, glibcLocales, haskellPackages,
+  haskellPkgNameVersion, jq, lib, makeHaskellPkgNixable, mkBin, nixedHsPkg,
+  nixEnv, runCommand, testData, testPackageNames, unpack, withDeps }:
 
 with lib;
 with rec {
