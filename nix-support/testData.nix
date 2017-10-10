@@ -1,6 +1,5 @@
 { fail, haskellPackages, haskellPkgToAsts, lib, makeHaskellPkgNixable,
-  nixedHsPkg, package, runCommand, testPackageNames, tipBenchmarks,
-  tipToHaskellPkg, withNix }:
+  nixedHsPkg, package, runCommand, tipBenchmarks, tipToHaskellPkg, withNix }:
 
 with lib;
 rec {
@@ -31,7 +30,7 @@ rec {
   haskellDrvs = mapAttrs (_: dir: haskellPackages.callPackage (nixedHsPkg dir)
                                                               {})
                          haskellPkgs //
-                genAttrs testPackageNames
+                genAttrs [ "list-extras" ]
                          (attr: getAttr attr haskellPackages);
 
   asts = mapAttrs (n: drv: runCommand "asts-of-${n}"

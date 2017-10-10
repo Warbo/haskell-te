@@ -47,8 +47,8 @@ fix (self: rec {
 
   # Cases where we want both the attribute set and its attributes available
   inherit (testDefs)
-    runTestInDrv testAll testDbg testDrvString testFiles testMsg
-    testPackageNames testRec testRun testWrap;
+    runTestInDrv testAll testDbg testDrvString testFiles testMsg testRec testRun
+    testWrap;
   inherit (callPackage ./annotate.nix {})
     annotated annotateRawAstsFrom;
   inherit (dumpToNixScripts)
