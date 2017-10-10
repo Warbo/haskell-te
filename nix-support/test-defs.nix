@@ -17,14 +17,6 @@ rec {
                                     then c
                                     else "");
 
-  testMsg = cond: msg:
-              let info = toJSON { inherit cond msg; };
-               in assert isBool   cond ||
-                         abort "testMsg condition not bool ${info}";
-                 assert isString msg ||
-                        abort "testMsg message not string ${info}";
-                 testDbg cond msg null;
-
   testDbg = cond: msg: dbg:
               let info = toJSON { inherit cond msg dbg; };
                in assert isBool cond ||
