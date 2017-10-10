@@ -70,7 +70,7 @@ rec {
       set -o pipefail
 
       # Perform clustering
-      CL=$(${cluster.clusterScript})
+      CL=$(${cluster})
 
       clCount=$(echo "$CL" | jq 'map(.cluster) | max')
       ${assertNumeric "$clCount" "clCount should contain number of clusters"}

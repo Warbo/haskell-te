@@ -100,7 +100,7 @@ rec {
       set -o pipefail
 
       # Perform clustering
-      CLUSTERED=$(${cluster.clusterScript})
+      CLUSTERED=$(${cluster})
 
       clCount=$(echo "$CLUSTERED" | jq 'map(.cluster) | max')
       export clCount

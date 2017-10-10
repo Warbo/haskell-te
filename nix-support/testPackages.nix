@@ -28,14 +28,9 @@ with rec {
         quickspecAsts < "$asts" > "$out"
       '';
 
-    clustered = runCommand "cluster"
-      {
-        inherit asts;
-        inherit (cluster) clusterScript;
-      }
-      ''
-        "$clusterScript" < "$asts" > "$out"
-      '';
+    clustered = runCommand "cluster" { inherit asts cluster; } ''
+      "$cluster" < "$asts" > "$out"
+    '';
   };
 };
 genAttrs [ "list-extras" ] (n: extend (getAttr n haskellPackages))

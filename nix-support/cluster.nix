@@ -54,6 +54,5 @@ with rec {
 
   tests = concatMap test testPackageNames;
 };
-{
-  clusterScript = withDeps tests clusterScript-untested;
-}
+
+withDeps tests clusterScript-untested

@@ -3,7 +3,7 @@ with builtins;
 
 runCommand "haveAllClusters"
  {
-   inherit (cluster) clusterScript;
+   inherit cluster;
    inherit (pkg) asts name;
    buildInputs = [ fail jq ];
  }
@@ -11,7 +11,7 @@ runCommand "haveAllClusters"
    for CLUSTERS in 1 2 3
    do
      export CLUSTERS
-     RESULT=$("$clusterScript" < "$asts")
+     RESULT=$("$cluster" < "$asts")
       FOUND=$(echo "$RESULT" | jq '.[] | .cluster')
      for NUM in $(seq 1 "$CLUSTERS")
      do
