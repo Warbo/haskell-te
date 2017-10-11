@@ -21,7 +21,7 @@ with rec {
 
   test = attr: pkg:
     with rec {
-      asts      = getAttr attr testData.asts;
+      asts      = getAttr attr (testData.asts {});
       clustered = runCommand "cluster"
         {
           inherit asts;

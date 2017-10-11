@@ -47,26 +47,24 @@ with rec {
     '';
   };
 
-  testExamplePkg = n: pkg: runCommand "testRawAstsOf-${n}"
+  testExamplePkg = n: asts: runCommand "testRawAstsOf-${n}"
     (nixEnv // {
-      inherit pkg;
-      buildInputs = [ fail haskellPkgToRawAsts jq ];
+      inherit asts;
+      buildInputs = [ fail jq ];
     })
     ''
       set -o pipefail
-
-      ASTS=$(haskellPkgToRawAsts "$pkg") || fail "Couldn't get ASTs"
-
-      T=$(echo "$ASTS" | jq 'type')       || fail "Couldn't get type of: $ASTS"
+      T=$(jq 'type' < "$asts") || fail "Couldn't get type of: $asts"
       [[ "x$T" = 'x"array"' ]] || fail "Got '$T' instead of array"
 
-      L=$(echo "$ASTS" | jq 'length') || fail "Couldn't get length"
-      [[ "$L" -gt 3 ]]                || fail "Length '$L', expected a few"
+      L=$(jq 'length' < "$asts") || fail "Couldn't get length"
+      [[ "$L" -gt 3 ]]           || fail "Length '$L', expected a few"
 
-      echo "pass" > "$out"
+      mkdir "$out"
     '';
 
-  checks = attrValues (mapAttrs testExamplePkg testData.haskellPkgs);
+  checks = mapAttrs testExamplePkg
+                    (testData.asts { script = haskellPkgToRawAsts; });
 };
 
-withDeps checks haskellPkgToRawAsts
+withDeps (attrValues checks) haskellPkgToRawAsts

@@ -5,7 +5,7 @@ with lib;
 with rec {
   quickspec = mkBin {
     name   = "quickspec";
-    paths  = [ bash fail haskellPkgToAsts jq makeHaskellPkgNixable
+    paths  = [ bash fail (haskellPkgToAsts {}) jq makeHaskellPkgNixable
                quickspecAsts ];
     script = ''
       #!/usr/bin/env bash
@@ -52,7 +52,7 @@ with rec {
 
   # Avoid packages which are known to timeout, get out-of-memory, etc.
   knownGoodPkgs = filterAttrs (n: _: !(elem n [ "nat-full" "teBenchmark" ]))
-                              testData.haskellPkgs;
+                              (testData.haskellPkgs {});
 
   testHsPkgs = mapAttrs
     (n: pkg: runCommand "test-quickspec-${n}"

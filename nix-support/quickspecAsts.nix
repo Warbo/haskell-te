@@ -46,7 +46,7 @@ with rec {
 
   # Avoid packages which are known to timeout, get out-of-memory, etc.
   knownGoodPkgs = filterAttrs (n: _: !(elem n [ "nat-full" "teBenchmark" ]))
-                              testData.asts;
+                              (testData.asts {});
 
   eqsOf = { asts, name, src }: runCommand "eqs-of-${name}"
     {
@@ -118,7 +118,7 @@ with rec {
       buildInputs  = [ fail jq tipBenchmarks.tools ];
       eqs          = eqsOf {
         inherit (testData.haskellDrvs.list-full) name src;
-        asts = testData.asts.list-full;
+        asts = (testData.asts {}).list-full;
       };
       GROUND_TRUTH = ../benchmarks/ground-truth/list-full.smt2;
       TRUTH_SOURCE = ../benchmarks/ground-truth/list-full.smt2;

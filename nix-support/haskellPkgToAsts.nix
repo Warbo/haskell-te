@@ -1,11 +1,11 @@
 { annotateRawAstsFrom, bash, fail, haskellPkgToRawAsts, jq,
   makeHaskellPkgNixable, mkBin, runCommand, withDeps }:
 
+{ script ? haskellPkgToRawAsts }:
 with rec {
   haskellPkgToAsts = mkBin {
     name   = "haskellPkgToAsts";
-    paths  = [ annotateRawAstsFrom bash fail haskellPkgToRawAsts
-               makeHaskellPkgNixable ];
+    paths  = [ annotateRawAstsFrom bash fail script makeHaskellPkgNixable ];
     vars   = {
       usage = ''
         haskellPkgToAsts extracts ASTs from the definitions made in a given

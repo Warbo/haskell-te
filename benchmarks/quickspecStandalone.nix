@@ -16,8 +16,8 @@ with rec {
     runner       = runCommand "quickspec-runner-${n}"
       {
         buildInputs = [ genQuickspecRunner ];
-        OUT_DIR     = nixify (getAttr n testData.haskellPkgs);
-        asts        = getAttr n testData.asts;
+        OUT_DIR     = nixify (getAttr n (testData.haskellPkgs {}));
+        asts        = getAttr n (testData.asts {});
       }
       ''
         X=$(genQuickspecRunner < "$asts")

@@ -164,8 +164,8 @@ with rec {
   tests = rec {
     runner = runCommand "list-full-runner"
       (withNix {
-        asts        = testData.asts.list-full;
-        OUT_DIR     = nixify testData.haskellPkgs.list-full;
+        asts        = (testData.asts {}).list-full;
+        OUT_DIR     = nixify (testData.haskellPkgs {}).list-full;
         buildInputs = [ generateCode ];
       })
       ''

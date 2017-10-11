@@ -25,8 +25,8 @@ with {
                     ''
                       racket "$getCommDeps" > "$out"
                     '';
-                  asts        = testData.asts.teBenchmark;
-                  OUT_DIR     = nixify testData.haskellPkgs.teBenchmark;
+                  asts        = (testData.asts {}).teBenchmark;
+                  OUT_DIR     = nixify (testData.haskellPkgs {}).teBenchmark;
                   buildInputs = [ filterToSampled genQuickspecRunner jq ];
                 }
                 ''
@@ -61,7 +61,7 @@ withDeps [ canFindComm ] (buildEnv {
   paths = [
     quickspec
     quickspecAsts
-    haskellPkgToAsts
+    (haskellPkgToAsts {})
     mlspecBench.mls
   ];
 })

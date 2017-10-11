@@ -18,7 +18,8 @@ with rec {
         COUNT=$(( COUNT + 1 ))
       done
 
-      [[ "$COUNT" -eq 1 ]] || fail "No cabal files found in '$1'"
+      [[ "$COUNT" -eq 1 ]] ||
+        fail "No .cabal in '$1'; is it a build output? (We need the source)"
     '';
   };
 
@@ -87,29 +88,26 @@ with rec {
   };
 
   testMakeHaskellPkgNixable = mapAttrs
-    (n: p: runCommand "testMakeHaskellPkgNixable-${n}"
+    (n: nixed: runCommand "testMakeHaskellPkgNixable-${n}"
       (withNix {
-        inherit n p;
-        inherit (nix-config) stableHackageDb;
-        buildInputs = [ fail makeHaskellPkgNixable ];
+        inherit n nixed;
+        buildInputs = [ fail ];
         expr        = ''builtins.typeOf (import (builtins.getEnv "F"))'';
       })
       ''
-        export HOME="$PWD"
-        ln -s "$stableHackageDb/.cabal" "$HOME/.cabal"
+        set -e
 
-        X=$(makeHaskellPkgNixable "$p") || fail "Package $n failed"
-        [[ -n "$X" ]] || fail "No output for package $n"
-        Y=$(readlink -f "$X")
-        [[ -d "$Y" ]] || fail "Didn't make nixified dir for $n: '$X' ($Y)"
+        [[ -n "$nixed" ]] || fail "No output for package $n"
+        Y=$(readlink -f "$nixed")
+        [[ -d "$Y" ]] || fail "Didn't make nixified dir for $n: '$nixed' ($Y)"
 
         T=$(F="$Y" nix-instantiate --show-trace --eval -E "$expr") ||
           fail "Output for $n didn't parse"
         [[ "x$T" = 'x"lambda"' ]] || fail "Expr type of $n was '$T'"
 
-        echo pass > "$out"
+        mkdir "$out"
       '')
-    testData.haskellPkgs;
+    (testData.haskellNixed { script = makeHaskellPkgNixable; });
 };
 
 withDeps ([ testHasCabalFile ] ++ (attrValues testMakeHaskellPkgNixable))
