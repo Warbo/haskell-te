@@ -43,21 +43,11 @@ rec {
                              haskellPkgToAsts "$src" > "$out"
                            '')
                   haskellDrvs;
-/*
-  clustered = mapAttrs (n: a: runCommand "cluster"
-                                {
-                                  asts = getAttr n asts;
-                                  cmd  = cluster;
-                                }
-                                ''
-                                  "$cmd" < "$asts" > "$out"
-                                '')
-                       asts;
-*/
+
   eqs = mapAttrs (n: asts: runCommand "eqs-of-${n}"
                              (withNix {
                                inherit asts;
-                               buildInputs = [ package ];
+                               buildInputs = [ quickspecAsts ];
                                pkg         = getAttr n haskellPkgs;
                              })
                              ''

@@ -1,6 +1,6 @@
-{ annotated, bash, fail, genQuickspecRunner, glibcLocales, haskellPackages,
+{ annotated, bash, fail, genQuickspecRunner, glibcLocales,
   haskellPkgNameVersion, jq, lib, makeHaskellPkgNixable, mkBin, nixedHsPkg,
-  nixEnv, runCommand, testData, unpack, withDeps }:
+  nixEnv, runCommand, testData, tipBenchmarks, unpack, withDeps, withNix }:
 
 with lib;
 with rec {
@@ -48,6 +48,17 @@ with rec {
   knownGoodPkgs = filterAttrs (n: _: !(elem n [ "nat-full" "teBenchmark" ]))
                               testData.asts;
 
+  eqsOf = { asts, name, src }: runCommand "eqs-of-${name}"
+    {
+      inherit asts;
+      buildInputs = [ quickspecAsts ];
+      OUT_DIR     = nixedHsPkg (unpack src);
+    }
+    ''
+      set -e
+      quickspecAsts < "$asts" > "$out"
+    '';
+
   testAsts = mapAttrs
     (n: asts: runCommand "test-quickspecasts-${n}"
       (nixEnv // {
@@ -73,17 +84,11 @@ with rec {
   moreTests = attr: pkg:
     with rec {
       name = pkg.name;
-      eqs  = runCommand "eqs-of-${name}"
-        {
-          asts        = annotated { pkgDir = unpack pkg.src; };
-          buildInputs = [ quickspecAsts ];
-          OUT_DIR     = nixedHsPkg (unpack pkg.src);
-        }
-        ''
-          set -e
-          quickspecAsts < "$asts" > "$out"
-        '';
-
+      eqs  = eqsOf {
+        inherit name;
+        inherit (pkg) src;
+        asts = annotated { pkgDir = unpack pkg.src; };
+      };
       haveEqs = runCommand "haveEquations-${name}"
         {
           inherit eqs;
@@ -108,9 +113,27 @@ with rec {
     };
     [ foundEqs haveEqs ];
 
+  checkParamTypes = runCommand "can-find-properties-of-parameterised-types"
+    (withNix {
+      buildInputs  = [ fail jq tipBenchmarks.tools ];
+      eqs          = eqsOf {
+        inherit (testData.haskellDrvs.list-full) name src;
+        asts = testData.asts.list-full;
+      };
+      GROUND_TRUTH = ../benchmarks/ground-truth/list-full.smt2;
+      TRUTH_SOURCE = ../benchmarks/ground-truth/list-full.smt2;
+    })
+    ''
+      set -e
+      set -o pipefail
+      RESULT=$(echo "$eqs" | precision_recall_eqs)
+               echo "$RESULT" | jq -e '.recall | . > 0' || fail "No recall"
+      mkdir "$out"
+    '';
+
   checks = attrValues testAsts                                  ++
            attrValues (mapAttrs moreTests testData.haskellDrvs) ++
-           [ testGarbage ];
+           [ checkParamTypes testGarbage ];
 };
 
 withDeps checks quickspecAsts

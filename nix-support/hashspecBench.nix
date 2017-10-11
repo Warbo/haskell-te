@@ -236,28 +236,17 @@ rec {
     fi
   '';
 
-  hs-untested = stdenv.mkDerivation {
-    name         = "hashspecBench";
-    src          = script;
-    buildInputs  = [ env ];
-    unpackPhase  = "true";  # Nothing to do
-
-    doCheck      = true;
-    checkPhase   = ''
-      true
-    '';
-
-    installPhase = ''
-      mkdir -p "$out/bin"
-      cp "$src" "$out/bin/hashspecBench"
-    '';
+  hs-untested = mkBin {
+    name  = "hashspecBench";
+    paths = [ env ];
+    file  = script;
   };
 
-  maxSecs  = "300";
+  MAX_SECS = "300";
   testFile = name: path: runCommand "hs-${name}"
     {
-      buildInputs = [ fail jq package ];
-      MAX_SECS    = maxSecs;
+      inherit MAX_SECS;
+      buildInputs = [ fail jq hs-untested ];
     }
     ''
       set -e
@@ -282,19 +271,19 @@ rec {
       (testFile "nat-simple" ../benchmarks/nat-simple.smt2)
       (attrValues (mapAttrs
         (name: runCommand name {
-                 buildInputs = [ fail package tipBenchmarks.tools ];
-                 MAX_SECS    = maxSecs;
+                 inherit MAX_SECS;
+                 buildInputs = [ fail hs-untested tipBenchmarks.tools ];
                })
         {
           canRun = ''
             set -e
-            hashspecBench < "${./example.smt2}"
+            hashspecBench < "${../tests/example.smt2}"
             mkdir "$out"
           '';
 
           outputIsJson = ''
             set -e
-            OUTPUT=$(hashspecBench < ${./example.smt2})
+            OUTPUT=$(hashspecBench < ${../tests/example.smt2})
 
             TYPE=$(echo "$OUTPUT" | jq -r 'type') ||
               fail "START OUTPUT\n$OUTPUT\nEND OUTPUT"
@@ -307,7 +296,7 @@ rec {
 
           haveEquations = ''
             set -e
-            OUTPUT=$(hashspecBench < ${./example.smt2})    || exit 1
+            OUTPUT=$(hashspecBench < ${../tests/example.smt2})    || exit 1
              CHECK=$(echo "$OUTPUT" | jq 'has("results")') || exit 1
             [[ "x$CHECK" = "xtrue" ]] ||
               fail "Didn't find 'results' in\n$OUTPUT"
