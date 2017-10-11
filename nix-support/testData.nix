@@ -43,15 +43,4 @@ rec {
                              haskellPkgToAsts "$src" > "$out"
                            '')
                   haskellDrvs;
-
-  eqs = mapAttrs (n: asts: runCommand "eqs-of-${n}"
-                             (withNix {
-                               inherit asts;
-                               buildInputs = [ quickspecAsts ];
-                               pkg         = getAttr n haskellPkgs;
-                             })
-                             ''
-                               quickspecAsts "$pkg" < "$asts" > "$out"
-                             '')
-                 asts;
 }
