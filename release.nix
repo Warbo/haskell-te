@@ -7,7 +7,7 @@ with rec {
     };
     # Remove unbuildable 'override' and 'overrideDerivation' attributes
     pkgs.stripOverrides {
-      inherit benchmarkEnv packageUntested package tests testSuite;
+      inherit benchmarkEnv package;
     };
 };
 {
