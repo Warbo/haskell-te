@@ -1,4 +1,4 @@
-{ fail, haskellPackages, haskellPkgToAsts, haskellPkgToRawAsts, lib,
+{ fail, haskellPackages, haskellPkgToAsts, haskellPkgToRawAsts, jq, lib,
   makeHaskellPkgNixable, nix-config, nixedHsPkg, nixEnv, package, quickspec,
   quickspecAsts, runCommand, tipBenchmarks, tipToHaskellPkg, unpack, withNix }:
 
