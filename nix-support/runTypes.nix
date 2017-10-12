@@ -1,7 +1,6 @@
-{ drvFromScript, runTypesScript }:
-asts: { pkgSrc }:
+{ runCommand, runTypesScript, withNix }:
 
-drvFromScript { inherit asts; } ''
-    set -e
-    "${runTypesScript { inherit pkgSrc; }}" < "$asts" > "$out"
-  ''
+asts: { pkgSrc }: runCommand "runTypes" (withNix { inherit asts; }) ''
+  set -e
+  "${runTypesScript { inherit pkgSrc; }}" < "$asts" > "$out"
+''

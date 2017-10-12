@@ -66,7 +66,6 @@ fix (self: rec {
   checkHsEnv            = callPackage ./checkHsEnv.nix            {};
   checkStderr           = callPackage ./checkStderr.nix           {};
   cluster               = callPackage ./cluster.nix               {};
-  drvFromScript         = callPackage ./drvFromScript.nix         {};
   dumpToNixScripts      = callPackage ./dumpToNix.nix             {};
   explore               = callPackage ./explore.nix               {};
   extractTarball        = callPackage ./extractTarball.nix        {};

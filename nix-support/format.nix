@@ -1,4 +1,4 @@
-{ drvFromScript, fail, jq, lib, wrap, writeScript }:
+{ fail, jq, lib, runCommand, withNix, wrap, writeScript }:
 with builtins;
 with lib;
 
@@ -59,11 +59,12 @@ rec {
 
   format = clusterCount: clusters:
     let cCount = fromJSON clusterCount;
-        result = drvFromScript { inherit clusters;
-                                 clCount = toString clusterCount;
-                                 outputs = map (n: "out" + toString n)
-                                               (range 1 cCount); }
-                               script;
+        result = runCommand "format" (withNix {
+                                       inherit clusters;
+                                       clCount = toString clusterCount;
+                                       outputs = map (n: "out" + toString n)
+                                                     (range 1 cCount); })
+                                     script;
 
         wrapped = map (n: result."out${toString n}") (range 1 cCount);
      in assert isList wrapped;
