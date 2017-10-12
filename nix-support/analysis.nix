@@ -41,12 +41,12 @@ with rec {
         ''
           decode < "$commEqs" | conjectures_for_sample > "$out"
         '';
-      buildInputs = [ jq ];
+      buildInputs = [ fail jq ];
     }
     ''
       set -e
-      jq -e '.precision | . > 0' < "$precRec"
-      jq -e '.recall    | . > 0' < "$precRec"
+      jq -e '.precision | . > 0' < "$precRec" || fail "No/zero precision"
+      jq -e '.recall    | . > 0' < "$precRec" || fail "No/zero recall"
       mkdir "$out"
     '';
 };
