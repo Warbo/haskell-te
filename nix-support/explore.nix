@@ -1,5 +1,5 @@
-{ allDrvsIn, checkHsEnv, fail, haskellPackages, jq, lib, mkBin, nix, nixEnv,
-  pkgName, runCommand, sanitiseName, timeout, withDeps, writeScript }:
+{ allDrvsIn, checkHsEnv, coreutils, fail, haskellPackages, jq, lib, mkBin, nix,
+  nixEnv, pkgName, runCommand, sanitiseName, timeout, withDeps, writeScript }:
 with builtins;
 with lib;
 with rec {
@@ -37,7 +37,8 @@ explore-theories-untested = mkBin {
     }
 
     # limit time/memory using 'timeout'
-    withTimeout MLSpec "$@" 2> >(checkForErrors 1>&2) | noDepth | jq -s '.'
+    "${coreutils.timeout}" "$MAX_SECS" \
+      withTimeout MLSpec "$@" 2> >(checkForErrors 1>&2) | noDepth | jq -s '.'
   '';
 };
 
