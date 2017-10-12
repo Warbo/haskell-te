@@ -133,38 +133,35 @@ rec {
     '';
   };
 
-  rawScript = writeScript "mlspecBench" ''
-    #!${bash}/bin/bash
-    set -e
-
-    ${hashspecBench.setUpDir}
-    export TEMPDIR="$DIR"
-    ${hashspecBench.getInput}
-
-    # Explore
-    export    NIXENV="import ${ourEnv}"
-    export       CMD="${inEnvScript}"
-
-    if [[ -n "$SAMPLE_SIZES" ]]
-    then
-      echo "Looping through sample sizes" 1>&2
-      for SAMPLE_SIZE in $SAMPLE_SIZES
-      do
-        echo "Limiting to a sample size of '$SAMPLE_SIZE'" 1>&2
-        export GEN_INPUT="${mlGenInput}"
-        INFO="$SAMPLE_SIZE" benchmark
-      done
-    else
-      echo "No sample size given, using whole signature" 1>&2
-      export GEN_INPUT="${mlAllInput}"
-      INFO="" benchmark
-    fi
-  '';
-
   mls-untested = mkBin {
     name = "mlspecBench";
-    file = hashspecBench.wrapScript "mlspecBench" rawScript;
+    vars = {
+      CMD    = inEnvScript;
+      NIXENV = "import ${ourEnv}";
+    };
+    file = hashspecBench.wrapScript "mlspecBench" (writeScript "mlspecBench" ''
+      #!${bash}/bin/bash
+      set -e
 
+      ${hashspecBench.setUpDir}
+      export TEMPDIR="$DIR"
+      ${hashspecBench.getInput}
+
+      if [[ -n "$SAMPLE_SIZES" ]]
+      then
+        echo "Looping through sample sizes" 1>&2
+        for SAMPLE_SIZE in $SAMPLE_SIZES
+        do
+          echo "Limiting to a sample size of '$SAMPLE_SIZE'" 1>&2
+          export GEN_INPUT="${mlGenInput}"
+          INFO="$SAMPLE_SIZE" benchmark
+        done
+      else
+        echo "No sample size given, using whole signature" 1>&2
+        export GEN_INPUT="${mlAllInput}"
+        INFO="" benchmark
+      fi
+    '');
   };
 
   MAX_SECS = "300";
