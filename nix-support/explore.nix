@@ -37,7 +37,7 @@ explore-theories-untested = mkBin {
     }
 
     # limit time/memory using 'timeout'
-    "${coreutils.timeout}" "$MAX_SECS" \
+    "${coreutils}/bin/timeout" "$MAX_SECS" \
       withTimeout MLSpec "$@" 2> >(checkForErrors 1>&2) | noDepth | jq -s '.'
   '';
 };
