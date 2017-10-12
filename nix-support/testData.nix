@@ -83,8 +83,8 @@ rec {
                            set -e
                            quickspecAsts "$OUT_DIR" < "$asts" > "$out"
                          '')
-             (removeAttrs (asts {}) [ "nat-full" "teBenchmark"
-                                      "tip-benchmark-haskell" ]);
+             (removeAttrs (asts {}) [ "list-extras" "list-full" "nat-full"
+                                      "teBenchmark" "tip-benchmark-haskell" ]);
 
   finalEqs = { script ? quickspec }:
     mapAttrs (n: pkg: runCommand "test-quickspec-${n}"
