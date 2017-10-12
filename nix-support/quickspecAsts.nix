@@ -44,51 +44,28 @@ with rec {
       echo pass > "$out"
     '';
 
-  # Avoid packages which are known to timeout, get out-of-memory, etc.
-  knownGoodPkgs = filterAttrs (n: _: !(elem n [ "nat-full" "teBenchmark" ]))
-                              (testData.asts {});
-
-  eqsOf = { asts, name, src }: runCommand "eqs-of-${name}"
-    {
-      inherit asts;
-      buildInputs = [ quickspecAsts ];
-      OUT_DIR     = nixedHsPkg (unpack src);
-    }
-    ''
-      set -e
-      quickspecAsts < "$asts" > "$out"
-    '';
+  eqss = testData.eqs { script = quickspecAsts; };
 
   testAsts = mapAttrs
-    (n: asts: runCommand "test-quickspecasts-${n}"
-      (nixEnv // {
-        inherit asts n;
-        buildInputs = [ fail jq quickspecAsts ];
-        pkg         = getAttr n testData.haskellDrvs;
-        MAX_SECS    = "180";
-        MAX_KB      = "2000000";
-      })
+    (n: eqs: runCommand "test-quickspecasts-${n}"
+      {
+        inherit eqs n;
+        buildInputs = [ fail jq ];
+      }
       ''
-        BENCH_OUT=$(quickspecAsts "$pkg" < "$asts" 2> >(tee stderr 1>&2)) ||
-          fail "Failed to run $n.\n$BENCH_OUT"
-
-        RESULTS=$(echo "$BENCH_OUT" | jq 'length') ||
+        set -e
+        RESULTS=$(echo "$eqs" | jq 'length') ||
           fail "Couldn't get equation array for $n"
 
-        [[ "$RESULTS" -gt 0 ]] || fail "No equations for $n: $BENCH_OUT"
-
-        echo "pass" > "$out"
+        [[ "$RESULTS" -gt 0 ]] || fail "No equations for $n: $eqs"
+        mkdir "$out"
     '')
-    knownGoodPkgs;
+    eqss;
 
-  moreTests = attr: pkg:
+  moreTests = attr: eqs:
     with rec {
-      name = pkg.name;
-      eqs  = eqsOf {
-        inherit name;
-        inherit (pkg) src;
-        asts = annotated { pkgDir = unpack pkg.src; };
-      };
+      pkg     = getAttr attr testData.haskellDrvs;
+      name    = pkg.name;
       haveEqs = runCommand "haveEquations-${name}"
         {
           inherit eqs;
@@ -96,8 +73,9 @@ with rec {
         }
         ''
           set -e
-          jq -e 'type == "array"'            < "$eqs" >> "$out"
-          jq -e 'map(has("relation")) | all' < "$eqs" >> "$out"
+          jq -e 'type == "array"'            < "$eqs"
+          jq -e 'map(has("relation")) | all' < "$eqs"
+          mkdir "$out"
         '';
 
       foundEqs = runCommand "${name}-eqs-found"
@@ -116,10 +94,7 @@ with rec {
   checkParamTypes = runCommand "can-find-properties-of-parameterised-types"
     (withNix {
       buildInputs  = [ fail jq tipBenchmarks.tools ];
-      eqs          = eqsOf {
-        inherit (testData.haskellDrvs.list-full) name src;
-        asts = (testData.asts {}).list-full;
-      };
+      eqs          = eqss.list-full;
       GROUND_TRUTH = ../benchmarks/ground-truth/list-full.smt2;
       TRUTH_SOURCE = ../benchmarks/ground-truth/list-full.smt2;
     })
@@ -131,8 +106,8 @@ with rec {
       mkdir "$out"
     '';
 
-  checks = attrValues testAsts                                  ++
-           attrValues (mapAttrs moreTests testData.haskellDrvs) ++
+  checks = attrValues testAsts                  ++
+           attrValues (mapAttrs moreTests eqss) ++
            [ checkParamTypes testGarbage ];
 };
 

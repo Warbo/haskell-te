@@ -65,4 +65,20 @@ rec {
                           haskellPkgToAsts "$src" > "$out"
                         '')
              haskellDrvs;
+
+  # Some of our examples are infeasible to explore, so we skip them
+  eqs = { script ? quickspecAsts }:
+    mapAttrs (n: asts: runCommand "eqs-of-${n}"
+                         {
+                           inherit asts;
+                           buildInputs = [ script ];
+                           OUT_DIR     = getAttr n (haskellNixed {});
+                           MAX_SECS    = "180";
+                           MAX_KB      = "2000000";
+                         }
+                         ''
+                           set -e
+                           quickspecAsts "$OUT_DIR" < "$asts" > "$out"
+                         '')
+             (removeAttrs (asts {}) [ "nat-full" "teBenchmark" ]);
 }

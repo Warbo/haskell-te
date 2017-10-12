@@ -35,33 +35,19 @@ with rec {
       mkdir "$out"
     '';
 
-  checkGetEqs = attr: pkg:
-    with rec {
-      name = pkg.name;
-      eqs  = runCommand "eqs-of-${name}"
-        {
-          asts        = annotated { pkgDir = unpack pkg.src; };
-          buildInputs = [ quickspecAsts ];
-          OUT_DIR     = nixedHsPkg (unpack pkg.src);
-        }
-        ''
-          set -e
-          quickspecAsts < "$asts" > "$out"
-        '';
-    };
-    runCommand "reduceProducesEqs-${name}"
-      {
-        inherit eqs;
-        buildInputs = [ jq reduce-equations ];
-      }
-      ''
-        set -e
-        GOT=$(reduce-equations < "$eqs")
-        echo "$GOT" | jq -e 'type == "array"'
-        echo "$GOT" | jq -e 'map(has("relation")) | all' > "$out"
-      '';
+  checkGetEqs = attr: eqs: runCommand "reduceProducesEqs-${attr}"
+    {
+      inherit eqs;
+      buildInputs = [ jq reduce-equations ];
+    }
+    ''
+      set -e
+      GOT=$(reduce-equations < "$eqs")
+      echo "$GOT" | jq -e 'type == "array"'
+      echo "$GOT" | jq -e 'map(has("relation")) | all' > "$out"
+    '';
 };
 
 withDeps ([ testSuite ] ++ attrValues (mapAttrs checkGetEqs
-                                                testData.haskellDrvs))
+                                                (testData.eqs {})))
          reduce-equations
