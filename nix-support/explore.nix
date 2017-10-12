@@ -41,9 +41,6 @@ explore-theories-untested = mkBin {
           [[ "$ERR" -eq 0 ]] || fail "Haskell error, aborting"
         }
 
-        function go {
-        }
-
         # limit time/memory
         withTimeout MLSpec "$@" 2> >(checkForErrors 1>&2) | noDepth | jq -s '.'
       '';
