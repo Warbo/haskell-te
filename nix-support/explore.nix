@@ -120,7 +120,7 @@ explore-exit-success =
     ''
       set -e
 
-      OUTPUT=$(explore-theories "$f" 2>&1) ||
+      OUTPUT=$(explore-theories "$f" 2>&1 | tee >(cat 1>&2)) ||
         fail "Failed to explore 'hastily' ($OUTPUT)"
 
       mkdir "$out"
@@ -133,7 +133,7 @@ explore-finds-equations =
     foundEquations = name: f: runCommand "explore-test-${name}"
       {
         buildInputs = extractedEnv { inherit f; } ++
-                      [ explore-theories-untested ];
+                      [ explore-theories-untested fail ];
         inherit f;
       }
       ''
@@ -162,18 +162,15 @@ explore-finds-equations =
         trap finish EXIT
 
         echo "Exploring '$f'" 1>&2
-        explore-theories < "$f" 1> sout 2> serr || {
-          echo -e "Failed to explore '$f'"
-          exit 2
-        }
+        RESULT=$(explore-theories < "$f" 2> serr | tee >(cat 1>&2)) ||
+          fail "Failed to explore '$f'"
 
         if grep "No clusters found" < serr
         then
-          echo "No clusters found by MLSpec (did it receive any input?)" 1>&2
-          exit 3
+          fail "No clusters found by MLSpec (did it receive any input?)"
         fi
 
-        COUNT=$(jq 'length' < sout)
+        COUNT=$(echo "$RESULT" | jq 'length')
 
         if [[ "$COUNT" -eq 0 ]]
         then
@@ -213,7 +210,7 @@ explore-no-dupes =
         }
 
         echo "Exploring '$f'" 1>&2
-        OUTPUT=$(explore-theories < "$f" 2>&1) ||
+        OUTPUT=$(explore-theories < "$f" 2>&1 | tee >(cat 1>&2)) ||
           fail "Failed to explore '$f'\nOUTPUT:\n\n$OUTPUT\n\n"
 
         echo "$OUTPUT" | noDupes
