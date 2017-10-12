@@ -51,9 +51,9 @@ explore-theories-untested = mkBin {
     set -e
     if [[ -n "$MAX_SECS" ]]
     then
-      timeout "$MAX_SECS" "$runner"
+      timeout "$MAX_SECS" "$runner" "$@"
     else
-      "$runner"
+      "$runner" "$@"
     fi
   '';
 };
