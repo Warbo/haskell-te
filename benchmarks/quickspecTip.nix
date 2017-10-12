@@ -9,20 +9,12 @@ with rec {
       analysis bash filterToSampled genQuickspecRunner haveVar jq nix
     ];
     vars   = {
-      asts    = (testData.asts {}).teBenchmark;
+      asts    = (testData.asts         {}).teBenchmark;
+      OUT_DIR = (testData.haskellNixed {}).teBenchmark;
       EXPR    = ''
         (import ${toString ../nix-support} {}).callPackage
           ${toString ./sampleAnalyser.nix} {}
       '';
-      OUT_DIR = runCommand "nixable-tip"
-        {
-          pkg         = (testData.haskellPkgs {}).teBenchmark;
-          buildInputs = [ makeHaskellPkgNixable ];
-        }
-        ''
-          D=$(makeHaskellPkgNixable "$pkg")
-          ln -s "$D" "$out"
-        '';
     };
     script = ''
       #!/usr/bin/env bash
