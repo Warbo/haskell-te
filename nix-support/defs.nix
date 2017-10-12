@@ -95,7 +95,6 @@ fix (self: rec {
   quickspec             = callPackage ./quickspec.nix             {};
   quickspecAsts         = callPackage ./quickspecAsts.nix         {};
   reduce-equations      = callPackage ./reduce-equations.nix      {};
-  runScript             = callPackage ./runScript.nix             {};
   runTypes              = callPackage ./runTypes.nix              {};
   runTypesScriptData    = callPackage ./runTypesScript.nix        {};
   runWeka               = callPackage ./runWeka.nix               {};

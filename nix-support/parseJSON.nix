@@ -1,7 +1,7 @@
 # Give more context to fromJSON, in case of errors, and avoid floating point
 # issues by first converting them to strings
 
-{ jq, runScript, writeScript }:
+{ jq, runCommand, writeScript }:
 
 with builtins;
 with rec {
@@ -23,10 +23,12 @@ with rec {
   '';
 
   parseString = txt:
-    let result = runScript { inherit txt; passAsFile = [ "txt" ]; } ''
+    let result = runCommand "parseJSON"
+                   { inherit txt; passAsFile = [ "txt" ]; }
+                   ''
                      "${allNumsToStrings}" < "$txtPath" > "$out"
                    '';
-       in fromJSON result;
+       in fromJSON (readFile result);
 
   go = txt: if isString txt
                then parseString txt
