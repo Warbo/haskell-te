@@ -74,11 +74,32 @@ rec {
                            buildInputs = [ script ];
                            OUT_DIR     = getAttr n (haskellNixed {});
                            MAX_SECS    = "180";
-                           MAX_KB      = "2000000";
+                           MAX_KB      = "1000000";
                          }
                          ''
                            set -e
                            quickspecAsts "$OUT_DIR" < "$asts" > "$out"
                          '')
              (removeAttrs (asts {}) [ "nat-full" "teBenchmark" ]);
+
+  finalEqs = { script ? quickspec }:
+    mapAttrs (n: pkg: runCommand "test-quickspec-${n}"
+                        (nixEnv // {
+                          inherit pkg;
+                          buildInputs = [ fail jq script ];
+                          MAX_SECS    = "180";
+                          MAX_KB      = "1000000";
+                        })
+                        ''
+                          BENCH_OUT=$(quickspec "$pkg" 2> >(tee stderr 1>&2)) ||
+                            fail "Failed to run.\n$BENCH_OUT"
+
+                          RESULTS=$(echo "$BENCH_OUT" | jq 'length') ||
+                            fail "Couldn't get equation array"
+
+                          [[ "$RESULTS" -gt 0 ]] || fail "Found no equations $BENCH_OUT"
+
+                          echo "pass" > "$out"
+                        '')
+             (removeAttrs (haskellPkgs {}) [ "nat-full" "teBenchmark" ])
 }

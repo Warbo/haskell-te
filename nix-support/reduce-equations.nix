@@ -1,5 +1,5 @@
 { annotated, cabal-install, glibcLocales, haskellPackages, jq, lib, nixedHsPkg,
-  quickspecAsts, runCommand, testData, unpack, withDeps }:
+  runCommand, testData, unpack, withDeps }:
 
 with builtins;
 with lib;

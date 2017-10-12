@@ -21,20 +21,6 @@ with rec {
     '';
   };
 
-  test = name: code: runCommand "quickspec-${name}-test"
-    {
-      given       = name;
-      buildInputs = [ fail jq quickspec tipToHaskellPkg ];
-    }
-    ''
-      #!/usr/bin/env bash
-      set -e
-      {
-        ${code}
-      } || exit 1
-      echo "pass" > "$out"
-    '';
-
   testGarbage = runCommand "check-garbage"
     {
       buildInputs = [ fail quickspec ];
@@ -50,30 +36,22 @@ with rec {
 
   checks = [ testGarbage ] ++ attrValues testHsPkgs;
 
-  # Avoid packages which are known to timeout, get out-of-memory, etc.
-  knownGoodPkgs = filterAttrs (n: _: !(elem n [ "nat-full" "teBenchmark" ]))
-                              (testData.haskellPkgs {});
+  testHsPkgs =
+    mapAttrs (n: eqs: runCommand "test-quickspec-${n}"
+                        {
+                          inherit eqs;
+                          buildInputs = [ fail jq ];
+                        }
+                        ''
+                          set -e
+                          RESULTS=$(echo "$eqs" | jq 'length') ||
+                            fail "Couldn't get equation array"
 
-  testHsPkgs = mapAttrs
-    (n: pkg: runCommand "test-quickspec-${n}"
-      (nixEnv // {
-        inherit pkg;
-        buildInputs = [ fail jq quickspec ];
-        MAX_SECS    = "180";
-        MAX_KB      = "3000000";
-      })
-      ''
-        BENCH_OUT=$(quickspec "$pkg" 2> >(tee stderr 1>&2)) ||
-          fail "Failed to run.\n$BENCH_OUT"
-
-        RESULTS=$(echo "$BENCH_OUT" | jq 'length') ||
-          fail "Couldn't get equation array"
-
-        [[ "$RESULTS" -gt 0 ]] || fail "Found no equations $BENCH_OUT"
-
-        echo "pass" > "$out"
-      '')
-    knownGoodPkgs;
+                          [[ "$RESULTS" -gt 0 ]] ||
+                            fail "Found no equations $eqs"
+                          mkdir "$out"
+                        '')
+             (testData.finalEqs { script = quickspec; });
 };
 
 withDeps checks quickspec
