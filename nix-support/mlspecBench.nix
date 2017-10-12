@@ -88,8 +88,6 @@ rec {
     '';
   };
 
-  script = hashspecBench.wrapScript "mlspecBench" rawScript;
-
   mlGenInput = wrap {
     name   = "gen-input";
     paths  = [ bash jq tipBenchmarks.tools ];
@@ -179,7 +177,8 @@ rec {
 
   mls-untested = mkBin {
     name = "mlspecBench";
-    file = script;
+    file = hashspecBench.wrapScript "mlspecBench" rawScript;
+
   };
 
   MAX_SECS = "300";
