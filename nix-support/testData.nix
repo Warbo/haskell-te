@@ -1,5 +1,5 @@
 { fail, haskellPackages, haskellPkgToAsts, haskellPkgToRawAsts, lib,
-  makeHaskellPkgNixable, nix-config, nixedHsPkg, package, quickspec,
+  makeHaskellPkgNixable, nix-config, nixedHsPkg, nixEnv, package, quickspec,
   quickspecAsts, runCommand, tipBenchmarks, tipToHaskellPkg, unpack, withNix }:
 
 with lib;
