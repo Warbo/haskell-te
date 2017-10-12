@@ -101,5 +101,5 @@ rec {
 
                           echo "pass" > "$out"
                         '')
-             (removeAttrs (haskellPkgs {}) [ "nat-full" "teBenchmark" ])
+             (removeAttrs (haskellPkgs {}) [ "nat-full" "teBenchmark" ]);
 }
