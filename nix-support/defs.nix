@@ -57,6 +57,7 @@ fix (self: rec {
   # argument values from the 'self' attrset.
   callPackage = nixpkgs.callPackage ./callPackage.nix { inherit self; };
 
+  analysis              = callPackage ./analysis.nix              {};
   asv-nix               = callPackage ./asv-nix.nix               {};
   bashEscape            = callPackage ./bashEscape.nix            {};
   benchmarkEnv          = callPackage ./benchmarkEnv.nix          {};

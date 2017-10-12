@@ -1,4 +1,4 @@
-{ bash, fail, tipBenchmarks, wrap }:
+{ analysis, bash, fail, wrap }:
 
 with builtins;
 assert getEnv("SAMPLE") != "" ||
@@ -6,7 +6,7 @@ assert getEnv("SAMPLE") != "" ||
 
 wrap {
   name   = "sampleAnalyser";
-  paths  = [ bash fail tipBenchmarks.tools ];
+  paths  = [ analysis bash fail ];
   vars   = { SAMPLED_NAMES = getEnv("SAMPLE"); };
   script = ''
     #!/usr/bin/env bash

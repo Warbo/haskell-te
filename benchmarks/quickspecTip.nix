@@ -1,12 +1,12 @@
-{ bash, callPackage, fail, filterToSampled, genQuickspecRunner, haveVar, jq,
-  makeHaskellPkgNixable, mkBin, nix, nixEnv, runCommand, testData,
-  tipBenchmarks, withDeps, wrap }:
+{ analysis, bash, callPackage, fail, filterToSampled, genQuickspecRunner,
+  haveVar, jq, makeHaskellPkgNixable, mkBin, nix, nixEnv, runCommand, testData,
+  withDeps, wrap }:
 
 with rec {
   quickspecTip = mkBin {
     name   = "quickspecTip";
     paths  = [
-      bash filterToSampled genQuickspecRunner haveVar jq nix tipBenchmarks.tools
+      analysis bash filterToSampled genQuickspecRunner haveVar jq nix
     ];
     vars   = {
       asts    = (testData.asts {}).teBenchmark;

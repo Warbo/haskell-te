@@ -27,7 +27,10 @@ rec {
 
         ln -s "$X" "$out"
       '')
-      tip // { testPackage = ../tests/testPackage; };
+      tip // {
+        inherit (tipBenchmarks) tip-benchmark-haskell;
+        testPackage = ../tests/testPackage;
+      };
 
   haskellDrvs = mapAttrs (_: d: haskellPackages.callPackage d {})
                          (haskellNixed {});
