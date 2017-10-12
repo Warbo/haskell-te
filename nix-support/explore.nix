@@ -1,5 +1,6 @@
 { allDrvsIn, checkHsEnv, coreutils, fail, haskellPackages, jq, lib, mkBin, nix,
-  nixEnv, pkgName, runCommand, sanitiseName, timeout, withDeps, writeScript }:
+  nixEnv, pkgName, runCommand, sanitiseName, timeout, withDeps, wrap,
+  writeScript }:
 with builtins;
 with lib;
 with rec {
@@ -12,33 +13,51 @@ explore-theories = withDeps
 
 explore-theories-untested = mkBin {
   name   = "explore-theories";
-  paths  = [ fail jq timeout haskellPackages.mlspec nix ];
-  vars   = nixEnv;
+  paths  = [ coreutils ];
+  vars   = {
+    runner = wrap {
+      name   = "explore-runner";
+      paths  = [ fail jq timeout haskellPackages.mlspec nix ];
+      vars   = nixEnv;
+      script = ''
+        #!/usr/bin/env bash
+        set -e
+        set -o pipefail
+
+        function noDepth {
+          grep -v "^Depth" || true # Don't abort if nothing found
+        }
+
+        function checkForErrors {
+          ERR=0
+          while read -r LINE
+          do
+            echo "$LINE"
+            if echo "$LINE" | grep "No instance for" > /dev/null
+            then
+              ERR=1
+            fi
+          done
+          [[ "$ERR" -eq 0 ]] || fail "Haskell error, aborting"
+        }
+
+        function go {
+        }
+
+        # limit time/memory
+        withTimeout MLSpec "$@" 2> >(checkForErrors 1>&2) | noDepth | jq -s '.'
+      '';
+    };
+  };
   script = ''
     #!/usr/bin/env bash
     set -e
-    set -o pipefail
-
-    function noDepth {
-      grep -v "^Depth" || true # Don't abort if nothing found
-    }
-
-    function checkForErrors {
-      ERR=0
-      while read -r LINE
-      do
-        echo "$LINE"
-        if echo "$LINE" | grep "No instance for" > /dev/null
-        then
-          ERR=1
-        fi
-      done
-      [[ "$ERR" -eq 0 ]] || fail "Haskell error, aborting"
-    }
-
-    # limit time/memory using 'timeout'
-    "${coreutils}/bin/timeout" "$MAX_SECS" \
-      withTimeout MLSpec "$@" 2> >(checkForErrors 1>&2) | noDepth | jq -s '.'
+    if [[ -n "$MAX_SECS" ]]
+    then
+      timeout "$MAX_SECS" "$runner"
+    else
+      "$runner"
+    fi
   '';
 };
 
