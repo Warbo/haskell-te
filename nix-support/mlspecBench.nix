@@ -44,19 +44,6 @@ rec {
     }
   '';
 
-  assertNumeric = var: msg:
-    assert hasPrefix "$" var || abort (toString {
-      function = "assertNumeric";
-      error    = "Argument 'var' should be bash variable with '$'";
-      inherit var msg;
-    });
-    ''
-      echo "${var}" | grep -o "^[0-9][0-9]*\$" > /dev/null || {
-        echo 'Error, ${var}' "(${var})" 'is not numeric: ${msg}' 1>&2
-        exit 1
-      }
-    '';
-
   inEnvScript = wrap {
     name   = "mlspecBench-inenvscript";
     paths  = [ bash explore.explore-theories jq reduce-equations timeout ];
@@ -73,7 +60,6 @@ rec {
       CL=$(${cluster})
 
       clCount=$(echo "$CL" | jq 'map(.cluster) | max')
-      ${assertNumeric "$clCount" "clCount should contain number of clusters"}
 
       export clCount
 
