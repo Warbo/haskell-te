@@ -54,7 +54,7 @@ with rec {
       }
       ''
         set -e
-        RESULTS=$(echo "$eqs" | jq 'length') ||
+        RESULTS=$(jq 'length' < "$eqs") ||
           fail "Couldn't get equation array for $n"
 
         [[ "$RESULTS" -gt 0 ]] || fail "No equations for $n: $eqs"
