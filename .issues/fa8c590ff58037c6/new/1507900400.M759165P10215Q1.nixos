@@ -1,0 +1,9 @@
+From: Chris Warburton
+Date: Fri, 13 Oct 2017 14:12:52 +0100
+Subject: Re: Don't use nix-store --add in tests
+Message-Id: <fa8c590ff58037c6-a468fe6c6d1703e3-artemis@nixos>
+References: <fa8c590ff58037c6-0-artemis@nixos>
+In-Reply-To: <fa8c590ff58037c6-0-artemis@nixos>
+
+Removed raw uses of nix-store, and added a SKIP_NIX flag to inNixedDir,
+which all of our tests now use.

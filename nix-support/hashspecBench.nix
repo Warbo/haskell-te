@@ -147,58 +147,41 @@ rec {
       echo "Exploring" 1>&2
       hashBucket | withTimeout explore-theories | reduce-equations
     '';
-    };
+  };
 
-    setUpDir = ''
-      [[ -n "$DIR" ]] || {
-        echo "No DIR given to work in, using current directory $PWD" 1>&2
-        DIR="$PWD"
-      }
-      export DIR
-    '';
+  setUpDir = ''
+    [[ -n "$DIR" ]] || {
+      echo "No DIR given to work in, using current directory $PWD" 1>&2
+      DIR="$PWD"
+    }
+    export DIR
+  '';
 
-    mkPkgInner = wrap {
-      name  = "mkPkgInner";
-      paths = [ fail inNixedDir ];
-      vars  = {
-        MAKE_PACKAGE = wrap {
-          name   = "make-haskell-package";
-          paths  = [ tipBenchmarks.tools ];
-          script = ''
-            OUT_DIR="$PWD" full_haskell_package < "$INPUT_TIP"
-          '';
-        };
+  mkPkgInner = wrap {
+    name  = "mkPkgInner";
+    paths = [ fail ];
+    vars  = {
+      MAKE_PACKAGE = wrap {
+        name   = "make-haskell-package";
+        paths  = [ tipBenchmarks.tools ];
+        script = ''
+          OUT_DIR="$PWD" full_haskell_package < "$INPUT_TIP"
+        '';
       };
-      script = ''
-        #!/usr/bin/env bash
-        set -e
-        [[ -n "$INPUT_TIP" ]] || fail "No INPUT_TIP given, aborting"
-
-        echo "Creating Haskell package" 1>&2
-        inNixedDir "$MAKE_PACKAGE" "generated-haskell-package" ||
-          fail "Failed to create Haskell package"
-        echo "Created Haskell package" 1>&2
-      '';
     };
+    script = ''
+      #!/usr/bin/env bash
+      set -e
+      [[ -n "$INPUT_TIP" ]] || fail "No INPUT_TIP given, aborting"
 
-    getInput = ''
-      INPUT_TIP=$(pipeToNix)
-      export INPUT_TIP
-
-      echo "Input stored at '$INPUT_TIP'" 1>&2
-
-      # Initialise all of the data we need
-      OUT_DIR=$("$mkPkgInner")
-
-      export OUT_DIR
-
-      # Extract ASTs from the Haskell package, annotate and add to the Nix
-      # store. By doing this in nix-build, we get content-based caching for free
-      EXPR="with import <support> {}; annotated { pkgDir = \"$OUT_DIR\"; }"
-      ANNOTATED=$(nix-build --show-trace -E "$EXPR")
-
-      export ANNOTATED
+      echo "Creating Haskell package" 1>&2
+      mkdir "generated-haskell-package"
+      pushd "generated-haskell-package" > /dev/null
+        "$MAKE_PACKAGE" || fail "Failed to create Haskell package"
+      popd > /dev/null
+      echo "Created Haskell package" 1>&2
     '';
+  };
 
   env = buildEnv {
     name  = "te-env";
@@ -218,7 +201,15 @@ rec {
 
       ${setUpDir}
       export TEMPDIR="$DIR"
-      ${getInput}
+      pushd "$DIR" > /dev/null
+        INPUT_TIP="$PWD/input_tip"
+        cat > "$INPUT_TIP"
+        OUT_DIR=$("$mkPkgInner")
+        export OUT_DIR
+        EXPR="with import <support> {}; annotated { pkgDir = \"$OUT_DIR\"; }"
+        ANNOTATED=$(nix-build --show-trace -E "$EXPR")
+        export ANNOTATED
+      popd > /dev/null
 
       if [[ -n "$SAMPLE_SIZES" ]]
       then

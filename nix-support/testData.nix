@@ -61,6 +61,7 @@ rec {
     mapAttrs (n: drv: runCommand "asts-of-${n}"
                         {
                           src         = unpack drv.src;
+                          SKIP_NIX    = "1";
                           buildInputs = [
                             (haskellPkgToAsts { inherit script; })
                           ];

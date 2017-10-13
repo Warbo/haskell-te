@@ -145,7 +145,15 @@ rec {
 
       ${hashspecBench.setUpDir}
       export TEMPDIR="$DIR"
-      ${hashspecBench.getInput}
+      pushd "$DIR" > /dev/null
+        INPUT_TIP="$PWD/input_tip"
+        cat > "$INPUT_TIP"
+        OUT_DIR=$("$mkPkgInner")
+        export OUT_DIR
+        EXPR="with import <support> {}; annotated { pkgDir = \"$OUT_DIR\"; }"
+        ANNOTATED=$(nix-build --show-trace -E "$EXPR")
+        export ANNOTATED
+      popd > /dev/null
 
       if [[ -n "$SAMPLE_SIZES" ]]
       then

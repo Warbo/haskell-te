@@ -7,6 +7,7 @@ dir: runCommand "nixified"
     SKIP_NIX    = "1";
   }
   ''
+    set -e
     D=$(makeHaskellPkgNixable "$dir")
     cp -r "$D" "$out"
   ''
