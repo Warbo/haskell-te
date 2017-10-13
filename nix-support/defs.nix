@@ -41,9 +41,9 @@ fix (self: rec {
 
   # Helper functions, etc.
   inherit (nix-config)
-    allDrvsIn attrsToDirs backtrace fail inNixedDir mkBin nixListToBashArray
-    nothing pipeToNix reverse sanitiseName stable stripOverrides timeout unlines
-    unpack withDeps wrap;
+    allDrvsIn attrsToDirs backtrace fail mkBin nixListToBashArray nothing
+    pipeToNix reverse sanitiseName stable stripOverrides timeout unlines unpack
+    withDeps wrap;
 
   # Cases where we want both the attribute set and its attributes available
   inherit (callPackage ./annotate.nix {})
@@ -82,6 +82,7 @@ fix (self: rec {
   hsNameVersion         = callPackage ./hsNameVersion.nix         {};
   hsOverride            = callPackage ./hsOverride.nix            {};
   importDir             = callPackage ./importDir.nix             {};
+  inNixedDir            = callPackage ./inNixedDir.nix            {};
   makeHaskellPkgNixable = callPackage ./makeHaskellPkgNixable.nix {};
   ML4HSFE               = callPackage ./ML4HSFE.nix               {};
   mlspecBench           = callPackage ./mlspecBench.nix           {};
