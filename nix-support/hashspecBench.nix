@@ -206,9 +206,7 @@ rec {
     paths = [ jq nix tipBenchmarks.tools ];
   };
 
-  script = wrapScript "hashspecBench" rawScript;
-
-  rawScript = writeScript "hashspecBench" ''
+  script = wrapScript "hashspecBench" (writeScript "hashspecBench" ''
     #!${bash}/bin/bash
     set -e
 
@@ -234,7 +232,7 @@ rec {
       export GEN_INPUT="${mlspecBench.mlAllInput}"
       INFO="" benchmark
     fi
-  '';
+  '');
 
   hs-untested = mkBin {
     name  = "hashspecBench";

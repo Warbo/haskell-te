@@ -1,0 +1,12 @@
+From: Chris Warburton
+Date: Fri, 13 Oct 2017 13:07:02 +0100
+State: new
+Subject: Don't use nix-store --add in tests
+Message-Id: <fa8c590ff58037c6-0-artemis@nixos>
+
+inNixedDir calls 'nix-store --add'. This can cause problems, since the
+output doesn't get picked up by the Nix garbage collector as a
+reference, i.e. we might have derivation A which depends on B and C,
+where C is the result of `nix-store --add`. As long as A is "alive", the
+garbage collector won't delete B, but it might still delete C since it
+doesn't realise that A needs it.
