@@ -1,5 +1,5 @@
 { bash, fail, haskellPkgToAsts, jq, lib, makeHaskellPkgNixable, mkBin, nixEnv,
-  quickspecAsts, runCommand, testData, tipToHaskellPkg, withDeps }:
+  quickspecAsts, runCommand, testData, withDeps }:
 
 with lib;
 with rec {
@@ -44,7 +44,7 @@ with rec {
                         }
                         ''
                           set -e
-                          RESULTS=$(echo "$eqs" | jq 'length') ||
+                          RESULTS=$(jq 'length' < "$eqs") ||
                             fail "Couldn't get equation array"
 
                           [[ "$RESULTS" -gt 0 ]] ||

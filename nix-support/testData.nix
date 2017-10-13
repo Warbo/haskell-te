@@ -99,15 +99,8 @@ rec {
                           SKIP_NIX    = "1";
                         })
                         ''
-                          BENCH_OUT=$(quickspec "$pkg" 2> >(tee stderr 1>&2)) ||
-                            fail "Failed to run.\n$BENCH_OUT"
-
-                          RESULTS=$(echo "$BENCH_OUT" | jq 'length') ||
-                            fail "Couldn't get equation array"
-
-                          [[ "$RESULTS" -gt 0 ]] || fail "Found no equations $BENCH_OUT"
-
-                          echo "pass" > "$out"
+                          set -e
+                          quickspec "$pkg" > "$out"
                         '')
              (removeAttrs (haskellPkgs {}) [ "nat-full" "teBenchmark" ]);
 }
