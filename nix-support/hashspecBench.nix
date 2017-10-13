@@ -113,20 +113,6 @@ rec {
     }
   '';
 
-  wrapScript = name: script: wrap {
-    inherit name script;
-    paths = [ env ];
-    vars  = nixEnv // {
-      LANG                  = "en_US.UTF-8";
-      LOCALE_ARCHIVE        = "${glibcLocales}/lib/locale/locale-archive";
-      NIX_EVAL_HASKELL_PKGS = customHs;
-      NIX_PATH              = concatStringsSep ":" [
-        "nixpkgs=${toString <nixpkgs>}"
-        "support=${toString ../nix-support}"
-      ];
-    };
-  };
-
   inEnvScript = wrap {
     name   = "hashspecBench-inenvscript";
     paths  = [
@@ -188,13 +174,20 @@ rec {
     paths = [ jq nix tipBenchmarks.tools ];
   };
 
-  script = wrapScript "hashspecBench" (wrap {
-    name   = "hashspecBench";
-    paths  = [ bash haskellPkgToAsts ];
-    vars   = {
+  hs-untested = mkBin {
+    name  = "hashspecBench";
+    paths = [ bash env haskellPkgToAsts ];
+    vars  = {
       CMD      = inEnvScript;
       NIXENV   = "import ${mlspecBench.ourEnv}";
       SKIP_NIX = "1";
+      LANG                  = "en_US.UTF-8";
+      LOCALE_ARCHIVE        = "${glibcLocales}/lib/locale/locale-archive";
+      NIX_EVAL_HASKELL_PKGS = customHs;
+      NIX_PATH              = concatStringsSep ":" [
+        "nixpkgs=${toString <nixpkgs>}"
+        "support=${toString ../nix-support}"
+      ];
     };
     script = ''
       #!/usr/bin/env bash
@@ -226,12 +219,6 @@ rec {
         INFO="" benchmark
       fi
     '';
-  });
-
-  hs-untested = mkBin {
-    name  = "hashspecBench";
-    paths = [ env ];
-    file  = script;
   };
 
   MAX_SECS = "300";

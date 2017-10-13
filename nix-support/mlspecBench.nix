@@ -139,9 +139,16 @@ rec {
       CMD      = inEnvScript;
       NIXENV   = "import ${ourEnv}";
       SKIP_NIX = "1";
+      LANG                  = "en_US.UTF-8";
+      LOCALE_ARCHIVE        = "${glibcLocales}/lib/locale/locale-archive";
+      NIX_EVAL_HASKELL_PKGS = customHs;
+      NIX_PATH              = concatStringsSep ":" [
+        "nixpkgs=${toString <nixpkgs>}"
+        "support=${toString ../nix-support}"
+      ];
     };
-    paths = [ bash haskellPkgToAsts ];
-    file = hashspecBench.wrapScript "mlspecBench" (writeScript "mlspecBench" ''
+    paths  = [ bash haskellPkgToAsts hashspecBench.env ];
+    script = ''
       #!${bash}/bin/bash
       set -e
 
@@ -170,7 +177,7 @@ rec {
         export GEN_INPUT="${mlAllInput}"
         INFO="" benchmark
       fi
-    '');
+    '';
   };
 
   MAX_SECS = "300";
