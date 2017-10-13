@@ -136,9 +136,11 @@ rec {
   mls-untested = mkBin {
     name = "mlspecBench";
     vars = {
-      CMD    = inEnvScript;
-      NIXENV = "import ${ourEnv}";
+      CMD      = inEnvScript;
+      NIXENV   = "import ${ourEnv}";
+      SKIP_NIX = "1";
     };
+    paths = [ bash haskellPkgToAsts ];
     file = hashspecBench.wrapScript "mlspecBench" (writeScript "mlspecBench" ''
       #!${bash}/bin/bash
       set -e
@@ -150,8 +152,7 @@ rec {
         cat > "$INPUT_TIP"
         OUT_DIR=$("$mkPkgInner")
         export OUT_DIR
-        EXPR="with import <support> {}; annotated { pkgDir = \"$OUT_DIR\"; }"
-        ANNOTATED=$(nix-build --show-trace -E "$EXPR")
+        ANNOTATED=$(haskellPkgToAsts "$OUT_DIR")
         export ANNOTATED
       popd > /dev/null
 

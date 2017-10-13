@@ -190,10 +190,11 @@ rec {
 
   script = wrapScript "hashspecBench" (wrap {
     name   = "hashspecBench";
-    paths  = [ bash ];
+    paths  = [ bash haskellPkgToAsts ];
     vars   = {
-      CMD    = inEnvScript;
-      NIXENV = "import ${mlspecBench.ourEnv}";
+      CMD      = inEnvScript;
+      NIXENV   = "import ${mlspecBench.ourEnv}";
+      SKIP_NIX = "1";
     };
     script = ''
       #!/usr/bin/env bash
@@ -206,8 +207,7 @@ rec {
         cat > "$INPUT_TIP"
         OUT_DIR=$("$mkPkgInner")
         export OUT_DIR
-        EXPR="with import <support> {}; annotated { pkgDir = \"$OUT_DIR\"; }"
-        ANNOTATED=$(nix-build --show-trace -E "$EXPR")
+        ANNOTATED=$(haskellPkgToAsts "$OUT_DIR")
         export ANNOTATED
       popd > /dev/null
 
