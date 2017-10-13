@@ -13,20 +13,23 @@ with rec {
     '';
   };
 
+  dirName = "haskellPkgGeneratedFromTip";
+
   tipToHaskellPkg = mkBin {
     name   = "tipToHaskellPkg";
     paths  = [ bash genPkgHere inNixedDir ];
     script = ''
       #!/usr/bin/env bash
-      inNixedDir genPkgHere "haskellPkgGeneratedFromTip"
+      inNixedDir genPkgHere "${dirName}"
     '';
   };
 
   checks = mapAttrs
     (n: f: runCommand "test-tipToHaskellPkg-${n}"
       {
-        inherit f;
+        inherit dirName f;
         buildInputs = [ fail tipToHaskellPkg ];
+        SKIP_NIX    = "1";
       }
       ''
         shopt -s nullglob
@@ -54,15 +57,18 @@ with rec {
         done
         [[ "$GOTCABAL" -eq 1 ]] || fail "Found $GOTCABAL .cabal files"
 
+        [[ -e "$PWD/${dirName}" ]] || fail "Didn't make '$PWD/${dirName}'"
+        WITHDIR=$(( PRECRUFT + 1 ))
+
         POSTCRUFT=0
         for X in ./*
         do
           POSTCRUFT=$(( POSTCRUFT + 1 ))
         done
-        [[ "$PRECRUFT" -eq "$POSTCRUFT" ]] ||
-          fail "PWD has '$POSTCRUFT' entries; did have '$PRECRUFT'"
+        [[ "$WITHDIR" -eq "$POSTCRUFT" ]] ||
+          fail "PWD has '$POSTCRUFT' entries; should have '$PRECRUFT' + 1"
 
-        echo pass > "$out"
+        mkdir "$out"
       '')
     testData.tip;
 };

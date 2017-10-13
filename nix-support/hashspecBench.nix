@@ -194,8 +194,7 @@ rec {
 
       # Extract ASTs from the Haskell package, annotate and add to the Nix
       # store. By doing this in nix-build, we get content-based caching for free
-      STORED=$(nix-store --add "$OUT_DIR")
-      EXPR="with import <support> {}; annotated { pkgDir = \"$STORED\"; }"
+      EXPR="with import <support> {}; annotated { pkgDir = \"$OUT_DIR\"; }"
       ANNOTATED=$(nix-build --show-trace -E "$EXPR")
 
       export ANNOTATED

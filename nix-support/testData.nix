@@ -1,5 +1,5 @@
 { fail, haskellPackages, haskellPkgToAsts, haskellPkgToRawAsts, jq, lib,
-  makeHaskellPkgNixable, nix-config, nixedHsPkg, nixEnv, package, quickspec,
+  makeHaskellPkgNixable, nix-config, nixedHsPkg, nixEnv, quickspec,
   quickspecAsts, runCommand, tipBenchmarks, tipToHaskellPkg, unpack, withNix }:
 
 with lib;
@@ -16,6 +16,7 @@ rec {
     mapAttrs (n: f: runCommand "haskell-pkg-of-${n}"
       {
         inherit f;
+        SKIP_NIX    = "1";
         buildInputs = [ fail script ];
       }
       ''
@@ -25,7 +26,7 @@ rec {
         X=$(readlink -f "$D")
         [[ -d "$X" ]] || fail "'$X' isn't dir"
 
-        ln -s "$X" "$out"
+        cp -r "$X" "$out"
       '')
       tip // {
         inherit (tipBenchmarks) tip-benchmark-haskell;
@@ -41,6 +42,7 @@ rec {
                           inherit dir n;
                           inherit (nix-config) stableHackageDb;
                           buildInputs = [ fail script ];
+                          SKIP_NIX    = "1";
                         }
                         ''
                           set -e
@@ -49,7 +51,7 @@ rec {
 
                           X=$(makeHaskellPkgNixable "$dir") ||
                             fail "Package $n failed to nixify"
-                          ln -s "$X" "$out"
+                          cp -r "$X" "$out"
                         '')
              (haskellPkgs {} // {
                list-extras = unpack haskellPackages.list-extras.src;
@@ -78,6 +80,7 @@ rec {
                            OUT_DIR     = getAttr n (haskellNixed {});
                            MAX_SECS    = "180";
                            MAX_KB      = "1000000";
+                           SKIP_NIX    = "1";
                          }
                          ''
                            set -e
@@ -93,6 +96,7 @@ rec {
                           buildInputs = [ fail jq script ];
                           MAX_SECS    = "180";
                           MAX_KB      = "1000000";
+                          SKIP_NIX    = "1";
                         })
                         ''
                           BENCH_OUT=$(quickspec "$pkg" 2> >(tee stderr 1>&2)) ||

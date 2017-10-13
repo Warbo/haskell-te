@@ -46,6 +46,7 @@ with rec {
       {
         buildInputs = [ fail haskellPkgToAsts jq ];
         pkg         = ../tests/testPackage;
+        SKIP_NIX    = "1";
       }
       ''
         ASTS=$(haskellPkgToAsts "$pkg" ) || fail "Command failed"
@@ -56,7 +57,7 @@ with rec {
         L=$(echo "$ASTS" | jq 'length') || fail "Couldn't get length"
         [[ "$L" -gt 3 ]] || fail "Expected a few ASTs, found '$L'"
 
-        echo pass > "$out"
+        mkdir "$out"
       '')
   ];
 };
