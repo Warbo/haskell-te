@@ -113,28 +113,6 @@ rec {
     }
   '';
 
-  inEnvScript = wrap {
-    name   = "hashspecBench-inenvscript";
-    paths  = [
-      bash explore.explore-theories reduce-equations timeout buckets.hashes
-    ];
-    vars   = {
-      NIX_EVAL_EXTRA_IMPORTS = ''[("tip-benchmark-sig", "A")]'';
-    };
-    script = ''
-      #!/usr/bin/env bash
-
-      if [[ -n "$EXPLORATION_MEM" ]]
-      then
-        echo "Limiting memory to '$EXPLORATION_MEM'" 1>&2
-        export MAX_KB="$EXPLORATION_MEM"
-      fi
-
-      echo "Exploring" 1>&2
-      hashBucket | withTimeout explore-theories | reduce-equations
-    '';
-  };
-
   setUpDir = ''
     [[ -n "$DIR" ]] || {
       echo "No DIR given to work in, using current directory $PWD" 1>&2
@@ -178,7 +156,27 @@ rec {
     name  = "hashspecBench";
     paths = [ bash env haskellPkgToAsts ];
     vars  = {
-      CMD      = inEnvScript;
+      CMD      = wrap {
+        name   = "hashspecBench-inenvscript";
+        paths  = [
+          bash explore.explore-theories reduce-equations timeout buckets.hashes
+        ];
+        vars   = {
+          NIX_EVAL_EXTRA_IMPORTS = ''[("tip-benchmark-sig", "A")]'';
+        };
+        script = ''
+          #!/usr/bin/env bash
+
+          if [[ -n "$EXPLORATION_MEM" ]]
+          then
+            echo "Limiting memory to '$EXPLORATION_MEM'" 1>&2
+            export MAX_KB="$EXPLORATION_MEM"
+          fi
+
+          echo "Exploring" 1>&2
+          hashBucket | withTimeout explore-theories | reduce-equations
+        '';
+      };
       NIXENV   = "import ${mlspecBench.ourEnv}";
       SKIP_NIX = "1";
       LANG                  = "en_US.UTF-8";
