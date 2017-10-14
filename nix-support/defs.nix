@@ -72,7 +72,6 @@ fix (self: rec {
   format                = callPackage ./format.nix                {};
   genQuickspecRunner    = callPackage ./genQuickspecRunner.nix    {};
   getDepsScript         = callPackage ./getDepsScript.nix         {};
-  hashspecBench         = callPackage ./hashspecBench.nix         {};
   haskellPackages       = callPackage ./haskellPackages.nix       {};
   haskellPkgNameVersion = callPackage ./haskellPkgNameVersion.nix {};
   haskellPkgToAsts      = callPackage ./haskellPkgToAsts.nix      {};
@@ -84,7 +83,6 @@ fix (self: rec {
   inNixedDir            = callPackage ./inNixedDir.nix            {};
   makeHaskellPkgNixable = callPackage ./makeHaskellPkgNixable.nix {};
   ML4HSFE               = callPackage ./ML4HSFE.nix               {};
-  mlspecBench           = callPackage ./mlspecBench.nix           {};
   nixedHsPkg            = callPackage ./nixedHsPkg.nix            {};
   nixEnv                = callPackage ./nixEnv.nix                {};
   nixFromCabal          = callPackage ./nixFromCabal.nix          {};

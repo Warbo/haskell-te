@@ -4,12 +4,12 @@ args:
 with builtins;
 with import ../nix-support {};
 with rec {
-  quickspecTip = callPackage ./quickspecTip.nix {};
+  quickspecTip  = callPackage ./quickspecTip.nix  {};
+  hashspecBench = callPackage ./hashspecBench.nix { inherit mlspecBench;   };
+  mlspecBench   = callPackage ./mlspecBench.nix   { inherit hashspecBench; };
 
   hs = hashspecBench.benchVars;
-
   ml = mlspecBench.benchVars;
-
   py = nixpkgs-2016-09.python.withPackages (p: [ p.sexpdata p.subprocess32 ]);
 };
 
