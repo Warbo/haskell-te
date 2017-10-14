@@ -144,7 +144,7 @@ with rec {
       }
       [[ -n "$GENERATED" ]] || fail "Empty GENERATED"
 
-      # Store code in a file file since it may be too big for an env var
+      # Store code in a file since it may be too big for an env var
       HASKELL_CODE=$(echo "$GENERATED" | jq -r '.code'  | pipeToNix "qsCode.hs")
             NIXENV=$(echo "$GENERATED" | jq -r '.env'   )
                CMD=$(echo "$GENERATED" | jq -r '.runner')
