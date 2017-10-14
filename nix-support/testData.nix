@@ -5,11 +5,12 @@
 with lib;
 rec {
   tip = {
-    example     = ../tests/example.smt2;
-    list-full   = ../benchmarks/list-full.smt2;
-    nat-full    = ../benchmarks/nat-full.smt2;
-    nat-simple  = ../benchmarks/nat-simple.smt2;
-    teBenchmark = tipBenchmarks.tip-benchmark-smtlib;
+    #example     = ../tests/example.smt2;
+    test-theory = ../tests/test-theory.smt2;
+    #list-full   = ../benchmarks/list-full.smt2;
+    #nat-full    = ../benchmarks/nat-full.smt2;
+    #nat-simple  = ../benchmarks/nat-simple.smt2;
+    #teBenchmark = tipBenchmarks.tip-benchmark-smtlib;
   };
 
   haskellPkgs = { script ? tipToHaskellPkg }:

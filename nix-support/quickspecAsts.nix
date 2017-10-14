@@ -94,9 +94,9 @@ with rec {
   checkParamTypes = runCommand "can-find-properties-of-parameterised-types"
     (withNix {
       buildInputs  = [ fail jq tipBenchmarks.tools ];
-      eqs          = eqss.list-full;
-      GROUND_TRUTH = ../benchmarks/ground-truth/list-full.smt2;
-      TRUTH_SOURCE = ../benchmarks/ground-truth/list-full.smt2;
+      eqs          = eqss.test-theory;
+      GROUND_TRUTH = ../tests/test-theory-truth.smt2;
+      TRUTH_SOURCE = ../tests/test-theory-truth.smt2;
     })
     ''
       set -e

@@ -24,8 +24,8 @@ with rec {
     {
       inherit (tipBenchmarks) commDeps;
       buildInputs   = [ fail filterToSampled genQuickspecRunner jq scripts ];
-      asts          = (testData.asts         {}).teBenchmark;
-      OUT_DIR       = (testData.haskellNixed {}).teBenchmark;
+      asts          = (testData.asts         {}).test-theory;
+      OUT_DIR       = (testData.haskellNixed {}).test-theory;
       SAMPLED_NAMES = "global746970323031352f62696e5f646973747269622e736d7432706c7573";
     }
     ''

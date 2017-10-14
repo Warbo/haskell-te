@@ -162,10 +162,10 @@ with rec {
   };
 
   tests = rec {
-    runner = runCommand "list-full-runner"
+    runner = runCommand "test-theory-runner"
       (withNix {
-        asts        = (testData.asts {}).list-full;
-        OUT_DIR     = nixify (testData.haskellPkgs {}).list-full;
+        asts        = (testData.asts {}).test-theory;
+        OUT_DIR     = nixify (testData.haskellPkgs {}).test-theory;
         buildInputs = [ generateCode ];
       })
       ''
@@ -173,7 +173,7 @@ with rec {
         ln -s "$R" "$out"
       '';
 
-    env = runCommand "list-full-env" { inherit runner; } ''
+    env = runCommand "test-theory-env" { inherit runner; } ''
       grep -v '^exec ' < "$runner" > "$out"
     '';
 
