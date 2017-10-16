@@ -1,7 +1,8 @@
-{ annotateRawAstsFrom, bash, fail, haskellPkgToRawAsts, jq,
-  makeHaskellPkgNixable, mkBin, runCommand, withDeps }:
+{ annotateRawAstsFrom, bash, explore, fail, haskellPkgToRawAsts, jq, lib,
+  makeHaskellPkgNixable, mkBin, runCommand, testData, withDeps, withNix }:
 
 { script ? haskellPkgToRawAsts }:
+with lib;
 with rec {
   haskellPkgToAsts = mkBin {
     name   = "haskellPkgToAsts";
@@ -41,25 +42,28 @@ with rec {
     '';
   };
 
-  checks = [
-    (runCommand "test-haskellPkgToAsts-example"
-      {
-        buildInputs = [ fail haskellPkgToAsts jq ];
-        pkg         = ../tests/testPackage;
-        SKIP_NIX    = "1";
-      }
-      ''
-        ASTS=$(haskellPkgToAsts "$pkg" ) || fail "Command failed"
+  check = n: pkg: runCommand "test-haskellPkgToAsts-example"
+    (withNix {
+      inherit pkg;
+      buildInputs = [ fail haskellPkgToAsts jq (explore.extractedEnv {
+        standalone = pkg;
+      }) ];
+      SKIP_NIX = "1";
+    })
+    ''
+      set -e
+      ASTS=$(haskellPkgToAsts "$pkg" ) || fail "Command failed"
 
-        T=$(echo "$ASTS" | jq -r 'type') || fail "Couldn't parse ASTs"
-        [[ "x$T" = "xarray" ]] || fail "Expected array, got '$T'"
+      T=$(echo "$ASTS" | jq -r 'type') || fail "Couldn't parse ASTs"
+      [[ "x$T" = "xarray" ]] || fail "Expected array, got '$T'"
 
-        L=$(echo "$ASTS" | jq 'length') || fail "Couldn't get length"
-        [[ "$L" -gt 3 ]] || fail "Expected a few ASTs, found '$L'"
+      L=$(echo "$ASTS" | jq 'length') || fail "Couldn't get length"
+      [[ "$L" -gt 3 ]] || fail "Expected a few ASTs, found '$L'"
 
-        mkdir "$out"
-      '')
-  ];
+      mkdir "$out"
+    '';
+
+  checks = attrValues (mapAttrs check (testData.haskellNixed {}));
 };
 
 withDeps checks haskellPkgToAsts

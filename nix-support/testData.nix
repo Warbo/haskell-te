@@ -30,8 +30,8 @@ rec {
         cp -r "$X" "$out"
       '')
       tip // {
-        inherit (tipBenchmarks) tip-benchmark-haskell;
-        testPackage = ../tests/testPackage;
+        #inherit (tipBenchmarks) tip-benchmark-haskell;
+        #testPackage = ../tests/testPackage;
       };
 
   haskellDrvs = mapAttrs (_: d: haskellPackages.callPackage d {})
@@ -55,18 +55,18 @@ rec {
                           cp -r "$X" "$out"
                         '')
              (haskellPkgs {} // {
-               list-extras = unpack haskellPackages.list-extras.src;
+               #list-extras = unpack haskellPackages.list-extras.src;
              });
 
   asts = { script ? haskellPkgToRawAsts }:
     mapAttrs (n: drv: runCommand "asts-of-${n}"
-                        {
+                        (withNix {
                           src         = unpack drv.src;
                           SKIP_NIX    = "1";
                           buildInputs = [
                             (haskellPkgToAsts { inherit script; })
                           ];
-                        }
+                        })
                         ''
                           set -e
                           haskellPkgToAsts "$src" > "$out"

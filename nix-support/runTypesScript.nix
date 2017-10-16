@@ -1,4 +1,5 @@
-{ bash, haskellPackages, jq, lib, mkBin, nixEnv, withNix, wrap, writeScript }:
+{ bash, fail, haskellPackages, jq, lib, mkBin, nixEnv, withNix, wrap,
+  writeScript }:
 
 with builtins;
 with lib;
@@ -11,13 +12,14 @@ with rec {
     paths = (withNix {}).buildInputs ++ [ replLines ];
     vars  = nixEnv // {
       cmd = "ghci -v0 -XTemplateHaskell";
-      pkg = with {
-        hs     = "with builtins; haskellPackages.ghcWithPackages";
-        hsPkgs = "x.QuickCheck x.quickspec x.cereal x.murmur-hash";
-      };
-      ''
-        ${hs} (x: [ ${hsPkgs} (x.callPackage (getEnv "pkgSrc") {}) ])
-      '';
+      pkg =
+        with {
+          hs     = "with builtins; haskellPackages.ghcWithPackages";
+          hsPkgs = "x.QuickCheck x.quickspec x.cereal x.murmur-hash";
+        };
+        ''
+          ${hs} (x: [ ${hsPkgs} (x.callPackage (getEnv "pkgSrc") {}) ])
+        '';
     };
     script = ''
       #!/usr/bin/env bash
@@ -229,7 +231,7 @@ with rec {
 rec {
   script = wrap {
     name   = "runTypesScript-raw";
-    paths  = [ bash checkMods jq repl typeCommand typeScopes ];
+    paths  = [ bash checkMods fail jq repl typeCommand typeScopes ];
     vars   = {
       JQ_COMMAND = concatStrings [
         "{"
@@ -261,21 +263,16 @@ rec {
       then
         echo "Found modules" 1>&2
       else
-        echo "Couldn't find modules, aborting" 1>&2
-        exit 1
+        fail "Couldn't find modules, aborting"
       fi
 
       echo "Building type-extraction command" 1>&2
-      CMD=$(echo "$ASTS" | jq -c '.[]' | typeCommand) 2> "$ERR"  || {
-        echo "Error building type extraction command" 1>&2
-        exit 1
-      }
+      CMD=$(echo "$ASTS" | jq -c '.[]' | typeCommand) 2> "$ERR" ||
+        fail "Error building type extraction command"
 
       echo "Extracting types" 1>&2
-      RESULT=$(echo "$CMD" | repl 2>> "$ERR") || {
-        echo "Error extracting types" 1>&2
-        exit 1
-      }
+      RESULT=$(echo "$CMD" | repl 2>> "$ERR") ||
+        fail "Error extracting types"
 
       echo "Building scope-checking command" 1>&2
       SCOPECMD=$(echo "$RESULT" | typeScopes)
