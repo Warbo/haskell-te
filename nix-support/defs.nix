@@ -59,7 +59,6 @@ fix (self: rec {
 
   analysis              = callPackage ./analysis.nix              {};
   asv-nix               = callPackage ./asv-nix.nix               {};
-  bashEscape            = callPackage ./bashEscape.nix            {};
   buckets               = callPackage ./buckets.nix               {};
   callHackage           = callPackage ./callHackage.nix           {};
   checkHsEnv            = callPackage ./checkHsEnv.nix            {};

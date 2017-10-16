@@ -1,4 +1,4 @@
-{ bash, bashEscape, checkStderr, fail, gnugrep, gnused, haskellPackages,
+{ bash, checkStderr, fail, gnugrep, gnused, haskellPackages,
   haskellPkgNameVersion, haveVar, jq, makeWrapper, mkBin, nix, nixEnv, nixify,
   pipeToNix, runCommand, testData, timeout, withDeps, withNix, wrap,
   writeScript }:
