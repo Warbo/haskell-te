@@ -190,7 +190,7 @@ with rec {
 
     countVars = with { ticks = "''"; }; writeScript "countVars.hs" ''
       -- TODO: We don't need all of these
-      import Test.QuickSpec hiding (lists)
+      import Test.QuickSpec
       import Test.QuickSpec.Signature
       import Data.Digest.Murmur32
       import Data.Serialize
@@ -217,10 +217,8 @@ with rec {
                                                               Prelude.Integer))])
       ints  = ("Integer", Test.RuntimeArbitrary.getArbGen
                             [Prelude.undefined :: (Prelude.Integer)])
-      lists = ("List",    Test.RuntimeArbitrary.getArbGen
-                            [Prelude.undefined :: ((A.List) Prelude.Integer)])
-      nats  = ("Nat",     Test.RuntimeArbitrary.getArbGen
-                            [Prelude.undefined :: (A.Nat)])
+      pairs = ("Pair",    Test.RuntimeArbitrary.getArbGen
+                            [Prelude.undefined :: ((A.Pair) Prelude.Integer)])
 
       check (t, l) = case l of
         [] -> error ("No Arbitrary instance for " ++ t)
@@ -228,8 +226,7 @@ with rec {
 
       main = sequence [
           check ints
-        , check nats
-        , check lists
+        , check pairs
         , check func1
         , check func2
         , putStrLn "Found Arbitrary instances"
@@ -254,7 +251,7 @@ with rec {
                 grep -o ' .*[^]]'                           |
                 grep -o '[^ ].*[^ ]'                        )
 
-        for TYPE in Prelude.Integer '(A.List) Prelude.Integer'
+        for TYPE in Prelude.Integer '(A.Pair) Prelude.Integer'
         do
           echo "$TYPES" | grep -F "$TYPE" > /dev/null ||
             fail "Didn't ask for variables of type '$TYPE'"

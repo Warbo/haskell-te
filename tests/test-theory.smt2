@@ -27,4 +27,18 @@
     (swap
        ((x (Pair a))) (Pair a)
        (MkPair (destructor-snd x) (destructor-fst x)))))
+
+(define-fun
+  (par (a)
+    (map
+       ((f (=> a a)) (x (Pair a))) (Pair a)
+       (MkPair (@ f (destructor-fst x)) (@ f (destructor-snd x))))))
+
+(define-fun
+  (par (a)
+    (uncurry
+       ((f (=> a (=> a a))) (x (Pair a))) a
+       (@ (@ f (destructor-fst x)) (destructor-snd x)))))
+
+
 (check-sat)
