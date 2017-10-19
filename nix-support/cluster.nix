@@ -91,7 +91,9 @@ with rec {
     };
     [ clustersHaveFields featuresConform haveAllClusters ];
 
-  tests = concatLists (attrValues (mapAttrs test testData.haskellDrvs));
+  tests = concatLists (attrValues (mapAttrs test {
+    inherit (testData.haskellDrvs) test-theory;
+  }));
 };
 
 withDeps tests clusterScript-untested

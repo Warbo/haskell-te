@@ -107,7 +107,10 @@ with rec {
 
         mkdir "$out"
       '')
-    (testData.haskellNixed { script = makeHaskellPkgNixable; });
+    {
+      inherit (testData.haskellNixed { script = makeHaskellPkgNixable; })
+        test-theory;
+    };
 };
 
 withDeps ([ testHasCabalFile ] ++ (attrValues testMakeHaskellPkgNixable))

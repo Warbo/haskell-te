@@ -1,6 +1,6 @@
-{ annotated, bash, fail, genQuickspecRunner, glibcLocales,
+{ analysis, annotated, bash, fail, genQuickspecRunner, glibcLocales,
   haskellPkgNameVersion, jq, lib, makeHaskellPkgNixable, mkBin, nixedHsPkg,
-  nixEnv, runCommand, testData, tipBenchmarks, unpack, withDeps, withNix }:
+  nixEnv, runCommand, testData, unpack, withDeps, withNix }:
 
 with lib;
 with rec {
@@ -92,17 +92,18 @@ with rec {
     [ foundEqs haveEqs ];
 
   checkParamTypes = runCommand "can-find-properties-of-parameterised-types"
-    (withNix {
-      buildInputs  = [ fail jq tipBenchmarks.tools ];
+    {
+      buildInputs  = [ analysis fail jq ];
       eqs          = eqss.test-theory;
       GROUND_TRUTH = ../tests/test-theory-truth.smt2;
       TRUTH_SOURCE = ../tests/test-theory-truth.smt2;
-    })
+    }
     ''
       set -e
       set -o pipefail
       RESULT=$(echo "$eqs" | precision_recall_eqs)
-               echo "$RESULT" | jq -e '.recall | . > 0' || fail "No recall"
+      RECALL=$(echo "$RESULT" | jq '.recall') || fail "No recall"
+      echo "$RECALL" | jq -e '. > 0' || fail "Recall is '$RECALL'"
       mkdir "$out"
     '';
 

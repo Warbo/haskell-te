@@ -30,7 +30,7 @@ rec {
         cp -r "$X" "$out"
       '')
       tip // {
-        #inherit (tipBenchmarks) tip-benchmark-haskell;
+        inherit (tipBenchmarks) tip-benchmark-haskell;
         #testPackage = ../tests/testPackage;
       };
 

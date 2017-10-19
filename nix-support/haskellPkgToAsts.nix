@@ -63,7 +63,9 @@ with rec {
       mkdir "$out"
     '';
 
-  checks = attrValues (mapAttrs check (testData.haskellNixed {}));
+  checks = attrValues (mapAttrs check {
+    inherit (testData.haskellNixed {}) test-theory;
+  });
 };
 
 withDeps checks haskellPkgToAsts

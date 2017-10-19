@@ -4,7 +4,8 @@
 
 with rec {
   scripts = attrsToDirs {
-    bin = lib.genAttrs [ "choose_sample" "decode" "conjectures_for_sample" ]
+    bin = lib.genAttrs [ "choose_sample" "conjectures_for_sample" "decode"
+                         "precision_recall_eqs" ]
                        (name: wrap {
                          inherit name;
                          file = "${tipBenchmarks.tools}/bin/${name}";
@@ -24,8 +25,8 @@ with rec {
     {
       inherit (tipBenchmarks) commDeps;
       buildInputs   = [ fail filterToSampled genQuickspecRunner jq scripts ];
-      asts          = (testData.asts         {}).test-theory;
-      OUT_DIR       = (testData.haskellNixed {}).test-theory;
+      asts          = (testData.asts         {}).tip-benchmark-haskell;
+      OUT_DIR       = (testData.haskellNixed {}).tip-benchmark-haskell;
       SAMPLED_NAMES = "global746970323031352f62696e5f646973747269622e736d7432706c7573";
     }
     ''

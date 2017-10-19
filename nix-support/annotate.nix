@@ -195,7 +195,9 @@ with rec {
   };
 
   annotateScript = withDeps (concatLists (attrValues
-                              (mapAttrs testsFor testData.haskellDrvs)))
+                              (mapAttrs testsFor {
+                                inherit (testData.haskellDrvs) test-theory;
+                              })))
                             annotateScript-untested;
 
   annotateScript-untested = mkBin {
