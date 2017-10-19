@@ -101,7 +101,7 @@ with rec {
     ''
       set -e
       set -o pipefail
-      RESULT=$(echo "$eqs" | precision_recall_eqs)
+      RESULT=$(precision_recall_eqs < "$eqs")
       RECALL=$(echo "$RESULT" | jq '.recall') || fail "No recall"
       echo "$RECALL" | jq -e '. > 0' || fail "Recall is '$RECALL'"
       mkdir "$out"
