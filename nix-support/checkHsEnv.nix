@@ -1,7 +1,8 @@
 # Check that the required Haskell packages are found in the environment
-{ explore, extraHaskellPackages, fail, haskellPackages, runCommand, unlines,
+{ extraHaskellPackages, fail, haskellPackages, jq, runCommand, unlines,
   withDeps, wrap, writeScript }:
 
+with builtins;
 with rec {
   findHsPkgReferences = wrap {
     name = "unique-references";
@@ -99,7 +100,12 @@ with rec {
 
   test = runCommand "test-checkHsEnv"
     {
-      buildInputs = explore.exploreEnv ++ [ fail ];
+      buildInputs = [
+        fail
+        jq
+        (haskellPackages.ghcWithPackages (h: map (n: getAttr n h)
+                                                 extraHaskellPackages))
+      ];
     }
     ''
       #!/usr/bin/env bash

@@ -58,13 +58,6 @@ explore-theories-untested = mkBin {
   '';
 };
 
-extra-packages = [ jq ];
-
-exploreEnv = extra-packages ++ [
-  (haskellPackages.ghcWithPackages (h: map (n: getAttr n h)
-                                           extraHaskellPackages))
-];
-
 explore-exit-success =
   with { f = ../tests/exploreTheoriesExamples/hastily.formatted.1; };
   runCommand "exploreExitSuccess"
@@ -176,5 +169,5 @@ explore-no-dupes =
   map noDupesFor files;
 };
 {
-  inherit explore-theories exploreEnv;
+  inherit explore-theories;
 }
