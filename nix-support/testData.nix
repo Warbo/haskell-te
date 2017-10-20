@@ -104,5 +104,6 @@ rec {
                           set -e
                           quickspec "$pkg" > "$out"
                         '')
-             (removeAttrs (haskellPkgs {}) [ "nat-full" "teBenchmark" ]);
+             (removeAttrs (haskellPkgs {}) [ "nat-full" "teBenchmark"
+                                             "tip-benchmark-haskell" ]);
 }
