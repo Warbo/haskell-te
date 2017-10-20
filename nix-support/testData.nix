@@ -96,7 +96,8 @@ rec {
                                    else script) ];
         }
         ''
-          D=$(tipToHaskellPkg < "$f")
+          set -e
+          D=$(tipToHaskellPkg < "$tip")
           [[ -e "$D" ]] || fail "'$D' doesn't exist"
 
           X=$(readlink -f "$D")
