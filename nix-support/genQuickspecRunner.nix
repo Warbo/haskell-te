@@ -164,8 +164,8 @@ with rec {
   tests = rec {
     runner = runCommand "test-theory-runner"
       (withNix {
-        asts        = (testData.asts {}).test-theory;
-        OUT_DIR     = nixify (testData.haskellPkgs {}).test-theory;
+        asts        = (testData.asts         {}).test-theory;
+        OUT_DIR     = (testData.haskellNixed {}).test-theory;
         buildInputs = [ generateCode ];
       })
       ''
