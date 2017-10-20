@@ -139,11 +139,11 @@ rec {
 
   # Resource-intensive data, which should be used sparingly
   tip-benchmark = rec {
-    asts = testData.commands.asts {
+    asts = commands.asts {
       name = "tip-benchmark";
       dir  = nixed;
     };
-    nixed = testData.commands.haskellNix {
+    nixed = commands.haskellNix {
       name = "tip-benchmark-haskell";
       dir  = tipBenchmarks.tip-benchmark-haskell;
     };
