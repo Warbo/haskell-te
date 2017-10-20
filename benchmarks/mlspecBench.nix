@@ -46,7 +46,7 @@ rec {
 
   inEnvScript = wrap {
     name   = "mlspecBench-inenvscript";
-    paths  = [ bash explore.explore-theories jq reduce-equations timeout ];
+    paths  = [ bash explore jq reduce-equations timeout ];
     vars   = {
       NIX_EVAL_EXTRA_IMPORTS = ''[("tip-benchmark-sig", "A")]'';
       SIMPLE                 = "1";

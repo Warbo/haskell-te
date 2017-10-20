@@ -168,6 +168,5 @@ explore-no-dupes =
   };
   map noDupesFor files;
 };
-{
-  inherit explore-theories;
-}
+
+explore-theories

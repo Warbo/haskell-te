@@ -19,7 +19,7 @@ rec {
                    reduce-equations
                    buckets.hashes
                    fail
-                   explore.explore-theories
+                   explore
                  ];
         vars   = {
           NIX_EVAL_EXTRA_IMPORTS = ''[("tip-benchmark-sig", "A")]'';
@@ -159,7 +159,7 @@ rec {
       CMD      = wrap {
         name   = "hashspecBench-inenvscript";
         paths  = [
-          bash explore.explore-theories reduce-equations timeout buckets.hashes
+          bash explore reduce-equations timeout buckets.hashes
         ];
         vars   = {
           NIX_EVAL_EXTRA_IMPORTS = ''[("tip-benchmark-sig", "A")]'';
