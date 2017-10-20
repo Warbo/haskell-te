@@ -1,109 +1,150 @@
+# Scripts which use our commands to generate data, and the results of running
+# these scripts on some selected examples. This can be used in a few ways:
+#
+#  - If we're writing a Nix expression which needs the output of one of our
+#    commands (e.g. some ASTs, a generated Haskell package, etc.) then we can
+#    use the relevant 'command' function from here to run it.
+#  - If we're defining a command, we don't want to expose an untested version,
+#    but we also want to make sure that the invocations we test are the same as
+#    the ones which will be used (also DRY!). We can do this by passing our
+#    untested version as the 'script' parameter of the relevant 'command'
+#    function, test the result, and use 'withDeps' to make the 'public' version
+#    of the command depend on these tests passing.
+#
+# Most tests should use the provided example data, since it's designed to be
+# fast. The only exception is when we're sampling, which obviously needs
+# TEBenchmark.
 { fail, haskellPackages, haskellPkgToAsts, haskellPkgToRawAsts, jq, lib,
   makeHaskellPkgNixable, nix-config, nixedHsPkg, nixEnv, quickspec,
   quickspecAsts, runCommand, tipBenchmarks, tipToHaskellPkg, unpack, withNix }:
 
 with lib;
 rec {
-  tip = {
-    #example     = ../tests/example.smt2;
-    test-theory = ../tests/test-theory.smt2;
-    #list-full   = ../benchmarks/list-full.smt2;
-    #nat-full    = ../benchmarks/nat-full.smt2;
-    #nat-simple  = ../benchmarks/nat-simple.smt2;
-    #teBenchmark = tipBenchmarks.tip-benchmark-smtlib;
-  };
-
-  haskellPkgs = { script ? tipToHaskellPkg }:
-    mapAttrs (n: f: runCommand "haskell-pkg-of-${n}"
-      {
-        inherit f;
+  commands = {
+    asts = { dir, name, script ? null }: runCommand "asts-of-${name}"
+      (withNix {
+        src         = dir;
         SKIP_NIX    = "1";
-        buildInputs = [ fail script ];
+        buildInputs = [
+          (haskellPkgToAsts { script = if script == null
+                                          then haskellPkgToRawAsts
+                                          else script; })
+        ];
+      })
+      ''
+        set -e
+        haskellPkgToAsts "$src" > "$out"
+      '';
+
+    eqs = { asts, name, nixed, script ? null }: runCommand "eqs-of-${name}"
+      {
+        inherit asts;
+        buildInputs = [ (if script == null then quickspecAsts else script) ];
+        OUT_DIR     = nixed;
+        MAX_SECS    = "180";
+        MAX_KB      = "1000000";
+        SKIP_NIX    = "1";
       }
       ''
-        D=$(tipToHaskellPkg < "$f")
-        [[ -e "$D" ]] || fail "'$D' doesn't exist"
+        set -e
+        quickspecAsts "$OUT_DIR" < "$asts" > "$out"
+      '';
 
-        X=$(readlink -f "$D")
-        [[ -d "$X" ]] || fail "'$X' isn't dir"
+    finalEqs = { name, pkg, script ? null }: runCommand "test-quickspec-${name}"
+      (nixEnv // {
+        inherit pkg;
+        buildInputs = [ (if script == null then quickspec else script) ];
+        MAX_SECS    = "180";
+        MAX_KB      = "1000000";
+        SKIP_NIX    = "1";
+      })
+      ''
+        set -e
+        quickspec "$pkg" > "$out"
+      '';
 
+    haskellDrv = { dir, name, script ? null }: haskellPackages.callPackage
+      (commands.haskellNixed { inherit dir name script; }) {};
+
+    haskellNix = { dir, name, script ? null }: runCommand "nixed-${name}"
+      {
+        inherit dir;
+        inherit (nix-config) stableHackageDb;
+        buildInputs = [ fail (if script == null
+                                 then makeHaskellPkgNixable
+                                 else script) ];
+        SKIP_NIX    = "1";
+        n           = name;
+      }
+      ''
+        set -e
+        export HOME="$PWD"
+        ln -s "$stableHackageDb/.cabal" "$HOME/.cabal"
+
+        X=$(makeHaskellPkgNixable "$dir") ||
+          fail "Package $n failed to nixify"
         cp -r "$X" "$out"
-      '')
-      tip // {
-        inherit (tipBenchmarks) tip-benchmark-haskell;
-        #testPackage = ../tests/testPackage;
-      };
+      '';
 
-  haskellDrvs = mapAttrs (_: d: haskellPackages.callPackage d {})
+    haskellPkg = { name, script ? null, tip }:
+      runCommand "haskell-pkg-of-${name}"
+        {
+          inherit tip;
+          SKIP_NIX    = "1";
+          buildInputs = [ fail (if script == null
+                                   then tipToHaskellPkg
+                                   else script) ];
+        }
+        ''
+          D=$(tipToHaskellPkg < "$f")
+          [[ -e "$D" ]] || fail "'$D' doesn't exist"
+
+          X=$(readlink -f "$D")
+          [[ -d "$X" ]] || fail "'$X' isn't dir"
+
+          cp -r "$X" "$out"
+        '';
+  };
+
+  # Selected example data for tests to use. These should be reasonably quick to
+  # run.
+
+  tip = { test-theory = ../tests/test-theory.smt2; };
+
+  haskellPkgs = { script ? null }:
+    mapAttrs (name: tip: commands.haskellPkg { inherit name tip; }) tip;
+
+  haskellDrvs = mapAttrs (name: dir: haskellPackages.callPackage dir {})
                          (haskellNixed {});
 
-  haskellNixed = { script ? makeHaskellPkgNixable }:
-    mapAttrs (n: dir: runCommand "nixed-${n}"
-                        {
-                          inherit dir n;
-                          inherit (nix-config) stableHackageDb;
-                          buildInputs = [ fail script ];
-                          SKIP_NIX    = "1";
-                        }
-                        ''
-                          set -e
-                          export HOME="$PWD"
-                          ln -s "$stableHackageDb/.cabal" "$HOME/.cabal"
+  haskellNixed = { script ? null }:
+    mapAttrs (name: dir: commands.haskellNix { inherit dir name script; })
+             (haskellPkgs {});
 
-                          X=$(makeHaskellPkgNixable "$dir") ||
-                            fail "Package $n failed to nixify"
-                          cp -r "$X" "$out"
-                        '')
-             (haskellPkgs {} // {
-               #list-extras = unpack haskellPackages.list-extras.src;
-             });
+  asts = { script ? null }:
+    mapAttrs (name: dir: commands.asts { inherit dir name script; })
+             haskellNixed;
 
-  asts = { script ? haskellPkgToRawAsts }:
-    mapAttrs (n: drv: runCommand "asts-of-${n}"
-                        (withNix {
-                          src         = unpack drv.src;
-                          SKIP_NIX    = "1";
-                          buildInputs = [
-                            (haskellPkgToAsts { inherit script; })
-                          ];
-                        })
-                        ''
-                          set -e
-                          haskellPkgToAsts "$src" > "$out"
-                        '')
-             haskellDrvs;
+  eqs = { script ? null }:
+    mapAttrs (name: asts: commands.eqs {
+                            inherit asts name script;
+                            nixed = getAttr name (haskellNixed {});
+                          })
+             (asts {});
 
-  # Some of our examples are infeasible to explore, so we skip them
-  eqs = { script ? quickspecAsts }:
-    mapAttrs (n: asts: runCommand "eqs-of-${n}"
-                         {
-                           inherit asts;
-                           buildInputs = [ script ];
-                           OUT_DIR     = getAttr n (haskellNixed {});
-                           MAX_SECS    = "180";
-                           MAX_KB      = "1000000";
-                           SKIP_NIX    = "1";
-                         }
-                         ''
-                           set -e
-                           quickspecAsts "$OUT_DIR" < "$asts" > "$out"
-                         '')
-             (removeAttrs (asts {}) [ "list-extras" "nat-full"
-                                      "teBenchmark" "tip-benchmark-haskell" ]);
+  finalEqs = { script ? null }:
+    mapAttrs (name: pkg: commands.finalEqs { inherit name pkg script; })
+             (haskellPkgs {});
 
-  finalEqs = { script ? quickspec }:
-    mapAttrs (n: pkg: runCommand "test-quickspec-${n}"
-                        (nixEnv // {
-                          inherit pkg;
-                          buildInputs = [ fail jq script ];
-                          MAX_SECS    = "180";
-                          MAX_KB      = "1000000";
-                          SKIP_NIX    = "1";
-                        })
-                        ''
-                          set -e
-                          quickspec "$pkg" > "$out"
-                        '')
-             (removeAttrs (haskellPkgs {}) [ "nat-full" "teBenchmark"
-                                             "tip-benchmark-haskell" ]);
+  # Resource-intensive data, which should be used sparingly
+  tip-benchmark = rec {
+    asts = testData.commands.asts {
+      name = "tip-benchmark";
+      dir  = nixed;
+    };
+    nixed = testData.commands.haskellNix {
+      name = "tip-benchmark-haskell";
+      dir  = tipBenchmarks.tip-benchmark-haskell;
+    };
+  };
 }

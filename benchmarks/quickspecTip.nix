@@ -1,5 +1,6 @@
 { analysis, bash, callPackage, fail, filterToSampled, genQuickspecRunner,
-  haveVar, jq, mkBin, nix, nixEnv, runCommand, testData, withDeps, wrap }:
+  haveVar, jq, mkBin, nix, nixEnv, runCommand, testData, tipBenchmarks,
+  withDeps }:
 
 with rec {
   quickspecTip = mkBin {
@@ -7,13 +8,13 @@ with rec {
     paths  = [
       analysis bash filterToSampled genQuickspecRunner haveVar jq nix
     ];
-    vars   = {
-      asts    = (testData.asts         {}).teBenchmark;
-      OUT_DIR = (testData.haskellNixed {}).teBenchmark;
-      EXPR    = ''
+    vars   = rec {
+      EXPR = ''
         (import ${toString ../nix-support} {}).callPackage
           ${toString ./sampleAnalyser.nix} {}
       '';
+      asts    = testData.tip-benchmark.asts;
+      OUT_DIR = testData.tip-benchmark.nixed;
     };
     script = ''
       #!/usr/bin/env bash
