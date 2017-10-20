@@ -123,7 +123,7 @@ rec {
 
   asts = { script ? null }:
     mapAttrs (name: dir: commands.asts { inherit dir name script; })
-             haskellNixed;
+             (haskellNixed {});
 
   eqs = { script ? null }:
     mapAttrs (name: asts: commands.eqs {
