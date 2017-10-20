@@ -102,5 +102,6 @@ fix (self: rec {
   tipBenchmarks         = callPackage ./tipBenchmarks.nix         {};
   tipToHaskellPkg       = callPackage ./tipToHaskellPkg.nix       {};
   tryElse               = callPackage ./tryElse.nix               {};
+  tryTip                = callPackage ./tryTip.nix                {};
   withNix               = callPackage ./withNix.nix               {};
 })

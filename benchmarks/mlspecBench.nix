@@ -15,7 +15,7 @@ rec {
 
       runner  = wrap {
         name  = "mlspec-sampled-runner";
-        paths = [ ((import hashspecBench.augmentedHs {
+        paths = [ ((import ../nix-support/augmentedHs.nix {
           hsDir = "${tipBenchmarks.tip-benchmark-haskell}";
         }).ghcWithPackages (h: map (n: h."${n}") [
           "quickspec" "murmur-hash" "cereal" "mlspec-helper"
@@ -36,7 +36,7 @@ rec {
     buildEnv {
       name  = "mlspecbench-env";
       paths = [
-        ((import ${hashspecBench.customHs}).ghcWithPackages (h: [
+        ((import ${../nix-support/customHs.nix}).ghcWithPackages (h: [
           h.tip-benchmark-sig h.mlspec
         ]))
         runWeka
@@ -142,7 +142,7 @@ rec {
       SKIP_NIX = "1";
       LANG                  = "en_US.UTF-8";
       LOCALE_ARCHIVE        = "${glibcLocales}/lib/locale/locale-archive";
-      NIX_EVAL_HASKELL_PKGS = customHs;
+      NIX_EVAL_HASKELL_PKGS = ../nix-support/customHs.nix;
       NIX_PATH              = concatStringsSep ":" [
         "nixpkgs=${toString <nixpkgs>}"
         "support=${toString ../nix-support}"

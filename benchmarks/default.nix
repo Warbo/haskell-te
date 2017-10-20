@@ -5,11 +5,19 @@ with builtins;
 with import ../nix-support {};
 with rec {
   quickspecTip  = callPackage ./quickspecTip.nix  {};
+
+  /*
+  hashspecTip   = callPackage ./hashspecTip.nix   {};
   hashspecBench = callPackage ./hashspecBench.nix { inherit mlspecBench;   };
   mlspecBench   = callPackage ./mlspecBench.nix   { inherit hashspecBench; };
-
+  hsTipSetup    = hs.sampled.genInput;
+  hsTipRunner   = hs.sampled.runner;
+  mlTipSetup    = ml.sampled.genInput;
+  mlTipRunner   = ml.sampled.runner;
   hs = hashspecBench.benchVars;
   ml = mlspecBench.benchVars;
+  */
+
   py = nixpkgs-2016-09.python.withPackages (p: [ p.sexpdata p.subprocess32 ]);
 };
 
@@ -17,13 +25,7 @@ mkBin {
   name  = "python";
   paths = [ py quickspecTip tipBenchmarks.tools ];
   vars  = nixEnv // {
-    NIX_EVAL_HASKELL_PKGS = hashspecBench.customHs;
-
-    hsTipSetup  = hs.sampled.genInput;
-    hsTipRunner = hs.sampled.runner;
-
-    mlTipSetup  = ml.sampled.genInput;
-    mlTipRunner = ml.sampled.runner;
+    NIX_EVAL_HASKELL_PKGS = ../nix-support/customHs.nix;
 
     qsStandalone = callPackage ./quickspecStandalone.nix {};
 

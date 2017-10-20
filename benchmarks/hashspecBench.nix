@@ -1,6 +1,7 @@
-{ annotated, bash, buckets, buildEnv, concurrentQuickspec, fail, format,
-  glibcLocales, jq, mlspecBench, nix, nix-config, nixEnv, reduce-equations,
-  runCommand, stdenv, timeout, tipBenchmarks, wrap, writeScript }:
+{ annotated, bash, buckets, buildEnv, concurrentQuickspec, fail,
+  format, glibcLocales, jq, mlspecBench, nix, nix-config, nixEnv,
+  reduce-equations, runCommand, stdenv, timeout, tipBenchmarks, wrap,
+  writeScript }:
 
 with builtins;
 rec {
@@ -8,7 +9,7 @@ rec {
     sampled = {
       runner  = wrap {
         name  = "hashspec-sampled-runner";
-        paths = [ ((import augmentedHs {
+        paths = [ ((import ../nix-support/augmentedHs.nix {
                      hsDir = "${tipBenchmarks.tip-benchmark-haskell}";
                    }).ghcWithPackages (h: map (n: h."${n}") [
                      "quickspec" "murmur-hash" "cereal" "mlspec-helper"
@@ -80,39 +81,6 @@ rec {
     };
   };
 
-  # We use "./.." so that all of our dependencies get included
-  augmentedHs = writeScript "augmented-hs.nix" ''
-    # Provides a set of Haskell packages for use by nix-eval.
-    { hsDir }:
-    with import ${./..}/nix-support {};
-    with builtins;
-    let hsName = "tip-benchmark-sig";  # The name used by full_haskell_package
-        hsPkgs = haskellPackages.override {
-          overrides = self: super:
-            # Include existing overrides, along with our new one
-            hsOverride self super // {
-              "tip-benchmark-sig" = self.callPackage (toString (nixedHsPkg hsDir)) {};
-            };
-        };
-        # Echo "true", with our Haskell package as a dependency
-        check = stdenv.mkDerivation {
-          name = "check-for-pkg";
-          buildInputs  = [(hsPkgs.ghcWithPackages (h: [h."tip-benchmark-sig"]))];
-          buildCommand = "source $stdenv/setup; echo true > $out";
-        };
-     in assert hsDir  != ""                 || abort "Got no OUT_DIR";
-        assert hsPkgs ? "tip-benchmark-sig" || abort "hsPkgs doesn't have pkg";
-        assert import "''${check}"          || abort "Couldn't build pkg";
-        hsPkgs
-  '';
-
-  customHs = writeScript "custom-hs.nix" ''
-    # Uses OUT_DIR env var to include the package generated from smtlib data
-    (import <nixpkgs> {}).callPackage "${augmentedHs}" {
-      hsDir = builtins.getEnv "OUT_DIR";
-    }
-  '';
-
   setUpDir = ''
     [[ -n "$DIR" ]] || {
       echo "No DIR given to work in, using current directory $PWD" 1>&2
@@ -181,7 +149,7 @@ rec {
       SKIP_NIX = "1";
       LANG                  = "en_US.UTF-8";
       LOCALE_ARCHIVE        = "${glibcLocales}/lib/locale/locale-archive";
-      NIX_EVAL_HASKELL_PKGS = customHs;
+      NIX_EVAL_HASKELL_PKGS = ../nix-support/customHs.nix;
       NIX_PATH              = concatStringsSep ":" [
         "nixpkgs=${toString <nixpkgs>}"
         "support=${toString ../nix-support}"
