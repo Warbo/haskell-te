@@ -1,4 +1,4 @@
-{ annotateRawAstsFrom, bash, explore, fail, haskellPkgToRawAsts, jq, lib,
+{ annotateRawAstsFrom, bash, extractedEnv, fail, haskellPkgToRawAsts, jq, lib,
   makeHaskellPkgNixable, mkBin, runCommand, testData, withDeps, withNix }:
 
 { script ? haskellPkgToRawAsts }:
@@ -45,7 +45,7 @@ with rec {
   check = n: pkg: runCommand "test-haskellPkgToAsts-example"
     (withNix {
       inherit pkg;
-      buildInputs = [ fail haskellPkgToAsts jq (explore.extractedEnv {
+      buildInputs = [ fail haskellPkgToAsts jq (extractedEnv {
         standalone = pkg;
       }) ];
       SKIP_NIX = "1";

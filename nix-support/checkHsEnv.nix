@@ -1,6 +1,6 @@
 # Check that the required Haskell packages are found in the environment
-{ explore, fail, haskellPackages, runCommand, unlines, withDeps, wrap,
-  writeScript }:
+{ explore, extraHaskellPackages, fail, haskellPackages, runCommand, unlines,
+  withDeps, wrap, writeScript }:
 
 with rec {
   findHsPkgReferences = wrap {
@@ -47,7 +47,7 @@ with rec {
     name = "checkHsEnv";
     vars = {
       inherit findHsPkgReferences;
-      allGiven = unlines (extra ++ explore.extra-haskell-packages);
+      allGiven = unlines (extra ++ extraHaskellPackages);
     };
     script = ''
       #!/usr/bin/env bash

@@ -66,7 +66,9 @@ fix (self: rec {
   cluster               = callPackage ./cluster.nix               {};
   dumpToNixScripts      = callPackage ./dumpToNix.nix             {};
   explore               = callPackage ./explore.nix               {};
+  extractedEnv          = callPackage ./extractedEnv.nix          {};
   extractTarball        = callPackage ./extractTarball.nix        {};
+  extraHaskellPackages  = callPackage ./extraHaskellPackages.nix  {};
   filterToSampled       = callPackage ./filterToSampled.nix       {};
   format                = callPackage ./format.nix                {};
   genQuickspecRunner    = callPackage ./genQuickspecRunner.nix    {};

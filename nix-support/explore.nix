@@ -1,6 +1,6 @@
-{ allDrvsIn, checkHsEnv, coreutils, fail, haskellPackages, jq, lib, mkBin, nix,
-  nixEnv, pkgName, runCommand, sanitiseName, timeout, withDeps, wrap,
-  writeScript }:
+{ allDrvsIn, checkHsEnv, coreutils, extractedEnv, extraHaskellPackages, fail,
+  haskellPackages, jq, lib, mkBin, nix, nixEnv, runCommand, sanitiseName,
+  timeout, withDeps, wrap, writeScript }:
 with builtins;
 with lib;
 with rec {
@@ -58,55 +58,11 @@ explore-theories-untested = mkBin {
   '';
 };
 
-hsPkgsInEnv = env: names: runCommand "checkIfHsPkgsInEnv" env ''
-  set -e
-  "${checkHsEnv names}"
-  echo "true" > "$out"
-'';
-
-# Make a list of packages suitable for a 'buildInputs' field. We treat Haskell
-# packages separately from everything else. The Haskell packages will include:
-#
-#  - The contents of 'extra-haskell-packages', required for our scripts
-#  - The contents of the 'extraHs' argument; use '[]' for none
-#  - The cabal package contained at path 'standalone' (requires a 'default.nix'
-#    file, e.g. from 'nixFromCabal'); use 'null' for none
-#  - Any 'package' fields read from the JSON file 'f'
-#
-# The non-Haskell packages will include:
-#
-#  - The contents of extra-packages, required by our scripts
-#  - The contents of the 'extraPkgs' argument; use '[]' for none
-#
-extractedEnv = { extraPkgs ? [], extraHs ? [], standalone ? null, f ? null }:
-  with rec {
-    names     = if standalone == null then [] else [ name ];
-    pkgs      = h: if standalone == null || elem name hsNames
-                      then []
-                      else [ (pkg h) ];
-    name      = assert standalone != null; pkgName (pkg haskellPackages).name;
-    pkg       = assert standalone != null; h: h.callPackage (import standalone) {};
-    extras    = extra-packages ++ extraPkgs;
-    hsNames   = unique (map pkgName (extra-haskell-packages ++ extraHs));
-    ghcEnv    = haskellPackages.ghcWithPackages (h: pkgs h ++ (concatMap
-                  (n: if hasAttr n haskellPackages
-                         then [ (getAttr n h) ]
-                         else [])
-                  hsNames));
-    check     = hsPkgsInEnv { buildInputs = [ ghcEnv ] ++ extras; }
-                            (hsNames ++ names);
-  };
-  [ (withDeps [ check ] ghcEnv) ] ++ extras;
-
-# Haskell packages required for MLSpec
-extra-haskell-packages = [ "mlspec" "mlspec-helper" "runtime-arbitrary"
-                           "quickspec" "QuickCheck" "AstPlugin" ];
-
 extra-packages = [ jq ];
 
 exploreEnv = extra-packages ++ [
   (haskellPackages.ghcWithPackages (h: map (n: getAttr n h)
-                                           extra-haskell-packages))
+                                           extraHaskellPackages))
 ];
 
 explore-exit-success =
@@ -220,6 +176,5 @@ explore-no-dupes =
   map noDupesFor files;
 };
 {
-  inherit extra-haskell-packages explore-theories exploreEnv
-          extractedEnv;
+  inherit explore-theories exploreEnv;
 }

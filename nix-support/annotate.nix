@@ -1,6 +1,7 @@
-{ bash, checkStderr, dumpToNix, explore, fail, getDepsScript, haskellPackages,
-  jq, lib, mkBin, nixedHsPkg, pkgName, runCommand, runTypesScript,
-  runTypesScriptData, testData, unpack, utillinux, withDeps, wrap }:
+{ bash, checkStderr, dumpToNix, extractedEnv, fail, getDepsScript,
+  haskellPackages, jq, lib, mkBin, nixedHsPkg, pkgName, runCommand,
+  runTypesScript, runTypesScriptData, testData, unpack, utillinux, withDeps,
+  wrap }:
 
 with builtins;
 with lib;
@@ -371,7 +372,7 @@ with rec {
     with rec {
       pkgSrc   = nixedHsPkg pkgDir;
       f        = dumpToNix { pkgDir = pkgSrc; };
-      env      = explore.extractedEnv {
+      env      = extractedEnv {
         inherit f;
         standalone = pkgSrc;
       };
