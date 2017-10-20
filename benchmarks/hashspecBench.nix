@@ -1,6 +1,6 @@
-{ annotated, bash, buckets, buildEnv, explore, fail, format, glibcLocales, jq,
-  mlspecBench, nix, nix-config, nixEnv, reduce-equations, runCommand, stdenv,
-  timeout, tipBenchmarks, wrap, writeScript }:
+{ annotated, bash, buckets, buildEnv, concurrentQuickspec, fail, format,
+  glibcLocales, jq, mlspecBench, nix, nix-config, nixEnv, reduce-equations,
+  runCommand, stdenv, timeout, tipBenchmarks, wrap, writeScript }:
 
 with builtins;
 rec {
@@ -19,7 +19,7 @@ rec {
                    reduce-equations
                    buckets.hashes
                    fail
-                   explore
+                   concurrentQuickspec
                  ];
         vars   = {
           NIX_EVAL_EXTRA_IMPORTS = ''[("tip-benchmark-sig", "A")]'';
@@ -34,7 +34,7 @@ rec {
             export MAX_KB=2000000
           }
 
-          hashBucket | explore-theories | reduce-equations
+          hashBucket | concurrentQuickspec | reduce-equations
         '';
       };
 
@@ -159,7 +159,7 @@ rec {
       CMD      = wrap {
         name   = "hashspecBench-inenvscript";
         paths  = [
-          bash explore reduce-equations timeout buckets.hashes
+          bash concurrentQuickspec reduce-equations timeout buckets.hashes
         ];
         vars   = {
           NIX_EVAL_EXTRA_IMPORTS = ''[("tip-benchmark-sig", "A")]'';
@@ -174,7 +174,7 @@ rec {
           fi
 
           echo "Exploring" 1>&2
-          hashBucket | withTimeout explore-theories | reduce-equations
+          hashBucket | withTimeout concurrentQuickspec | reduce-equations
         '';
       };
       NIXENV   = "import ${mlspecBench.ourEnv}";

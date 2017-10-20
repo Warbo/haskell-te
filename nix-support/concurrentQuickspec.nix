@@ -5,14 +5,14 @@ with builtins;
 with lib;
 with rec {
 
-explore-theories = withDeps
+concurrentQuickspec = withDeps
   (explore-no-dupes ++ allDrvsIn explore-finds-equations ++ [
     explore-exit-success
   ])
-  explore-theories-untested;
+  concurrentQuickspec-untested;
 
-explore-theories-untested = mkBin {
-  name   = "explore-theories";
+concurrentQuickspec-untested = mkBin {
+  name   = "concurrentQuickspec";
   paths  = [ coreutils ];
   vars   = {
     runner = wrap {
@@ -64,12 +64,12 @@ explore-exit-success =
     {
       inherit f;
       buildInputs = extractedEnv { inherit f; } ++
-                    [ explore-theories-untested fail ];
+                    [ concurrentQuickspec-untested fail ];
     }
     ''
       set -e
 
-      OUTPUT=$(explore-theories "$f" 2>&1 | tee >(cat 1>&2)) ||
+      OUTPUT=$(concurrentQuickspec "$f" 2>&1 | tee >(cat 1>&2)) ||
         fail "Failed to explore 'hastily' ($OUTPUT)"
 
       mkdir "$out"
@@ -82,7 +82,7 @@ explore-finds-equations =
     foundEquations = name: f: runCommand "explore-test-${name}"
       {
         buildInputs = extractedEnv { inherit f; } ++
-                      [ explore-theories-untested fail ];
+                      [ concurrentQuickspec-untested fail ];
         inherit f;
       }
       ''
@@ -111,7 +111,7 @@ explore-finds-equations =
         trap finish EXIT
 
         echo "Exploring '$f'" 1>&2
-        RESULT=$(explore-theories < "$f" 2> serr | tee >(cat 1>&2)) ||
+        RESULT=$(concurrentQuickspec < "$f" 2> serr | tee >(cat 1>&2)) ||
           fail "Failed to explore '$f'"
 
         if grep "No clusters found" < serr
@@ -140,7 +140,7 @@ explore-no-dupes =
     noDupesFor = f: runCommand "no-dupes-for-${sanitiseName (baseNameOf f)}"
       {
         inherit f;
-        buildInputs = extractedEnv {} ++ [ fail explore-theories-untested ];
+        buildInputs = extractedEnv {} ++ [ fail concurrentQuickspec-untested ];
       }
       ''
         set -e
@@ -159,7 +159,7 @@ explore-no-dupes =
         }
 
         echo "Exploring '$f'" 1>&2
-        OUTPUT=$(explore-theories < "$f" 2>&1 | tee >(cat 1>&2)) ||
+        OUTPUT=$(concurrentQuickspec < "$f" 2>&1 | tee >(cat 1>&2)) ||
           fail "Failed to explore '$f'\nOUTPUT:\n\n$OUTPUT\n\n"
 
         echo "$OUTPUT" | noDupes
@@ -169,4 +169,4 @@ explore-no-dupes =
   map noDupesFor files;
 };
 
-explore-theories
+concurrentQuickspec

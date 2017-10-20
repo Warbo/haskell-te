@@ -64,8 +64,8 @@ fix (self: rec {
   checkHsEnv            = callPackage ./checkHsEnv.nix            {};
   checkStderr           = callPackage ./checkStderr.nix           {};
   cluster               = callPackage ./cluster.nix               {};
+  concurrentQuickspec   = callPackage ./concurrentQuickspec.nix   {};
   dumpToNixScripts      = callPackage ./dumpToNix.nix             {};
-  explore               = callPackage ./explore.nix               {};
   extractedEnv          = callPackage ./extractedEnv.nix          {};
   extractTarball        = callPackage ./extractTarball.nix        {};
   extraHaskellPackages  = callPackage ./extraHaskellPackages.nix  {};

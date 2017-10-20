@@ -1,6 +1,7 @@
-{ annotated, bash, buckets, buildEnv, cluster, explore, fail, format,
-  glibcLocales, hashspecBench, jq, lib, mkBin, nix-config, reduce-equations,
-  runCommand, runWeka, stdenv, timeout, tipBenchmarks, withDeps, writeScript }:
+{ annotated, bash, buckets, buildEnv, cluster, concurrentQuickspec, fail,
+  format, glibcLocales, hashspecBench, jq, lib, mkBin, nix-config,
+  reduce-equations, runCommand, runWeka, stdenv, timeout, tipBenchmarks,
+  withDeps, writeScript }:
 with builtins;
 with lib;
 with {
@@ -70,7 +71,7 @@ rec {
       fi
 
       echo "$CL" | "${format.fromStdin}" |
-        withTimeout explore-theories | reduce-equations
+        withTimeout concurrentQuickspec | reduce-equations
     '';
   };
 
