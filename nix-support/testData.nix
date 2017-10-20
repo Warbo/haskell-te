@@ -138,6 +138,7 @@ rec {
              (haskellPkgs {});
 
   # Resource-intensive data, which should be used sparingly
+
   tip-benchmark = rec {
     asts = commands.asts {
       name = "tip-benchmark";
@@ -148,4 +149,14 @@ rec {
       dir  = tipBenchmarks.tip-benchmark-haskell;
     };
   };
+
+  isabelle-theories = genAttrs [ "list-full" "nat-full" "nat-simple" ] (name:
+    rec {
+      asts  = commands.asts { inherit name; dir = nixed; };
+      nixed = commands.haskellNix { inherit name; dir = pkg; };
+      pkg = commands.haskellPkg {
+        inherit name;
+        tip = ../benchmarks + "/${name}.smt2";
+      };
+    });
 }

@@ -10,14 +10,18 @@ with rec {
 
   benchmarks = listToAttrs (map (n: nameValuePair n (mkBench n)) names);
 
-  mkBench = n: {
+  mkBench = n:
+    with {
+      data = getAttr n testData.isabelle-theories;
+    };
+    {
     content      = readFile (./. + "/${n}.smt2");
     ground_truth = readFile (./ground-truth + "/${n}.smt2");
     runner       = runCommand "quickspec-runner-${n}"
       {
+        inherit (data) asts;
         buildInputs = [ genQuickspecRunner ];
-        OUT_DIR     = nixify (getAttr n (testData.haskellPkgs {}));
-        asts        = getAttr n (testData.asts {});
+        OUT_DIR     = data.nixed;
       }
       ''
         X=$(genQuickspecRunner < "$asts")
