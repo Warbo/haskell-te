@@ -1,0 +1,55 @@
+# Haskell Theory Exploration Benchmarks #
+
+This directory contains benchmarks for automated theory exploration tools. There
+are two sorts of benchmarks:
+
+### Standalone Theories ##
+
+These are the files ending `.smt2`, and are written in the TIP format:
+
+ - `benchmarks/nat-simple.smt2` is a simple theory of Natural numbers, with
+   addition and multiplication, comparable to that used in [1] and [2]
+ - `benchmarks/nat-full.smt2` is similar to `nat-simple.smt2` but also contains
+   an exponentiation function, comparable to that used in [3]
+ - `benchmarks/list-full.smt2` is a theory of lists, comparable to that used
+   in [2]
+
+The standalone benchmarks have a corresponding file in `ground-truth/`
+containing the statements considered "interesting" for that theory (these are
+taken from [1]).
+
+### Theory Exploration Benchmark ##
+
+We use the Theory Exploration Benchmark project, which includes a corpus of
+definitions and statements. Subsets of these definitions are sampled
+(deterministically), and the applicable statements are used as the ground truth.
+
+## Running Benchmarks ##
+
+We use `asv` to run the benchmarks and manage the results. To suitable
+environment can be entered by running `nix-shell benchmarkEnv.nix` from the root
+directory of this repository (i.e. the directory above this `benchmarks/` one).
+
+The usual `asv` commands can be used: `asv run`, `asv publish`, etc.
+
+Note that benchmarking can take a while. In particular, we do all of the
+exploration in the 'setup' phase rather than in the benchmarks themselves; this
+makes the setup phase slow, but the benchmarks which follow are almost instant.
+
+Our policy is to commit benchmark results (which will include the raw
+input/output data and specs of the machine) to git to ensure reproducibility. We
+don't commit HTML reports, since they can be generated automatically. When
+committing new results, keep in mind that the raw data can get quite large, and
+these will hang around forever in git. Hence only include those which are
+reliable (e.g. don't run benchmarks at the same time as other resource-intensive
+programs).
+
+## References ##
+
+[1]: Automated discovery of inductive lemmas, Moa Johansson 2009
+
+[2]: Automating inductive proofs using theory exploration, Koen Claessen, Moa
+     Johansson, Dan Rosén and Nicholas Smallbone 2013
+
+[3]: Scheme-based theorem discovery and concept invention, Omar Montano-Rivas,
+     Roy McCasland, Lucas Dixon and Alan Bundy 2012

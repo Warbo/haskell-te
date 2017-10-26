@@ -4,7 +4,7 @@ args:
 with builtins;
 with import ../nix-support {};
 with rec {
-  quickspecTip  = callPackage ./quickspecTip.nix  {};
+  quickspecTip = callPackage ./quickspecTip.nix {};
 
   /*
   hashspecTip   = callPackage ./hashspecTip.nix   {};

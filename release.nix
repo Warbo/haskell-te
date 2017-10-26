@@ -1,4 +1,4 @@
-# Entry point for evaluating/building
+# A useful entry point for continuous integration (e.g. Hydra)
 with rec {
   go = stable:
     with import ./. {

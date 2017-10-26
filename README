@@ -8,62 +8,13 @@ implementation, tied together using the Nix expression language.
 
  - You'll need the Nix package manager and a UNIX-like OS (tested on Linux). Nix
    will take care of gathering any other dependencies.
- - If you use the Hydra continuous integration server, `release.nix` can be used
-   to build and test everything.
- - Invoking `test.sh` will run all tests.
- - Packages can be accessed via `default.nix`, e.g. for `nix-shell` or to
-   `import` into your own Nix expressions.
- - The `package` attribute will install `quickspec`, `hashspec` and `mlspec`
-   commands (e.g. `nix-build -A package` will build it).
- - `asv` is used for benchmarking. `shell.nix` defines an environment for
-   running benchmarks, which can be accessed by running `nix-shell`.
- - A few individual benchmarks are stored in `benchmarks/*.smt2`, in the same
-   format used by the Tons of Inductive Problems (TIP) project.
- - More extensive benchmarking is performed on problems sampled from the TE
-   Benchmarks project.
-
-## Benchmarks ##
-
-The files ending `.smt2` in the `benchmarks` directory are theories which will
-be benchmarked. They are as follows:
-
- - `benchmarks/nat-simple.smt2` is a simple theory of Natural numbers, with
-   addition and multiplication, comparable to that used in [1] and [2]
- - `benchmarks/nat-full.smt2` is similar to `nat-simple.smt2` but also contains
-   an exponentiation function, comparable to that used in [3]
- - `benchmarks/list-full.smt2` is a theory of lists, comparable to that used
-   in [2]
-
-Each file has a partner in `benchmarks/ground-truth` containing the statements
-considered "interesting" for that theory.
-
-More extensive benchmarking is performed using the TE Benchmarks project, which
-includes a corpus of definitions and statements. Subsets of these definitions
-are sampled (deterministically), and the applicable statements are used as the
-ground truth.
-
-We use `asv` to run the benchmarks and manage the results. Use `asv run` to run
-them, `asv publish` to generate a HTML report, etc.
-
-Note that benchmarking can take a while. In particular, there's a large up-front
-cost as we gather all results during the 'setup' phase; the benchmark functions
-themselves (defined in `benchmarks/*.py`) are fast since they just extract data
-from these results.
-
-Our policy is to commit benchmark results (which will include the raw
-input/output data and specs of the machine) to git to ensure reproducibility. We
-don't commit the HTML reports, since they can be generated automatically. When
-committing new results, keep in mind that the raw data can get quite large, and
-these will hang around forever in git. Hence only include those which are
-reliable (e.g. don't run benchmarks at the same time as other resource-intensive
-programs).
-
-## References ##
-
-[1]: Automated discovery of inductive lemmas, Moa Johansson 2009
-
-[2]: Automating inductive proofs using theory exploration, Koen Claessen, Moa
-     Johansson, Dan Rosén and Nicholas Smallbone 2013
-
-[3]: Scheme-based theorem discovery and concept invention, Omar Montano-Rivas,
-     Roy McCasland, Lucas Dixon and Alan Bundy 2012
+ - The main "user facing" functionality is the package provided by `default.nix`
+   which contains scripts for exploring Haskell packages:
+  - `haskellPkgToAsts d` will look in directory `d` for a Haskell package (i.e.
+    a `.cabal` file) and extract ASTs for every function defined in the package,
+    including whether or not they're suitable for exploring.
+  - `quickspecAsts d` will start GHC with the Haskell package of directory `d`
+    in scope, and explore all of the suitable ASTs it's given on stdin.
+  - `quickspec d` combines `haskellPkgToAsts d` and `quickspecAsts d`.
+ - The main "researcher facing" functionality is the benchmark suite, which is
+   explained in more detail by `benchmarks/README`.
