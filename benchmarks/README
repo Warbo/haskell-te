@@ -26,7 +26,7 @@ definitions and statements. Subsets of these definitions are sampled
 
 ## Running Benchmarks ##
 
-We use `asv` to run the benchmarks and manage the results. To suitable
+We use `asv` to run the benchmarks and manage the results. A suitable
 environment can be entered by running `nix-shell benchmarkEnv.nix` from the root
 directory of this repository (i.e. the directory above this `benchmarks/` one).
 
