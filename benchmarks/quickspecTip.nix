@@ -30,7 +30,8 @@
         set -o pipefail
         SAMPLE=$(cat "$sampleFile")
         export SAMPLE
-        filterToSampled < "$asts" | genQuickspecRunner > "$out"
+        R=$(filterToSampled < "$asts" | genQuickspecRunner)
+        cp "$R" "$out"
       '';
 
     analyser = sampleAnalyser { inherit REP SIZE sampleFile; };
