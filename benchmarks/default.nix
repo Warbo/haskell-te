@@ -3,6 +3,7 @@ args:
 
 with builtins;
 with import ../nix-support {};
+with lib;
 with rec {
   parameters = {
     repetitions  = 30;
