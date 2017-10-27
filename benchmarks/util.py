@@ -173,11 +173,20 @@ def tip_cache(var_name):
 
             if result['success']:
                 try:
-                    analysis = loads(pipe([cmds['analyser']],
-                                          result['stdout'])['stdout'])
-                    analysis['analysed'] = True
+                    analysed = pipe([cmds['analyser']],
+                                    result['stdout'])['stdout'];
+                    analysis = {'analysed': True}
                 except e:
                     analysis = {'analysed': False, 'analysis error': repr(e)}
+
+                if analysis['analysed']:
+                    try:
+                        analysis = loads(analysed)
+                        analysis['analysed'] = True
+                    except e:
+                        analysis = {'analysed':        False,
+                                    'analysis error':  repr(e),
+                                    'analysis stdout': analysed}
             return dict(result, **analysis)
 
         return generate_cache(sizes(), gen)
