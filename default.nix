@@ -14,5 +14,5 @@ with rec {
   inherit (pkgs) package;
 };
 if bypassPublicApi
-   then { inherit benchmarkEnv package pkgs; }
+   then { inherit benchmarkEnv benchmarkRunner package pkgs; }
    else package
