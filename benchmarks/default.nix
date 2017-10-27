@@ -27,6 +27,12 @@ mkBin {
   vars  = nixEnv // {
     NIX_EVAL_HASKELL_PKGS = ../nix-support/customHs.nix;
 
+    parameters = toJSON {
+      repetitions  = 30;
+      timeout_secs = 180;
+      max_size     = 20;
+    };
+
     qsStandalone = callPackage ./quickspecStandalone.nix {};
 
     theoryFiles = toJSON {
