@@ -1,4 +1,4 @@
-{ analysis, bash, fail, wrap }:
+{ analysis, bash, fail, jq, wrap }:
 
 with builtins;
 with {
