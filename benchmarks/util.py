@@ -173,12 +173,15 @@ def tip_cache(cmd):
                                                REP  = str(rep))))
 
             result   = timed_run([cmds['runner']], '', timeout=timeout_secs)
-            analysis = {}
+            analysis = {'analysed': false}
 
             if result['success']:
-                analysis = loads(pipe([cmds['analyser']],
-                                      result['stdout'])['stdout'])
-
+                try:
+                    analysis = loads(pipe([cmds['analyser']],
+                                          result['stdout'])['stdout'])
+                    analysis['analysed'] = True
+                except e:
+                    analysis = {'analysed': False, 'analysis error': repr(e)}
             return dict(result, **analysis)
 
         return generate_cache(sizes(), gen)
