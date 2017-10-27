@@ -39,11 +39,12 @@ mkBin {
 
     qsStandalone = callPackage ./quickspecStandalone.nix {};
 
-    quickspecTip = toJSON (map (size: map (rep: quickspecTip {
-                                                  inherit rep size;
-                                                })
-                                          (range 0 parameters.repetitions))
-                               (range 1 parameters.max_size));
+    quickspecTip = toJSON (["EMPTY"] ++
+                           (map (size: map (rep: quickspecTip {
+                                                   inherit rep size;
+                                                 })
+                                           (range 1 parameters.repetitions))
+                                (range 1 parameters.max_size)));
 
     theoryFiles = toJSON {
       list-full  = ./list-full.smt2;
