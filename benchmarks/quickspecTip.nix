@@ -3,9 +3,9 @@
 
 { rep, size }:
   with rec {
-    REP    = toString rep;
-    SIZE   = toString size;
-    SAMPLE = runCommand "sample-${SIZE}-${REP}"
+    REP        = toString rep;
+    SIZE       = toString size;
+    sampleFile = runCommand "sample-${SIZE}-${REP}"
       {
         inherit REP SIZE;
         buildInputs = [ tipBenchmarks.tools ];
@@ -19,7 +19,7 @@
   {
     runner = runCommand "quickspec-tip-runner-${SIZE}-${REP}"
       {
-        inherit SAMPLE;
+        inherit sampleFile;
         asts        = testData.tip-benchmark.asts;
         OUT_DIR     = testData.tip-benchmark.nixed;
         buildInputs = [ filterToSampled genQuickspecRunner ];
@@ -28,8 +28,10 @@
         #!/usr/bin/env bash
         set -e
         set -o pipefail
+        SAMPLE=$(cat "$sampleFile")
+        export SAMPLE
         filterToSampled < "$asts" | genQuickspecRunner > "$out"
       '';
 
-    analyser = sampleAnalyser { inherit SAMPLE; };
+    analyser = sampleAnalyser { inherit REP SIZE sampleFile; };
   }

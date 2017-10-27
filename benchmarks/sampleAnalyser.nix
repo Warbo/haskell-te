@@ -11,14 +11,17 @@ with {
     END SAMPLED_NAMES
   '';
 };
-{ REP, SIZE, SAMPLE }: wrap {
+{ REP, SIZE, sampleFile }: wrap {
   name   = "sampleAnalyser-${SIZE}-${REP}";
   paths  = [ analysis bash fail jq ];
-  vars   = { SAMPLED_NAMES = SAMPLE; };
+  vars   = { inherit sampleFile; };
   script = ''
     #!/usr/bin/env bash
     set -e
     set -o pipefail
+
+    SAMPLED_NAMES=$(cat "$sampleFile")
+    export SAMPLED_NAMES
 
     FOUND=$(cat)
 
