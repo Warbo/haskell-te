@@ -12,7 +12,10 @@ with rec {
       import os
       import sys
 
-      sample = os.getenv('SAMPLE').split('\n')
+      var = os.getenv('SAMPLE')
+      if var.startswith('/'):
+        raise Exception('SAMPLE variable "{0}" looks like a path'.format(var))
+      sample = var.split('\n')
 
       def sampled(ast):
         """Whether the given AST is part of our chosen sample."""
