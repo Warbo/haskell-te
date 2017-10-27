@@ -1,13 +1,20 @@
 { analysis, bash, fail, wrap }:
 
 with builtins;
-assert getEnv("SAMPLE") != "" ||
-       abort "No SAMPLE given; ensure we're being built by quickspecTip!";
-
-wrap {
+with {
+  errMsg = ''
+    FOUND:
+      $FOUND
+    END FOUND
+    SAMPLED_NAMES:
+      $SAMPLED_NAMES
+    END SAMPLED_NAMES
+  '';
+};
+{ SAMPLED_NAMES }: wrap {
   name   = "sampleAnalyser";
-  paths  = [ analysis bash fail ];
-  vars   = { SAMPLED_NAMES = getEnv("SAMPLE"); };
+  paths  = [ analysis bash fail jq ];
+  vars   = { inherit SAMPLED_NAMES; };
   script = ''
     #!/usr/bin/env bash
     set -e
@@ -17,7 +24,7 @@ wrap {
 
     # conjectures_for_sample expects encoded sample but decoded eqs
     RESULT=$(echo "$FOUND" | decode | conjectures_for_sample) ||
-      fail "FOUND:\n$FOUND\nEND FOUND\nSAMPLED_NAMED:\n$SAMPLED_NAMES\nEND SAMPLED_NAMES"
+      fail "${errMsg}"
 
     echo "$RESULT" | jq --slurpfile f <(echo "$FOUND") '. + {"found": $f}'
   '';
