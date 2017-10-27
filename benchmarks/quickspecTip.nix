@@ -1,6 +1,5 @@
-{ analysis, bash, callPackage, fail, filterToSampled, genQuickspecRunner,
-  haveVar, jq, mkBin, nix, nixEnv, runCommand, sampleAnalyser, testData,
-  tipBenchmarks, tryTip, withDeps }:
+{ bash, fail, filterToSampled, genQuickspecRunner, runCommand, sampleAnalyser,
+  testData, tipBenchmarks }:
 
 { rep, size }:
   with rec {
@@ -21,6 +20,9 @@
     runner = runCommand "quickspec-tip-runner-${SIZE}-${REP}"
       {
         inherit SAMPLE;
+        asts        = testData.tip-benchmark.asts;
+        OUT_DIR     = testData.tip-benchmark.nixed;
+        buildInputs = [ filterToSampled genQuickspecRunner ];
       }
       ''
         #!/usr/bin/env bash
