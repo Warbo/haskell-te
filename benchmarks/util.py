@@ -160,20 +160,16 @@ def reps():
     '''The repetitions to run (a list [0, 1, ...]).'''
     return range(0, repetitions)
 
-def tip_cache(cmd):
+def tip_cache(var_name):
     '''Running a TE tool is expensive, so we only want to run each sample once.
     By returning all of the results from setup_cache, each benchmark can pick
     out the values it cares about, without having to re-run anything.
     The returned value will appear as the first argument to each benchmark.'''
     def setup_cache():
         def gen(size, rep):
-            cmds = loads(check_output([cmd],
-                                      env=dict(environ,
-                                               SIZE = str(size),
-                                               REP  = str(rep))))
-
+            cmds     = loads(getenv(var_name))[size][rep]
             result   = timed_run([cmds['runner']], '', timeout=timeout_secs)
-            analysis = {'analysed': false}
+            analysis = {'analysed': False}
 
             if result['success']:
                 try:

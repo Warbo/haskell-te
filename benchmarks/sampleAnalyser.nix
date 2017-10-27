@@ -11,10 +11,10 @@ with {
     END SAMPLED_NAMES
   '';
 };
-{ SAMPLED_NAMES }: wrap {
+{ SAMPLE }: wrap {
   name   = "sampleAnalyser";
   paths  = [ analysis bash fail jq ];
-  vars   = { inherit SAMPLED_NAMES; };
+  vars   = { SAMPLED_NAMES = SAMPLE; };
   script = ''
     #!/usr/bin/env bash
     set -e

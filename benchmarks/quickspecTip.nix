@@ -1,39 +1,33 @@
 { analysis, bash, callPackage, fail, filterToSampled, genQuickspecRunner,
-  haveVar, jq, mkBin, nix, nixEnv, runCommand, testData, tipBenchmarks, tryTip,
-  withDeps }:
+  haveVar, jq, mkBin, nix, nixEnv, runCommand, sampleAnalyser, testData,
+  tipBenchmarks, tryTip, withDeps }:
 
-with rec {
-  quickspecTip = mkBin {
-    name   = "quickspecTip";
-    paths  = [
-      analysis bash filterToSampled genQuickspecRunner haveVar jq nix
-    ];
-    vars   = rec {
-      EXPR = ''
-        (import ${toString ../nix-support} {}).callPackage
-          ${toString ./sampleAnalyser.nix} {}
+{ rep, size }:
+  with rec {
+    REP    = toString rep;
+    SIZE   = toString size;
+    SAMPLE = runCommand "sample-${SIZE}-${REP}"
+      {
+        inherit REP SIZE;
+        buildInputs = [ tipBenchmarks.tools ];
+      }
+      ''
+        #!/usr/bin/env bash
+        set -e
+        choose_sample "$SIZE" "$REP" > "$out"
       '';
-      asts    = testData.tip-benchmark.asts;
-      OUT_DIR = testData.tip-benchmark.nixed;
-    };
-    script = ''
-      #!/usr/bin/env bash
-      set -e
-      set -o pipefail
-
-      haveVar SIZE
-      haveVar REP
-
-      SAMPLE=$(choose_sample "$SIZE" "$REP")
-      export SAMPLE
-
-      R=$(filterToSampled < "$asts" | genQuickspecRunner)
-      A=$(nix-build --no-out-link --show-trace -E "$EXPR")
-
-      jq -n --arg r "$R" --arg a "$A" '{"runner": $r, "analyser": $a}'
-    '';
   };
-};
+  {
+    runner = runCommand "quickspec-tip-runner-${SIZE}-${REP}"
+      {
+        inherit SAMPLE;
+      }
+      ''
+        #!/usr/bin/env bash
+        set -e
+        set -o pipefail
+        filterToSampled < "$asts" | genQuickspecRunner > "$out"
+      '';
 
-withDeps [ (tryTip { cmd = "quickspecTip"; pkg = quickspecTip; }) ]
-         quickspecTip
+    analyser = sampleAnalyser { inherit SAMPLE; };
+  }

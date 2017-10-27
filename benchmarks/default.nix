@@ -4,7 +4,16 @@ args:
 with builtins;
 with import ../nix-support {};
 with rec {
-  quickspecTip = callPackage ./quickspecTip.nix {};
+  parameters = {
+    repetitions  = 30;
+    timeout_secs = 180;
+    max_size     = 20;
+  };
+
+  py             = nixpkgs-2016-09.python.withPackages
+                     (p: [ p.sexpdata p.subprocess32 ]);
+  quickspecTip   = callPackage ./quickspecTip.nix   { inherit sampleAnalyser; };
+  sampleAnalyser = callPackage ./sampleAnalyser.nix {};
 
   /*
   hashspecTip   = callPackage ./hashspecTip.nix   {};
@@ -17,23 +26,23 @@ with rec {
   hs = hashspecBench.benchVars;
   ml = mlspecBench.benchVars;
   */
-
-  py = nixpkgs-2016-09.python.withPackages (p: [ p.sexpdata p.subprocess32 ]);
 };
 
 mkBin {
   name  = "python";
-  paths = [ py quickspecTip tipBenchmarks.tools ];
+  paths = [ py tipBenchmarks.tools ];
   vars  = nixEnv // {
     NIX_EVAL_HASKELL_PKGS = ../nix-support/customHs.nix;
 
-    parameters = toJSON {
-      repetitions  = 30;
-      timeout_secs = 180;
-      max_size     = 20;
-    };
+    parameters   = toJSON parameters;
 
     qsStandalone = callPackage ./quickspecStandalone.nix {};
+
+    quickspecTip = toJSON (map (size: map (rep: quickspecTip {
+                                                  inherit rep size;
+                                                })
+                                          (range 0 parameters.repetitions))
+                               (range 1 parameters.max_size));
 
     theoryFiles = toJSON {
       list-full  = ./list-full.smt2;
