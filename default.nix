@@ -7,7 +7,8 @@ with rec {
   pkgs = import ./nix-support args;
 
   # Used for general performance testing, as well as formal evaluation
-  benchmarkEnv = import ./benchmarks { inherit pkgs; };
+  benchmarkEnv    = import ./benchmarkEnv.nix;
+  benchmarkRunner = import ./benchmarks { inherit pkgs; };
 
   # Provides our exploration scripts
   inherit (pkgs) package;
