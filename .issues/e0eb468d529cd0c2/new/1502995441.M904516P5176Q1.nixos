@@ -1,8 +1,9 @@
 From: Chris Warburton
 Date: Thu, 17 Aug 2017 19:40:56 +0100
-State: new
+State: resolved
 Subject: Speed up getDepsScript.nix
 Message-Id: <e0eb468d529cd0c2-0-artemis@nixos>
+resolution: fixed
 
 This can take a LONG time, and it seems to spend that time sitting idle,
 or spending a chunk of CPU on a bash process.

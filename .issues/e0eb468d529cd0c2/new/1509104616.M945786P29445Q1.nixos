@@ -1,0 +1,13 @@
+From: Chris Warburton
+Date: Fri, 27 Oct 2017 12:37:52 +0100
+Subject: Re: Speed up getDepsScript.nix
+Message-Id: <e0eb468d529cd0c2-ac24cd16ed625274-artemis@nixos>
+References: <e0eb468d529cd0c2-0-artemis@nixos>
+In-Reply-To: <e0eb468d529cd0c2-0-artemis@nixos>
+
+Ported to Haskell, as nix-support/getDepsScript.hs
+
+Was a nice opportunity to learn lenses. The resulting process still
+spends a lot of time idle, waiting for input to be piped in, but we no
+longer see bash processes eating up CPU, or jq/GetDeps processes popping
+in and out of existence.

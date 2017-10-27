@@ -11,8 +11,8 @@ with {
     END SAMPLED_NAMES
   '';
 };
-{ SAMPLE }: wrap {
-  name   = "sampleAnalyser";
+{ REP, SIZE, SAMPLE }: wrap {
+  name   = "sampleAnalyser-${SIZE}-${REP}";
   paths  = [ analysis bash fail jq ];
   vars   = { SAMPLED_NAMES = SAMPLE; };
   script = ''
