@@ -133,15 +133,19 @@ with rec {
       ALL=$(cat)
        QS=$(echo "$ALL" | jq 'map(select(.quickspecable))')
 
-      echo "$QS" | jq -e 'length | . > 0' > /dev/null ||
-        fail "Nothing quickspecable ($QS) in ($ALL)"
-
-      # Get the required environment, code and Haskell command
-      GENERATED=$(echo "$QS" | "$getCmd") || {
+      function die {
         echo -e "Given:\n$ALL\n" 1>&2
         echo -e "Chosen:\n$QS\n" 1>&2
-        fail "Couldn't generate QuickSpec code"
+        fail "$@"
       }
+
+      echo "$QS" | jq -e 'length | . > 0' > /dev/null ||
+        die "Nothing quickspecable"
+
+      # Get the required environment, code and Haskell command
+      GENERATED=$(echo "$QS" | "$getCmd") ||
+        die "Couldn't generate QuickSpec code"
+
       [[ -n "$GENERATED" ]] || fail "Empty GENERATED"
 
       # Store code in a file since it may be too big for an env var
