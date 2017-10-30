@@ -39,12 +39,22 @@ mkBin {
 
     qsStandalone = callPackage ./quickspecStandalone.nix {};
 
-    quickspecTip = toJSON (["EMPTY"] ++
-                           (map (size: map (rep: quickspecTip {
-                                                   inherit rep size;
-                                                 })
-                                           (range 1 parameters.repetitions))
-                                (range 1 parameters.max_size)));
+    quickspecTip = runCommand "qstip.json"
+      {
+        buildInputs = [ fail ];
+        passAsFile  = [ "content" ];
+        content     = toJSON
+          (["EMPTY"] ++ (map (size: map (rep: quickspecTip {
+                                                inherit rep size;
+                                              })
+                                        (range 1 parameters.repetitions))
+                             (range 1 parameters.max_size)));
+      }
+      ''
+        set -e
+        [[ -f "$contentPath" ]] || fail "No path '$contentPath'"
+        cp "$contentPath" "$out"
+      '';
 
     theoryFiles = toJSON {
       list-full  = ./list-full.smt2;

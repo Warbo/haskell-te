@@ -160,6 +160,10 @@ def reps():
     '''The repetitions to run (a list [0, 1, ...]).'''
     return range(0, repetitions)
 
+tips = {
+    'quickspecTip': loads(open(getenv('quickspecTip'), 'r').read())
+}
+
 def tip_cache(var_name):
     '''Running a TE tool is expensive, so we only want to run each sample once.
     By returning all of the results from setup_cache, each benchmark can pick
@@ -167,7 +171,7 @@ def tip_cache(var_name):
     The returned value will appear as the first argument to each benchmark.'''
     def setup_cache():
         def gen(size, rep):
-            cmds     = loads(getenv(var_name))[size][rep]
+            cmds     = tips['quickspecTip'][size][rep]
             result   = timed_run([cmds['runner']], '', timeout=timeout_secs)
             analysis = {'analysed': False}
 
