@@ -1,0 +1,20 @@
+From: Chris Warburton
+Date: Mon, 30 Oct 2017 15:43:03 +0000
+State: new
+Subject: Take multiple OUT_DIRs and arguments
+Message-Id: <cdc5bae1f35d828e-0-artemis@nixos>
+
+We split up AST extraction from exploration, but that requires some way
+to tell the exploration where to find the package that defines those
+ASTs.
+
+Currently we use an env var `OUT_DIR` internally, and externally
+(i.e. when called by a user) we require a command line argument to
+specify this.
+
+However, this is not enough. One of the reasons to separate extraction
+from exploration is to allow multiple packages to be explored together.
+Yet there's no way to pass along multiple paths.
+
+We should replace OUT_DIR with OUT_DIRS, and allow multiple paths to be
+given by a user.

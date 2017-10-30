@@ -1,0 +1,18 @@
+From: Chris Warburton
+Date: Mon, 30 Oct 2017 13:36:11 +0000
+State: new
+Subject: Trigger errors in benchmarking Nix
+Message-Id: <fc1b90cdeb0a74a4-0-artemis@nixos>
+
+When nix-eval needs some Haskell packages, it checks to see if they're
+available. If so, it calls GHC as-is, if not it uses Nix to generate an
+environment with those packages, potentially compiling them.
+
+We don't want to be compiling during a benchmark, since it'll skew our
+runtimes massively upwards. We *should* be running without having to
+compile, since we're only using a given package (e.g. TEBenchmark,
+list-full, etc.), but we can't be sure.
+
+We should set the Haskell overrides used by nix-eval to some sort of
+error, e.g. `abort "Benchmarking shouldn't need to make a new
+env"`. This way, we'll know if there's a potential skew.

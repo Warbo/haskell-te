@@ -1,0 +1,29 @@
+From: Chris Warburton
+Date: Mon, 30 Oct 2017 14:20:58 +0000
+Subject: Re: Tease out independent components again.
+Message-Id: <bdc1e1f920a1ecfa-e556238ad7aad53f-artemis@nixos>
+References: <bdc1e1f920a1ecfa-0-artemis@nixos>
+In-Reply-To: <bdc1e1f920a1ecfa-0-artemis@nixos>
+
+After some more work, I think we should provide the following commands
+to users (i.e. in the 'package' derivation):
+
+ 1) TIP to Haskell package (DONE: tipToHaskellPkg)
+ 2) Haskell package to ASTs (DONE: haskellPkgToAsts)
+ 3) QuickSpec ASTs (DONE: quickspecAsts)
+ 4) QuickSpec Haskell package (compose (2) and (3)) (DONE: quickspec)
+ 5) HashSpec ASTs to clusters (TODO)
+ 6) MLSpec ASTs to clusters (TODO)
+ 7) Clusters to equations, without reduction (DONE: concurrentQuickspec)
+ 8) Reduce equations (DONE: reduce-equations)
+
+It probably makes sense to make commands for "hashspec Haskell package
+to equations" and an "mlspec Haskell package to equations" as well;
+they're not particularly needed, but it's a nicer UI if we have users
+provide Haskell packages rather than ASTs. We should still provide the
+AST-consuming versions, since users may want to mix and match what gets
+sent in: for example, running `haskellPkgToAsts` on packages X, Y and Z,
+using `jq` to pick out some functions, then sending them into *spec.
+
+Note that all of the bucketing stuff can wait for now, so we actually
+have all of the commands we need :)
