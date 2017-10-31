@@ -1,5 +1,15 @@
 # Haskell packages required for MLSpec
 {}:
 
-[ "mlspec" "mlspec-helper" "runtime-arbitrary" "quickspec" "QuickCheck"
-  "AstPlugin" ]
+[
+  "AstPlugin"
+  "cereal"
+  "hashable"
+  "ifcxt"
+  "mlspec"
+  "mlspec-helper"
+  "murmur-hash"
+  "QuickCheck"
+  "quickspec"
+  "runtime-arbitrary"
+]

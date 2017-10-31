@@ -2,7 +2,7 @@
 { hsDir }:
 
 # We use "./.." so that all of our dependencies get included
-with import ./../nix-support {};
+with import ../nix-support {};
 with builtins;
 let hsName = "tip-benchmark-sig";  # The name used by full_haskell_package
     hsPkgs = haskellPackages.override {
@@ -20,5 +20,5 @@ let hsName = "tip-benchmark-sig";  # The name used by full_haskell_package
     };
  in assert hsDir  != ""                 || abort "Got no OUT_DIR";
     assert hsPkgs ? "tip-benchmark-sig" || abort "hsPkgs doesn't have pkg";
-    assert import "''${check}"          || abort "Couldn't build pkg";
+    assert import check                 || abort "Couldn't build pkg";
     hsPkgs
