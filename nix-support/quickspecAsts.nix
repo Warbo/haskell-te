@@ -95,8 +95,8 @@ with rec {
     {
       buildInputs  = [ analysis fail jq ];
       eqs          = eqss.test-theory;
-      GROUND_TRUTH = ../tests/test-theory-truth.smt2;
-      TRUTH_SOURCE = ../tests/test-theory-truth.smt2;
+      GROUND_TRUTH = testData.truth.test-theory;
+      TRUTH_SOURCE = testData.truth.test-theory;
     }
     ''
       set -e

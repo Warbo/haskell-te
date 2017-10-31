@@ -110,7 +110,8 @@ rec {
   # Selected example data for tests to use. These should be reasonably quick to
   # run.
 
-  tip = { test-theory = ../tests/test-theory.smt2; };
+  tip   = { test-theory = ./test-theory.smt2;       };
+  truth = { test-theory = ./test-theory-truth.smt2; };
 
   haskellPkgs = { script ? null }:
     mapAttrs (name: tip: commands.haskellPkg { inherit name tip; }) tip;

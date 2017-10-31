@@ -1,7 +1,7 @@
 { annotated, bash, buckets, buildEnv, cluster, concurrentQuickspec, fail,
   format, glibcLocales, hashspecBench, jq, lib, mkBin, nix-config,
-  reduce-equations, runCommand, runWeka, stdenv, timeout, tipBenchmarks,
-  withDeps, writeScript }:
+  reduce-equations, runCommand, runWeka, stdenv, testData, timeout,
+  tipBenchmarks, withDeps, writeScript }:
 with builtins;
 with lib;
 with {
@@ -211,13 +211,13 @@ rec {
                 }) {
       canRun = ''
         set -e
-        mlspecBench < "${../tests/test-theory.smt2}"
+        mlspecBench < "${testData.tip.test-theory}"
         mkdir "$out"
       '';
 
       outputIsJson = ''
         set -e
-        OUTPUT=$(mlspecBench < ${../tests/test-theory.smt2})  ||
+        OUTPUT=$(mlspecBench < ${testData.tip.test-theory})  ||
           fail "Couldn't explore"
         echo "$OUTPUT" | jq -e 'type | . == "object"') || {
           echo "$OUTPUT" 1>&2
@@ -227,7 +227,7 @@ rec {
 
       haveEquations = ''
         set -e
-        OUTPUT=$(mlspecBench < ${../tests/test-theory.smt2}) ||
+        OUTPUT=$(mlspecBench < ${testData.tip.test-theory}) ||
           fail "Couldn't explore"
         echo "$OUTPUT" | jq -e 'has("results")' || {
           echo "$OUTPUT" 1>&2

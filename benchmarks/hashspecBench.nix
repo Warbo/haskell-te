@@ -1,6 +1,6 @@
 { annotated, bash, buckets, buildEnv, concurrentQuickspec, fail,
   format, glibcLocales, jq, mlspecBench, nix, nix-config, nixEnv,
-  reduce-equations, runCommand, stdenv, timeout, tipBenchmarks, wrap,
+  reduce-equations, runCommand, stdenv, testData, timeout, tipBenchmarks, wrap,
   writeScript }:
 
 with builtins;
@@ -222,13 +222,13 @@ rec {
         {
           canRun = ''
             set -e
-            hashspecBench < "${../tests/test-theory.smt2}"
+            hashspecBench < "${testData.tip.test-theory}"
             mkdir "$out"
           '';
 
           outputIsJson = ''
             set -e
-            OUTPUT=$(hashspecBench < ${../tests/test-theory.smt2})
+            OUTPUT=$(hashspecBench < ${testData.tip.test-theory})
 
             TYPE=$(echo "$OUTPUT" | jq -r 'type') ||
               fail "START OUTPUT\n$OUTPUT\nEND OUTPUT"
@@ -241,8 +241,8 @@ rec {
 
           haveEquations = ''
             set -e
-            OUTPUT=$(hashspecBench < ${../tests/test-theory.smt2}) || exit 1
-             CHECK=$(echo "$OUTPUT" | jq 'has("results")')         || exit 1
+            OUTPUT=$(hashspecBench < ${testData.tip.test-theory}) || exit 1
+             CHECK=$(echo "$OUTPUT" | jq 'has("results")')        || exit 1
             [[ "x$CHECK" = "xtrue" ]] ||
               fail "Didn't find 'results' in\n$OUTPUT"
             mkdir "$out"
