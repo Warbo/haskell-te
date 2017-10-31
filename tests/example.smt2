@@ -1,6 +1,0 @@
-(declare-datatypes (local-a) ((list (nil) (cons (head local-a) (tail (list local-a))))))
-(declare-datatypes () ((Nat (Z) (prod/prop_14.smt2S (p Nat)))))
-(define-fun-rec le ((local-x Nat) (local-y Nat)) Bool (match local-x (case Z true) (case (prod/prop_14.smt2S local-z) (match local-y (case Z false) (case (prod/prop_14.smt2S local-x2) (le local-z local-x2))))))
-(define-fun-rec sorted ((local-x (list Nat))) Bool (match local-x (case nil true) (case (cons local-y local-z) (match local-z (case nil true) (case (cons local-y2 local-xs) (and (le local-y local-y2) (sorted local-z)))))))
-(define-fun-rec prod/prop_14.smt2insert2 ((local-x Nat) (local-y (list Nat))) (list Nat) (match local-y (case nil (cons local-x (as nil (list Nat)))) (case (cons local-z local-xs) (ite (le local-x local-z) (cons local-x local-y) (cons local-z (prod/prop_14.smt2insert2 local-x local-xs))))))
-(check-sat)

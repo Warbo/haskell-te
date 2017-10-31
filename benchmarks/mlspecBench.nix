@@ -211,31 +211,27 @@ rec {
                 }) {
       canRun = ''
         set -e
-        mlspecBench < "${../tests/example.smt2}"
+        mlspecBench < "${../tests/test-theory.smt2}"
         mkdir "$out"
       '';
 
       outputIsJson = ''
         set -e
-        OUTPUT=$(mlspecBench < ${../tests/example.smt2}) || exit 1
-        TYPE=$(echo "$OUTPUT" | jq -r 'type') || {
-          echo -e "START OUTPUT\n$OUTPUT\nEND OUTPUT" 1>&2
-          exit 1
-        }
-        [[ "x$TYPE" = "xobject" ]] || {
-          echo -e "START OUTPUT\n$OUTPUT\nEND OUTPUT" 1>&2
-          echo "Type is '$TYPE' instead of object" 1>&2
-          exit 1
+        OUTPUT=$(mlspecBench < ${../tests/test-theory.smt2})  ||
+          fail "Couldn't explore"
+        echo "$OUTPUT" | jq -e 'type | . == "object"') || {
+          echo "$OUTPUT" 1>&2
+          fail "Not an object"
         }
       '';
 
       haveEquations = ''
         set -e
-        OUTPUT=$(mlspecBench < ${../tests/example.smt2})   || exit 1
-         CHECK=$(echo "$OUTPUT" | jq 'has("results")') || exit 1
-        [[ "x$CHECK" = "xtrue" ]] || {
-          echo -e "Didn't find 'results' in\n$OUTPUT" 1>&2
-          exit 1
+        OUTPUT=$(mlspecBench < ${../tests/test-theory.smt2}) ||
+          fail "Couldn't explore"
+        echo "$OUTPUT" | jq -e 'has("results")' || {
+          echo "$OUTPUT" 1>&2
+          fail "Didn't find 'results'"
         }
       '';
 

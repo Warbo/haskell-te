@@ -222,13 +222,13 @@ rec {
         {
           canRun = ''
             set -e
-            hashspecBench < "${../tests/example.smt2}"
+            hashspecBench < "${../tests/test-theory.smt2}"
             mkdir "$out"
           '';
 
           outputIsJson = ''
             set -e
-            OUTPUT=$(hashspecBench < ${../tests/example.smt2})
+            OUTPUT=$(hashspecBench < ${../tests/test-theory.smt2})
 
             TYPE=$(echo "$OUTPUT" | jq -r 'type') ||
               fail "START OUTPUT\n$OUTPUT\nEND OUTPUT"
@@ -241,8 +241,8 @@ rec {
 
           haveEquations = ''
             set -e
-            OUTPUT=$(hashspecBench < ${../tests/example.smt2})    || exit 1
-             CHECK=$(echo "$OUTPUT" | jq 'has("results")') || exit 1
+            OUTPUT=$(hashspecBench < ${../tests/test-theory.smt2}) || exit 1
+             CHECK=$(echo "$OUTPUT" | jq 'has("results")')         || exit 1
             [[ "x$CHECK" = "xtrue" ]] ||
               fail "Didn't find 'results' in\n$OUTPUT"
             mkdir "$out"
