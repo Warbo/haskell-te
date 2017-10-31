@@ -1,0 +1,7 @@
+From: Chris Warburton
+Date: Tue, 31 Oct 2017 21:56:41 +0000
+State: new
+Subject: Replace tests/example.smt2 with tests/test-theory.smt2
+Message-Id: <c807c6572d198bfd-0-artemis@nixos>
+
+Should allow more reuse of intermediate results like ASTs
