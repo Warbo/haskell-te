@@ -1,8 +1,9 @@
 From: Chris Warburton
 Date: Tue, 31 Oct 2017 21:51:17 +0000
-State: new
+State: resolved
 Subject: Is weigh override needed?
 Message-Id: <8ca32d07238feddd-0-artemis@nixos>
+resolution: fixed
 
 haskellPackages.weigh was used by MLSpec, but isn't any more. Can we
 remove our override, or does that break stuff?

@@ -94,13 +94,6 @@ with rec {
       rev    = "4424f9a";
       sha256 = "1d14qawzf7pimkjccj3f2vy9nc4fb2w00ib8li4kb180fb6wjvq4";
     } {};
-
-    weigh = get {
-      owner  = "fpco";
-      repo   = "weigh";
-      rev    = "26f8e3e";
-      sha256 = "0pmkzlcjfqi41qmrgjyw1y7naclq86kb6mp0i4ni3d1lkiylb9gc";
-    } {};
   };
 };
 
