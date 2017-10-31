@@ -1,8 +1,89 @@
 # Haskell Theory Exploration #
 
-This repository is designed to allow reproducible experiments in theory
-exploration, in the Haskell language. Many separate tools are used in this
-implementation, tied together using the Nix expression language.
+This repository provides commands for performing "theory exploration", mostly in
+the Haskell programming language. Theory exploration describes the task of
+taking in some function definitions and outputting conjectures about those
+functions. For example, given an `append` function for lists, we might get the
+following conjectures:
+
+    append x [] = x
+    append [] x = x
+    append x (append y z) = append (append x y) z
+
+In this case, we've found that `append` and `[]` form a monoid for lists :)
+
+Currently, we're limited to finding equations. We rely on QuickSpec to do most
+of the work, but we also use and provide many complementary tools. We use Nix to
+tame the menagerie of languages and systems 'under the hood'.
+
+## Overview ##
+
+This implementation of theory exploration can be thought of as "dynamic
+analysis", since we discover properties of the given code by running it over and
+over in many combinations. The Haskell programming language is well suited to
+this, since its "purity" prevents functions relying on any ambient 'context'
+(everything a Haskell function needs should be taken in as an argument), and the
+type system tells us which functions we can combine together, and what arguments
+they should be given. The QuickSpec system uses this knowledge, along with the
+type-directed data generators from QuickCheck, to find combinations of the given
+functions which seem to behave the same way on many inputs. Those which do, are
+conjectured to be equivalent.
+
+Whilst QuickSpec is very useful, it has a few weaknesses which we seek to
+address:
+
+ - We provide a wrapper around the QuickSpec library, allowing it to be run as a
+   standalone program.
+ - We provide a tool to extract all functions from a Haskell package, and
+   generate a suitable signature for QuickSpec, so the user doesn't have to.
+ - To generate our signatures, we automatically pick suitable names, types,
+   arities, data generators, comparison functions and free variables for all
+   relevant functions.
+ - We call out to Nix to ensure that all necessary packages (QuickSpec and
+   whatever is to be explored) are available.
+ - We replace QuickSpec's custom pretty-printer with a JSON format which is more
+   amenable to subsequent processing, and has fewer degrees of freedom
+   (expressions are sorted, variables are indexed, etc.)
+ - We split apart QuickSpec's exploration phase from its 'filter out redundant
+   conjectures' phase, in case users want to explore without filtering, or want
+   to filter some separate data.
+ - We allow functions to be split into separate "buckets" for concurrent
+   exploration, as well as a few "bucketing" algorithms to select how this
+   splitting up should be performed.
+
+## Commands ##
+
+Here, we use "Haskell package" to mean a directory containing a Haskell project,
+with a `.cabal` file, etc.
+
+The Nix package defined in `default.nix` provides the following commands:
+
+ - `quickspec` takes the path to a Haskell package as an argument, explores the
+   code it finds inside, and writes the conjectures it discovers to stdout.
+ - `renderEqs` reads conjectures from stdin and pretty-prints a more
+   human-friendly syntax to stdout.
+ - `reduce-equations` reads conjectures from stdin and writes to stdout only
+   those which aren't "redundant" (i.e. it removes anything which is just a
+   special case of some other conjecture).
+ - `haskellPkgToAsts` takes the path to a Haskell package as an argument and
+   outputs JSON describing the functions defined inside.
+ - `quickspecAsts` will explore the equations described by JSON given on stdin,
+   in the same format outputted by `haskellPkgToAsts`. The Haskell package must
+   also be given as an argument, so GHC knows where to find it.
+ - `concurrentQuickspec` takes an *array* of JSON on stdin, and launches a
+   QuickSpec process for each, gathering up the conjectures from all of them.
+
+The intermediate JSON data is useful if we want to remove particular functions
+from being explored, or if we want to explore functions from multiple packages.
+Tools like `jq` are handy for manipulating this JSON.
+
+Note that during AST extraction, we try to determine whether or not a function
+is usable by QuickSpec. The result is stored in the `quickspecable` field, and
+if this is `false` you may have trouble sending it into an exploration command
+like `quickspec` or `concurrentQuickspec`. You can filter out such entries using
+tools like `jq`, e.g.
+
+    jq 'map(select(.quickspecable))' < ./myAstsFile | quickspecAsts
 
 ## Quick Summary ##
 
