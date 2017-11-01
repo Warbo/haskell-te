@@ -76,7 +76,10 @@ with rec {
       }
       ''
         set -e
-        concurrentQuickspec < "$f" || fail "Exit failure for '$f'"
+        OUTPUT=$(concurrentQuickspec < "$f") || {
+          echo "$OUTPUT" 1>&2
+          fail "Exit failure for '$f'"
+        }
         mkdir "$out"
       '';
 
@@ -92,22 +95,29 @@ with rec {
         set -e
         set -o pipefail
 
-        function finish {
-          if [[ -e serr ]]
-          then
-            echo -e "\n\nstderr:\n\n" 1>&2
-            cat serr                  1>&2
-          else
-            echo "No stderr produced" 1>&2
-          fi
+        DONE=0
 
-          echo "COUNT: $COUNT" 1>&2
+        function finish {
+          if [[ "$DONE" -eq 0 ]]
+          then
+            if [[ -e serr ]]
+            then
+              echo -e "\n\nstderr:\n\n" 1>&2
+              cat serr                  1>&2
+            else
+              echo "No stderr produced" 1>&2
+            fi
+
+            echo "COUNT: $COUNT" 1>&2
+          fi
         }
         trap finish EXIT
 
         echo "Exploring '$f'" 1>&2
-        RESULT=$(concurrentQuickspec < "$f" 2> serr | tee >(cat 1>&2)) ||
+        RESULT=$(concurrentQuickspec < "$f" 2> serr) || {
+          echo "$RESULT" 1>&2
           fail "Equation finding failed for '$f'"
+        }
 
         if grep "No clusters found" < serr
         then
@@ -118,10 +128,12 @@ with rec {
 
         if [[ "$COUNT" -eq 0 ]]
         then
-          echo -e "Couldn't find any equations in output of '$f'" 1>&2
+          fail "Couldn't find any equations in output of '$f'"
         else
           echo "Found '$COUNT' equations for '$f'" 1>&2
         fi
+
+        DONE=1
 
         mkdir "$out"
       '';
@@ -152,8 +164,10 @@ with rec {
         }
 
         echo "Exploring '$f'" 1>&2
-        OUTPUT=$(concurrentQuickspec < "$f" 2>&1 | tee >(cat 1>&2)) ||
-        fail "Failed to explore '$f'\nOUTPUT:\n\n$OUTPUT\n\n"
+        OUTPUT=$(concurrentQuickspec < "$f" 2>&1) || {
+          echo "$OUTPUT" 1>&2
+          fail "Failed to explore '$f'"
+        }
 
         echo "$OUTPUT" | noDupes
         mkdir "$out"
