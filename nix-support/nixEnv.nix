@@ -53,7 +53,7 @@ with rec {
 
       echo "Checking <nixpkgs> has our custom definitions" 1>&2
       go 'assert x ? wrap; true'
-      for P in bench mlspec mlspec-helper nix-eval runtime-arbitrary
+      for P in mlspec mlspec-helper nix-eval runtime-arbitrary
       do
         go "assert x.haskellPackages ? $P; true"
       done

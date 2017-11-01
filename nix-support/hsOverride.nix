@@ -14,13 +14,6 @@ with rec {
       sha256 = "1gmkv4l38vpvhg2h8dwv4gf8dq1d0lr0zxd5j9szi90xb8nl2241";
     } {};
 
-    bench  = get {
-      owner  = "Gabriel439";
-      repo   = "bench";
-      rev    = "2575ff3";
-      sha256 = "18xplqhhqn9y7byib01sv75i4wbgg73rz53bn1ppd5mfxhdp8g8x";
-    } {};
-
     GetDeps = get {
       path   = <get-deps>;
       repo   = "getDeps";
