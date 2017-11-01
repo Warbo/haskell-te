@@ -127,10 +127,10 @@ with rec {
         # extract this name and print it out; if this works, then the term
         # must be suitable for use in QuickSpec.
 
-        EXPR="$QS.Term.name (head ($QS.Signature.symbols ($1 ($JSON) f)))"
+        EXPR="$QS.Term.name (Prelude.head ($QS.Signature.symbols ($1 ($JSON) f)))"
 
         # Print out the JSON, so we can spot it when we parse the results
-        echo "$BIND putStrLn ($EXPR)"
+        echo "$BIND Prelude.putStrLn ($EXPR)"
       }
 
       # Try `blind` functions first; the higher the arity the better,
@@ -142,7 +142,7 @@ with rec {
         CALL="f"
         for ARG in $(seq 1 "$NUM")
         do
-          CALL="$CALL undefined"
+          CALL="$CALL Prelude.undefined"
         done
         CALL="($FUNCS ($CALL)))))"
 
@@ -174,13 +174,13 @@ with rec {
 
       while read -r MOD
       do
-        echo "import $MOD"
+        echo "import qualified $MOD"
       done < <(echo "$MODS")
 
       grep "^{" | while read -r LINE
       do
         MOD=$(echo "$LINE" | jq -r '.module')
-        echo "import $MOD"
+        echo "import qualified $MOD"
         QNAME=$(echo "$LINE" | jq -r '.module + "." + .name')
         mkQuery "$QNAME"
       done
@@ -196,7 +196,7 @@ with rec {
 
       while read -r MOD
       do
-        echo "import $MOD"
+        echo "import qualified $MOD"
       done < <(echo "$MODS")
 
       grep "in f[ ]*::" |
