@@ -1,0 +1,17 @@
+From: Chris Warburton
+Date: Wed, 01 Nov 2017 03:00:41 +0000
+State: new
+Subject: Avoid ambiguity when annotating
+Message-Id: <87535917df9449c6-0-artemis@nixos>
+
+Tried to annotate DList and getting errors like this from GHCi (invoked
+by runTypesScript):
+
+<interactive>:335:104:
+Ambiguous occurrence `head'
+It could refer to either `Data.DList.head',
+imported from `Data.DList'
+or `Prelude.head',
+imported from `Prelude' (and originally defined in `GHC.List')
+
+This is bad, we should be qualifying everything to prevent this!

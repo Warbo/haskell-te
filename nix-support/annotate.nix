@@ -11,7 +11,6 @@ with rec {
     name   = "getArities";
     paths  = [ bash jq ];
     vars   = {
-
       # Extract the name and module from the qname of each object
       EXTRACT =
         with rec {
@@ -169,11 +168,24 @@ with rec {
         "$tagAritiesScript" <(echo "$RAWTYPES" | getArities)
       }
 
-         INPUT=$(cat                                 ); msg "Getting ASTs"
-       RAWASTS=$(echo "$INPUT" | jq -c '.asts'       ); msg "Getting types"
-      RAWTYPES=$(echo "$INPUT" | jq -r '.result'     ); msg "Getting scope"
-      RAWSCOPE=$(echo "$INPUT" | jq -r '.scoperesult'); msg "Tagging"
+      INPUT=$(cat)
+      if [[ -z "$IN_SELF_TEST" ]]
+      then
+        if [[ "$DEBUG" -eq 1 ]]
+        then
+          NAME=$(echo "$INPUT" | sha256sum | head -n1 | cut -d ' ' -f1)
+          msg "DEBUG detected, writing to '$NAME.annotateInput'"
+          echo "$INPUT" > "$NAME.annotateInput"
+        else
+          msg "This stage is tricky. Set DEBUG=1 to see the debug info."
+        fi
+      fi
 
+      msg "Getting ASTs";   RAWASTS=$(echo "$INPUT" | jq -c '.asts'       )
+      msg "Getting types"; RAWTYPES=$(echo "$INPUT" | jq -r '.result'     )
+      msg "Getting scope"; RAWSCOPE=$(echo "$INPUT" | jq -r '.scoperesult')
+
+      msg "Tagging"
       echo "$RAWASTS" | tagTypes | tagArities
 
       msg "Tagged"
@@ -219,7 +231,10 @@ with rec {
 
   testsFor = attr: pkg:
     with rec {
-      asts = annotatedWith annotateScript-untested { pkgDir = unpack pkg.src; };
+      asts = annotatedWith annotateScript-untested {
+        pkgDir = unpack pkg.src;
+        extras = { IN_SELF_TEST = "1"; };
+      };
       annotatedExists = runCommand "annotatedExists"
         {
           inherit asts;
@@ -287,7 +302,8 @@ with rec {
       getTypes = runCommand "have-types-for-asts"
         {
           annotations = annotatedWith annotateScript-untested {
-            pkgDir =  toString (nixedHsPkg (toString runCommand "hsPkg"
+            extras = { IN_SELF_TEST = "1"; };
+            pkgDir = toString (nixedHsPkg (toString runCommand "hsPkg"
               {
                 buildInputs = tipBenchmarks.tools;
                 example     = ../benchmarks/nat-simple.smt2;
@@ -368,7 +384,7 @@ with rec {
       haveAsts haveDependencies namesUnversioned noCoreNames
     ];
 
-  annotatedWith = annotateScript: { pkgDir }:
+  annotatedWith = annotateScript: { pkgDir, extras ? {} }:
     with rec {
       pkgSrc   = nixedHsPkg pkgDir;
       f        = dumpToNix { pkgDir = pkgSrc; };
@@ -378,11 +394,11 @@ with rec {
       };
     };
     runCommand "annotate"
-      {
+      ({
         inherit f;
         buildInputs = env ++ [ annotateScript ];
         typesScript = runTypesScript { inherit pkgSrc; };
-      }
+      } // extras)
       ''
         set -e
         annotate < "$f" > "$out"

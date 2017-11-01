@@ -23,7 +23,8 @@ with rec {
 
   testGarbage = runCommand "check-garbage"
     {
-      buildInputs = [ fail quickspec ];
+      buildInputs  = [ fail quickspec ];
+      IN_SELF_TEST = "1";
     }
     ''
       if echo '!"£$%^&*()' | quickspec 1> /dev/null 2> garbage.err

@@ -23,9 +23,10 @@ rec {
   commands = {
     asts = { dir, name, script ? null }: runCommand "asts-of-${name}"
       (withNix {
-        src         = dir;
-        SKIP_NIX    = "1";
-        buildInputs = [
+        src          = dir;
+        IN_SELF_TEST = "1";
+        SKIP_NIX     = "1";
+        buildInputs  = [
           (haskellPkgToAsts { script = if script == null
                                           then haskellPkgToRawAsts
                                           else script; })
@@ -53,10 +54,11 @@ rec {
     finalEqs = { name, pkg, script ? null }: runCommand "test-quickspec-${name}"
       (nixEnv // {
         inherit pkg;
-        buildInputs = [ (if script == null then quickspec else script) ];
-        MAX_SECS    = "180";
-        MAX_KB      = "1000000";
-        SKIP_NIX    = "1";
+        buildInputs  = [ (if script == null then quickspec else script) ];
+        IN_SELF_TEST = "1";
+        MAX_SECS     = "180";
+        MAX_KB       = "1000000";
+        SKIP_NIX     = "1";
       })
       ''
         set -e

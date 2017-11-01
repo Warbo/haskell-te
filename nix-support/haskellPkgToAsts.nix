@@ -48,7 +48,8 @@ with rec {
       buildInputs = [ fail haskellPkgToAsts jq (extractedEnv {
         standalone = pkg;
       }) ];
-      SKIP_NIX = "1";
+      IN_SELF_TEST = "1";
+      SKIP_NIX     = "1";
     })
     ''
       set -e

@@ -250,6 +250,7 @@ rec {
 
       function finish {
         cat "$ERR" 1>&2
+        rm -f "$ERR"
       }
       trap finish EXIT
 
@@ -290,6 +291,21 @@ rec {
             "$JQ_COMMAND"
       echo "Finished output" 1>&2
 
+      if [[ -z "$IN_SELF_TEST" ]]
+      then
+        if [[ "$DEBUG" -eq 1 ]]
+        then
+          {
+            echo 'DEBUG detected, showing stderr output'
+            echo 'NOTE: This comes from trial-and-error in GHCi, so we expect'
+            echo "many error messages. They can aid debugging, but if you aren't"
+            echo 'experiencing a problem then they can be safely ignored.'
+            cat "$ERR"
+          } 1>&2
+        else
+          echo "Set DEBUG=1 if you want to see gory GHCi output." 1>&2
+        fi
+      fi
       echo "" > "$ERR"
     '';
   };
