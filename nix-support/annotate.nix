@@ -405,6 +405,13 @@ with rec {
           jq -e '.[] | select(.name == "replicate") | .hashable |
                                                       not       ' < "$asts" ||
             fail "'replicate' shouldn't be hashable (DLists are functions)"
+
+          jq -e 'map(select(.name == "toList")) | length |
+                                                  . == 1 ' < "$asts" ||
+            fail "No 'toList' found"
+          jq -e '.[] | select(.name == "toList") | .hashable' < "$asts" ||
+            fail "'toList' should be hashable ([Integer] can be serialised)"
+
           mkdir "$out"
         '';
     };
