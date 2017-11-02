@@ -9,7 +9,7 @@ with rec {
   pkg     = getEnv "OUT_DIR";
   hsPkgs  = hs.override { overrides = support.hsOverride (_: _: {}); };
 };
-hsPkgs.ghcWithPackages (h: [
+(hsPkgs.ghcWithPackages (h: [
   h.AstPlugin h.mlspec h.mlspec-helper h.nix-eval h.QuickCheck h.quickspec
   (h.callPackage pkg {})
-])
+])).override { ignoreCollisions = true; }

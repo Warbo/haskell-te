@@ -178,11 +178,15 @@ with rec {
 
       # Look for a .cabal file and extract the "name:" field
       pName = (haskellPackages.callPackage pkgDir {}).name;
+
+      hPkgs = (haskellPackages.ghcWithPackages mkDeps).override {
+        ignoreCollisions = true;
+      };
     };
     runCommand "dumpToNix"
       {
         inherit nameVersion pkgDir pName;
-        buildInputs = [ main (haskellPackages.ghcWithPackages mkDeps) ];
+        buildInputs = [ main hPkgs ];
       }
       ''
         dumpToNix "$pkgDir" > "$out"

@@ -14,7 +14,10 @@ let hsName = "tip-benchmark-sig";  # The name used by full_haskell_package
     # Echo "true", with our Haskell package as a dependency
     check = stdenv.mkDerivation {
       name = "check-for-pkg";
-      buildInputs  = [(hsPkgs.ghcWithPackages (h: [h."tip-benchmark-sig"]))];
+      buildInputs  = [((hsPkgs.ghcWithPackages
+                        (h: [h."tip-benchmark-sig"])).override {
+                        ignoreCollisions = true;
+                      })];
       buildCommand = "source $stdenv/setup; echo true > $out";
     };
  in assert hsDir  != ""                 || abort "Got no OUT_DIR";

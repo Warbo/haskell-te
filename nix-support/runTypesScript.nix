@@ -14,11 +14,11 @@ with rec {
       cmd = "ghci -v0 -XTemplateHaskell";
       pkg =
         with {
-          hs     = "with builtins; haskellPackages.ghcWithPackages";
+          hs     = "with builtins; (haskellPackages.ghcWithPackages";
           hsPkgs = "x.QuickCheck x.quickspec x.cereal x.murmur-hash";
         };
         ''
-          ${hs} (x: [ ${hsPkgs} (x.callPackage (getEnv "pkgSrc") {}) ])
+          ${hs} (x: [ ${hsPkgs} (x.callPackage (getEnv "pkgSrc") {}) ])).override { ignoreCollisions = true; }
         '';
     };
     script = ''

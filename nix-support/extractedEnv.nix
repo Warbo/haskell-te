@@ -27,11 +27,11 @@
                 h: h.callPackage (import standalone) {};
     extras    = [ jq ] ++ extraPkgs;
     hsNames   = lib.unique (map pkgName (extraHaskellPackages ++ extraHs));
-    ghcEnv    = haskellPackages.ghcWithPackages (h: pkgs h ++ (lib.concatMap
+    ghcEnv    = (haskellPackages.ghcWithPackages (h: pkgs h ++ (lib.concatMap
                   (n: if builtins.hasAttr n haskellPackages
                          then [ (builtins.getAttr n h) ]
                          else [])
-                  hsNames));
+                  hsNames))).override { ignoreCollisions = true; };
     check     = runCommand "checkIfHsPkgsInEnv"
                   { buildInputs = [ ghcEnv ] ++ extras; }
                   ''

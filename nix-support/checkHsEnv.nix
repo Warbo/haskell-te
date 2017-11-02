@@ -103,8 +103,10 @@ with rec {
       buildInputs = [
         fail
         jq
-        (haskellPackages.ghcWithPackages (h: map (n: getAttr n h)
-                                                 extraHaskellPackages))
+        ((haskellPackages.ghcWithPackages (h: map (n: getAttr n h)
+                                                  extraHaskellPackages)).override {
+          ignoreCollisions = true;
+        })
       ];
     }
     ''
