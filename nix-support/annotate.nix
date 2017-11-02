@@ -30,8 +30,8 @@ with rec {
       # field to true if the array contains a hashable object with the same qname.
       SET_HASHABLE = ''
         . as $all | map(.qname as $qn | . + {
-                          "hashable": ($all | map(select(.qname == $qn)) | any)
-                        })
+          "hashable": ($all | map(select(.qname == $qn) | .hashable) | any)
+        })
       '';
 
       # Any duplicates will be identical, including their "hashable" field, so we
