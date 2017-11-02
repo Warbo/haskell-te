@@ -23,11 +23,12 @@ with rec {
           # The module is all except the last "bit", joined by dots
           mod = ''$bits[1:] | reverse | join(".")'';
         };
-      "${input} | . + {name: ${name}, module: ${mod}}";
+        "${input} | . + {name: ${name}, module: ${mod}}";
 
       # There may be duplicates: one which is hashed and one which isn't. We
       # prefer to be hashed if possible, so we update each objects' "hashable"
-      # field to true if the array contains a hashable object with the same qname.
+      # field to true if the array contains a hashable object with the same
+      # qname.
       SET_HASHABLE = ''
         . as $all | map(.qname as $qn | . + {
           "hashable": ($all | map(select(.qname == $qn) | .hashable) | any)

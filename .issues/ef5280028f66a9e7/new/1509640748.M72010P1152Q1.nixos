@@ -1,0 +1,20 @@
+From: Chris Warburton
+Date: Thu, 02 Nov 2017 16:35:54 +0000
+Subject: Re: Ensure hashable are Serializable
+Message-Id: <ef5280028f66a9e7-a72245eef963ac90-artemis@nixos>
+References: <ef5280028f66a9e7-0-artemis@nixos>
+In-Reply-To: <ef5280028f66a9e7-0-artemis@nixos>
+
+Turns out we had a bug in setting 'hashable'.
+
+We try a hashed version and an unhashed version, and see what works. For
+each function name, we see if anything with that name worked, and if any
+of those was a hashed version.
+
+We forgot this second check, so non-hashable things were being flagged
+as hashable, simply because we found some working output (despite it
+being from the unhashed version).
+
+This is now fixed, with regression tests involving dlist: `replicate`
+produces a `DList a`, which synonymous with a function type and hence is
+not hashable; `toList` produces a `[a]` which is hashable.

@@ -6,11 +6,11 @@ taking in some function definitions and outputting conjectures about those
 functions. For example, given an `append` function for lists, we might get the
 following conjectures:
 
-    append x [] = x
-    append [] x = x
+    append x nil = x
+    append nil x = x
     append x (append y z) = append (append x y) z
 
-In this case, we've found that `append` and `[]` form a monoid for lists :)
+In this case, we've found that `append` and `nil` form a monoid for lists :)
 
 Currently, we're limited to finding equations. We rely on QuickSpec to do most
 of the work, but we also use and provide many complementary tools. We use Nix to
@@ -26,7 +26,7 @@ this, since its "purity" prevents functions relying on any ambient 'context'
 type system tells us which functions we can combine together, and what arguments
 they should be given. The QuickSpec system uses this knowledge, along with the
 type-directed data generators from QuickCheck, to find combinations of the given
-functions which seem to behave the same way on many inputs. Those which do, are
+functions which seem to behave the same way on many inputs. Those which do are
 conjectured to be equivalent.
 
 Whilst QuickSpec is very useful, it has a few weaknesses which we seek to
@@ -42,8 +42,7 @@ address:
  - We call out to Nix to ensure that all necessary packages (QuickSpec and
    whatever is to be explored) are available.
  - We replace QuickSpec's custom pretty-printer with a JSON format which is more
-   amenable to subsequent processing, and has fewer degrees of freedom
-   (expressions are sorted, variables are indexed, etc.)
+   amenable to subsequent processing.
  - We split apart QuickSpec's exploration phase from its 'filter out redundant
    conjectures' phase, in case users want to explore without filtering, or want
    to filter some separate data.
@@ -84,6 +83,150 @@ like `quickspec` or `concurrentQuickspec`. You can filter out such entries using
 tools like `jq`, e.g.
 
     jq 'map(select(.quickspecable))' < ./myAstsFile | quickspecAsts
+
+## Examples ##
+
+We can start a shell with this package in scope as follows:
+
+    $ nix-shell --show-trace -p 'import ./. {}'
+
+This should drop us to a "nix shell" with the above commands in our `PATH`:
+
+    [nix-shell]$ command -v quickspecAsts
+    /nix/store/...-haskell-theory-exploration/bin/quickspecAsts
+
+We need some code to explore; you'll probably be using your own projects, but
+here we'll fetch a package from Hackage:
+
+    [nix-shell]$ cabal get dlist
+    Warning: The package list for 'hackage.haskell.org' is 310 days old.
+    Run 'cabal update' to get the latest list of available packages.
+    Downloading dlist-0.8.0.2...
+    Unpacking to dlist-0.8.0.2/
+
+First let's try exploring it, by passing the unpacked directory to `quickspec`:
+
+    [nix-shell]$ quickspec dlist-0.8.0.2 | tee dlist.eqs
+    these derivations will be built:
+      /nix/store/jpzhn0ww9c3dvh62hmpcrib6xkdxbndd-ghc-7.10.3.drv
+    building path(s) ‘/nix/store/x6nfs4mh02h58a3g1z1a80c4pw5dqgmz-ghc-7.10.3’
+    <the usual messages from nix, haddock, and cabal>
+
+    Checking module availability
+    Found modules
+    Building type-extraction command
+    Extracting types
+    Building scope-checking command
+    Checking scope
+    Outputting JSON
+    Finished output
+    Set DEBUG=1 if you want to see gory GHCi output.
+
+    This stage is tricky. Set DEBUG=1 to see the debug info.
+    Getting ASTs
+    Getting types
+    Getting scope
+    Tagging
+    Tagged
+    <more messages from nix, haddock and cabal>
+    building path(s) ‘/nix/store/8cwvwrw10i2yfgq7xy820wqrhy33vkq5-quickspec-runner’
+    [
+      {
+        "relation": "~=",
+        ...
+      },
+      ...
+    ]
+
+This can take a while, and you might want to keep an eye on GHC's memory usage.
+The messages in the middle are from our AST extraction system as it finds
+which functions are defined in `dlist` and their types, arities, etc.
+
+The result is a bunch of conjectured equations involving the package's
+functions. By default these are in a machine-readable JSON format, so they can
+be piped into other tools. Since we want to read them, we'll pipe them into
+`renderEqs`:
+
+    [nix-shell:~/Programming/haskell-te]$ renderEqs < dlist.eqs
+    ((foldr iii9) i0) empty ~= i0
+    (cons i0) empty ~= singleton i0
+    (map ii3) empty ~= empty
+    (snoc empty) i0 ~= singleton i0
+    (apply empty) i15 ~= i15
+    head empty ~= undefined
+    tail empty ~= undefined
+    (append empty) empty ~= empty
+    (snoc ((replicate i12) i0)) i0 ~= (cons i0) ((replicate i12) i0)
+    (snoc (singleton i0)) i1 ~= (cons i0) (singleton i1)
+    head (singleton i0) ~= i0
+    tail (singleton i0) ~= empty
+    toList (fromList i15) ~= i15
+    (append ((unfoldr imii6) i0)) (singleton i1) ~= (snoc ((unfoldr imii6) i0)) i1
+    (append ((replicate i12) i0)) (singleton i1) ~= (snoc ((replicate i12) i0)) i1
+    (append ((replicate i13) i0)) ((replicate i12) i0) ~= (append ((replicate i12) i0)) ((replicate i13) i0)
+    (append (singleton i0)) ((unfoldr imii6) i1) ~= (cons i0) ((unfoldr imii6) i1)
+    (append (singleton i0)) ((replicate i12) i1) ~= (cons i0) ((replicate i12) i1)
+    (append empty) ((unfoldr imii6) i0) ~= (unfoldr imii6) i0
+    (append empty) ((replicate i12) i0) ~= (replicate i12) i0
+    (append ((unfoldr imii6) i0)) empty ~= (unfoldr imii6) i0
+    (append ((replicate i12) i0)) empty ~= (replicate i12) i0
+    (append (singleton i0)) (singleton i1) ~= (cons i0) (singleton i1)
+    (append (singleton i0)) (fromList i15) ~= (cons i0) (fromList i15)
+    (append (fromList i15)) (singleton i0) ~= (snoc (fromList i15)) i0
+    (append empty) (singleton i0) ~= singleton i0
+    (append empty) (fromList i15) ~= fromList i15
+    (append (singleton i0)) empty ~= singleton i0
+    (append (fromList i15)) empty ~= fromList i15
+    fromList (toList empty) ~= empty
+    (apply ((unfoldr imii6) i0)) (toList empty) ~= toList ((unfoldr imii6) i0)
+    (apply ((replicate i12) i0)) (toList empty) ~= toList ((replicate i12) i0)
+    (apply (singleton i0)) (toList empty) ~= toList (singleton i0)
+    (apply (fromList i15)) (toList empty) ~= i15
+
+We use the symbol `~=` to indicate that these are not definitions or proven
+theorems, they're just conjectures based on many empirical tests. The numbered
+terms like `ii3` are free variables: the letters come from the type and the
+numbers distinguish between different variables of the same type. Here we've
+found that `toList` is the inverse of `fromList`, that `head` is the inverse of
+`singleton`, etc.
+
+Notice that there are several equations of the form `(append empty) x = x`, but
+that more general statement itself wasn't conjectured. The reason is that `x`
+would be a variable of type `DList a` (in fact `DList Integer`, since we
+monomorphise), but the `dlist` package doesn't expose a `DList a` instance of
+QuickCheck's `Arbitrary` type class. Without this, we don't know how to test
+equations involving such variables, so we cannot include such variables in our
+expressions, and hence the general equation wasn't found.
+## Caveats ##
+
+We abstract over a lot of implementation details. These abstractions are leaky,
+so you may encounter problems. Here are some known difficulties and workarounds:
+
+*AST extraction uses a GHC compiler plugin*
+
+This means we must be able to compile your code with GHC. We do this by invoking
+Cabal, with specially crafted arguments in a specially crafted environment. If
+your code doesn't have an accompanying `.cabal` file *it will not work*. We have
+no plans to support alternative build tools (Stack, Hpack, etc.).
+
+*Packages must be installable by Nix*
+
+We use Nix to set up our working environments, e.g. for compiling, for querying
+GHCi, for exploring, etc. If your package can't be built by Nix then *it will
+not work*.
+
+There are two ways you can ensure your package builds. The default behaviour is
+to run `cabal2nix` on the package directory, which reads the `.cabal` file awe look for a
+`default.nix` file at the root of the package directory. If your need to do fancy, custom
+stuff then that's a good place to
+
+Raw Haskell code won't work; it needs to be packaged, so we can install it into
+the environment used by the exploration program. We rely on Cabal for packaging,
+so when we say "a Haskell package" we mean "a directory with a `.cabal` file".
+If you don't have a `.cabal` file because you use something else, like Stack or
+HPack, then your package will not work: specifically, the AST extractor works
+via a GHC plugin, and we won't be able to invoke GHC correctly if your package
+doesn't provide a `.cabal` file.
 
 ## Quick Summary ##
 

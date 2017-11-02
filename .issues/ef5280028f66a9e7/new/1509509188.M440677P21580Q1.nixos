@@ -1,8 +1,9 @@
 From: Chris Warburton
 Date: Wed, 01 Nov 2017 04:05:42 +0000
-State: new
+State: resolved
 Subject: Ensure hashable are Serializable
 Message-Id: <ef5280028f66a9e7-0-artemis@nixos>
+resolution: fixed
 
 Some things (e.g. from dlist) are getting marked as `hashable` but
 getting MLSpec complaints that they have no `Serializable` instance.
