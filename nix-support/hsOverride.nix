@@ -90,7 +90,7 @@ with rec {
   };
 };
 
-self: super: hsPkgs {
+extra: self: super: hsPkgs {
   hackagePkg = n: v: self.callPackage (callHackage n v);
 
   get = { path ? null, url ? null, owner ? "Warbo", repo ? null, rev, sha256}:
@@ -105,4 +105,4 @@ self: super: hsPkgs {
                 if success && value != null then value else git;
     };
     self.callPackage (nixFromCabal (toString src) null);
-}
+} // extra self super

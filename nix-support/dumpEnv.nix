@@ -7,7 +7,7 @@ with rec {
                then support.haskellPackages
                else import (getEnv "HASKELL_PACKAGES");
   pkg     = getEnv "OUT_DIR";
-  hsPkgs  = hs.override { overrides = support.hsOverride; };
+  hsPkgs  = hs.override { overrides = support.hsOverride (_: _: {}); };
 };
 hsPkgs.ghcWithPackages (h: [
   h.AstPlugin h.mlspec h.mlspec-helper h.nix-eval h.QuickCheck h.quickspec

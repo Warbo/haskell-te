@@ -9,6 +9,8 @@ assert ghcVersion == reqVersion ||
        abort "Using GHC ${ghcVersion} (should be ${reqVersion})";
 
 {
-  value = nixpkgs.haskellPackages.override { overrides = hsOverride; };
+  value = nixpkgs.haskellPackages.override {
+            overrides = hsOverride (_: _: {});
+          };
   removeOverrides = true;  # Otherwise they'd mess up the Haskell overrides
 }

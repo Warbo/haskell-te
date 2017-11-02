@@ -6,11 +6,10 @@ with import ../nix-support {};
 with builtins;
 let hsName = "tip-benchmark-sig";  # The name used by full_haskell_package
     hsPkgs = haskellPackages.override {
-      overrides = self: super:
+      overrides = hsOverride (self: super: {
         # Include existing overrides, along with our new one
-        hsOverride self super // {
-          "tip-benchmark-sig" = self.callPackage (toString (nixedHsPkg hsDir)) {};
-        };
+        "tip-benchmark-sig" = self.callPackage (toString (nixedHsPkg hsDir)) {};
+      });
     };
     # Echo "true", with our Haskell package as a dependency
     check = stdenv.mkDerivation {

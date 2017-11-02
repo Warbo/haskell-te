@@ -9,9 +9,9 @@ with rec {
   pkg     = getEnv "OUT_DIR";
   pkgName = getEnv "PKG_NAME";
   hsPkgs  = hs.override {
-    overrides = self: super: (support.hsOverride self super) // {
+    overrides = support.hsOverride (self: super: {
       "${pkgName}" = self.callPackage pkg {};
-    };
+    });
   };
 };
 
