@@ -210,7 +210,7 @@ with rec {
   annotateScript = withDeps (concatLists (attrValues
                               (mapAttrs testsFor {
                                 inherit (testData.haskellDrvs) test-theory;
-                              })))
+                              })) ++ checkDlist)
                             annotateScript-untested;
 
   annotateScript-untested = mkBin {
@@ -383,6 +383,32 @@ with rec {
       annotatedExists astsHaveField astsLabelled dependencyNameVersions getTypes
       haveAsts haveDependencies namesUnversioned noCoreNames
     ];
+
+  # Regression tests for ef5280028f66a9e7
+  checkDlist =
+    with rec {
+      pkg  = haskellPackages.dlist;
+      asts = annotatedWith annotateScript-untested {
+        pkgDir = unpack pkg.src;
+        extras = { IN_SELF_TEST = "1"; };
+      };
+      notHashable = runCommand "dlist-not-hashable"
+        {
+          inherit asts;
+          buildInputs = [ fail jq ];
+        }
+        ''
+          set -e
+          jq -e 'map(select(.name == "replicate")) | length |
+                                                     . == 1 ' < "$asts" ||
+            fail "No 'replicate' found"
+          jq -e '.[] | select(.name == "replicate") | .hashable |
+                                                      not       ' < "$asts" ||
+            fail "'replicate' shouldn't be hashable (DLists are functions)"
+          mkdir "$out"
+        '';
+    };
+    [ notHashable ];
 
   annotatedWith = annotateScript: { pkgDir, extras ? {} }:
     with rec {
