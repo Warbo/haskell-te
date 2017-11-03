@@ -201,9 +201,6 @@ with rec {
       set -e
       set -o pipefail
 
-      # Turns output from dump-package or dump-hackage into a form suitable for
-      # clustering
-
       "$typesScript" | annotateAsts | getDepsScript
     '';
   };
@@ -448,6 +445,7 @@ rec {
     vars   = { typesScript = runTypesScriptData.script; };
     script = ''
       #!/usr/bin/env bash
+      set -e
       pkgSrc=$(readlink -f "$1")
       export pkgSrc
 
