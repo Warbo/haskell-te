@@ -5,9 +5,11 @@
 with import ../nix-support {};
 with builtins;
 with rec {
-  hsDrvs  = self: listToAttrs (map (dir: rec {
-                      value = self.callPackage (toString (nixedHsPkg dir)) {};
-                      name  = pkgName value.name;
+  hsDrvs  = self: listToAttrs (map (dir:
+                    with { d = toString (nixedHsPkg dir); };
+                    {
+                      value = self.callPackage d {};
+                      name  = pkgName (haskellPackages.callPackage d {}).name;
                     })
                     hsDirs);
   hsNames = attrNames (hsDrvs haskellPackages);

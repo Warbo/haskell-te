@@ -9,9 +9,9 @@ with rec {
   hsDirs  = fromJSON (getEnv "OUT_DIRS");
   hsPkgs  = hs.override {
     overrides = support.hsOverride (self: super: listToAttrs (map
-      (d: rec {
+      (d: {
         value = self.callPackage d {};
-        name  = support.pkgName value.name;
+        name  = support.pkgName (support.haskellPackages.callPackage d {}).name;
       })
       hsDirs));
   };
