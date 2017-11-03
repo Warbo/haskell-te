@@ -145,7 +145,7 @@ with rec {
         NIX_EVAL_HASKELL_PKGS = attrsToDirs {
                                   nix-support = ./.;
                                 } + "/nix-support/customHs.nix";  # Relativity
-        OUT_DIR               = getAttr name (testData.haskellNixed {});
+        OUT_DIRS              = [(getAttr name (testData.haskellNixed {}))];
       }
       ''
         set -e

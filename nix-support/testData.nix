@@ -18,6 +18,7 @@
   makeHaskellPkgNixable, nix-config, nixedHsPkg, nixEnv, quickspec,
   quickspecAsts, runCommand, tipBenchmarks, tipToHaskellPkg, unpack, withNix }:
 
+with builtins;
 with lib;
 rec {
   commands = {
@@ -39,16 +40,15 @@ rec {
 
     eqs = { asts, name, nixed, script ? null }: runCommand "eqs-of-${name}"
       {
-        inherit asts;
+        inherit asts nixed;
         buildInputs = [ (if script == null then quickspecAsts else script) ];
-        OUT_DIR     = nixed;
         MAX_SECS    = "180";
         MAX_KB      = "1000000";
         SKIP_NIX    = "1";
       }
       ''
         set -e
-        quickspecAsts "$OUT_DIR" < "$asts" > "$out"
+        quickspecAsts "$nixed" < "$asts" > "$out"
       '';
 
     finalEqs = { name, pkg, script ? null }: runCommand "test-quickspec-${name}"

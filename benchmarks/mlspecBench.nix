@@ -79,7 +79,7 @@ rec {
     name   = "gen-input";
     paths  = [ bash jq tipBenchmarks.tools ];
     vars   = {
-      OUT_DIR   = tipBenchmarks.tip-benchmark-haskell;
+      OUT_DIR   = trace "FIXME: OUT_DIR/OUT_DIRS confusion" tipBenchmarks.tip-benchmark-haskell;
       ANNOTATED = annotated {
         pkgDir = toString tipBenchmarks.tip-benchmark-haskell;
       };

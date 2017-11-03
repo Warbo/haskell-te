@@ -2,6 +2,7 @@
 { attrsToDirs, fail, filterToSampled, genQuickspecRunner, jq, lib, runCommand,
   testData, tipBenchmarks, withDeps, wrap }:
 
+with builtins;
 with rec {
   scripts = attrsToDirs {
     bin = lib.genAttrs [ "choose_sample" "conjectures_for_sample" "decode"
@@ -26,7 +27,7 @@ with rec {
       inherit (tipBenchmarks) commDeps;
       buildInputs   = [ fail filterToSampled genQuickspecRunner jq scripts ];
       asts          = testData.tip-benchmark.asts;
-      OUT_DIR       = testData.tip-benchmark.nixed;
+      OUT_DIRS      = toJSON [(testData.tip-benchmark.nixed)];
       SAMPLED_NAMES = "global746970323031352f62696e5f646973747269622e736d7432706c7573";
     }
     ''

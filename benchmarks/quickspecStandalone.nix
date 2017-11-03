@@ -21,7 +21,7 @@ with rec {
       {
         inherit (data) asts;
         buildInputs = [ genQuickspecRunner ];
-        OUT_DIR     = data.nixed;
+        OUT_DIRS    = toJSON [data.nixed];
       }
       ''
         X=$(genQuickspecRunner < "$asts")

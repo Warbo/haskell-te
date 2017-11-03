@@ -18,11 +18,15 @@ with rec {
       set   -e
       set   -o pipefail
 
-      OUT_DIR=$(makeHaskellPkgNixable "$1")
-      export OUT_DIR
+      function mkNixable {
+        for P in "$@"
+        do
+          makeHaskellPkgNixable "$P" | jq -R '.'
+        done
+      }
 
-      PKG_NAME=$(haskellPkgNameVersion "$OUT_DIR" | jq -r '.package')
-      export PKG_NAME
+      OUT_DIRS=$(mkNixable "$@" | jq -s '.')
+      export OUT_DIRS
 
       S=$(genQuickspecRunner)
 

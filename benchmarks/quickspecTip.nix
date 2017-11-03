@@ -21,15 +21,20 @@
       {
         inherit sampleFile;
         asts        = testData.tip-benchmark.asts;
-        OUT_DIR     = testData.tip-benchmark.nixed;
+        dir         = testData.tip-benchmark.nixed;
         buildInputs = [ filterToSampled genQuickspecRunner ];
       }
       ''
         #!/usr/bin/env bash
         set -e
         set -o pipefail
+
         SAMPLE=$(cat "$sampleFile")
         export SAMPLE
+
+        OUT_DIRS=$(jq -n '[env | .dir]')
+        export OUT_DIRS
+
         R=$(filterToSampled < "$asts" | genQuickspecRunner)
         cp "$R" "$out"
       '';

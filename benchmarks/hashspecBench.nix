@@ -43,7 +43,7 @@ rec {
         name  = "hashspec-sampled-gen-input";
         paths = [ fail jq tipBenchmarks.tools ];
         vars  = {
-          OUT_DIR   = tipBenchmarks.tip-benchmark-haskell;
+          OUT_DIRS  = toJSON [tipBenchmarks.tip-benchmark-haskell];
 
           ANNOTATED = annotated {
             pkgDir = toString tipBenchmarks.tip-benchmark-haskell;
@@ -65,7 +65,7 @@ rec {
           set -o pipefail
 
           [[ -n "$ANNOTATED" ]] || fail "No ANNOTATED given"
-          [[ -n "$OUT_DIR"   ]] || fail "No OUT_DIR given"
+          [[ -n "$OUT_DIRS"  ]] || fail "No OUT_DIRS given"
 
           # Give sampled names a module and package, then slurp into an array
           KEEPERS=$(jq -R '{"name"    : .,
@@ -97,7 +97,7 @@ rec {
         name   = "make-haskell-package";
         paths  = [ tipBenchmarks.tools ];
         script = ''
-          OUT_DIR="$PWD" full_haskell_package < "$INPUT_TIP"
+          OUT_DIRS="[\"$PWD\"]" full_haskell_package < "$INPUT_TIP"
         '';
       };
     };
@@ -122,7 +122,7 @@ rec {
 
   hs-untested = mkBin {
     name  = "hashspecBench";
-    paths = [ bash env haskellPkgToAsts ];
+    paths = [ bash env haskellPkgToAsts jq ];
     vars  = {
       CMD      = wrap {
         name   = "hashspecBench-inenvscript";
@@ -169,6 +169,8 @@ rec {
         ANNOTATED=$(haskellPkgToAsts "$OUT_DIR")
         export ANNOTATED
       popd > /dev/null
+
+      # FIXME: OUT_DIR/OUT_DIRS confusion here
 
       if [[ -n "$SAMPLE_SIZES" ]]
       then

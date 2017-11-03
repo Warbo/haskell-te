@@ -3,6 +3,7 @@
   pipeToNix, runCommand, testData, timeout, withDeps, withNix, wrap,
   writeScript }:
 
+with builtins;
 with rec {
   getCmd = wrap {
     name   = "getCmd";
@@ -79,9 +80,8 @@ with rec {
 
       haveVar CMD
       haveVar HASKELL_CODE
-      haveVar PKG_NAME
       haveVar NIX_EVAL_HASKELL_PKGS
-      haveVar OUT_DIR
+      haveVar OUT_DIRS
 
       function run {
         # Let users choose time/memory limits by wrapping in withTimout
@@ -104,8 +104,7 @@ with rec {
       mkCmd = writeScript "quickspec-builder.nix" ''
         with builtins;
         assert getEnv "NIXENV"   != "" || abort "No NIXENV set";
-        assert getEnv "OUT_DIR"  != "" || abort "No OUT_DIR set";
-        assert getEnv "PKG_NAME" != "" || abort "No PKG_NAME set";
+        assert getEnv "OUT_DIRS" != "" || abort "No OUT_DIRS set";
         assert getEnv "CMD"      != "" || abort "No CMD set";
         (import ${toString ../nix-support} {}).wrap {
           name  = "quickspec-runner";
@@ -113,8 +112,7 @@ with rec {
           vars  = {
             CMD          = getEnv("CMD");
             HASKELL_CODE = getEnv("HASKELL_CODE");
-            OUT_DIR      = getEnv("OUT_DIR");
-            PKG_NAME     = getEnv("PKG_NAME");
+            OUT_DIRS     = getEnv("OUT_DIRS");
           };
           file  = getEnv("runner");
         }
@@ -125,10 +123,7 @@ with rec {
       set -e
       set -o pipefail
 
-      haveVar OUT_DIR
-
-      PKG_NAME=$(haskellPkgNameVersion "$OUT_DIR" | jq -r '.package')
-      export PKG_NAME
+      haveVar OUT_DIRS
 
       ALL=$(cat)
        QS=$(echo "$ALL" | jq 'map(select(.quickspecable))')
@@ -169,7 +164,7 @@ with rec {
     runner = runCommand "test-theory-runner"
       (withNix {
         asts        = (testData.asts         {}).test-theory;
-        OUT_DIR     = (testData.haskellNixed {}).test-theory;
+        OUT_DIRS    = toJSON [(testData.haskellNixed {}).test-theory];
         buildInputs = [ generateCode ];
       })
       ''

@@ -6,15 +6,17 @@ with rec {
   hs      = if getEnv "HASKELL_PACKAGES" == ""
                then support.haskellPackages
                else import (getEnv "HASKELL_PACKAGES");
-  pkg     = getEnv "OUT_DIR";
-  pkgName = getEnv "PKG_NAME";
+  hsDirs  = fromJSON (getEnv "OUT_DIRS");
   hsPkgs  = hs.override {
-    overrides = support.hsOverride (self: super: {
-      "${pkgName}" = self.callPackage pkg {};
-    });
+    overrides = support.hsOverride (self: super: listToAttrs (map
+      (d: rec {
+        value = self.callPackage d {};
+        name  = support.pkgName value.name;
+      })
+      hsDirs));
   };
 };
 
-assert typeOf pkg == "path" || (isString pkg && substring 0 1 pkg == "/") ||
-       abort "Value of 'OUT_DIR' is '${toJSON pkg}'";
+assert all (d: typeOf d == "path" || (isString d && substring 0 1 d == "/"))
+           hsDirs || abort "Value of 'OUT_DIRS' is '${toJSON hsDirs}'";
 hsPkgs

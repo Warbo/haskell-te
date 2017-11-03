@@ -16,8 +16,21 @@ with rec {
       D_ARG=$(readlink -f "$1")
       [[ -d "$D_ARG" ]] || fail "quickspec arg '$1' isn't a directory (or link)"
 
-      DIR=$(makeHaskellPkgNixable "$1") || fail "Couldn't nixify '$1'"
-      haskellPkgToAsts "$DIR" | quickspecAsts "$DIR"
+      DIRS=()
+      for D in "$@"
+      do
+        DIR=$(makeHaskellPkgNixable "$D") || fail "Couldn't nixify '$D'"
+        DIRS+=($D)
+      done
+
+      function getAsts {
+        for DIR in "''${DIRS[@]}"
+        do
+          haskellPkgToAsts "$DIR"
+        done | jq -s 'reduce .[] as $x ([]; . + $x)'
+      }
+
+      getAsts | quickspecAsts "''${DIRS[@]}"
     '';
   };
 

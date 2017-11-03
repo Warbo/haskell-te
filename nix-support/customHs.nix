@@ -1,4 +1,5 @@
-# Uses OUT_DIR env var to include the package generated from smtlib data
+# Uses OUT_DIRS env var to include the packages generated from TIP data
+with builtins;
 (import <nixpkgs> {}).callPackage ./augmentedHs.nix {
-  hsDir = builtins.getEnv "OUT_DIR";
+  hsDirs = fromJSON (getEnv "OUT_DIRS");
 }

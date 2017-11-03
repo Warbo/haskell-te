@@ -1,26 +1,31 @@
 # Provides a set of Haskell packages for use by nix-eval.
-{ hsDir }:
+{ hsDirs }:
 
 # We use "./.." so that all of our dependencies get included
 with import ../nix-support {};
 with builtins;
-let hsName = "tip-benchmark-sig";  # The name used by full_haskell_package
-    hsPkgs = haskellPackages.override {
-      overrides = hsOverride (self: super: {
-        # Include existing overrides, along with our new one
-        "tip-benchmark-sig" = self.callPackage (toString (nixedHsPkg hsDir)) {};
-      });
-    };
-    # Echo "true", with our Haskell package as a dependency
-    check = stdenv.mkDerivation {
-      name = "check-for-pkg";
-      buildInputs  = [((hsPkgs.ghcWithPackages
-                        (h: [h."tip-benchmark-sig"])).override {
-                        ignoreCollisions = true;
-                      })];
-      buildCommand = "source $stdenv/setup; echo true > $out";
-    };
- in assert hsDir  != ""                 || abort "Got no OUT_DIR";
-    assert hsPkgs ? "tip-benchmark-sig" || abort "hsPkgs doesn't have pkg";
-    assert import check                 || abort "Couldn't build pkg";
-    hsPkgs
+with rec {
+  hsDrvs  = self: listToAttrs (map (dir: rec {
+                      value = self.callPackage (toString (nixedHsPkg dir)) {};
+                      name  = pkgName value.name;
+                    })
+                    hsDirs);
+  hsNames = attrNames (hsDrvs haskellPackages);
+  hsPkgs  = haskellPackages.override {
+    overrides = hsOverride (self: super: hsDrvs self);
+  };
+
+  # Check that these Haskell packages build
+  check = runCommand "check-for-pkgs.nix"
+    {
+      buildInputs  = [((hsPkgs.ghcWithPackages (h: map (n: getAttr n h)
+                                                       hsNames)).override {
+                          ignoreCollisions = true;
+                        })];
+    }
+    ''echo "true" > "$out"'';
+};
+
+assert hsDirs != [] || abort "Got no OUT_DIRS";
+assert import check || abort "Couldn't build pkgs";
+hsPkgs
