@@ -147,7 +147,7 @@ functions. By default these are in a machine-readable JSON format, so they can
 be piped into other tools. Since we want to read them, we'll pipe them into
 `renderEqs`:
 
-    [nix-shell:~/Programming/haskell-te]$ renderEqs < dlist.eqs
+    [nix-shell]$ renderEqs < dlist.eqs
     ((foldr iii9) i0) empty ~= i0
     (cons i0) empty ~= singleton i0
     (map ii3) empty ~= empty
@@ -206,27 +206,53 @@ so you may encounter problems. Here are some known difficulties and workarounds:
 
 This means we must be able to compile your code with GHC. We do this by invoking
 Cabal, with specially crafted arguments in a specially crafted environment. If
-your code doesn't have an accompanying `.cabal` file *it will not work*. We have
-no plans to support alternative build tools (Stack, Hpack, etc.).
+your code doesn't have an accompanying `.cabal` file we *cannot* extract
+function information from it. We have no plans to support alternative build
+tools (Stack, Hpack, etc.). Note that it is still be possible to explore
+non-Cabal packages, but the function information (normally produced by
+`haskellPkgToAsts`) must be provided by some other means.
 
 *Packages must be installable by Nix*
 
 We use Nix to set up our working environments, e.g. for compiling, for querying
 GHCi, for exploring, etc. If your package can't be built by Nix then *it will
-not work*.
+not work*. Unlike the Cabal requirement, this cannot be worked around.
 
-There are two ways you can ensure your package builds. The default behaviour is
-to run `cabal2nix` on the package directory, which reads the `.cabal` file awe look for a
-`default.nix` file at the root of the package directory. If your need to do fancy, custom
-stuff then that's a good place to
+There are two ways to make a package work with Nix. The easiest is to have a
+working `.cabal` file, in which case we will automatically run `cabal2nix` to
+convert it to Nix. If this doesn't work, or you don't have a `.cabal` file, then
+you can provide your own definition in a `default.nix` file instead. This should
+follow the same convention as those produced by `cabal2nix`.
 
-Raw Haskell code won't work; it needs to be packaged, so we can install it into
-the environment used by the exploration program. We rely on Cabal for packaging,
-so when we say "a Haskell package" we mean "a directory with a `.cabal` file".
-If you don't have a `.cabal` file because you use something else, like Stack or
-HPack, then your package will not work: specifically, the AST extractor works
-via a GHC plugin, and we won't be able to invoke GHC correctly if your package
-doesn't provide a `.cabal` file.
+*Dependency hell*
+
+We use a few Haskell packages internally. Some, like `reduce-equations`, provide
+standalone commands which don't interfere with the packages being explored.
+Others, like `QuickSpec` and `AstPlugin`, must be installed into the same
+ghc-pkg database as the packages being explored, so there is potential for
+dependencies to clash. A clash with `AstPlugin` can be avoided by providing JSON
+data by some other means than `haskellPkgToAsts`, but a clash with packages used
+during exploration (e.g. `QuickSpec`) cannot be worked around, due to the nature
+of the algorithm.
+
+We prefer to hard-code our dependency versions, to make results more
+deterministic and reproducible, but if this prevents some package from building
+then they can be overridden in the following ways:
+
+ - Our package accepts overridable parameters, including `stable` which defaults
+   to `true`. If set to `false`, we will check out the latest revision of each
+   git repository we access, rather than the known-good revision we've
+   hard-coded. For example: `nix-shell -p 'import ./. { stable = false; }'`
+ - Some dependencies are looked up in the `NIX_PATH` environment variable,
+   falling back to the hard-coded versions if no override is given.
+ - We avoid using the `<nixpkgs>` path, since differs among systems
+ - The `HASKELL_PACKAGES` environment variable can be set to a `.nix` file to
+   override which Haskell package set is used by the exploration process. Note
+   that this will not affect things *other* than exploration, like function
+   extraction or setup code.
+ - Note that we use the `nix-eval` package, but we *don't* expose its
+   `NIX_EVAL_HASKELL_PKGS` override. That's because we need to use it ourselves,
+   but the `HASKELL_PACKAGES` we provide acts in a similar way.
 
 ## Quick Summary ##
 
