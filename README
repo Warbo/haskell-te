@@ -50,6 +50,47 @@ address:
    exploration, as well as a few "bucketing" algorithms to select how this
    splitting up should be performed.
 
+## Design Goals ##
+
+The design of this codebase is influenced by the following considerations:
+
+*Exploring arbitrary (Haskell) code*
+
+To be as useful as possible, we want to accept as much "normal" Haskell code as
+we can, rather than placing too many requirements on users. Since the vast
+majority of Haskell code only works with GHC, due to language extensions,
+dependencies, etc. we're pretty much forced to use it.
+
+Likewise, most code won't build without taking specific instructions into
+account, like ensuring dependencies are available, preprocessors are executed,
+commandline flags are provided, etc. This forces us to use a build system, so
+we've opted for Cabal since it's been around for long enough to "just work" in
+most situations, especially with Nix.
+
+We're also forced to use an "eval" mechanism, since we need to run code supplied
+by the user at runtime, but GHC is an ahead-of-time compiler. We've opted for
+`nix-eval`, which spawns `runghc` in a subprocess and pipes in the given code.
+As the name suggests, `nix-eval` runs this subprocess in an environment provided
+by Nix, which lets us fetch, build and install any packages needed by the user's
+code.
+
+*Measuring performance*
+
+We want a way to reliably measure and compare different exploration algorithms
+and approaches. This requires the code to be:
+
+ - Highly automated, so many repetitions can be executed, against many different
+   inputs, with as little human intervention as possible.
+ - Modular, so that algorithms can be swapped out and separate components can be
+   run independently: in particular so we can time the exploration without
+   including things like function extraction.
+ - Deterministic and reproducible, as far as possible, so experiments can be
+   replicated and results can be compared.
+ - Fast at running a "happy path", allowing us to perform any expensive setup
+   (like compiling dependencies and creating environments) beforehand, so they
+   don't contribute to the measured runtime. In particular, we need to prevent
+   `nix-eval` from having to compile dependencies during a run.
+
 ## Commands ##
 
 Here, we use "Haskell package" to mean a directory containing a Haskell project,
@@ -208,8 +249,13 @@ This means we must be able to compile your code with GHC. We do this by invoking
 Cabal, with specially crafted arguments in a specially crafted environment. If
 your code doesn't have an accompanying `.cabal` file we *cannot* extract
 function information from it. We have no plans to support alternative build
-tools (Stack, Hpack, etc.). Note that it is still be possible to explore
-non-Cabal packages, but the function information (normally produced by
+tools. In particular, we do *not* support Stack, despite its popularity, for the
+simple reason that after a great deal of effort, adding up to many wasted days,
+spread across several attempts, with different versions, the author still hasn't
+managed to get Stack to even *compile*.
+
+Note that it is still be possible to *explore* non-Cabal packages, as long as
+they're installable by Nix, but the function information (normally produced by
 `haskellPkgToAsts`) must be provided by some other means.
 
 *Packages must be installable by Nix*
@@ -229,11 +275,17 @@ follow the same convention as those produced by `cabal2nix`.
 We use a few Haskell packages internally. Some, like `reduce-equations`, provide
 standalone commands which don't interfere with the packages being explored.
 Others, like `QuickSpec` and `AstPlugin`, must be installed into the same
-ghc-pkg database as the packages being explored, so there is potential for
-dependencies to clash. A clash with `AstPlugin` can be avoided by providing JSON
-data by some other means than `haskellPkgToAsts`, but a clash with packages used
-during exploration (e.g. `QuickSpec`) cannot be worked around, due to the nature
-of the algorithm.
+`ghc-pkg` database as the packages being explored, so there is potential for
+dependencies to clash.
+
+Clashes with `AstPlugin` can be worked around by using `quickspecAsts` and
+providing JSON data from somewhere other than `haskellPkgToAsts`.
+
+Clashes with packages used during exploration (e.g. `QuickSpec`) cannot be
+worked around, due to the nature of the algorithm: functions from one must be
+invoked by the other, so their dependencies must be compatible.
+
+*Overrides*
 
 We prefer to hard-code our dependency versions, to make results more
 deterministic and reproducible, but if this prevents some package from building
