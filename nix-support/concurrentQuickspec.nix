@@ -34,6 +34,26 @@ with rec {
             [[ "$ERR" -eq 0 ]] || fail "Haskell error, aborting"
           }
 
+          function nixify {
+            for D in "$@"
+            do
+              makeHaskellPkgNixable "$D" | jq -R '.'
+            done | jq -s '.'
+          }
+
+          if [[ -n "$OUT_DIRS" ]]
+          then
+            echo "Using existing OUT_DIRS" 1>&2
+          else
+            if [[ -n "$IN_BENCHMARK" ]]
+            then
+              fail "No OUT_DIRS in benchmark, aborting"
+            else
+              OUT_DIRS=$(nixify "$@")
+              export OUT_DIRS
+            fi
+          fi
+
           # limit time/memory
           withTimeout MLSpec "$@" 2> >(checkForErrors 1>&2) | noDepth | jq -s '.'
         '';
@@ -142,10 +162,10 @@ with rec {
       {
         inherit f;
         buildInputs           = mkBuildInputs {};
+        nixed                 = [(getAttr name (testData.haskellNixed {}))];
         NIX_EVAL_HASKELL_PKGS = attrsToDirs {
                                   nix-support = ./.;
                                 } + "/nix-support/customHs.nix";  # Relativity
-        OUT_DIRS              = [(getAttr name (testData.haskellNixed {}))];
       }
       ''
         set -e
@@ -164,7 +184,7 @@ with rec {
         }
 
         echo "Exploring '$f'" 1>&2
-        OUTPUT=$(concurrentQuickspec < "$f" 2>&1) || {
+        OUTPUT=$(concurrentQuickspec "$nixed" < "$f" 2>&1) || {
           echo "$OUTPUT" 1>&2
           fail "Failed to explore '$f'"
         }
