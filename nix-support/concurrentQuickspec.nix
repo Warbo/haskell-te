@@ -57,7 +57,7 @@ with rec {
           fi
 
           # limit time/memory
-          withTimeout MLSpec "$@" 2> >(checkForErrors 1>&2) | noDepth | jq -s '.'
+          withTimeout MLSpec 2> >(checkForErrors 1>&2) | noDepth | jq -s '.'
         '';
       };
     };
