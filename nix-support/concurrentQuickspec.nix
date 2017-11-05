@@ -1,6 +1,7 @@
 { allDrvsIn, attrsToDirs, checkHsEnv, coreutils, extractedEnv,
-  extraHaskellPackages, fail, haskellPackages, jq, lib, mkBin, nix, nixEnv,
-  runCommand, testData, timeout, withDeps, wrap, writeScript }:
+  extraHaskellPackages, fail, haskellPackages, jq, lib, makeHaskellPkgNixable,
+  mkBin, nix, nixEnv, runCommand, testData, timeout, withDeps, wrap,
+  writeScript }:
 with builtins;
 with lib;
 with rec {
@@ -10,7 +11,8 @@ with rec {
     vars   = {
       runner = wrap {
         name   = "explore-runner";
-        paths  = [ fail jq timeout haskellPackages.mlspec nix ];
+        paths  = [ fail haskellPackages.mlspec jq makeHaskellPkgNixable nix
+                   timeout ];
         vars   = nixEnv;
         script = ''
           #!/usr/bin/env bash
