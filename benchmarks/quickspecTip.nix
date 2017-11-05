@@ -1,5 +1,5 @@
-{ bash, fail, filterToSampled, genQuickspecRunner, runCommand, sampleAnalyser,
-  testData, tipBenchmarks }:
+{ bash, fail, filterToSampled, genQuickspecRunner, jq, runCommand,
+  sampleAnalyser, testData, tipBenchmarks }:
 
 { rep, size }:
   with rec {
@@ -22,7 +22,7 @@
         inherit sampleFile;
         asts        = testData.tip-benchmark.asts;
         dir         = testData.tip-benchmark.nixed;
-        buildInputs = [ filterToSampled genQuickspecRunner ];
+        buildInputs = [ filterToSampled genQuickspecRunner jq ];
       }
       ''
         #!/usr/bin/env bash
