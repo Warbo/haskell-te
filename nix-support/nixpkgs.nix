@@ -7,7 +7,7 @@ with rec {
 
   # Default to a known, stable set of packages. Pass in 'false' to check against
   # the latest versions of everything.
-  stable = args.stable or true;
+  stable = allArgs.stable or true;
 
   # If we have a <real> path, use that as the source of fetchFromGitHub, to
   # prevent an infinite loop. Otherwise use <nixpkgs> as normal.
