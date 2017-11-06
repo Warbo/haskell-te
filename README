@@ -5,8 +5,8 @@
 This repository provides commands for performing "theory exploration", mostly in
 the Haskell programming language. Theory exploration describes the task of
 taking in some function definitions and outputting conjectures about those
-functions. For example, given an `append` function for lists, we might get the
-following conjectures:
+functions. For example, given the list functions `append` and `nil`, we might
+get the following conjectures:
 
     append x nil = x
     append nil x = x
@@ -52,47 +52,6 @@ address:
  - We allow functions to be split into separate "buckets" for concurrent
    exploration, as well as a few "bucketing" algorithms to select how this
    splitting up should be performed.
-
-## Design Goals ##
-
-The design of this codebase is influenced by the following considerations:
-
-*Exploring arbitrary (Haskell) code*
-
-To be as useful as possible, we want to accept as much "normal" Haskell code as
-we can, rather than placing too many requirements on users. Since the vast
-majority of Haskell code only works with GHC, due to language extensions,
-dependencies, etc. we're pretty much forced to use it.
-
-Likewise, most code won't build without taking specific instructions into
-account, like ensuring dependencies are available, preprocessors are executed,
-commandline flags are provided, etc. This forces us to use a build system, so
-we've opted for Cabal since it's been around for long enough to "just work" in
-most situations, especially with Nix.
-
-We're also forced to use an "eval" mechanism, since we need to run code supplied
-by the user at runtime, but GHC is an ahead-of-time compiler. We've opted for
-`nix-eval`, which spawns `runghc` in a subprocess and pipes in the given code.
-As the name suggests, `nix-eval` runs this subprocess in an environment provided
-by Nix, which lets us fetch, build and install any packages needed by the user's
-code.
-
-*Measuring performance*
-
-We want a way to reliably measure and compare different exploration algorithms
-and approaches. This requires the code to be:
-
- - Highly automated, so many repetitions can be executed, against many different
-   inputs, with as little human intervention as possible.
- - Modular, so that algorithms can be swapped out and separate components can be
-   run independently: in particular so we can time the exploration without
-   including things like function extraction.
- - Deterministic and reproducible, as far as possible, so experiments can be
-   replicated and results can be compared.
- - Fast at running a "happy path", allowing us to perform any expensive setup
-   (like compiling dependencies and creating environments) beforehand, so they
-   don't contribute to the measured runtime. In particular, we need to prevent
-   `nix-eval` from having to compile dependencies during a run.
 
 ## Commands ##
 
@@ -297,6 +256,47 @@ could explore them in separate processes using `concurrentQuickspec`:
     (lengthCompare i19) i19 ~= (lengthCompare i18) i18
     toList (fromList i18) ~= i18
 
+## Design Goals ##
+
+The design of this codebase is influenced by the following considerations:
+
+*Exploring arbitrary (Haskell) code*
+
+To be as useful as possible, we want to accept as much "normal" Haskell code as
+we can, rather than placing too many requirements on users. Since the vast
+majority of Haskell code only works with GHC, due to language extensions,
+dependencies, etc. we're pretty much forced to use it.
+
+Likewise, most code won't build without taking specific instructions into
+account, like ensuring dependencies are available, preprocessors are executed,
+commandline flags are provided, etc. This forces us to use a build system, so
+we've opted for Cabal since it's been around for long enough to "just work" in
+most situations, especially with Nix.
+
+We're also forced to use an "eval" mechanism, since we need to run code supplied
+by the user at runtime, but GHC is an ahead-of-time compiler. We've opted for
+`nix-eval`, which spawns `runghc` in a subprocess and pipes in the given code.
+As the name suggests, `nix-eval` runs this subprocess in an environment provided
+by Nix, which lets us fetch, build and install any packages needed by the user's
+code.
+
+*Measuring performance*
+
+We want a way to reliably measure and compare different exploration algorithms
+and approaches. This requires the code to be:
+
+ - Highly automated, so many repetitions can be executed, against many different
+   inputs, with as little human intervention as possible.
+ - Modular, so that algorithms can be swapped out and separate components can be
+   run independently: in particular so we can time the exploration without
+   including things like function extraction.
+ - Deterministic and reproducible, as far as possible, so experiments can be
+   replicated and results can be compared.
+ - Fast at running a "happy path", allowing us to perform any expensive setup
+   (like compiling dependencies and creating environments) beforehand, so they
+   don't contribute to the measured runtime. In particular, we need to prevent
+   `nix-eval` from having to compile dependencies during a run.
+
 ## Caveats ##
 
 We abstract over a lot of implementation details. These abstractions are leaky,
@@ -368,15 +368,42 @@ then they can be overridden in the following ways:
 In particular, it *does not* extract anything which is re-exported from a
 *different* package, and it does not include constuctors or type class methods.
 
-If a package defines things in a "private" module, and exports them from an
-exposed module, then the functions may get tagged as belonging to the *private*
-module. When we later try to import these functions, it will fail because that
-module is not exposed.
+If a package defines things in a "private" (non-exposed) module, those functions
+may be marked as unexplorable, since we can't import the module; *even if* an
+exposed module re-exports them.
 
-There is also an edge case if a package defines types separately to functions:
-we will import the modules providing the functions, but if we try to reference
-the types, e.g. to add typed variables to the signature, we will get an error
-since they're not in scope.
+We can work around these problems by defining wrapper functions (e.g. in a
+"helper" package). For example:
+
+    -- Wrap constructors in functions
+    nil    = []
+    cons   = (:)
+
+    -- Wrap methods in functions
+    listEq :: Eq a => [a] -> [a] -> Bool
+    listEq = (==)
+
+    -- Wrap unexposed definitions in functions
+    publicFoo = privateFoo
+
+    -- Wrap re-exported names in functions
+    definedInPublic = reexportedPrivateName
+
+There is also an edge case if we try to explore a function whose module doesn't
+expose the relevant types. We won't be able to add variables for these types,
+since the type names won't be in scope. Unfortunately this will die ungracefully
+with a GHC error.
+
+We can work around this by re-exporting the desired types from a module which we
+know will get imported. For example, we could wrap the relevant functions, and
+also expose the types:
+
+    module ExplorationHelper (MyType1, MyType2, myFunc) where
+
+    import MyPkg.Types (MyType1, MyType2)
+    import qualified MyPkg.Funcs (myFunc)
+
+    myFunc = MyPkg.Funcs.myFunc
 
 *Polymorphism, higher kinds, Arbitrary, Ord, etc.*
 
