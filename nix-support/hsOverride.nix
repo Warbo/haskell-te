@@ -104,5 +104,5 @@ extra: self: super: hsPkgs {
       src     = with tryEval path;
                 if success && value != null then value else git;
     };
-    self.callPackage (nixedHsPkg (toString src) null);
+    self.callPackage (nixedHsPkg (toString src));
 } // extra self super
