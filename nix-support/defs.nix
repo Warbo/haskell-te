@@ -67,7 +67,6 @@ fix (self: rec {
   concurrentQuickspec   = callPackage ./concurrentQuickspec.nix   {};
   dumpToNixScripts      = callPackage ./dumpToNix.nix             {};
   extractedEnv          = callPackage ./extractedEnv.nix          {};
-  extractTarball        = callPackage ./extractTarball.nix        {};
   extraHaskellPackages  = callPackage ./extraHaskellPackages.nix  {};
   filterToSampled       = callPackage ./filterToSampled.nix       {};
   format                = callPackage ./format.nix                {};
@@ -80,7 +79,6 @@ fix (self: rec {
   haveVar               = callPackage ./haveVar.nix               {};
   hsNameVersion         = callPackage ./hsNameVersion.nix         {};
   hsOverride            = callPackage ./hsOverride.nix            {};
-  importDir             = callPackage ./importDir.nix             {};
   inNixedDir            = callPackage ./inNixedDir.nix            {};
   makeHaskellPkgNixable = callPackage ./makeHaskellPkgNixable.nix {};
   ML4HSFE               = callPackage ./ML4HSFE.nix               {};
