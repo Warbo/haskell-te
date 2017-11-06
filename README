@@ -1,5 +1,7 @@
 # Haskell Theory Exploration #
 
+## A Wrapper Around QuickSpec ##
+
 This repository provides commands for performing "theory exploration", mostly in
 the Haskell programming language. Theory exploration describes the task of
 taking in some function definitions and outputting conjectures about those
@@ -12,9 +14,10 @@ following conjectures:
 
 In this case, we've found that `append` and `nil` form a monoid for lists :)
 
-Currently, we're limited to finding equations. We rely on QuickSpec to do most
-of the work, but we also use and provide many complementary tools. We use Nix to
-tame the menagerie of languages and systems 'under the hood'.
+Currently, we're limited to finding equations. We rely on the excellent
+QuickSpec library to do most of the work, but we also use and provide many
+complementary tools. We use Nix to tame the menagerie of languages and systems
+'under the hood'.
 
 ## Overview ##
 
@@ -283,13 +286,13 @@ the necessary code:
 
 In this case we didn't find any equations involving both `lengthCompare` and
 `toList`/`fromList`, so there's no need to explore them together. Instead, we
-could explore them in separate processes using `quickspecConcurrent`:
+could explore them in separate processes using `concurrentQuickspec`:
 
     [nix-shell]$ jq -n --argfile le list-extras.asts \
                        --argfile dl dlist.asts       \
                        '[($dl | map(select(.name   | contains("List"))))] +
                         [$le | map(select(.module | contains("LazyLength")))]' |
-                 quickspecConcurrent dlist-0.8.0.2 list-extras-0.4.1.4         |
+                 concurrentQuickspec dlist-0.8.0.2 list-extras-0.4.1.4         |
                  renderEqs
     (lengthCompare i19) i19 ~= (lengthCompare i18) i18
     toList (fromList i18) ~= i18
@@ -374,6 +377,51 @@ There is also an edge case if a package defines types separately to functions:
 we will import the modules providing the functions, but if we try to reference
 the types, e.g. to add typed variables to the signature, we will get an error
 since they're not in scope.
+
+*Polymorphism, higher kinds, Arbitrary, Ord, etc.*
+
+QuickSpec's exploration algorithm relies on the use of free variables, and
+testing by plugging many different values into these variables to see what
+happens.
+
+To do this, we need instances of QuickCheck's `Arbitrary` typeclass for each
+function's inputs, so we can generate random values. We also need the outputs to
+be comparable, either by having an instance of `Ord` (we could use `Eq`, but it
+would require O(n^2) comparisons) or an instance of `Serialize`.
+
+We use the latter if possible: serialising return values, hashing the resulting
+string and comparins. We do this in an attempt to reduce memory usage, since
+keeping many large values in memory for comparisons can be expensive, compared
+to keeping many fixed-length hashes.
+
+Another consideration is that we need code to be monomorphic: we can't generate
+random inputs if we don't know which particular type to generate values of. For
+example, to explore `id :: (Arbitrary a) => a -> a`, how do we choose which `a`
+to use?
+
+We solve this by 'monomorphising': replacing type variables with a particular
+concrete type. Currently, we replace variables of kind `*` with `Integer` and
+those of kind `* -> *` with `[]` (i.e. lists). If the variable has constraints,
+and these aren't satisfied by `Integer` or `[]`, then we use Template Haskell to
+look up a valid instance in the module's scope; if there are multiple
+possibilities, one is chosen non-deterministically.
+
+These instance-finding mechanisms are rather basic and could certainly be
+improved, but more sophisticated approaches (e.g. logic programming) would be
+better off being developed as a separate project.
+
+It's easy to work around most of these mechanisms' failures, by simply writing
+down monomorphic versions of your functions, e.g.
+
+    myCrazyFunc :: Madness
+    myCrazyFunc = ...
+
+    myMonoFunc :: Bool -> String
+    myMonoFunc = myCrazyFunc
+
+One annoyance is that many projects use QuickCheck "internally", and hence have
+`Arbitrary` instances for their types, but they don't provide these in their
+library interface, so we can't use them.
 
 *Resource usage*
 
