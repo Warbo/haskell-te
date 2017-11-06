@@ -93,7 +93,6 @@ fix (self: rec {
   renderEqs             = callPackage ./renderEqs.nix             {};
   runTypesScriptData    = callPackage ./runTypesScript.nix        {};
   runWeka               = callPackage ./runWeka.nix               {};
-  sta                   = callPackage ./sta.nix                   {};
   testData              = callPackage ./testData.nix              {};
   tipBenchmarks         = callPackage ./tipBenchmarks.nix         {};
   tipToHaskellPkg       = callPackage ./tipToHaskellPkg.nix       {};
