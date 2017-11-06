@@ -1,5 +1,5 @@
 { buildEnv, concurrentQuickspec, haskellPkgToAsts, quickspec, quickspecAsts,
-  renderEqs, tipToHaskellPkg }:
+  reduce-equations, renderEqs, tipToHaskellPkg }:
 
 buildEnv {
   name  = "haskell-theory-exploration";
@@ -8,6 +8,7 @@ buildEnv {
     (haskellPkgToAsts {})
     quickspec
     quickspecAsts
+    reduce-equations
     renderEqs
     tipToHaskellPkg
   ];
