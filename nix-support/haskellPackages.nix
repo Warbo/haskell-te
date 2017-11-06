@@ -1,12 +1,12 @@
-{ hsOverride, nixpkgs }:
+{ hsOverride, nixpkgs, stable }:
 
 with builtins // {
   ghcVersion = nixpkgs.haskellPackages.ghc.version;
   reqVersion = "7.10.3";
 };
 
-assert ghcVersion == reqVersion ||
-       abort "Using GHC ${ghcVersion} (should be ${reqVersion})";
+assert stable -> ghcVersion == reqVersion ||
+       abort "Stable build requires GHC ${reqVersion}, using GHC";
 
 {
   value = nixpkgs.haskellPackages.override {
