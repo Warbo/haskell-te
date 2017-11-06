@@ -238,25 +238,78 @@ monomorphise), but the `dlist` package doesn't expose a `DList a` instance of
 QuickCheck's `Arbitrary` type class. Without this, we don't know how to test
 equations involving such variables, so we cannot include such variables in our
 expressions, and hence the general equation wasn't found.
+
+If we want more control over what gets explored, we can use `haskellPkgToAsts`
+to dump out a package's information as JSON, without exploring it immediately:
+
+    [nix-shell]$ haskellPkgToAsts dlist-0.8.0.2 | tee dlist.asts
+    <nix, haddock and cabal output>
+
+    Checking module availability
+    Found modules
+    Building type-extraction command
+    Extracting types
+    Building scope-checking command
+    Checking scope
+    Outputting JSON
+    Finished output
+    Set DEBUG=1 if you want to see gory GHCi output.
+
+    This stage is tricky. Set DEBUG=1 to see the debug info.
+    Getting ASTs
+    Getting types
+    Getting scope
+    Tagging
+    Tagged
+    [{"name":"replicate","version":"0.8.0.2",...},...]
+
+Tools like `jq` can manipulate this JSON. We can use them to mix and match
+functions from different packages. For example, we can take functions from the
+`LazyLength` module of the `list-extras` package, any functions from `dlist`
+which have `List` in their name, and explore them together. Note that we provide
+both package directories to `quickspecAsts`, so it knows where to find all of
+the necessary code:
+
+    [nix-shell]$ cabal get list-extras
+    [nix-shell]$ haskellPkgToAsts list-extras-0.4.1.4 > list-extras.asts
+    [nix-shell]$ jq -n --argfile le list-extras.asts \
+                       --argfile dl dlist.asts       \
+                       '($dl | map(select(.name   | contains("List")))) +
+                        ($le | map(select(.module | contains("LazyLength"))))' |
+                 quickspecAsts dlist-0.8.0.2 list-extras-0.4.1.4               |
+                 renderEqs
+    (lengthCompare i19) i19 ~= (lengthCompare i18) i18
+    toList (fromList i18) ~= i18
+
+In this case we didn't find any equations involving both `lengthCompare` and
+`toList`/`fromList`, so there's no need to explore them together. Instead, we
+could explore them in separate processes using `quickspecConcurrent`:
+
+    [nix-shell]$ jq -n --argfile le list-extras.asts \
+                       --argfile dl dlist.asts       \
+                       '[($dl | map(select(.name   | contains("List"))))] +
+                        [$le | map(select(.module | contains("LazyLength")))]' |
+                 quickspecConcurrent dlist-0.8.0.2 list-extras-0.4.1.4         |
+                 renderEqs
+    (lengthCompare i19) i19 ~= (lengthCompare i18) i18
+    toList (fromList i18) ~= i18
+
 ## Caveats ##
 
 We abstract over a lot of implementation details. These abstractions are leaky,
 so you may encounter problems. Here are some known difficulties and workarounds:
 
-*AST extraction uses a GHC compiler plugin*
+*Function extraction uses a GHC compiler plugin*
 
 This means we must be able to compile your code with GHC. We do this by invoking
 Cabal, with specially crafted arguments in a specially crafted environment. If
 your code doesn't have an accompanying `.cabal` file we *cannot* extract
 function information from it. We have no plans to support alternative build
-tools. In particular, we do *not* support Stack, despite its popularity, for the
-simple reason that after a great deal of effort, adding up to many wasted days,
-spread across several attempts, with different versions, the author still hasn't
-managed to get Stack to even *compile*.
+tools at this time.
 
-Note that it is still be possible to *explore* non-Cabal packages, as long as
-they're installable by Nix, but the function information (normally produced by
-`haskellPkgToAsts`) must be provided by some other means.
+Note that it is still be possible to *explore* non-Cabal packages (e.g. with
+`quickspecAsts` or `concurrentQuickspec`), but `haskellPkgToAsts` cannot be used
+to extract the function information; you'll have to provide it some other way.
 
 *Packages must be installable by Nix*
 
@@ -306,17 +359,32 @@ then they can be overridden in the following ways:
    `NIX_EVAL_HASKELL_PKGS` override. That's because we need to use it ourselves,
    but the `HASKELL_PACKAGES` we provide acts in a similar way.
 
-## Quick Summary ##
+*Extraction caveats*
 
- - You'll need the Nix package manager and a UNIX-like OS (tested on Linux). Nix
-   will take care of gathering any other dependencies.
+`haskellPkgToAsts` looks at all of the functions defined in the given package.
+In particular, it *does not* extract anything which is re-exported from a
+*different* package, and it does not include constuctors or type class methods.
+
+If a package defines things in a "private" module, and exports them from an
+exposed module, then the functions may get tagged as belonging to the *private*
+module. When we later try to import these functions, it will fail because that
+module is not exposed.
+
+There is also an edge case if a package defines types separately to functions:
+we will import the modules providing the functions, but if we try to reference
+the types, e.g. to add typed variables to the signature, we will get an error
+since they're not in scope.
+
+*Resource usage*
+
+We use QuickSpec version 1, which has a rather slow algorithm. In particular,
+memory usage may explode when exploring some functions and not for others. To
+prevent GHC eating all of your resources, it can be killed after a time limit by
+setting the `MAX_SECS` env var, or memory limit by setting `MAX_KB`.
+
+## Other Details ##
+
+ - Tested on NixOS Linux, but other Linux systems should also work
  - The main "user facing" functionality is the package provided by `default.nix`
-   which contains scripts for exploring Haskell packages:
-  - `haskellPkgToAsts d` will look in directory `d` for a Haskell package (i.e.
-    a `.cabal` file) and extract ASTs for every function defined in the package,
-    including whether or not they're suitable for exploring.
-  - `quickspecAsts d` will start GHC with the Haskell package of directory `d`
-    in scope, and explore all of the suitable ASTs it's given on stdin.
-  - `quickspec d` combines `haskellPkgToAsts d` and `quickspecAsts d`.
  - The main "researcher facing" functionality is the benchmark suite, which is
-   explained in more detail by `benchmarks/README`.
+   explained in more detail by `benchmarks/README`

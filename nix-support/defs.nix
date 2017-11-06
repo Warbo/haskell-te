@@ -89,7 +89,6 @@ fix (self: rec {
   nixFromCabal          = callPackage ./nixFromCabal.nix          {};
   nixify                = callPackage ./nixify.nix                {};
   package               = callPackage ./package.nix               {};
-  parseJSON             = callPackage ./parseJSON.nix             {};
   pkgName               = callPackage ./pkgName.nix               {};
   quickspec             = callPackage ./quickspec.nix             {};
   quickspecAsts         = callPackage ./quickspecAsts.nix         {};
