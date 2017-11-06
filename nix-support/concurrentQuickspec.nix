@@ -1,4 +1,4 @@
-{ allDrvsIn, attrsToDirs, checkHsEnv, coreutils, extractedEnv,
+{ allDrvsIn, attrsToDirs, coreutils, extractedEnv,
   extraHaskellPackages, fail, haskellPackages, jq, lib, makeHaskellPkgNixable,
   mkBin, nix, nixEnv, runCommand, testData, timeout, withDeps, wrap,
   writeScript }:

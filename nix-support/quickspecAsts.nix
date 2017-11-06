@@ -1,13 +1,12 @@
 { analysis, annotated, bash, fail, genQuickspecRunner, glibcLocales,
-  haskellPkgNameVersion, jq, lib, makeHaskellPkgNixable, mkBin, nixedHsPkg,
-  nixEnv, runCommand, testData, unpack, withDeps, withNix }:
+  jq, lib, makeHaskellPkgNixable, mkBin, nixedHsPkg, nixEnv, runCommand,
+  testData, unpack, withDeps, withNix }:
 
 with lib;
 with rec {
   quickspecAsts = mkBin {
     name  = "quickspecAsts";
-    paths = [ bash genQuickspecRunner haskellPkgNameVersion jq
-              makeHaskellPkgNixable ];
+    paths = [ bash genQuickspecRunner jq makeHaskellPkgNixable ];
     vars  = {
       LANG                  = "en_US.UTF-8";
       LOCALE_ARCHIVE        = "${glibcLocales}/lib/locale/locale-archive";

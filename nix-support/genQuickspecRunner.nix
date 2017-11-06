@@ -1,7 +1,6 @@
-{ bash, checkStderr, fail, gnugrep, gnused, haskellPackages,
-  haskellPkgNameVersion, haveVar, jq, makeWrapper, mkBin, nix, nixEnv, nixify,
-  pipeToNix, runCommand, testData, timeout, withDeps, withNix, wrap,
-  writeScript }:
+{ bash, checkStderr, fail, gnugrep, gnused, haskellPackages, haveVar, jq,
+  makeWrapper, mkBin, nix, nixEnv, nixify, pipeToNix, runCommand, testData,
+  timeout, withDeps, withNix, wrap, writeScript }:
 
 with builtins;
 with rec {
@@ -96,7 +95,7 @@ with rec {
     name   = "genQuickspecRunner";
     paths  = [
       (haskellPackages.ghcWithPackages (h: [ h.mlspec h.nix-eval ]))
-      fail haskellPkgNameVersion haveVar jq nix pipeToNix
+      fail haveVar jq nix pipeToNix
     ];
     vars   = nixEnv // {
       inherit getCmd runner;
