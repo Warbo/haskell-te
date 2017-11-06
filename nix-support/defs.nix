@@ -84,7 +84,6 @@ fix (self: rec {
   nixedHsPkg            = callPackage ./nixedHsPkg.nix            {};
   nixEnv                = callPackage ./nixEnv.nix                {};
   nixFromCabal          = callPackage ./nixFromCabal.nix          {};
-  nixify                = callPackage ./nixify.nix                {};
   package               = callPackage ./package.nix               {};
   pkgName               = callPackage ./pkgName.nix               {};
   quickspec             = callPackage ./quickspec.nix             {};

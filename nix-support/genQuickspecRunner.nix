@@ -1,6 +1,6 @@
 { bash, checkStderr, fail, gnugrep, gnused, haskellPackages, haveVar, jq,
-  makeWrapper, mkBin, nix, nixEnv, nixify, pipeToNix, runCommand, testData,
-  timeout, withDeps, withNix, wrap, writeScript }:
+  makeWrapper, mkBin, nix, nixEnv, pipeToNix, runCommand, testData, timeout,
+  withDeps, withNix, wrap, writeScript }:
 
 with builtins;
 with rec {

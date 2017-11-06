@@ -1,4 +1,4 @@
-{ bash, genQuickspecRunner, lib, nixify, runCommand, testData, wrap }:
+{ bash, genQuickspecRunner, lib, runCommand, testData, wrap }:
 
 with rec {
   inherit (builtins) attrNames filter getAttr listToAttrs readDir readFile

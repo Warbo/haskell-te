@@ -15,8 +15,8 @@
 # fast. The only exception is when we're sampling, which obviously needs
 # TEBenchmark.
 { fail, haskellPackages, haskellPkgToAsts, haskellPkgToRawAsts, jq, lib,
-  makeHaskellPkgNixable, nix-config, nixedHsPkg, nixEnv, quickspec,
-  quickspecAsts, runCommand, tipBenchmarks, tipToHaskellPkg, unpack, withNix }:
+  makeHaskellPkgNixable, nix-config, nixEnv, quickspec, quickspecAsts,
+  runCommand, tipBenchmarks, tipToHaskellPkg, unpack, withNix }:
 
 with builtins;
 with lib;
