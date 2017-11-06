@@ -83,7 +83,6 @@ fix (self: rec {
   ML4HSFE               = callPackage ./ML4HSFE.nix               {};
   nixedHsPkg            = callPackage ./nixedHsPkg.nix            {};
   nixEnv                = callPackage ./nixEnv.nix                {};
-  nixFromCabal          = callPackage ./nixFromCabal.nix          {};
   package               = callPackage ./package.nix               {};
   pkgName               = callPackage ./pkgName.nix               {};
   quickspec             = callPackage ./quickspec.nix             {};

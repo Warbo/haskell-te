@@ -1,4 +1,4 @@
-{ callHackage, lib, nix-config, nixFromCabal, stable }:
+{ callHackage, lib, nix-config, nixedHsPkg, stable }:
 
 with builtins;
 with lib;
@@ -104,5 +104,5 @@ extra: self: super: hsPkgs {
       src     = with tryEval path;
                 if success && value != null then value else git;
     };
-    self.callPackage (nixFromCabal (toString src) null);
+    self.callPackage (nixedHsPkg (toString src) null);
 } // extra self super

@@ -8,8 +8,7 @@ dir:
   runCommand "nixedHsPkg"
     {
       inherit dir;
-      name         = "nixFromCabal";
-      buildInputs  = [ cabal2nix ];
+      buildInputs = [ cabal2nix ];
     }
     ''
       echo "Source is '$dir'" 1>&2
