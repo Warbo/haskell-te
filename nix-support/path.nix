@@ -1,4 +1,5 @@
 # Get the original nixpkgs path
 {}:
 
-(import ./tryElse.nix {}) <real> <nixpkgs>
+with builtins.tryEval <real>;
+if success then value else <nixpkgs>

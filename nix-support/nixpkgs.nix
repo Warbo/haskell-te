@@ -22,8 +22,6 @@ with rec {
   pkgs    = import path { inherit config; };
 
   default = if stable then pkgs.repo1603 else path;
-
-  tryElse = import ./tryElse.nix {};
 };
 rec {
   inherit (configs) nix-config-src;

@@ -42,8 +42,8 @@ fix (self: rec {
   # Helper functions, etc.
   inherit (nix-config)
     allDrvsIn attrsToDirs backtrace fail inNixedDir mkBin nixListToBashArray
-    nothing pipeToNix reverse sanitiseName stable stripOverrides timeout unlines
-    unpack withDeps wrap;
+    nothing pipeToNix reverse sanitiseName stable stripOverrides timeout tryElse
+    unlines unpack withDeps wrap;
 
   # Cases where we want both the attribute set and its attributes available
   inherit (callPackage ./annotate.nix {})
@@ -94,7 +94,6 @@ fix (self: rec {
   testData              = callPackage ./testData.nix              {};
   tipBenchmarks         = callPackage ./tipBenchmarks.nix         {};
   tipToHaskellPkg       = callPackage ./tipToHaskellPkg.nix       {};
-  tryElse               = callPackage ./tryElse.nix               {};
   tryTip                = callPackage ./tryTip.nix                {};
   withNix               = callPackage ./withNix.nix               {};
 })
