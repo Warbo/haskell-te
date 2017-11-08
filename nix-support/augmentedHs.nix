@@ -13,7 +13,10 @@ with rec {
                     })
                     hsDirs);
   hsNames = attrNames (hsDrvs haskellPackages);
-  hsPkgs  = haskellPackages.override {
+  givenHs = if getEnv("HASKELL_PACKAGES") == ""
+               then haskellPackages
+               else import getEnv("HASKELL_PACKAGES");
+  hsPkgs  = givenHs.override {
     overrides = hsOverride (self: super: hsDrvs self);
   };
 

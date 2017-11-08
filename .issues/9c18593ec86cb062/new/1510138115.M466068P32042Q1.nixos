@@ -1,0 +1,8 @@
+From: Chris Warburton
+Date: Wed, 08 Nov 2017 10:48:25 +0000
+Subject: Re: Provide HASKELL_PACKAGES override for all nix-eval runners
+Message-Id: <9c18593ec86cb062-ec88acfea7407886-artemis@nixos>
+References: <9c18593ec86cb062-0-artemis@nixos>
+In-Reply-To: <9c18593ec86cb062-0-artemis@nixos>
+
+Added to augmentedHs

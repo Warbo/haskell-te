@@ -1,8 +1,9 @@
 From: Chris Warburton
 Date: Fri, 03 Nov 2017 14:06:01 +0000
-State: new
+State: resolved
 Subject: Provide HASKELL_PACKAGES override for all nix-eval runners
 Message-Id: <9c18593ec86cb062-0-artemis@nixos>
+resolution: fixed
 
 We run QuickSpec using nix-eval, which provides NIX_EVAL_HASKELL_PKGS as
 an override if we want to alter the source of Haskell packages. Since
