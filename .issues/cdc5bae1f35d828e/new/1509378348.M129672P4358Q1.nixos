@@ -1,8 +1,9 @@
 From: Chris Warburton
 Date: Mon, 30 Oct 2017 15:43:03 +0000
-State: new
+State: resolved
 Subject: Take multiple OUT_DIRs and arguments
 Message-Id: <cdc5bae1f35d828e-0-artemis@nixos>
+resolution: fixed
 
 We split up AST extraction from exploration, but that requires some way
 to tell the exploration where to find the package that defines those

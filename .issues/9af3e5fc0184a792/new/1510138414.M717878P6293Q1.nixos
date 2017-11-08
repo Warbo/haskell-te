@@ -1,0 +1,9 @@
+From: Chris Warburton
+Date: Wed, 08 Nov 2017 10:52:48 +0000
+Subject: Re: Reduce usage of ./.
+Message-Id: <9af3e5fc0184a792-e8f985488ca788bc-artemis@nixos>
+References: <9af3e5fc0184a792-0-artemis@nixos>
+In-Reply-To: <9af3e5fc0184a792-0-artemis@nixos>
+
+I think we've done as much as we can here. The remaining stuff is in
+things like nix-eval env vars, which seems to be pretty unavoidable.

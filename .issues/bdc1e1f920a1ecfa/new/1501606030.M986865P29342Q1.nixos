@@ -1,8 +1,9 @@
 From: Chris Warburton
 Date: Tue, 01 Aug 2017 17:29:08 +0100
-State: new
+State: resolved
 Subject: Tease out independent components again.
 Message-Id: <bdc1e1f920a1ecfa-0-artemis@nixos>
+resolution: fixed
 
 This began as a collection of bash scripts (oh how times have changed!),
 which were at least runnable as standalone commands.

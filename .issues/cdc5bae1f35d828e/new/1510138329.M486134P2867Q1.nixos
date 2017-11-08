@@ -1,0 +1,13 @@
+From: Chris Warburton
+Date: Wed, 08 Nov 2017 10:50:30 +0000
+Subject: Re: Take multiple OUT_DIRs and arguments
+Message-Id: <cdc5bae1f35d828e-b80adc960fa0c62d-artemis@nixos>
+References: <cdc5bae1f35d828e-0-artemis@nixos>
+In-Reply-To: <cdc5bae1f35d828e-0-artemis@nixos>
+
+We now take multiple commandline arguments, and put them in an OUT_DIRS
+env var, which contains a JSON array of strings.
+
+We still use one argument and OUT_DIR for those commands which must be
+done one package at a time (e.g. 'haskellPkgToAsts' on the user-facing
+side; 'dumpNix', 'annotate', etc. on the internal side)

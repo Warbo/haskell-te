@@ -1,0 +1,16 @@
+From: Chris Warburton
+Date: Wed, 08 Nov 2017 12:18:43 +0000
+State: new
+Subject: Don't reduce in quickspecAsts or concurrentQuickspec
+Message-Id: <cacc597411d5955c-0-artemis@nixos>
+
+We have a standalone reduce-equations command, so we shouldn't have the
+other commands do reduction.
+
+This is unrelated to whether we automatically reduce during
+benchmarking. In that case, I think quickspec should automatically
+reduce, since that's how the authors intended it to be used, whilst the
+bucketing systems should use reduce-equations, as that's how we intended
+them to be used.
+
+Make sure to update the README examples if we do this change!

@@ -1,0 +1,25 @@
+From: Chris Warburton
+Date: Wed, 08 Nov 2017 12:23:19 +0000
+State: new
+Subject: ifcxt-0.1.1 doesn't build with GHC 8.*
+Message-Id: <dce06df48c444e89-0-artemis@nixos>
+
+On "unstable":
+
+<5>building path(s) â€˜/nix/store/znrxhrwk4bb565rz5d7xrjq6v2k6xwwg-ifcxt-0.1.1â€™
+setupCompilerEnvironmentPhase
+Build with /nix/store/hg0ppf88q1rw0q7x3zqhlxbnviq0ddcg-ghc-8.0.2.
+unpacking sources
+unpacking source archive /nix/store/74skf4jmigm69scg2m6j5xqp0fz03f2r-44zw23qk0a6ih5r2jjs7xq1c1c9axmqs-nixedHsPkg
+source root is 44zw23qk0a6ih5r2jjs7xq1c1c9axmqs-nixedHsPkg
+patching sources
+compileBuildDriverPhase
+setupCompileFlags: -package-db=/tmp/nix-build-ifcxt-0.1.1.drv-0/package.conf.d -j1 -threaded
+[1 of 1] Compiling Main             ( Setup.hs, /tmp/nix-build-ifcxt-0.1.1.drv-0/Main.o )
+Linking Setup ...
+configuring
+configureFlags: --verbose --prefix=/nix/store/znrxhrwk4bb565rz5d7xrjq6v2k6xwwg-ifcxt-0.1.1 --libdir=$prefix/lib/$compiler --libsubdir=$pkgid --with-gcc=gcc --package-db=/tmp/nix-build-ifcxt-0.1.1.drv-0/package.conf.d --ghc-option=-optl=-Wl,-rpath=/nix/store/znrxhrwk4bb565rz5d7xrjq6v2k6xwwg-ifcxt-0.1.1/lib/ghc-8.0.2/ifcxt-0.1.1 --ghc-option=-j1 --disable-split-objs --disable-library-profiling --disable-profiling --enable-shared --disable-coverage --enable-library-vanilla --enable-executable-dynamic --enable-tests --ghc-option=-split-sections
+Configuring ifcxt-0.1.1...
+Setup: Encountered missing dependencies:
+base ==4.8.*, template-haskell ==2.10.*
+<3>builder for â€˜/nix/store/blwrn051syc6fpixlfrbknkiyfa1b1pn-ifcxt-0.1.1.drvâ€™ failed with exit code 1

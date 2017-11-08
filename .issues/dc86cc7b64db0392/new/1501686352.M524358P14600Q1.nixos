@@ -1,8 +1,9 @@
 From: Chris Warburton
 Date: Wed, 02 Aug 2017 15:59:43 +0100
-State: new
+State: resolved
 Subject: asv errors on desktop
 Message-Id: <dc86cc7b64db0392-0-artemis@nixos>
+resolution: fixed
 
 Looks like an obvious issue with jq not being in the environment:
 

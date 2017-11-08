@@ -1,0 +1,11 @@
+From: Chris Warburton
+Date: Wed, 08 Nov 2017 12:17:49 +0000
+Subject: Re: Tease out independent components again.
+Message-Id: <bdc1e1f920a1ecfa-86789ecc139ec663-artemis@nixos>
+References: <bdc1e1f920a1ecfa-0-artemis@nixos>
+In-Reply-To: <bdc1e1f920a1ecfa-0-artemis@nixos>
+
+The commands we care about now exist, closing this issue.
+
+We still don't have standalone commands for bucketing, but that can wait
+for another issue.

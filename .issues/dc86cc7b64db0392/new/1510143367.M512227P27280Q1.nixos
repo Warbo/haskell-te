@@ -1,0 +1,8 @@
+From: Chris Warburton
+Date: Wed, 08 Nov 2017 12:15:35 +0000
+Subject: Re: asv errors on desktop
+Message-Id: <dc86cc7b64db0392-cf5d0286f88231bd-artemis@nixos>
+References: <dc86cc7b64db0392-0-artemis@nixos>
+In-Reply-To: <dc86cc7b64db0392-0-artemis@nixos>
+
+The refactoring of the benchmark env seems to have fixed this

@@ -46,8 +46,8 @@ with rec {
     mlspec = get {
       path   = <mlspec>;
       repo   = "mlspec";
-      rev    = "82c123c";
-      sha256 = "0wyinmqfgy8l31lzxklm41a47678sw9jgy9jrn540n6ihc1jal8d";
+      rev    = "8f97e7f";
+      sha256 = "1f9wq92pizxagb5d4a8lk7hhw76qhx94qjgrdy73qf11f6q9dij7";
     } {};
 
     mlspec-helper = get {

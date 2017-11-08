@@ -1,8 +1,9 @@
 From: Chris Warburton
 Date: Tue, 15 Aug 2017 23:59:01 +0100
-State: new
+State: resolved
 Subject: Reduce usage of ./.
 Message-Id: <9af3e5fc0184a792-0-artemis@nixos>
+resolution: fixed
 
 In a few places we're using './.', or './nix-support', or './..',
 etc. usually spliced into strings. This is annoying, since it adds the
