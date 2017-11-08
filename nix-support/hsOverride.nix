@@ -67,8 +67,8 @@ with rec {
     reduce-equations = get {
       path   = <reduce-equations>;
       repo   = "reduce-equations";
-      rev    = "a86199b";
-      sha256 = "11dafq0zl6vj1lzybsfpryvc2rqbxxkjjy3v4ab1vb8nzhxfgna3";
+      rev    = "dcc8b0f";
+      sha256 = "1qlgkdjn2nvg9hw5p9wj5mjb59dyrjys2gxxij653fhrilpa8yr2";
     } {
       haskell-src-exts = hackagePkg "haskell-src-exts" "1.19.0" {
         pretty-show = hackagePkg "pretty-show" "1.6.12" {};

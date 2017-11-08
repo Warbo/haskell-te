@@ -1,0 +1,7 @@
+From: Chris Warburton
+Date: Wed, 08 Nov 2017 01:51:48 +0000
+State: new
+Subject: Try to remove foo/fooScript/fooData distinctions
+Message-Id: <fbff40f455050e66-0-artemis@nixos>
+
+See if we still need 2 versions of annotate, dumpToNix, format, etc.

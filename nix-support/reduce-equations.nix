@@ -1,5 +1,5 @@
-{ annotated, cabal-install, glibcLocales, haskellPackages, jq, lib, runCommand,
-  testData, unpack, withDeps }:
+{ annotated, cabal-install, fail, glibcLocales, haskellPackages, jq, lib,
+  runCommand, testData, unpack, withDeps }:
 
 with builtins;
 with lib;
@@ -38,13 +38,21 @@ with rec {
   checkGetEqs = attr: eqs: runCommand "reduceProducesEqs-${attr}"
     {
       inherit eqs;
-      buildInputs = [ jq reduce-equations ];
+      buildInputs = [ fail jq reduce-equations ];
     }
     ''
       set -e
-      GOT=$(reduce-equations < "$eqs")
-      echo "$GOT" | jq -e 'type == "array"'
-      echo "$GOT" | jq -e 'map(has("relation")) | all' > "$out"
+
+      function die {
+        echo "$GOT" 1>&2
+        fail "$*"
+      }
+
+      GOT=$(reduce-equations < "$eqs")                 || die "Couldn't reduce"
+      echo "$GOT" | jq -e 'type == "array"'            || die 'Not array'
+      echo "$GOT" | jq -e 'map(has("relation")) | all' || die 'Not relation'
+
+      mkdir "$out"
     '';
 };
 
