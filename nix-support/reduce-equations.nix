@@ -22,6 +22,7 @@ with rec {
           h.tasty-quickcheck
           h.reduce-equations
         ]))
+        jq
       ];
     }
     ''
