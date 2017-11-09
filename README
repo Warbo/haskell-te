@@ -1,9 +1,27 @@
 # Haskell Theory Exploration #
 
-http://chriswarbo.net/git/haskell-te
-https://github.com/Warbo/haskell-te
+Contact:  chriswarbo@gmail.com
 
-## A Wrapper Around QuickSpec ##
+Homepage: http://chriswarbo.net/git/haskell-te
+
+Mirrors:
+
+ - /ipns/QmWv958VzBJQchGjYKiSaxLC9ugrjvXkqMpVrmjp9AonXq
+ - https://github.com/Warbo/haskell-te
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU Affero General Public License as published by the Free
+Software Foundation, either version 3 of the License, or (at your option) any
+later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License along
+with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+## Introduction: A Wrapper Around QuickSpec ##
 
 This repository provides commands for performing "theory exploration", mostly in
 the Haskell programming language. Theory exploration describes the task of
@@ -309,7 +327,26 @@ and approaches. This requires the code to be:
 ## Caveats ##
 
 We abstract over a lot of implementation details. These abstractions are leaky,
-so you may encounter problems. Here are some known difficulties and workarounds:
+so you may encounter problems.
+
+Barring dependency clashes, the packages most likely to work are "helper
+libraries" for built-in types, like `list-extras`, since they can use the
+`Arbitrary` instances bundled with QuickCheck (`Bool`, `[a]`, `Maybe a`, etc.).
+
+Packages which define combinator libraries and simple 'sums of products'
+datatypes should usually work, but you may need to define/expose some
+`Arbitrary` instances, and maybe be selective about which functions get explored
+together to avoid running out of memory.
+
+Libraries making heavy use of type classes and records may struggle, as will
+those whose "data" can't be serialised or compared (e.g. functions).
+
+It goes without saying, but anything which invokes `IO` may cause damage to your
+system. This should only be possible with `unsafePerformIO` and friends, but
+don't blindly trust third-party code. A welcome feature would be to enforce
+GHC's "safe haskell" mode when exploring!
+
+Here are some known difficulties and workarounds:
 
 *Function extraction uses a GHC compiler plugin*
 

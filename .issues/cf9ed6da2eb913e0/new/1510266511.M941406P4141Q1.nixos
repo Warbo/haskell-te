@@ -1,0 +1,14 @@
+From: Chris Warburton
+Date: Thu, 09 Nov 2017 22:23:51 +0000
+State: resolved
+Subject: Add a COPYING/LICENSE file
+Message-Id: <cf9ed6da2eb913e0-0-artemis@nixos>
+resolution: fixed
+
+Oops, we don't have a license. EPSRC funding recommends an "open
+license", and university doesn't want to lose commercial exploitability.
+
+AGPLv3 fits this best: it's "open" for the research community to use,
+e.g. for reproducing results, it is FOSS and hence compatible with our
+dependencies (notably QuickSpec is BSD3) and it allows commercial
+exploitation via dual-licensing agreements.
