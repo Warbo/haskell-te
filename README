@@ -8,11 +8,11 @@ taking in some function definitions and outputting conjectures about those
 functions. For example, given the list functions `append` and `nil`, we might
 get the following conjectures:
 
-    append x nil = x
-    append nil x = x
-    append x (append y z) = append (append x y) z
+    append v0 nil = v0
+    append nil v0 = v0
+    append v0 (append v1 v2) = append (append v0 v1) v2
 
-In this case, we've found that `append` and `nil` form a monoid for lists :)
+In which case, we'd find that `append` and `nil` form a monoid for lists.
 
 Currently, we're limited to finding equations. We rely on the excellent
 QuickSpec library to do most of the work, but we also use and provide many
@@ -21,22 +21,24 @@ complementary tools. We use Nix to tame the menagerie of languages and systems
 
 ## Overview ##
 
-This implementation of theory exploration can be thought of as "dynamic
-analysis", since we discover properties of the given code by running it over and
-over in many combinations. The Haskell programming language is well suited to
-this, since its "purity" prevents functions relying on any ambient 'context'
-(everything a Haskell function needs should be taken in as an argument), and the
-type system tells us which functions we can combine together, and what arguments
-they should be given. The QuickSpec system uses this knowledge, along with the
-type-directed data generators from QuickCheck, to find combinations of the given
-functions which seem to behave the same way on many inputs. Those which do are
-conjectured to be equivalent.
+We can think of these tools as "dynamic analysers" (as opposed to static
+analysers), since we discover properties of the given code by *running it*, over
+and over, in many combinations. Haskell is well suited to this, since its
+"purity" prevents functions relying on any ambient 'context': everything a
+Haskell function needs should be taken in as an argument. The type system tells
+us which functions we can combine together, and what arguments they should be
+given.
+
+QuickSpec uses this knowledge, along with data generators for the popular test
+framework QuickCheck, to find combinations of the given functions which seem to
+behave the same way on many inputs. We conjecture that such expressions are
+(beta) equivalent.
 
 Whilst QuickSpec is very useful, it has a few weaknesses which we seek to
 address:
 
- - We provide a wrapper around the QuickSpec library, allowing it to be run as a
-   standalone program.
+ - We provide a wrapper script around the QuickSpec library, allowing it to be
+   run as a standalone program.
  - We provide a tool to extract all functions from a Haskell package, and
    generate a suitable signature for QuickSpec, so the user doesn't have to.
  - To generate our signatures, we automatically pick suitable names, types,
@@ -47,11 +49,11 @@ address:
  - We replace QuickSpec's custom pretty-printer with a JSON format which is more
    amenable to subsequent processing.
  - We split apart QuickSpec's exploration phase from its 'filter out redundant
-   conjectures' phase, in case users want to explore without filtering, or want
+   conjectures' phase, in case users want to explore without filtering, or wants
    to filter some separate data.
  - We allow functions to be split into separate "buckets" for concurrent
    exploration, as well as a few "bucketing" algorithms to select how this
-   splitting up should be performed.
+   splitting up should be performed. (Currently WIP).
 
 ## Commands ##
 
@@ -68,53 +70,43 @@ The Nix package defined in `default.nix` provides the following commands:
    those which aren't "redundant" (i.e. it removes anything which is just a
    special case of some other conjecture).
  - `haskellPkgToAsts` takes the path to a Haskell package as an argument and
-   outputs JSON describing the functions defined inside.
- - `quickspecAsts` will explore the equations described by JSON given on stdin,
-   in the same format outputted by `haskellPkgToAsts`. The Haskell package must
-   also be given as an argument, so GHC knows where to find it.
- - `concurrentQuickspec` takes an *array* of JSON on stdin, and launches a
-   QuickSpec process for each, gathering up the conjectures from all of them.
+   outputs a JSON array detailing the function definitions it finds inside.
+ - `quickspecAsts` will explore the equations described by a JSON array given on
+   stdin, in the same format outputted by `haskellPkgToAsts`. The relevant
+   Haskell packages should also be given as an argument, so GHC knows where to
+   find them.
+ - `concurrentQuickspec` takes a "2D array" of JSON on stdin, where each element
+   of the outer array is a JSON array as per `quickspecAsts`. A QuickSpec
+   process is launched for each, and the conjectures from all of them are
+   pooled.
 
 The intermediate JSON data is useful if we want to remove particular functions
-from being explored, or if we want to explore functions from multiple packages.
-Tools like `jq` are handy for manipulating this JSON.
-
-Note that during AST extraction, we try to determine whether or not a function
-is usable by QuickSpec. The result is stored in the `quickspecable` field, and
-if this is `false` you may have trouble sending it into an exploration command
-like `quickspec` or `concurrentQuickspec`. You can filter out such entries using
-tools like `jq`, e.g.
-
-    jq 'map(select(.quickspecable))' < ./myAstsFile | quickspecAsts
+from being explored, or if we want to explore functions from multiple packages
+together. Tools like `jq` are handy for manipulating this JSON.
 
 ## Examples ##
 
-We can start a shell with this package in scope as follows:
+We can start a shell with these commands in scope as follows:
 
     $ nix-shell --show-trace -p 'import ./. {}'
 
-This should drop us to a "nix shell" with the above commands in our `PATH`:
+After much building and testing, this should drop us to a "nix shell" with an
+augmented `PATH`:
 
     [nix-shell]$ command -v quickspecAsts
     /nix/store/...-haskell-theory-exploration/bin/quickspecAsts
 
-We need some code to explore; you'll probably be using your own projects, but
-here we'll fetch a package from Hackage:
+Now we need some code to explore; you'll probably be using your own projects,
+but here we'll fetch a package from Hackage:
 
     [nix-shell]$ cabal get dlist
-    Warning: The package list for 'hackage.haskell.org' is 310 days old.
-    Run 'cabal update' to get the latest list of available packages.
     Downloading dlist-0.8.0.2...
     Unpacking to dlist-0.8.0.2/
 
-First let's try exploring it, by passing the unpacked directory to `quickspec`:
+First let's try exploring it, by passing the directory path to `quickspec`:
 
     [nix-shell]$ quickspec dlist-0.8.0.2 | tee dlist.eqs
-    these derivations will be built:
-      /nix/store/jpzhn0ww9c3dvh62hmpcrib6xkdxbndd-ghc-7.10.3.drv
-    building path(s) ‘/nix/store/x6nfs4mh02h58a3g1z1a80c4pw5dqgmz-ghc-7.10.3’
-    <the usual messages from nix, haddock, and cabal>
-
+    ...the usual messages from nix, haddock, and cabal...
     Checking module availability
     Found modules
     Building type-extraction command
@@ -131,8 +123,7 @@ First let's try exploring it, by passing the unpacked directory to `quickspec`:
     Getting scope
     Tagging
     Tagged
-    <more messages from nix, haddock and cabal>
-    building path(s) ‘/nix/store/8cwvwrw10i2yfgq7xy820wqrhy33vkq5-quickspec-runner’
+    ...more messages from nix, haddock and cabal...
     [
       {
         "relation": "~=",
@@ -143,94 +134,78 @@ First let's try exploring it, by passing the unpacked directory to `quickspec`:
 
 This can take a while, and you might want to keep an eye on GHC's memory usage.
 The messages in the middle are from our AST extraction system as it finds
-which functions are defined in `dlist` and their types, arities, etc.
+functions definitions in the `dlist` packages, along with their types, arities,
+etc.
 
-The result is a bunch of conjectured equations involving the package's
-functions. By default these are in a machine-readable JSON format, so they can
-be piped into other tools. Since we want to read them, we'll pipe them into
-`renderEqs`:
+The result is a bunch of conjectured equations involving functions from the
+`dlist` package. These are in our JSON format, suitable for piping into other
+tools. Since we only want to read them, we'll pipe them into `renderEqs`:
 
     [nix-shell]$ renderEqs < dlist.eqs
-    ((foldr iii9) i0) empty ~= i0
-    (cons i0) empty ~= singleton i0
-    (map ii3) empty ~= empty
-    (snoc empty) i0 ~= singleton i0
-    (apply empty) i15 ~= i15
+    ((foldr v0) v1) empty ~= v1
+    (cons v0) empty ~= singleton v0
+    (map v0) empty ~= empty
+    (snoc empty) v0 ~= singleton v0
+    (apply empty) v0 ~= v0
     head empty ~= undefined
     tail empty ~= undefined
     (append empty) empty ~= empty
-    (snoc ((replicate i12) i0)) i0 ~= (cons i0) ((replicate i12) i0)
-    (snoc (singleton i0)) i1 ~= (cons i0) (singleton i1)
-    head (singleton i0) ~= i0
-    tail (singleton i0) ~= empty
-    toList (fromList i15) ~= i15
-    (append ((unfoldr imii6) i0)) (singleton i1) ~= (snoc ((unfoldr imii6) i0)) i1
-    (append ((replicate i12) i0)) (singleton i1) ~= (snoc ((replicate i12) i0)) i1
-    (append ((replicate i13) i0)) ((replicate i12) i0) ~= (append ((replicate i12) i0)) ((replicate i13) i0)
-    (append (singleton i0)) ((unfoldr imii6) i1) ~= (cons i0) ((unfoldr imii6) i1)
-    (append (singleton i0)) ((replicate i12) i1) ~= (cons i0) ((replicate i12) i1)
-    (append empty) ((unfoldr imii6) i0) ~= (unfoldr imii6) i0
-    (append empty) ((replicate i12) i0) ~= (replicate i12) i0
-    (append ((unfoldr imii6) i0)) empty ~= (unfoldr imii6) i0
-    (append ((replicate i12) i0)) empty ~= (replicate i12) i0
-    (append (singleton i0)) (singleton i1) ~= (cons i0) (singleton i1)
-    (append (singleton i0)) (fromList i15) ~= (cons i0) (fromList i15)
-    (append (fromList i15)) (singleton i0) ~= (snoc (fromList i15)) i0
-    (append empty) (singleton i0) ~= singleton i0
-    (append empty) (fromList i15) ~= fromList i15
-    (append (singleton i0)) empty ~= singleton i0
-    (append (fromList i15)) empty ~= fromList i15
+    (snoc ((replicate v0) v1)) v1 ~= (cons v1) ((replicate v0) v1)
+    (snoc (singleton v0)) v1 ~= (cons v0) (singleton v1)
+    head (singleton v0) ~= v0
+    tail (singleton v0) ~= empty
+    toList (fromList v0) ~= v0
+    (append ((unfoldr v0) v1)) (singleton v2) ~= (snoc ((unfoldr v0) v1)) v2
+    (append ((replicate v0) v1)) (singleton v2) ~= (snoc ((replicate v0) v1)) v2
+    (append ((replicate v0) v1)) ((replicate v2) v1) ~= (append ((replicate v2) v1)) ((replicate v0) v1)
+    (append (singleton v0)) ((unfoldr v1) v2) ~= (cons v0) ((unfoldr v1) v2)
+    (append (singleton v0)) ((replicate v1) v2) ~= (cons v0) ((replicate v1) v2)
+    (append empty) ((unfoldr v0) v1) ~= (unfoldr v0) v1
+    (append empty) ((replicate v0) v1) ~= (replicate v0) v1
+    (append ((unfoldr v0) v1)) empty ~= (unfoldr v0) v1
+    (append ((replicate v0) v1)) empty ~= (replicate v0) v1
+    (append (singleton v0)) (singleton v1) ~= (cons v0) (singleton v1)
+    (append (singleton v0)) (fromList v1) ~= (cons v0) (fromList v1)
+    (append (fromList v0)) (singleton v1) ~= (snoc (fromList v0)) v1
+    (append empty) (singleton v0) ~= singleton v0
+    (append empty) (fromList v0) ~= fromList v0
+    (append (singleton v0)) empty ~= singleton v0
+    (append (fromList v0)) empty ~= fromList v0
     fromList (toList empty) ~= empty
-    (apply ((unfoldr imii6) i0)) (toList empty) ~= toList ((unfoldr imii6) i0)
-    (apply ((replicate i12) i0)) (toList empty) ~= toList ((replicate i12) i0)
-    (apply (singleton i0)) (toList empty) ~= toList (singleton i0)
-    (apply (fromList i15)) (toList empty) ~= i15
+    (apply ((unfoldr v0) v1)) (toList empty) ~= toList ((unfoldr v0) v1)
+    (apply ((replicate v0) v1)) (toList empty) ~= toList ((replicate v0) v1)
+    (apply (singleton v0)) (toList empty) ~= toList (singleton v0)
+    (apply (fromList v0)) (toList empty) ~= v0
+
+Here we've found that `toList` is the inverse of `fromList`, that `head` is the
+inverse of `singleton`, etc.
 
 We use the symbol `~=` to indicate that these are not definitions or proven
-theorems, they're just conjectures based on many empirical tests. The numbered
-terms like `ii3` are free variables: the letters come from the type and the
-numbers distinguish between different variables of the same type. Here we've
-found that `toList` is the inverse of `fromList`, that `head` is the inverse of
-`singleton`, etc.
+theorems, they're just conjectures based on many empirical tests. The terms
+`v0`, `v1`, etc. are free variables, which are numbered from left to right per
+equation; the prefix contains enough `v`s to prevent clashing with any function
+name (e.g. if we had a function called `verbose`, or even `v0`, the variables
+would render as `vv0`, `vv1`, etc.)
 
 Notice that there are several equations of the form `(append empty) x = x`, but
 that more general statement itself wasn't conjectured. The reason is that `x`
 would be a variable of type `DList a` (in fact `DList Integer`, since we
 monomorphise), but the `dlist` package doesn't expose a `DList a` instance of
-QuickCheck's `Arbitrary` type class. Without this, we don't know how to test
-equations involving such variables, so we cannot include such variables in our
-expressions, and hence the general equation wasn't found.
+QuickCheck's `Arbitrary` type class. Without this, we can't test equations
+involving such variables, so we don't include them and hence the general
+equation wasn't found.
 
 If we want more control over what gets explored, we can use `haskellPkgToAsts`
-to dump out a package's information as JSON, without exploring it immediately:
+to dump out a package's function definitions as JSON, without exploring them
+immediately:
 
     [nix-shell]$ haskellPkgToAsts dlist-0.8.0.2 | tee dlist.asts
-    <nix, haddock and cabal output>
-
-    Checking module availability
-    Found modules
-    Building type-extraction command
-    Extracting types
-    Building scope-checking command
-    Checking scope
-    Outputting JSON
-    Finished output
-    Set DEBUG=1 if you want to see gory GHCi output.
-
-    This stage is tricky. Set DEBUG=1 to see the debug info.
-    Getting ASTs
-    Getting types
-    Getting scope
-    Tagging
-    Tagged
+    ...output from nix, haddock, cabal, ...
     [{"name":"replicate","version":"0.8.0.2",...},...]
 
-Tools like `jq` can manipulate this JSON. We can use them to mix and match
-functions from different packages. For example, we can take functions from the
-`LazyLength` module of the `list-extras` package, any functions from `dlist`
-which have `List` in their name, and explore them together. Note that we provide
-both package directories to `quickspecAsts`, so it knows where to find all of
-the necessary code:
+Tools like `jq` can manipulate this JSON. Here we'll take functions from the
+`LazyLength` module of the `list-extras` package, and functions from `dlist`
+which have `List` in their name, and combine them into one array:
 
     [nix-shell]$ cabal get list-extras
     [nix-shell]$ haskellPkgToAsts list-extras-0.4.1.4 > list-extras.asts
@@ -238,23 +213,54 @@ the necessary code:
                        --argfile dl dlist.asts       \
                        '($dl | map(select(.name   | contains("List")))) +
                         ($le | map(select(.module | contains("LazyLength"))))' |
-                 quickspecAsts dlist-0.8.0.2 list-extras-0.4.1.4               |
-                 renderEqs
-    (lengthCompare i19) i19 ~= (lengthCompare i18) i18
-    toList (fromList i18) ~= i18
+                 tee combined.asts
 
-In this case we didn't find any equations involving both `lengthCompare` and
+We can explore these together by using `quickspecAsts`. Note that we provide
+*both* package directories as arguments, so GHC can find all of the necessary
+code:
+
+    [nix-shell]$ quickspecAsts dlist-0.8.0.2       \
+                               list-extras-0.4.1.4 < combined.asts | renderEqs
+    (lengthCompare v0) v0 ~= (lengthCompare v1) v1
+    v0 ~= toList (fromList v0)
+
+In this case we didn't find any equations involving *both* `lengthCompare` and
 `toList`/`fromList`, so there's no need to explore them together. Instead, we
-could explore them in separate processes using `concurrentQuickspec`:
+could have explored them in separate processes using `concurrentQuickspec`.
+
+We need a different `jq` command, since the one above uses `(...) + (...)` to
+append two arrays together, resulting in:
+
+    [{"name":"lengthCompare",...},{"name":"toList",...},{"name":"fromList",...}]
+
+This time we want multiple arrays, so we use `[...] + [...]` instead to get:
+
+    [[{"name":"lengthCompare",...}],
+     [{"name":"toList",...},{"name":"fromList",...}]]
+
+Here's the call we use:
 
     [nix-shell]$ jq -n --argfile le list-extras.asts \
                        --argfile dl dlist.asts       \
-                       '[($dl | map(select(.name   | contains("List"))))] +
+                       '[$dl | map(select(.name   | contains("List")))] +
                         [$le | map(select(.module | contains("LazyLength")))]' |
-                 concurrentQuickspec dlist-0.8.0.2 list-extras-0.4.1.4         |
-                 renderEqs
-    (lengthCompare i19) i19 ~= (lengthCompare i18) i18
-    toList (fromList i18) ~= i18
+                 tee separate.asts
+
+We send these nested arrays to `concurrentQuickspec` instead of `quickspecAsts`,
+remembering to provide both directory paths as before. We also send the
+resulting conjectures through `reduce-equations` to remove duplicates and
+redundancies (`quickspec` and `quickspecAsts` currently do this automatically):
+
+    [nix-shell]$ concurrentQuickspec dlist-0.8.0.2       \
+                                     list-extras-0.4.1.4 < separate.asts |
+                 reduce-equations | renderEqs
+    (lengthCompare v0) v0 ~= (lengthCompare v1) v1
+    v0 ~= toList (fromList v0)
+
+The idea of `concurrentQuickspec` is to work around QuickSpec's exponential
+worst-case complexity: turning O(2^N) into O(k*2^(N/k)). How we should divide up
+one big array into multiple smaller ones, without losing good conjectures in the
+process, is currently an open question!
 
 ## Design Goals ##
 
@@ -294,8 +300,8 @@ and approaches. This requires the code to be:
    replicated and results can be compared.
  - Fast at running a "happy path", allowing us to perform any expensive setup
    (like compiling dependencies and creating environments) beforehand, so they
-   don't contribute to the measured runtime. In particular, we need to prevent
-   `nix-eval` from having to compile dependencies during a run.
+   don't contribute to the measured runtime. In particular, we need a way to
+   prevent `nix-eval` from compile dependencies during an `eval` call.
 
 ## Caveats ##
 
@@ -334,8 +340,9 @@ Others, like `QuickSpec` and `AstPlugin`, must be installed into the same
 `ghc-pkg` database as the packages being explored, so there is potential for
 dependencies to clash.
 
-Clashes with `AstPlugin` can be worked around by using `quickspecAsts` and
-providing JSON data from somewhere other than `haskellPkgToAsts`.
+Clashes with `AstPlugin` can be worked around by avoiding `quickspec` and
+`haskellPkgToAsts`, and instead providing your own JSON to `quickspecAsts` or
+`concurrentQuickspec`.
 
 Clashes with packages used during exploration (e.g. `QuickSpec`) cannot be
 worked around, due to the nature of the algorithm: functions from one must be
@@ -344,20 +351,19 @@ invoked by the other, so their dependencies must be compatible.
 *Overrides*
 
 We prefer to hard-code our dependency versions, to make results more
-deterministic and reproducible, but if this prevents some package from building
-then they can be overridden in the following ways:
+deterministic and reproducible, but this may prevent some user packages from
+building, so we provide the following override mechanisms:
 
  - Our package accepts overridable parameters, including `stable` which defaults
    to `true`. If set to `false`, we will check out the latest revision of each
    git repository we access, rather than the known-good revision we've
    hard-coded. For example: `nix-shell -p 'import ./. { stable = false; }'`
- - Some dependencies are looked up in the `NIX_PATH` environment variable,
-   falling back to the hard-coded versions if no override is given.
- - We avoid using the `<nixpkgs>` path, since differs among systems
- - The `HASKELL_PACKAGES` environment variable can be set to a `.nix` file to
-   override which Haskell package set is used by the exploration process. Note
-   that this will not affect things *other* than exploration, like function
-   extraction or setup code.
+ - Some dependencies can be given in the `NIX_PATH` environment variable, e.g.
+   most of the custom Haskell packages in `nix-support/hsOverride.nix`.
+ - If the `HASKELL_PACKAGES` environment variable is set to a `.nix` file, that
+   will be used as the Haskell package set when exploring. Note that this will
+   not affect things *other* than exploration, like function extraction or setup
+   code.
  - Note that we use the `nix-eval` package, but we *don't* expose its
    `NIX_EVAL_HASKELL_PKGS` override. That's because we need to use it ourselves,
    but the `HASKELL_PACKAGES` we provide acts in a similar way.
@@ -369,8 +375,8 @@ In particular, it *does not* extract anything which is re-exported from a
 *different* package, and it does not include constuctors or type class methods.
 
 If a package defines things in a "private" (non-exposed) module, those functions
-may be marked as unexplorable, since we can't import the module; *even if* an
-exposed module re-exports them.
+may be deemed unexplorable, since we can't import the module; *even if* an
+exposed module happens to re-export them elsewhere.
 
 We can work around these problems by defining wrapper functions (e.g. in a
 "helper" package). For example:
@@ -416,10 +422,8 @@ function's inputs, so we can generate random values. We also need the outputs to
 be comparable, either by having an instance of `Ord` (we could use `Eq`, but it
 would require O(n^2) comparisons) or an instance of `Serialize`.
 
-We use the latter if possible: serialising return values, hashing the resulting
-string and comparins. We do this in an attempt to reduce memory usage, since
-keeping many large values in memory for comparisons can be expensive, compared
-to keeping many fixed-length hashes.
+We use the latter if possible, since serialised data can be easily hashed to a
+fixed-size value, which may save time and memory as our function outputs grow.
 
 Another consideration is that we need code to be monomorphic: we can't generate
 random inputs if we don't know which particular type to generate values of. For
@@ -440,22 +444,24 @@ better off being developed as a separate project.
 It's easy to work around most of these mechanisms' failures, by simply writing
 down monomorphic versions of your functions, e.g.
 
-    myCrazyFunc :: Madness
+    myCrazyFunc :: Heavy Wizardry..
     myCrazyFunc = ...
 
     myMonoFunc :: Bool -> String
     myMonoFunc = myCrazyFunc
 
-One annoyance is that many projects use QuickCheck "internally", and hence have
-`Arbitrary` instances for their types, but they don't provide these in their
+One annoyance is that many projects use QuickCheck "internally", and hence their
+test suites define `Arbitrary` instances, but these aren't provided by their
 library interface, so we can't use them.
 
 *Resource usage*
 
 We use QuickSpec version 1, which has a rather slow algorithm. In particular,
-memory usage may explode when exploring some functions and not for others. To
-prevent GHC eating all of your resources, it can be killed after a time limit by
-setting the `MAX_SECS` env var, or memory limit by setting `MAX_KB`.
+memory usage may explode when exploring some functions and not for others.
+Characterising this behaviour is itself an interesting question.
+
+To prevent GHC eating all of your resources, it can be killed after a time limit
+by setting the `MAX_SECS` env var, or memory limit by setting `MAX_KB`.
 
 ## Other Details ##
 
