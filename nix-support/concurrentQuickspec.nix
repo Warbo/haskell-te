@@ -1,6 +1,6 @@
-{ allDrvsIn, attrsToDirs, coreutils, extractedEnv,
+{ allDrvsIn, attrsToDirs, cabal-install, coreutils, extractedEnv,
   extraHaskellPackages, fail, haskellPackages, jq, lib, makeHaskellPkgNixable,
-  mkBin, nix, nixEnv, runCommand, testData, timeout, withDeps, wrap,
+  mkBin, nix, nixEnv, runCommand, testData, timeout, utillinux, withDeps, wrap,
   writeScript }:
 with builtins;
 with lib;
@@ -87,7 +87,33 @@ with rec {
 
   mkBuildInputs = args: extractedEnv args ++ [ untested fail ];
 
-  checks = mapAttrs (_: f: mapAttrs f data) {
+  checks = {
+    mlspec-test = runCommand "mlspec-test"
+      (nixEnv // {
+        buildInputs = [
+          cabal-install
+          (haskellPackages.ghcWithPackages (h: [ h.mlspec ]))
+          jq
+          nix
+          utillinux
+        ];
+        dir = haskellPackages.mlspec.src;
+      })
+      ''
+        set -e
+        echo "Appeasing Cabal's impurities" 1>&2
+        export HOME="$PWD"
+        GHC_PKG=$(ghc-pkg list | head -n 1 | tr -d ':')
+
+        cp -r "$dir" ./dir
+        chmod +w -R ./dir
+        cd ./dir
+
+        cabal configure --package-db="$GHC_PKG" 1>&2
+        ./test.sh
+        mkdir "$out"
+      '';
+  } // mapAttrs (_: f: mapAttrs f data) {
     exit-success = name: f: runCommand "exploreExitSuccess-${name}"
       {
         inherit f;
