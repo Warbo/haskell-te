@@ -43,6 +43,13 @@ with rec {
             done | jq -s '.'
           }
 
+          function onlyQuickspecable {
+            jq 'map(if type == "object"
+                       then select(.quickspecable)
+                       else map(select(.quickspecable))
+                    end)'
+          }
+
           if [[ -n "$OUT_DIRS" ]]
           then
             echo "Using existing OUT_DIRS" 1>&2
@@ -57,7 +64,8 @@ with rec {
           fi
 
           # limit time/memory
-          withTimeout MLSpec 2> >(checkForErrors 1>&2) | noDepth | jq -s '.'
+          onlyQuickspecable | withTimeout MLSpec 2> >(checkForErrors 1>&2) |
+                              noDepth | jq -s '.'
         '';
       };
     };
