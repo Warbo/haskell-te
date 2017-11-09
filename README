@@ -1,5 +1,8 @@
 # Haskell Theory Exploration #
 
+http://chriswarbo.net/git/haskell-te
+https://github.com/Warbo/haskell-te
+
 ## A Wrapper Around QuickSpec ##
 
 This repository provides commands for performing "theory exploration", mostly in
