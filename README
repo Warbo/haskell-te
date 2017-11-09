@@ -509,3 +509,8 @@ by setting the `MAX_SECS` env var, or memory limit by setting `MAX_KB`.
  - The main "user facing" functionality is the package provided by `default.nix`
  - The main "researcher facing" functionality is the benchmark suite, which is
    explained in more detail by `benchmarks/README`
+ - We track issues using [Artemis](http://www.mrzv.org/software/artemis/). Issue
+   data is stored in `.issues` and managed by Git.
+ - Bug reports, fixes and enhancements are welcome. These can be emailed to the
+   author for wider dissemination. Note that Git can be used to email changes,
+   if you like.
