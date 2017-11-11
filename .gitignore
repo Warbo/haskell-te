@@ -1,5 +1,5 @@
 result
 *.pyc
-.asv/env
-.asv/html
-!.asv/results
+.asv
+!.asv/results/benchmarks.json
+!.asv/results/*/machine.json
