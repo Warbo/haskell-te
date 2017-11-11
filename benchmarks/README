@@ -36,13 +36,31 @@ Note that benchmarking can take a while. In particular, we do all of the
 exploration in the 'setup' phase rather than in the benchmarks themselves; this
 makes the setup phase slow, but the benchmarks which follow are almost instant.
 
-Our policy is to commit benchmark results (which will include the raw
-input/output data and specs of the machine) to git to ensure reproducibility. We
-don't commit HTML reports, since they can be generated automatically. When
+Our policy is to commit benchmark results (which include the raw input/output
+data and specs of the machine) to git to ensure reproducibility. We do two
+things to save resources:
+
+ - We don't commit any "derived" data. In particular, we don't include any HTML
+   reports, since they can be regenerated automatically.
+ - When we want to store a benchmark run, we first compress it with gzip. This
+   *drastically* reduces the file size, and doesn't negatively affect git usage
+   since these results will never change (that would be tampering!)
+
+To store a result, commit any `benchmarks.json` and `machine.json` files as-is,
+and gzip the benchmark output using a command like:
+
+    gzip <       .asv/results/<machine-name>/<commit-id>-<args>.json \
+         > benchmarks/results/<machine-name>/<commit-id>-<args>.json.gz
+
+Commit the resulting `.json.gz` file, but not the original `.json` file. When
 committing new results, keep in mind that the raw data can get quite large, and
 these will hang around forever in git. Hence only include those which are
 reliable (e.g. don't run benchmarks at the same time as other resource-intensive
 programs).
+
+To use this gzipped data with asv, it can simply be unzipped into place. The
+benchmarking environment provides an `unzipBenchmarks` command which will do
+this for you.
 
 ## References ##
 

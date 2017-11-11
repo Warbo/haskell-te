@@ -3,7 +3,34 @@ stdenv.mkDerivation {
   name         = "haskell-te-benchmark-env";
   src          = ./benchmarkEnv.nix;
   unpackPhase  = "true";
-  buildInputs  = [ asv-nix fail ];
+  buildInputs  = [
+    asv-nix
+    (mkBin {
+      name   = "unzipBenchmarks";
+      paths  = [ fail ];
+      script = ''
+        #!/usr/bin/env bash
+        set   -e
+        shopt -s nullglob
+
+        echo "Looking for data" 1>&2
+        [[ -d benchmarks/results ]] || fail "Couldn't find benchmarks/results"
+        [[ -d .asv/results       ]] || fail "Couldn't find .asv/results"
+        for D in benchmarks/results/*
+        do
+          [[ -d "$D" ]] || continue
+          DIR=$(basename "$D")
+          [[ -d .asv/results/"$DIR" ]] || fail "Couldn't find .asv/results/$DIR"
+          for F in "$D"/*.json.gz
+          do
+            NAME=$(basename "$F" .gz)
+            echo "Extracting $F to .asv/results/$DIR/$NAME" 1>&2
+            gunzip < "$F" > .asv/results/"$DIR"/"$NAME"
+          done
+        done
+      '';
+    })
+  ];
   installPhase = ''
     set -e
     echo 'WARNING: Building the "benchmarkEnv" derivation. This is not meant
@@ -12,6 +39,7 @@ stdenv.mkDerivation {
     echo "This is not a 'package', it's meant to be used via nix-shell" > "$out"
   '';
   shellHook = ''
-    echo "Entered benchmarking shell: use 'asv' command to run"
+    echo "Entered benchmarking shell: use 'asv' command to run benchmarks." 1>&2
+    echo "Use 'unzipBenchmarks' to extract previous results into place."    1>&2
   '';
 }
