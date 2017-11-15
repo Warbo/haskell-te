@@ -5,6 +5,10 @@ with builtins;
 with import ../nix-support {};
 with lib;
 with rec {
+  noCompiling = writeScript "noCompilingDuringBenchmarking.nix" ''
+    with builtins; abort "Tried to build Nix env during a benchmark"
+  '';
+
   parameters = {
     repetitions  = 30;
     timeout_secs = 180;
@@ -33,7 +37,8 @@ mkBin {
   name  = "python";
   paths = [ py tipBenchmarks.tools ];
   vars  = nixEnv // {
-    NIX_EVAL_HASKELL_PKGS = ../nix-support/customHs.nix;
+    HASKELL_PACKAGES      = noCompiling;
+    NIX_EVAL_HASKELL_PKGS = noCompiling;
 
     parameters   = toJSON parameters;
 

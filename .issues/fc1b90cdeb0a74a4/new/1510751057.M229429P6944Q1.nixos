@@ -1,0 +1,8 @@
+From: Chris Warburton
+Date: Wed, 15 Nov 2017 13:03:59 +0000
+Subject: Re: Trigger errors in benchmarking Nix
+Message-Id: <fc1b90cdeb0a74a4-fe2d4390410ba671-artemis@nixos>
+References: <fc1b90cdeb0a74a4-0-artemis@nixos>
+In-Reply-To: <fc1b90cdeb0a74a4-0-artemis@nixos>
+
+Set env var to an abort message

@@ -1,8 +1,9 @@
 From: Chris Warburton
 Date: Mon, 30 Oct 2017 13:36:11 +0000
-State: new
+State: resolved
 Subject: Trigger errors in benchmarking Nix
 Message-Id: <fc1b90cdeb0a74a4-0-artemis@nixos>
+resolution: fixed
 
 When nix-eval needs some Haskell packages, it checks to see if they're
 available. If so, it calls GHC as-is, if not it uses Nix to generate an
