@@ -1,7 +1,8 @@
 From: Chris Warburton
 Date: Tue, 31 Oct 2017 22:01:07 +0000
-State: new
+State: resolved
 Subject: Add examples to README
 Message-Id: <da56908d6c6a8741-0-artemis@nixos>
+resolution: fixed
 
 Check that they work!

@@ -1,8 +1,9 @@
 From: Chris Warburton
 Date: Wed, 15 Nov 2017 01:05:27 +0000
-State: new
+State: resolved
 Subject: Include sampled names in benchmark output
 Message-Id: <d872210c255c6491-0-artemis@nixos>
+resolution: fixed
 
 Looking through the sampled TIP benchmarks, it looks like we're not
 including the sampled names. This is unfortunate, since that's one of

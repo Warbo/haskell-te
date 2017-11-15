@@ -1,0 +1,8 @@
+From: Chris Warburton
+Date: Wed, 15 Nov 2017 13:03:00 +0000
+Subject: Re: Include sampled names in benchmark output
+Message-Id: <d872210c255c6491-9e932e651820597b-artemis@nixos>
+References: <d872210c255c6491-0-artemis@nixos>
+In-Reply-To: <d872210c255c6491-0-artemis@nixos>
+
+Names are now included
