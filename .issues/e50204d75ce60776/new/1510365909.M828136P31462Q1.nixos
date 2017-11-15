@@ -1,0 +1,18 @@
+From: Chris Warburton
+Date: Sat, 11 Nov 2017 02:00:27 +0000
+State: new
+Subject: Strip raw output when unzipping benchmarks
+Message-Id: <e50204d75ce60776-0-artemis@nixos>
+
+We've decided to store gzipped benchmark results, rather than the raw,
+uncompressed data, since it's so big. We have an 'unzipBenchmarks'
+command to unzip this data into the right place for asv; but we still
+can't generate HTML nicely from it, since the track_data benchmarks
+don't play nicely with the graphing, etc.
+
+We should alter the unzipBenchmarks script to replace any problematic
+fields with dummy values. `null` would be a nice choice, since it's
+small and conveys the meaning of "no data". If that doesn't work, we
+might try removing the offending fields; although that might cause
+problems if asv expects to find them due to e.g. `benchmarks.json`. If
+so, a begrudging work around would be to stick zeroes in the fields...

@@ -174,7 +174,8 @@ def tip_cache(var_name):
             cmds     = tips['quickspecTip'][size][rep]
             result   = timed_run([cmds['runner']], '', timeout=timeout_secs)
             analysis = {'analysed': False}
-
+            with open(cmds['sampleFile'], 'r') as sampleFile:
+                result['sample'] = filter(None, sampleFile.read().split('\n'))
             if result['success']:
                 try:
                     analysed = pipe([cmds['analyser']],

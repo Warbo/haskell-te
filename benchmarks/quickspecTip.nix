@@ -17,6 +17,8 @@
       '';
   };
   {
+    inherit sampleFile;
+
     runner = runCommand "quickspec-tip-runner-${SIZE}-${REP}"
       {
         inherit sampleFile;

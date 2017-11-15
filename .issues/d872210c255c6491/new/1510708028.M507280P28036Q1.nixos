@@ -1,0 +1,10 @@
+From: Chris Warburton
+Date: Wed, 15 Nov 2017 01:05:27 +0000
+State: new
+Subject: Include sampled names in benchmark output
+Message-Id: <d872210c255c6491-0-artemis@nixos>
+
+Looking through the sampled TIP benchmarks, it looks like we're not
+including the sampled names. This is unfortunate, since that's one of
+the "inputs"; it can be regenerated deterministically from the size and
+rep, but that requires the te-benchmark version to be the same.

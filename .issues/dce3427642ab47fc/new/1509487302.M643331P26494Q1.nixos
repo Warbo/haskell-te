@@ -1,7 +1,8 @@
 From: Chris Warburton
 Date: Tue, 31 Oct 2017 22:01:22 +0000
-State: new
+State: resolved
 Subject: Publish standalone commands
 Message-Id: <dce3427642ab47fc-0-artemis@nixos>
+resolution: fixed
 
 They're in a usable state. Make them known.
