@@ -1,8 +1,9 @@
 From: Chris Warburton
 Date: Wed, 15 Nov 2017 17:21:27 +0000
-State: new
+State: resolved
 Subject: Handle 'lambda' and '@' in TIP theorems
 Message-Id: <f5669cd4db415d36-0-artemis@nixos>
+resolution: fixed
 
 Consider the following puported TIP theorem:
 

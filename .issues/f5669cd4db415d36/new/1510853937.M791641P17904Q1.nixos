@@ -1,0 +1,8 @@
+From: Chris Warburton
+Date: Thu, 16 Nov 2017 17:38:42 +0000
+Subject: Re: Handle 'lambda' and '@' in TIP theorems
+Message-Id: <f5669cd4db415d36-843cbbfc0d18251b-artemis@nixos>
+References: <f5669cd4db415d36-0-artemis@nixos>
+In-Reply-To: <f5669cd4db415d36-0-artemis@nixos>
+
+Fixed in te-benchmarks and bumped the version.
