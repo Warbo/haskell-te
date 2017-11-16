@@ -36,7 +36,7 @@ def setup_cache():
 
     return result
 
-setup_cache.timeout = max(3600, timeout_secs * len(reps()) * len(theories()))
+setup_cache.timeout = max(3600, timeout_secs * len(reps) * len(theories()))
 
 def track_data(cache, _):
     '''A dummy benchmark which spits out the raw data, for archiving.'''
@@ -72,7 +72,7 @@ set_attributes([track_ground_truth, track_equations, track_precision,
                {
                    'repeat'      : 1,
                    'number'      : 1,
-                   'params'      : (reps(), theories()),
+                   'params'      : (reps, theories()),
                    'param_names' : ['rep', 'theory']
                })
 

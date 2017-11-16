@@ -1,12 +1,12 @@
 from os         import getenv
-from parameters import max_size, repetitions
+from parameters import reps, sizes
 from util       import tip_benchmarks, tip_cache
 
 # Benchmark parameters. Will appear in alphabetical order as arguments, after
 # 'cache'
 args = {
-    'rep'  : range(0, repetitions),
-    'size' : range(1, max_size),
+    'rep'  : reps,
+    'size' : sizes,
 }
 
 #setup_cache = tip_cache(

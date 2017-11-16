@@ -1,6 +1,6 @@
 from json         import loads, dumps
 from os           import environ, getenv, getpgid, killpg, setsid
-from parameters   import max_size, repetitions, timeout_secs
+from parameters   import reps, sizes, timeout_secs
 from shutil       import rmtree
 from signal       import SIGTERM
 from subprocess32 import check_output, PIPE, Popen, TimeoutExpired
@@ -77,7 +77,6 @@ def generate_cache(theories, f):
     accumulated dictionary of the results.'''
     cache = {}
     for theory in theories:
-        reps          = range(0, repetitions)
         cache[theory] = {'reps': {}}
         for rep in reps:
             data = {'rep': rep, 'timeout': timeout_secs}
@@ -135,7 +134,7 @@ def tip_benchmarks():
                        'repeat'      : 1,
                        'number'      : 1,
                        'params'      : reduce(lambda x, y: x + (y,),
-                                              [reps(), sizes()],
+                                              [reps, sizes],
                                               ()),
                        'param_names' : ['rep', 'size']
                    })
@@ -151,14 +150,6 @@ def tip_benchmarks():
 def theories():
     '''The standalone theories we're benchmarking (nat-simple, etc.)'''
     return loads(getenv('qsStandalone')).keys()
-
-def sizes():
-    '''The TEBenchmark sample sizes to use.'''
-    return range(1, max_size)
-
-def reps():
-    '''The repetitions to run (a list [0, 1, ...]).'''
-    return range(0, repetitions)
 
 tips = {
     'quickspecTip': loads(open(getenv('quickspecTip'), 'r').read())
@@ -194,9 +185,9 @@ def tip_cache(var_name):
                                     'analysis stdout': analysed}
             return dict(result, **analysis)
 
-        return generate_cache(sizes(), gen)
+        return generate_cache(sizes, gen)
 
-    setup_cache.timeout = max(3600, timeout_secs * len(reps()) * len(sizes()))
+    setup_cache.timeout = max(3600, timeout_secs * len(reps) * len(sizes))
 
     return setup_cache
 

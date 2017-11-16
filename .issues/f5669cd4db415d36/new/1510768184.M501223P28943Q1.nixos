@@ -1,0 +1,195 @@
+From: Chris Warburton
+Date: Wed, 15 Nov 2017 17:21:27 +0000
+State: new
+Subject: Handle 'lambda' and '@' in TIP theorems
+Message-Id: <f5669cd4db415d36-0-artemis@nixos>
+
+Consider the following puported TIP theorem:
+
+  "wanted": [
+    {
+      "found": false,
+      "equation": [
+        {
+          "lhs": {
+            "lhs": {
+              "lhs": {
+                "role": "constant",
+                "symbol": "tip2015/list_assoc.smt2bind",
+                "type": "unknown"
+              },
+              "rhs": {
+                "lhs": {
+                  "lhs": {
+                    "role": "constant",
+                    "symbol": "tip2015/list_assoc.smt2bind",
+                    "type": "unknown"
+                  },
+                  "rhs": {
+                    "role": "variable",
+                    "type": "(grammars/packrat_unambigPackrat.smt2list a)",
+                    "id": 0
+                  },
+                  "role": "application"
+                },
+                "rhs": {
+                  "role": "variable",
+                  "type": "(=> a (grammars/packrat_unambigPackrat.smt2list b))",
+                  "id": 0
+                },
+                "role": "application"
+              },
+              "role": "application"
+            },
+            "rhs": {
+              "role": "variable",
+              "type": "(=> b (grammars/packrat_unambigPackrat.smt2list c))",
+              "id": 0
+            },
+            "role": "application"
+          },
+          "rhs": {
+            "lhs": {
+              "lhs": {
+                "role": "constant",
+                "symbol": "tip2015/list_assoc.smt2bind",
+                "type": "unknown"
+              },
+              "rhs": {
+                "role": "variable",
+                "type": "(grammars/packrat_unambigPackrat.smt2list a)",
+                "id": 0
+              },
+              "role": "application"
+            },
+            "rhs": {
+              "lhs": {
+                "lhs": {
+                  "role": "constant",
+                  "symbol": "tip2015/list_assoc.smt2bind",
+                  "type": "unknown"
+                },
+                "rhs": {
+                  "lhs": {
+                    "lhs": {
+                      "role": "constant",
+                      "symbol": "@",
+                      "type": "unknown"
+                    },
+                    "rhs": {
+                      "role": "variable",
+                      "type": "(=> a (grammars/packrat_unambigPackrat.smt2list b))",
+                      "id": 0
+                    },
+                    "role": "application"
+                  },
+                  "rhs": {
+                    "role": "variable",
+                    "type": "a",
+                    "id": 0
+                  },
+                  "role": "application"
+                },
+                "role": "application"
+              },
+              "rhs": {
+                "role": "variable",
+                "type": "(=> b (grammars/packrat_unambigPackrat.smt2list c))",
+                "id": 0
+              },
+              "role": "application"
+            },
+            "role": "application"
+          },
+          "relation": "~="
+        }
+      ],
+      "file": "tip2015/list_assoc.smt2"
+    }
+  ]
+
+
+This renders to:
+
+  (tip2015/list_assoc.smt2bind ((tip2015/list_assoc.smt2bind v0) v1)) v2
+  ~= (tip2015/list_assoc.smt2bind v0) ((tip2015/list_assoc.smt2bind ((@
+  v1) v3)) v2)
+
+Or, less verbosely:
+
+  bind (bind v0 v1) v2 ~= bind v0 (bind (@ v1 v3) v2)
+
+This seems a little odd: why is there a fully-applied '@'? '@' is
+function application (equivalent to '$' in Haskell), so '(@ x y)' is
+equivalent to '(x y)'.
+
+We wouldn't expect QuickSpec to find such an equation, for three
+reasons:
+
+ - There is no '@' in the signature; the Haskell equivalent is '$'
+ - There is no '$' in the signature, unless we add it (which certainly
+   isn't the case in our benchmarks)
+ - Even if '$' were in the signature, we'd expect to find something like
+   '($) f x ~= f x', and hence congruence closure would throw out any
+   fully-applied '$' calls as redundant.
+
+There's something else fishy about this equation too: the
+right-hand-side contains 'v3', but this doesn't occur on the left.
+That's OK in general, since information may be thrown away, like in
+'const x y = x'. Still, it's unusual to see in a theorem supposedly
+involving list monads.
+
+Digging a little deeper, we look in tip2015/list_assoc.smt2 to find:
+
+; List monad laws
+(declare-datatypes (a)
+  ((list (nil) (cons (head a) (tail (list a))))))
+(define-fun-rec
+  (par (a)
+    (append
+       ((x (list a)) (y (list a))) (list a)
+       (match x
+         (case nil y)
+         (case (cons z xs) (cons z (append xs y)))))))
+(define-fun-rec
+  (par (a b)
+    (bind
+       ((x (list a)) (y (=> a (list b)))) (list b)
+       (match x
+         (case nil (as nil (list b)))
+         (case (cons z xs) (append (@ y z) (bind xs y)))))))
+(assert-not
+  (par (a b c)
+    (forall ((m (list a)) (f (=> a (list b))) (g (=> b (list c))))
+      (= (bind (bind m f) g)
+        (bind m (lambda ((x a)) (bind (@ f x) g)))))))
+(check-sat)
+
+Notice the theorem statement:
+
+  (forall ((m (list a)) (f (=> a (list b))) (g (=> b (list c))))
+    (= (bind (bind m f) g)
+       (bind m (lambda ((x a)) (bind (@ f x) g)))))
+
+There's a 'lambda' in there! That was somehow discarded during the
+translation to JSON! It explains where the 'v3' came from (it's the 'x'
+variable of the 'lambda'). The '@' seems to be an artefact of the TIP
+format, to make it clear when a variable is being called as a function
+(I assume this is useful for some translations).
+
+What can we do to remedy this situation? The immediate fix seems to be:
+
+ - If we see 'lambda' in a theorem statement, refuse to spit out an
+   equation. This is quick, avoids having to extend our JSON equation
+   format (for now) and avoids changes to e.g. rendering, congruence
+   closure (which we didn't write!), etc.
+ - If we see '@' fully-applied in a theorem statement, we should
+   simplify it away.
+
+We should make a note of this in our writeup, i.e. that not only is
+QuickSpec limited to equations, it's unable to form new functions
+(unless the theory contains functions for constructing functions!).
+
+The first thing we should do is add regression tests involving 'lambda',
+'@', etc. to the te-benchmarks code. We should also test what happens
+with other keywords, like 'match', 'case', etc.
