@@ -4,6 +4,7 @@ from parameters   import reps, sizes, timeout_secs
 from shutil       import rmtree
 from signal       import SIGTERM
 from subprocess32 import check_output, PIPE, Popen, TimeoutExpired
+from sys          import exc_info
 from tempfile     import mkdtemp
 from threading    import Thread
 from timeit       import default_timer
@@ -172,16 +173,17 @@ def tip_cache(var_name):
                     analysed = pipe([cmds['analyser']],
                                     result['stdout'])['stdout'];
                     analysis = {'analysed': True}
-                except e:
-                    analysis = {'analysed': False, 'analysis error': repr(e)}
+                except:
+                    analysis = {'analysed':       False,
+                                'analysis error': repr(exc_info())}
 
                 if analysis['analysed']:
                     try:
                         analysis = loads(analysed)
                         analysis['analysed'] = True
-                    except e:
+                    except:
                         analysis = {'analysed':        False,
-                                    'analysis error':  repr(e),
+                                    'analysis error':  repr(exc_info()),
                                     'analysis stdout': analysed}
             return dict(result, **analysis)
 
