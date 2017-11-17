@@ -308,12 +308,13 @@
                 "16", 
                 "17", 
                 "18", 
-                "19"
+                "19", 
+                "20"
             ]
         ], 
         "pretty_name": "quickspectip.track_conjectured_equations", 
-        "setup_cache_key": "/home/user/haskell-te/benchmarks/util.py:172", 
-        "setup_cache_timeout": 102600, 
+        "setup_cache_key": "/home/user/haskell-te/benchmarks/util.py:164", 
+        "setup_cache_timeout": 108000, 
         "timeout": 60.0, 
         "type": "track", 
         "unit": "unit"
@@ -377,12 +378,13 @@
                 "16", 
                 "17", 
                 "18", 
-                "19"
+                "19", 
+                "20"
             ]
         ], 
         "pretty_name": "quickspectip.track_conjectures", 
-        "setup_cache_key": "/home/user/haskell-te/benchmarks/util.py:172", 
-        "setup_cache_timeout": 102600, 
+        "setup_cache_key": "/home/user/haskell-te/benchmarks/util.py:164", 
+        "setup_cache_timeout": 108000, 
         "timeout": 60.0, 
         "type": "track", 
         "unit": "unit"
@@ -399,8 +401,8 @@
             ]
         ], 
         "pretty_name": "quickspectip.track_data", 
-        "setup_cache_key": "/home/user/haskell-te/benchmarks/util.py:172", 
-        "setup_cache_timeout": 102600, 
+        "setup_cache_key": "/home/user/haskell-te/benchmarks/util.py:164", 
+        "setup_cache_timeout": 108000, 
         "timeout": 60.0, 
         "type": "track", 
         "unit": "unit"
@@ -464,12 +466,13 @@
                 "16", 
                 "17", 
                 "18", 
-                "19"
+                "19", 
+                "20"
             ]
         ], 
         "pretty_name": "quickspectip.track_equations", 
-        "setup_cache_key": "/home/user/haskell-te/benchmarks/util.py:172", 
-        "setup_cache_timeout": 102600, 
+        "setup_cache_key": "/home/user/haskell-te/benchmarks/util.py:164", 
+        "setup_cache_timeout": 108000, 
         "timeout": 60.0, 
         "type": "track", 
         "unit": "unit"
@@ -533,12 +536,13 @@
                 "16", 
                 "17", 
                 "18", 
-                "19"
+                "19", 
+                "20"
             ]
         ], 
         "pretty_name": "quickspectip.track_precision", 
-        "setup_cache_key": "/home/user/haskell-te/benchmarks/util.py:172", 
-        "setup_cache_timeout": 102600, 
+        "setup_cache_key": "/home/user/haskell-te/benchmarks/util.py:164", 
+        "setup_cache_timeout": 108000, 
         "timeout": 60.0, 
         "type": "track", 
         "unit": "unit"
@@ -602,12 +606,13 @@
                 "16", 
                 "17", 
                 "18", 
-                "19"
+                "19", 
+                "20"
             ]
         ], 
         "pretty_name": "quickspectip.track_recall", 
-        "setup_cache_key": "/home/user/haskell-te/benchmarks/util.py:172", 
-        "setup_cache_timeout": 102600, 
+        "setup_cache_key": "/home/user/haskell-te/benchmarks/util.py:164", 
+        "setup_cache_timeout": 108000, 
         "timeout": 60.0, 
         "type": "track", 
         "unit": "unit"
@@ -671,12 +676,13 @@
                 "16", 
                 "17", 
                 "18", 
-                "19"
+                "19", 
+                "20"
             ]
         ], 
         "pretty_name": "quickspectip.track_time", 
-        "setup_cache_key": "/home/user/haskell-te/benchmarks/util.py:172", 
-        "setup_cache_timeout": 102600, 
+        "setup_cache_key": "/home/user/haskell-te/benchmarks/util.py:164", 
+        "setup_cache_timeout": 108000, 
         "timeout": 60.0, 
         "type": "track", 
         "unit": "unit"
