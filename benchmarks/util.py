@@ -1,7 +1,6 @@
 from json         import loads, dumps
 from os           import environ, getenv, getpgid, killpg, setsid
 from parameters   import reps, sizes, timeout_secs
-from shutil       import rmtree
 from signal       import SIGTERM
 from subprocess32 import check_output, PIPE, Popen, TimeoutExpired
 from sys          import exc_info
