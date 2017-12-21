@@ -11,16 +11,25 @@ with {
     END SAMPLED_NAMES
   '';
 };
-{ REP, SIZE, sampleFile }: wrap {
+{ REP, SIZE, sampleFile ? null, SAMPLED_NAMES ? null}:
+assert filter (x: x)
+              [(sampleFile == null) (SAMPLED_NAMES == null)] == [true] ||
+       (abort (toJSON {
+                inherit sampleFile SAMPLED_NAMES;
+                error = "Need sampleFile xor SAMPLED_NAMES";
+              }));
+wrap {
   name   = "sampleAnalyser-${SIZE}-${REP}";
   paths  = [ analysis bash fail jq ];
-  vars   = { inherit sampleFile; };
+  vars   = if sampleFile == null
+              then { inherit SAMPLED_NAMES; }
+              else { inherit sampleFile;    };
   script = ''
     #!/usr/bin/env bash
     set -e
     set -o pipefail
 
-    SAMPLED_NAMES=$(cat "$sampleFile")
+    [[ -n "$SAMPLED_NAMES" ]] || SAMPLED_NAMES=$(cat "$sampleFile")
     export SAMPLED_NAMES
 
     FOUND=$(cat)
