@@ -6,8 +6,8 @@ with rec {
   path = tryElse <te-benchmarks> (nix-config.latestGit {
     url    = http://chriswarbo.net/git/theory-exploration-benchmarks.git;
     stable = {
-      rev    = "0b388e7";
-      sha256 = "0xx9034sww9krzi9fab8v87jkbl3v40x5n67lqf5lq5rymdn0acq";
+      rev    = "481b722";
+      sha256 = "0jl7f5s983sxz9g58pf80iywzkcn74m1ns2w21f3x81xpkcqspaw";
     };
   });
 
