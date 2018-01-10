@@ -6,8 +6,8 @@ with rec {
   path = tryElse <te-benchmarks> (nix-config.latestGit {
     url    = http://chriswarbo.net/git/theory-exploration-benchmarks.git;
     stable = {
-      rev    = "4b978c8";
-      sha256 = "113pqzqirqvjx20fkwmx49l927nj1648sbrfqxw0yhcxcxkky2pc";
+      rev    = "0b388e7";
+      sha256 = "0xx9034sww9krzi9fab8v87jkbl3v40x5n67lqf5lq5rymdn0acq";
     };
   });
 
@@ -27,8 +27,8 @@ with rec {
                (tebench.cache // {
                  getCommDeps = writeScript "getCommDeps.rkt" ''
                    #lang racket
-                   (require (file "${path}/scripts/lib/normalise.rkt"))
-                   (require (file "${path}/scripts/lib/theorems.rkt"))
+                   (require lib/normalise)
+                   (require lib/theorems)
                    (for ([dep (theorem-deps-of "tip2015/bin_plus_comm.smt2")])
                         (write (encode-lower-name dep)))
                  '';
