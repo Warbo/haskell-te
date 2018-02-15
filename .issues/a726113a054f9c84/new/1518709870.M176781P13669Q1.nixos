@@ -1,0 +1,8 @@
+From: Chris Warburton
+Date: Thu, 15 Feb 2018 14:49:19 +0000
+Subject: Re: Support 'lambda' in equation JSON
+Message-Id: <a726113a054f9c84-e88fec571d3d757b-artemis@nixos>
+References: <a726113a054f9c84-0-artemis@nixos>
+In-Reply-To: <a726113a054f9c84-0-artemis@nixos>
+
+Added lambda support to renderEqs.py

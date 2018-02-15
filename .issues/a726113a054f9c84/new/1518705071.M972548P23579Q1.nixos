@@ -1,0 +1,8 @@
+From: Chris Warburton
+Date: Thu, 15 Feb 2018 14:30:34 +0000
+State: new
+Subject: Support 'lambda' in equation JSON
+Message-Id: <a726113a054f9c84-0-artemis@nixos>
+
+IsaCoSy can produce lambda expressions in its theorems/conjectures. We
+need to extend our JSON format to allow them.
