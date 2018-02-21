@@ -18,15 +18,14 @@ with rec {
   remoteGiven = getEnv "NIX_REMOTE";
 
   # Ensure we can write to the Nix store (or ask a builders to do so for us)
-  remoteForce  = import remoteResult;
-  remoteResult = runCommand "nix-remote.nix" { buildInputs = [ nix ]; } ''
-    if nix-instantiate --eval -E null 2> /dev/null
+  remoteForce = import (runCommand "nix-remote.nix" { buildInputs = [ nix ]; } ''
+    if nix-instantiate --read-write-mode --eval -E null 2> /dev/null
     then
       printf "\"$NIX_REMOTE\"" > "$out"
     else
       printf '"daemon"'        > "$out"
     fi
-  '';
+  '');
 
   checkPath = runCommand "try-nix-path.nix"
     {
@@ -38,8 +37,8 @@ with rec {
       set -e
 
       function go {
-        nix-instantiate --eval \
-                        -E "with builtins // { x = import <nixpkgs> {}; }; $1"
+        nix-instantiate --eval --read-write-mode \
+          -E "with builtins // { x = import <nixpkgs> { config = {}; }; }; $1"
       }
 
       echo "Checking <nixpkgs> gets overridden" 1>&2
