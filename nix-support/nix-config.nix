@@ -1,24 +1,26 @@
 { fetchFromGitHub, path, stable }:
 
 with rec {
-  inherit (import path { inherit config; }) latestGit;
+  config    = import "${configSrc}";
 
-  config    = import "${stableSrc}/stable.nix";
+  configSrc = with builtins.tryEval <nix-config>;
+              if success then value else stableSrc;
+
   stableSrc = fetchFromGitHub {
-    rev    = "eb34052";
     owner  = "Warbo";
     repo   = "nix-config";
-    sha256 = "0js6af9xi9v576lh2jma6qjhfpjw8r0grrxbh5x6hr97399jryld";
+    rev    = "796865f";
+    sha256 = "132v4w8a1lf99d8n7w743cq7rdqj5w56a10f9xa9vmqx2lazhzvx";
   };
-  unstableSrc = latestGit {
+
+  unstableSrc = (config { unstablePath = path; }).latestGit {
     url    = http://chriswarbo.net/git/nix-config.git;
     stable = { unsafeSkip = true; };
   };
 };
 
 {
-  nix-config-src = if stable then stableSrc else unstableSrc;
-  nix-config     = if stable
-                      then config
-                      else import "${unstableSrc}/unstable.nix";
+  nix-config = if stable
+                  then config
+                  else import "${unstableSrc}";
 }
