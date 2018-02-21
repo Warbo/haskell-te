@@ -18,14 +18,14 @@ with rec {
       path   = <get-deps>;
       repo   = "getDeps";
       rev    = "7c02fbc";
-      sha256 = "0iw9ajzmq439qipm5r21dby32xlmdxg8bnsm6bcgm8dr9whhalfl";
+      sha256 = "19g1lyaplclnlyh7y3li08937bqgk58dsblz12hd290crmg999f0";
     } {};
 
     HS2AST = get {
       path   = <hs2ast>;
       repo   = "hs2ast";
       rev    = "469d999";
-      sha256 = "1yancv9pd8rnkpla462czsi4kgd8nvndjixmr1s6kkc7xk68zky8";
+      sha256 = "1x2f12s6caj0gaymaw62bmm62ydim78wm2pn18j18fa2l3p7vqyi";
     } {};
 
     ifcxt = get {
@@ -33,42 +33,42 @@ with rec {
       owner  = "mikeizbicki";
       repo   = "ifcxt";
       rev    = "7f9f876";
-      sha256 = "1k267zs3w999xg90ddy02l4cpjn14x07cdgqbca3w0ncili2p7a2";
+      sha256 = "0mzd5h45rkvj81pdi60p68r0j3lc4h9m4z3b4v8m6xacp9sxiic1";
     } {};
 
     ML4HSFE = get {
       path   = <ml4hsfe>;
       repo   = "ml4hsfe";
-      rev    = "bcdd93b";
-      sha256 = "0rraj7ias334g39vyc5z9afms4w30g5vf1czgw7fskahiir2vmi1";
+      rev    = "ecbc833";
+      sha256 = "0sgkc6kbyiilv4hs1485lrhbb2ja06bg9yrzd3kylw4l4jlk9lmn";
     } {};
 
     mlspec = get {
       path   = <mlspec>;
       repo   = "mlspec";
       rev    = "8f97e7f";
-      sha256 = "1f9wq92pizxagb5d4a8lk7hhw76qhx94qjgrdy73qf11f6q9dij7";
+      sha256 = "1ay4zw55k659cdpg1mbb3jcdblabyajpj657v4fc6wvydqvia6d5";
     } {};
 
     mlspec-helper = get {
       path   = <mlspec-helper>;
       repo   = "mlspec-helper";
       rev    = "d794706";
-      sha256 = "1vaniwziqq0w1ajrabxbyf76iqplk7c765z13k5kpndhmqmsga5r";
+      sha256 = "0vlr3ar1zwk0ykbzmg47j1yv1ba8gf6nzqj10bfy60nii91z7slh";
     } {};
 
     nix-eval = get {
       path   = <nix-eval>;
       repo   = "nix-eval";
       rev    = "53d18a2";
-      sha256 = "1agw1zppbhgk6aaqd75mmvbd6r8d67ap4y5rli1sm1j1q0a5qqx5";
+      sha256 = "0rplpygiqn6f9aqi09dr67xidb1bks9xnxxrpzi3bq67bdvjzvh1";
     } {};
 
     reduce-equations = get {
       path   = <reduce-equations>;
       repo   = "reduce-equations";
       rev    = "111af37";
-      sha256 = "1q56v60k8wqj5nhr68cv3kaanwdslsmyvqfv90mg4z1bm8kj467b";
+      sha256 = "14164562v6w151qxzrhilxacd1xwb48qf7l39nfzf313vw6qj3xc";
     } {
       haskell-src-exts = hackagePkg "haskell-src-exts" "1.19.0" {
         pretty-show = hackagePkg "pretty-show" "1.6.12" {};
@@ -79,7 +79,7 @@ with rec {
       path   = <runtime-arbitrary>;
       repo   = "runtime-arbitrary";
       rev    = "5b7ff2f";
-      sha256 = "06kpz8vmc4xslnx2863h1fwp99z7flpr66ichmz7x2fafys8gvda";
+      sha256 = "11gnfmz48vxvf42xs9255r51vbv1sjghvzi60gcrpx3jk38d2gyb";
     } {};
 
     spoon = get {
