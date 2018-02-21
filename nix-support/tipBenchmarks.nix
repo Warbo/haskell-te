@@ -19,6 +19,7 @@ with rec {
   };
 };
 {
+  inherit tebench;
   inherit (tebench) tip-benchmark-haskell tip-benchmark-smtlib tools;
 
   # Useful for tests. Defining it here means we don't have to expose path, env,
