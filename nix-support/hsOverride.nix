@@ -85,7 +85,7 @@ with rec {
     spoon = get {
       repo   = "spoon";
       rev    = "4424f9a";
-      sha256 = "1d14qawzf7pimkjccj3f2vy9nc4fb2w00ib8li4kb180fb6wjvq4";
+      sha256 = "14mn6ygr0wqy4css8wrbxd6b4qvp951xgc206x79fjfva3q6n12g";
     } {};
   };
 };
