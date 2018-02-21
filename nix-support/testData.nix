@@ -15,8 +15,8 @@
 # fast. The only exception is when we're sampling, which obviously needs
 # TEBenchmark.
 { fail, haskellPackages, haskellPkgToAsts, haskellPkgToRawAsts, jq, lib,
-  makeHaskellPkgNixable, nix-config, nixEnv, quickspec, quickspecAsts,
-  runCommand, tipBenchmarks, tipToHaskellPkg, unpack, withNix }:
+  makeHaskellPkgNixable, nixEnv, quickspec, quickspecAsts, runCommand,
+  stableHackageDb, tipBenchmarks, tipToHaskellPkg, unpack, withNix }:
 
 with builtins;
 with lib;
@@ -70,8 +70,7 @@ rec {
 
     haskellNix = { dir, name, script ? null }: runCommand "nixed-${name}"
       {
-        inherit dir;
-        inherit (nix-config) stableHackageDb;
+        inherit dir stableHackageDb;
         buildInputs = [ fail (if script == null
                                  then makeHaskellPkgNixable
                                  else script) ];

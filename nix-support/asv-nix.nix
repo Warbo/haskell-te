@@ -1,4 +1,4 @@
-{ callPackage, fetchFromGitHub, nix-config }:
+{ callPackage, fetchFromGitHub }:
 
 with {
   src = fetchFromGitHub {
@@ -8,6 +8,4 @@ with {
     sha256 = "1jp5a8p5dzh2vb2s9k2wf3j2l9fcm7l47ydqy8wlrjiyqlc4jw7a";
   };
 };
-callPackage "${src}" {
-  inherit (nix-config) asv;
-}
+callPackage "${src}" {}

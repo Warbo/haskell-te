@@ -14,13 +14,13 @@ fix (self: rec {
   # Various versions of nixpkgs from which to get our packages
   inherit (import ./nixpkgs.nix args)
     # Whichever nixpkgs we're using by default (depending on 'stable')
-    nixpkgs nixpkgs-src
+    nixpkgs
 
     # Fixed releases of nixpkgs. Useful for avoiding known incompatibilities.
     nixpkgs-2016-03 nixpkgs-2016-09
 
     # Default nixpkgs, overridden with helper functions and packages
-    nix-config nix-config-src;
+    nix-config;
 
   # Regular dependencies, used as-is
   inherit (nixpkgs)
@@ -41,9 +41,9 @@ fix (self: rec {
 
   # Helper functions, etc.
   inherit (nix-config)
-    allDrvsIn attrsToDirs backtrace fail inNixedDir mkBin nixListToBashArray
-    nothing pipeToNix reverse sanitiseName stable stripOverrides timeout tryElse
-    unlines unpack withDeps wrap;
+    allDrvsIn asv attrsToDirs backtrace fail inNixedDir latestGit mkBin
+    nixListToBashArray nothing pipeToNix reverse sanitiseName stable
+    stableHackageDb stripOverrides timeout tryElse unlines unpack withDeps wrap;
 
   # Cases where we want both the attribute set and its attributes available
   inherit (callPackage ./annotate.nix {})

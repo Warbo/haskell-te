@@ -1,9 +1,8 @@
-{ asv-nix, callPackage, haskellPackages, nix-config, nix-config-src, runCommand,
-  tryElse, writeScript }:
+{ callPackage, latestGit, runCommand, tryElse, writeScript }:
 
 with builtins;
 with rec {
-  path = tryElse <te-benchmarks> (nix-config.latestGit {
+  path = tryElse <te-benchmarks> (latestGit {
     url    = http://chriswarbo.net/git/theory-exploration-benchmarks.git;
     stable = {
       rev    = "e993b2f";
@@ -11,12 +10,7 @@ with rec {
     };
   });
 
-  tebench = callPackage path {
-    inherit asv-nix haskellPackages nix-config-src;
-
-    # Nixpkgs 17.03 disables Racket on i686, so always use 16.09 (for now)
-    pkgsPath = nix-config.repo1609;
-  };
+  tebench = callPackage path {};
 };
 {
   inherit tebench;

@@ -1,14 +1,10 @@
 { annotated, bash, buckets, buildEnv, cluster, concurrentQuickspec, fail,
-  format, glibcLocales, hashspecBench, jq, lib, mkBin, nix-config,
-  reduce-equations, runCommand, runWeka, stdenv, testData, timeout,
-  tipBenchmarks, withDeps, writeScript }:
+  format, glibcLocales, hashspecBench, jq, lib, mkBin, reduce-equations,
+  runCommand, runWeka, stdenv, testData, timeout, tipBenchmarks, withDeps, wrap,
+  writeScript }:
 with builtins;
 with lib;
-with {
-  inherit (nix-config) wrap;
-};
 rec {
-
   benchVars = {
     sampled = {
       inherit (hashspecBench.benchVars.sampled) genInput;

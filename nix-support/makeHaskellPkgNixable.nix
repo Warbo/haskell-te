@@ -1,5 +1,5 @@
-{ attrsToDirs, bash, cabal2nix, fail, inNixedDir, lib, mkBin, nix-config,
-  pipeToNix, runCommand, testData, withDeps, withNix }:
+{ attrsToDirs, bash, cabal2nix, fail, inNixedDir, lib, mkBin, pipeToNix,
+  runCommand, testData, withDeps, withNix }:
 
 with builtins;
 with lib;

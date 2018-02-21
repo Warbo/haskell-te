@@ -1,4 +1,4 @@
-{ callHackage, lib, nix-config, nixedHsPkg, stable }:
+{ callHackage, latestGit, lib, nixedHsPkg, stable }:
 
 with builtins;
 with lib;
@@ -100,7 +100,7 @@ extra: self: super: hsPkgs {
       fullUrl = if url == null
                    then "https://github.com/${owner}/${repo}.git"
                    else url;
-      git     = nix-config.latestGit { inherit stable; url = fullUrl; };
+      git     = latestGit { inherit stable; url = fullUrl; };
       src     = with tryEval path;
                 if success && value != null then value else git;
     };
