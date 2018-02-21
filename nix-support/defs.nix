@@ -2,7 +2,7 @@
 # than one place). Note that care should be taken to avoid infinite loops, since
 # 'callPackage' gets arguments from 'self', which is the set we're defining!
 {
-  lib    ? (import (import ./path.nix {}) {}).lib,
+  lib    ? (import (import ./path.nix {}) { config = {}; }).lib,
   stable ? true,
   ...
 }@args:
@@ -12,7 +12,7 @@ with lib;
 
 fix (self: rec {
   # Various versions of nixpkgs from which to get our packages
-  inherit (import ./nixpkgs.nix args)
+  inherit (import ./nixpkgs.nix {})
     # Whichever nixpkgs we're using by default (depending on 'stable')
     nixpkgs
 
