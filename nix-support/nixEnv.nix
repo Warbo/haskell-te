@@ -37,8 +37,11 @@ with rec {
       set -e
 
       function go {
-        nix-instantiate --eval --read-write-mode \
-          -E "with builtins // { x = import <nixpkgs> { config = {}; }; }; $1"
+        echo "Checking: $*" 1>&2
+        nix-instantiate --eval --read-write-mode -E \
+          "with builtins // { x = import <nixpkgs> { config = {}; }; }; $1" ||
+          fail "Failed:\nNIX_PATH: $NIX_PATH\nNIX_REMOTE: $NIX_REMOTE"
+        echo "Finished: $*" 1>&2
       }
 
       echo "Checking <nixpkgs> gets overridden" 1>&2
