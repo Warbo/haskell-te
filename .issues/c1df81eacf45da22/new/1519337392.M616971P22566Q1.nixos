@@ -1,0 +1,10 @@
+From: Chris Warburton
+Date: Thu, 22 Feb 2018 22:08:45 +0000
+Subject: Re: Make newer nix-config work
+Message-Id: <c1df81eacf45da22-d1223e3124b59093-artemis@nixos>
+References: <c1df81eacf45da22-0-artemis@nixos>
+In-Reply-To: <c1df81eacf45da22-0-artemis@nixos>
+
+Managed to get it working, without having to split up nix-config (but I
+*did* make its default.nix file accept an override for <nixpkgs>, so we
+can use <real> to prevent infinite recursion)

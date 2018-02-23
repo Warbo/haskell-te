@@ -1,8 +1,9 @@
 From: Chris Warburton
 Date: Wed, 21 Feb 2018 14:06:10 +0000
-State: new
+State: resolved
 Subject: Make newer nix-config work
 Message-Id: <c1df81eacf45da22-0-artemis@nixos>
+resolution: fixed
 
 I've tried bumping the version of nix-config, to maybe work around the
 old fetchgit hash issue. Unfortunately, the new architecture doesn't

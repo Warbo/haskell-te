@@ -32,14 +32,14 @@ with rec {
       buildInputs = [ fail hasCabalFile ];
     }
     ''
-      if hasCabalFile "$tooFew"
+      if GOT=$(hasCabalFile "$tooFew" 2>&1)
       then
-        fail "Should have been too few"
+        fail "Should have been too few\n$GOT"
       fi
 
-      if hasCabalFile "$tooMany"
+      if GOT=$(hasCabalFile "$tooMany" 2>&1)
       then
-        fail "Should have been too many"
+        fail "Should have been too many\n$GOT"
       fi
 
       hasCabalFile "$justOne" || fail "Should've worked for one .cabal file"
