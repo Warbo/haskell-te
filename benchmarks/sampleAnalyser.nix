@@ -10,14 +10,20 @@ with {
       $SAMPLED_NAMES
     END SAMPLED_NAMES
   '';
+
+  err = error: abort (toJSON { inherit error sampleFile SAMPLED_NAMES; });
 };
 { REP, SIZE, sampleFile ? null, SAMPLED_NAMES ? null}:
-assert filter (x: x)
-              [(sampleFile == null) (SAMPLED_NAMES == null)] == [true] ||
-       (abort (toJSON {
-                inherit sampleFile SAMPLED_NAMES;
-                error = "Need sampleFile xor SAMPLED_NAMES";
-              }));
+
+assert sampleFile == null -> SAMPLED_NAMES != null ||
+       err "sampleAnalyser needs either sampleFile xor SAMPLED_NAMES";
+
+assert sampleFile != null -> SAMPLED_NAMES == null ||
+       err "sampleAnalyser can't use sampleFIle AND SAMPLED_NAMES";
+
+assert SAMPLED_NAMES != null -> isString SAMPLED_NAMES ||
+       err "SAMPLED_NAMES should be a newline-delimited string";
+
 wrap {
   name   = "sampleAnalyser-${SIZE}-${REP}";
   paths  = [ analysis bash fail jq ];
