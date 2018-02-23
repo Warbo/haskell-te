@@ -25,7 +25,7 @@ assert SAMPLED_NAMES != null -> isString SAMPLED_NAMES ||
        err "SAMPLED_NAMES should be a newline-delimited string";
 
 wrap {
-  name   = "sampleAnalyser-${SIZE}-${REP}";
+  name   = "sampleAnalyser-${toString SIZE}-${toString REP}";
   paths  = [ analysis bash fail jq ];
   vars   = if sampleFile == null
               then { inherit SAMPLED_NAMES; }
