@@ -11,7 +11,7 @@ with rec {
 
   parameters = {
     repetitions  = 30;
-    timeout_secs = 180;
+    timeout_secs = 200;
     max_size     = 20;
   };
 
