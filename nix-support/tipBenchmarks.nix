@@ -6,7 +6,7 @@ with rec {
     url    = http://chriswarbo.net/git/theory-exploration-benchmarks.git;
     stable = {
       rev    = "e993b2f";
-      sha256 = "0zwd2bynj645b5frvmkb9mc4fhvvqv25ls6sh56wwaq69a5k76rq";
+      sha256 = "1c09m8040p9wvv25l12xckpmpvjhlhr3jwq5bm22d0947pc8fgdi";
     };
   });
 
