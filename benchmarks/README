@@ -42,23 +42,23 @@ things to save resources:
 
  - We don't commit any "derived" data. In particular, we don't include any HTML
    reports, since they can be regenerated automatically.
- - When we want to store a benchmark run, we first compress it with gzip. This
+ - When we want to store a benchmark run, we first compress it with lzip. This
    *drastically* reduces the file size, and doesn't negatively affect git usage
    since these results will never change (that would be tampering!)
 
 To store a result, commit any `benchmarks.json` and `machine.json` files as-is,
-and gzip the benchmark output using a command like:
+and lzip the benchmark output using a command like:
 
-    gzip <       .asv/results/<machine-name>/<commit-id>-<args>.json \
-         > benchmarks/results/<machine-name>/<commit-id>-<args>.json.gz
+    lzip <       .asv/results/<machine-name>/<commit-id>-<args>.json \
+         > benchmarks/results/<machine-name>/<commit-id>-<args>.json.lz
 
-Commit the resulting `.json.gz` file, but not the original `.json` file. When
+Commit the resulting `.json.lz` file, but not the original `.json` file. When
 committing new results, keep in mind that the raw data can get quite large, and
 these will hang around forever in git. Hence only include those which are
 reliable (e.g. don't run benchmarks at the same time as other resource-intensive
 programs).
 
-To use this gzipped data with asv, it can simply be unzipped into place. The
+To use this lzipped data with asv, it can simply be unzipped into place. The
 benchmarking environment provides an `unzipBenchmarks` command which will do
 this for you.
 

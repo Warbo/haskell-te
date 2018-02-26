@@ -7,7 +7,7 @@ stdenv.mkDerivation {
     asv-nix
     (mkBin {
       name   = "unzipBenchmarks";
-      paths  = [ fail ];
+      paths  = [ fail nixpkgs.lzip ];
       script = ''
         #!/usr/bin/env bash
         set   -e
@@ -21,11 +21,11 @@ stdenv.mkDerivation {
           [[ -d "$D" ]] || continue
           DIR=$(basename "$D")
           [[ -d .asv/results/"$DIR" ]] || fail "Couldn't find .asv/results/$DIR"
-          for F in "$D"/*.json.gz
+          for F in "$D"/*.json.lz
           do
-            NAME=$(basename "$F" .gz)
+            NAME=$(basename "$F" .lz)
             echo "Extracting $F to .asv/results/$DIR/$NAME" 1>&2
-            gunzip < "$F" > .asv/results/"$DIR"/"$NAME"
+            lzip -d < "$F" > .asv/results/"$DIR"/"$NAME"
           done
         done
       '';
