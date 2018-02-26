@@ -15,6 +15,14 @@ with rec {
     max_size     = 20;
   };
 
+  isEven = x: (div x 2) * 2 == x;
+
+  samples = map (size: if size == 0 || !isEven size
+                          then "EMPTY"
+                          else map (rep: quickspecTip { inherit rep size; })
+                                   (range 1 parameters.repetitions))
+                (range 0 parameters.max_size);
+
   py             = nixpkgs-2016-09.python.withPackages
                      (p: [ p.sexpdata p.subprocess32 ]);
   quickspecTip   = callPackage ./quickspecTip.nix   { inherit sampleAnalyser; };
@@ -48,12 +56,7 @@ mkBin {
       {
         buildInputs = [ fail ];
         passAsFile  = [ "content" ];
-        content     = toJSON
-          (["EMPTY"] ++ (map (size: map (rep: quickspecTip {
-                                                inherit rep size;
-                                              })
-                                        (range 1 parameters.repetitions))
-                             (range 1 parameters.max_size)));
+        content     = toJSON samples;
       }
       ''
         set -e
