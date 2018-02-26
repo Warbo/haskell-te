@@ -1,0 +1,8 @@
+From: Chris Warburton
+Date: Mon, 26 Feb 2018 00:12:15 +0000
+Subject: Re: Run benchmark analyses even after failure
+Message-Id: <d47550d08485b89b-8e5d0b2365544edf-artemis@nixos>
+References: <d47550d08485b89b-0-artemis@nixos>
+In-Reply-To: <d47550d08485b89b-0-artemis@nixos>
+
+We now use '[]' as the input to the analyser if there's an error.

@@ -20,10 +20,9 @@ def setup_cache():
 
         result.update(timed_run([thy['runner']], '', timeout_secs))
 
-        result['analysis'] = None
-        if result['success']:
-            analysis           = pipe([thy['analyser']], result['stdout'])
-            result['analysis'] = jloads(analysis['stdout'])
+        to_analyse         = result['stdout'] if result['success'] else '[]'
+        analysis           = pipe([thy['analyser']], to_analyse)
+        result['analysis'] = jloads(analysis['stdout'])
 
         return result
 

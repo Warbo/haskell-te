@@ -1,8 +1,9 @@
 From: Chris Warburton
 Date: Sun, 26 Nov 2017 19:17:44 +0000
-State: new
+State: resolved
 Subject: Run benchmark analyses even after failure
 Message-Id: <d47550d08485b89b-0-artemis@nixos>
+resolution: fixed
 
 In particular, we need to know the number of wanted conjectures for
 *all* data points, including those which failed. This is easy enough,

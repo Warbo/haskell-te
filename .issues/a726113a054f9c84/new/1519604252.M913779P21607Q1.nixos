@@ -1,0 +1,10 @@
+From: Chris Warburton
+Date: Mon, 26 Feb 2018 00:16:27 +0000
+Subject: Re: Support 'lambda' in equation JSON
+Message-Id: <a726113a054f9c84-bb0fb26ed8386fc3-artemis@nixos>
+References: <a726113a054f9c84-0-artemis@nixos>
+In-Reply-To: <a726113a054f9c84-0-artemis@nixos>
+
+I don't think there's anything else to do for this, since the only
+equation-generating code we have is for QuickSpec which doesn't generate
+lambdas.
