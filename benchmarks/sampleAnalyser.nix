@@ -1,5 +1,7 @@
 { analysis, bash, fail, jq, wrap }:
 
+{ REP, SIZE, sampleFile ? null, SAMPLED_NAMES ? null}:
+
 with builtins;
 with {
   errMsg = ''
@@ -13,7 +15,6 @@ with {
 
   err = error: abort (toJSON { inherit error sampleFile SAMPLED_NAMES; });
 };
-{ REP, SIZE, sampleFile ? null, SAMPLED_NAMES ? null}:
 
 assert sampleFile == null -> SAMPLED_NAMES != null ||
        err "sampleAnalyser needs either sampleFile xor SAMPLED_NAMES";
