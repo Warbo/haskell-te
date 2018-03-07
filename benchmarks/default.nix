@@ -12,12 +12,12 @@ with rec {
   parameters = {
     repetitions  = 30;
     timeout_secs = 300;
-    max_size     = 20;
+    max_size     = 19;
   };
 
   isEven = x: (div x 2) * 2 == x;
 
-  samples = map (size: if size == 0 || !isEven size
+  samples = map (size: if size == 0 || isEven size
                           then "EMPTY"
                           else map (rep: quickspecTip { inherit rep size; })
                                    (range 1 parameters.repetitions))
