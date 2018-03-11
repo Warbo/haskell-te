@@ -10,13 +10,14 @@ with rec {
   '';
 
   parameters = {
-    repetitions  = 30;
-    timeout_secs = 300;
-    max_size     = 19;
+    max_size      = 20;
+    repetitions   = 1;       # Repeat this many times unless specific_reps given
+    specific_reps = [ 30 ];  # Use instead of range(0, repetitions) unless empty
+    timeout_secs  = 300;
   };
 
-                                   (range 1 parameters.repetitions))
   samples = map (size: map (rep: quickspecTip { inherit rep size; })
+                           [30])
                 (range 1 parameters.max_size);
 
   py             = nixpkgs-2016-09.python.withPackages
