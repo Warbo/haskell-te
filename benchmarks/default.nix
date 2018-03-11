@@ -16,9 +16,20 @@ with rec {
     timeout_secs  = 300;
   };
 
-  samples = map (size: map (rep: quickspecTip { inherit rep size; })
-                           [30])
-                (range 1 parameters.max_size);
+  samples =
+    listToAttrs
+      (map (size: {
+             name  = toString size;
+             value = listToAttrs
+                       (map (rep: {
+                              name  = toString rep;
+                              value = quickspecTip { inherit rep size; };
+                            })
+                            (if parameters.specific_reps == []
+                                then range 0 (parameters.repetitions - 1)
+                                else parameters.specific_reps));
+           })
+           (range 1 parameters.max_size));
 
   py             = nixpkgs-2016-09.python.withPackages
                      (p: [ p.sexpdata p.subprocess32 ]);

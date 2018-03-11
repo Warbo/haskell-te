@@ -162,7 +162,7 @@ def tip_cache(var_name):
     The returned value will appear as the first argument to each benchmark.'''
     def setup_cache():
         def gen(size, rep):
-            cmds     = tips['quickspecTip'][size][rep]
+            cmds     = tips['quickspecTip'][str(size)][str(rep)]
             result   = timed_run([cmds['runner']], '', timeout=timeout_secs)
             analysis = {'analysed': False}
             with open(cmds['sampleFile'], 'r') as sampleFile:
