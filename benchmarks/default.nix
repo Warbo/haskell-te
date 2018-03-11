@@ -15,13 +15,9 @@ with rec {
     max_size     = 19;
   };
 
-  isEven = x: (div x 2) * 2 == x;
-
-  samples = map (size: if size == 0 || isEven size
-                          then "EMPTY"
-                          else map (rep: quickspecTip { inherit rep size; })
                                    (range 1 parameters.repetitions))
-                (range 0 parameters.max_size);
+  samples = map (size: map (rep: quickspecTip { inherit rep size; })
+                (range 1 parameters.max_size);
 
   py             = nixpkgs-2016-09.python.withPackages
                      (p: [ p.sexpdata p.subprocess32 ]);
