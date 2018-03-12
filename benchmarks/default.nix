@@ -11,20 +11,32 @@ with rec {
 
   parameters = {
     max_size      = 20;
+
+    # NOTE: These numbers are one-less-than their corresponding samples, e.g.
+    # a specific rep '20' will run 'choose_sample SIZE 21'
     repetitions   = 1;       # Repeat this many times unless specific_reps given
     specific_reps = [ 30 ];  # Use instead of range(0, repetitions) unless empty
+
     timeout_secs  = 300;
   };
 
+  # NOTE: For historical reasons (implicit list indices), the "rep" parameter
+  # given to "choose_sample" is 1+ the index we use here (hence "repMinusOne")
   samples =
     listToAttrs
       (map (size: {
              name  = toString size;
              value = listToAttrs
-                       (map (rep: {
-                              name  = toString rep;
-                              value = quickspecTip { inherit rep size; };
+                       (map (repMinusOne: {
+                              name  = toString repMinusOne;
+                              value = quickspecTip {
+                                inherit size;
+                                # For historical consistency, choose_sample is
+                                # run with 1+ the JSON key
+                                rep = repMinusOne + 1;
+                              };
                             })
+                            # These are the numbers which appear in the JSON
                             (if parameters.specific_reps == []
                                 then range 0 (parameters.repetitions - 1)
                                 else parameters.specific_reps));

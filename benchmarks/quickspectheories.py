@@ -2,7 +2,7 @@
 
 from json       import dumps as jdumps, loads as jloads
 from os         import chmod, getenv
-from parameters import repetitions, timeout_secs
+from parameters import timeout_secs
 from sexpdata   import loads as sloads, dumps as sdumps
 from stat       import S_IRWXU, S_IRWXG, S_IRWXO
 from util       import cached, generate_cache, pipe, reps, set_attributes, theories, timed_run
