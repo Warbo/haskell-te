@@ -1,15 +1,16 @@
 # Commands which split their input into various "buckets", e.g. based on
 # clustering. We don't do any exploration or reduction, we just look at the
 # resulting buckets.
-{ bash, bc, cluster, format, jq, makeWrapper, ghc, runWeka, stdenv,
-  writeScript }:
+{ bash, bc, cluster, format, jq, mkBin, ghc, runCommand, runWeka, stdenv,
+  withDeps, wrap, writeScript }:
 
-rec {
-  hashes = stdenv.mkDerivation {
-    name        = "hashBuckets";
-    buildInputs = [ bc ghc jq makeWrapper ];
-    src         = writeScript "hashBuckets-raw" ''
-      #!${bash}/bin/bash
+with rec {
+  hashes = mkBin {
+    name   = "hashBucket";
+    paths  = [ bash bc ghc jq ];
+    vars   = { SIMPLE = "1"; };
+    script = ''
+      #!/usr/bin/env bash
       set -e
       set -o pipefail
 
@@ -64,37 +65,30 @@ rec {
         done < <(echo "$INPUT" | jq -c '.[]') | jq -s '.'
       }
 
-      export SIMPLE=1
       getHashes | "${format.fromStdin}"
-    '';
-
-    unpackPhase  = "true"; # Nothing to do
-    doCheck      = true;
-    checkPhase   = ''
-      set -e
-      set -o pipefail
-
-      echo "Testing empty input" 1>&2
-      echo "" | CLUSTER_SIZE=10 "$src" 1 1 | jq -e 'length | . == 0'
-
-      echo "Testing single input" 1>&2
-      O='{"name":"foo", "type": "T", "quickspecable": true}'
-      echo "[$O]" | CLUSTER_SIZE=10 "$src" 1 1 |
-        jq -e --argjson o "$O" '. == [[$o + {"cluster":1}]]'
-    '';
-    installPhase = ''
-      mkdir -p "$out/bin"
-      makeWrapper "$src" "$out/bin/hashBucket" --prefix PATH : "${jq}/bin" \
-                                               --prefix PATH : "${bc}/bin" \
-                                               --prefix PATH : "${ghc}/bin"
     '';
   };
 
-  recurrent = stdenv.mkDerivation rec {
-    inherit jq runWeka;
-    name        = "recurrent-clustering-bucketing";
-    buildInputs = [ makeWrapper ];
-    src         = writeScript "recurrent-clustering-raw" ''
+  hashCheck = runCommand "hash-bucket-check" { buildInputs = [ hashes ]; } ''
+    set -e
+    set -o pipefail
+
+    echo "Testing empty input" 1>&2
+    echo "" | CLUSTER_SIZE=10 hashBucket 1 1 | jq -e 'length | . == 0'
+
+    echo "Testing single input" 1>&2
+    O='{"name":"foo", "type": "T", "quickspecable": true}'
+    echo "[$O]" | CLUSTER_SIZE=10 hashBucket 1 1 |
+      jq -e --argjson o "$O" '. == [[$o + {"cluster":1}]]'
+
+    mkdir "$out"
+  '';
+
+  recurrent = mkBin {
+    name   = "recurrentBucket";
+    paths  = [ bash jq runWeka ];
+    vars   = { SIMPLE = "1"; };
+    script = ''
       #!/usr/bin/env bash
       set -e
       set -o pipefail
@@ -105,16 +99,12 @@ rec {
       clCount=$(echo "$CLUSTERED" | jq 'map(.cluster) | max')
       export clCount
 
-      export SIMPLE=1
       echo "$CLUSTERED" | "${format.fromStdin}"
     '';
-
-    unpackPhase  = "true";  # Nothing to unpack
-    installPhase = ''
-      mkdir -p "$out/bin"
-      makeWrapper "$src" "$out/bin/recurrentBucket" \
-        --prefix PATH : "$jq/bin" \
-        --prefix PATH : "$runWeka/bin"
-    '';
   };
+};
+
+{
+  inherit recurrent;
+  hashes = withDeps [ hashCheck ] hashes;
 }
