@@ -1,0 +1,14 @@
+From: Chris Warburton
+Date: Mon, 19 Mar 2018 15:15:19 +0000
+State: new
+Subject: Make bucketing standalone, for reuse by other tools
+Message-Id: <aa35984a8448f916-0-artemis@nixos>
+
+Rather than having separate theory exploration tools (HashSpec, MLSpec,
+etc.) we can instead make bucketing into a generic pre-processor, which
+can be tested on different tools.
+
+In particular, timing how long the bucketing takes isn't particularly
+interesting: we can assume it's pretty darn fast. If not, we can just
+benchmark it separately, rather than complicating the timing of the
+exploration phase.
