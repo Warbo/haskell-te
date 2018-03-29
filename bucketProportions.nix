@@ -12,6 +12,12 @@ with { defs = rec {
   maxSize = 100;
   reps    = 100;
 
+  # Gather samples: run 'choose_sample size rep' for each size up to maxSize and
+  # rep from 0 to reps-1. Returns an object mapping sizes to objects, where the
+  # inner objects map reps to lists of name strings. We use the name 'dupe'
+  # because we will end up with duplicate samples for small sizes. We do the
+  # looping in Racket so we can call the sampler without the overhead of
+  # invoking a fresh Racket process each time.
   dupeSamples = runCommand "samples-with-dupes.json"
     {
       script = wrap {
@@ -46,6 +52,8 @@ with { defs = rec {
       "$script" > "$out"
     '';
 
+  # Deduplicate the raw samples: duplicates are replaced with null, whilst
+  # non-duplicates are set as the "sample" key of an object.
   samples = runCommand "samples.json"
     {
       inherit dupeSamples;
@@ -74,6 +82,10 @@ with { defs = rec {
       "$dedupe" < "$dupeSamples" > "$out"
     '';
 
+  # Runs each sample through the stdio of a given program, adding the result to
+  # the samples JSON. Useful for running a bucketing script on each sample.
+  # Run the bucket script on each sample; we use a few bucket sizes, in
+  # increments
   groundTruthsOf = samples: runCommand "ground-truths.json"
     {
       inherit samples;
