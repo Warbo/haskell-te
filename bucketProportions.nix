@@ -59,9 +59,9 @@ with { defs = rec {
       inherit dupeSamples;
       dedupe = wrap {
         name = "dedupe.py";
-        paths = [ nixpkgs.python ];
+        paths = [ nixpkgs.python3 ];
         script = ''
-          #!/usr/bin/env python
+          #!/usr/bin/env python3
           import json
           import sys
 
