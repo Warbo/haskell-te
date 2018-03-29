@@ -140,6 +140,31 @@ with { defs = rec {
 
   # Run the bucket script on each sample; we use a few bucket sizes, in
   # increments
+  addHashBuckets = samples: processSamples {
+    inherit samples;
+    key  = "hashed";
+    prog = wrap {
+      name  = "hash";
+      paths = [ buckets.hashes jq ];
+      vars  = {
+        sizes = concatStringsSep " " (map toString (lib.range 1 20));
+      };
+      script = ''
+        #!/usr/bin/env bash
+        set -e
+
+        INPUT=$(cat)
+
+        for CLUSTER_SIZE in $sizes
+        do
+          export CLUSTER_SIZE
+          echo "$INPUT" | hashBucket |
+            jq '{(env["CLUSTER_SIZE"]) : map(map(.name))}'
+        done | jq -s 'add'
+      '';
+    };
+  };
+
   groundTruthsOf = samples: runCommand "ground-truths.json"
     {
       inherit samples;
