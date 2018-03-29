@@ -73,6 +73,8 @@ with { defs = rec {
               sample = frozenset(data[size][rep])
               if sample in seen:
                 data[size][rep] = None
+              else:
+                data[size][rep] = {'sample': data[size][rep]}
               seen += [sample]
           print(json.dumps(data))
         '';
