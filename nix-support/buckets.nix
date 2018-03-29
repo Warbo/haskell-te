@@ -69,7 +69,7 @@ with rec {
     '';
   };
 
-  hashCheck = runCommand "hash-bucket-check" { buildInputs = [ hashes ]; } ''
+  hashCheck = runCommand "hash-bucket-check" { buildInputs = [ hashes jq ]; } ''
     set -e
     set -o pipefail
 

@@ -1,0 +1,13 @@
+From: Chris Warburton
+Date: Wed, 28 Mar 2018 16:54:13 +0100
+State: resolved
+Subject: Bucket sampling needs ASTs
+Message-Id: <98c564d662bc515a-0-artemis@nixos>
+resolution: fixed
+
+We've got samples of names, but when we bucket we need to provide the
+ASTs.
+
+We could do this in the Python script which invokes the bucketing
+scripts, since there's no need to have the ASTs duplicated over and over
+among the samples.

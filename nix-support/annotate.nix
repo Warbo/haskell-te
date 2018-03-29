@@ -417,9 +417,9 @@ with rec {
 
   annotatedWith = annotateScript: { pkgDir, extras ? {} }:
     with rec {
-      pkgSrc   = nixedHsPkg pkgDir;
-      f        = dumpToNix { pkgDir = pkgSrc; };
-      env      = extractedEnv {
+      pkgSrc = nixedHsPkg pkgDir;
+      f      = dumpToNix { pkgDir = pkgSrc; };
+      env    = extractedEnv {
         inherit f;
         standalone = pkgSrc;
       };

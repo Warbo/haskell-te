@@ -1,0 +1,8 @@
+From: Chris Warburton
+Date: Thu, 29 Mar 2018 13:51:13 +0100
+Subject: Re: Bucket sampling needs ASTs
+Message-Id: <98c564d662bc515a-e0202764f1f35fe9-artemis@nixos>
+References: <98c564d662bc515a-0-artemis@nixos>
+In-Reply-To: <98c564d662bc515a-0-artemis@nixos>
+
+We now pass all ASTs to the clustering programs
