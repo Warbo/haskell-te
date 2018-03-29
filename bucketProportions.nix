@@ -252,7 +252,9 @@ with { defs = rec {
       "$script" < "$samples" > "$out"
     '';
 
-  result = groundTruthsOf samples;
+  withBuckets = addHashBuckets samples;
+
+  result = groundTruthsOf withBuckets;
 
 }; };
 if exposeDefs
