@@ -72,9 +72,6 @@ address:
  - We split apart QuickSpec's exploration phase from its 'filter out redundant
    conjectures' phase, in case users want to explore without filtering, or wants
    to filter some separate data.
- - We allow functions to be split into separate "buckets" for concurrent
-   exploration, as well as a few "bucketing" algorithms to select how this
-   splitting up should be performed. (Currently WIP).
 
 ## Commands ##
 

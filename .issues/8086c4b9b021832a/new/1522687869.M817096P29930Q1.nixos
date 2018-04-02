@@ -1,0 +1,8 @@
+From: Chris Warburton
+Date: Mon, 02 Apr 2018 17:49:45 +0100
+State: new
+Subject: Rip out bucketing stuff
+Message-Id: <8086c4b9b021832a-0-artemis@nixos>
+
+This repo is now officially *just* for running quickspec on a given set
+of names, or a given package, etc. It is *not* for bucketing algorithms.
