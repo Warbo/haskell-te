@@ -36,7 +36,7 @@ with rec {
     ''
       function go {
         echo "Checking: $*" 1>&2
-        nix-instantiate --eval --read-write-mode -E \
+        nix-instantiate --show-trace --eval --read-write-mode -E \
           "with builtins // { x = import <nixpkgs> { config = {}; overlays = []; }; }; $1" ||
           fail "Failed:\nNIX_PATH: $NIX_PATH\nNIX_REMOTE: $NIX_REMOTE"
         echo "Finished: $*" 1>&2
