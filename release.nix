@@ -1,16 +1,5 @@
-# A useful entry point for continuous integration (e.g. Hydra)
-with rec {
-  go = stable:
-    with import ./. {
-      args            = { inherit stable; };
-      bypassPublicApi = true;
-    };
-    # Remove unbuildable 'override' and 'overrideDerivation' attributes
-    pkgs.stripOverrides {
-      inherit benchmarkEnv benchmarkRunner package;
-    };
-};
+# Pick out those values which are "externally-facing", e.g. to build with CI
 {
-  stable   = go true;
-  unstable = go false;
+  inherit (import ./.)
+    benchmarkEnv benchmarkRunner package;
 }

@@ -1,18 +1,11 @@
-# Set 'bypassPublicApi' to get access to all of our implementation details, but
-# keep in mind that we make no guarantees about their stability.
-{ args ? {}, bypassPublicApi ? false }:
-
+# The definitions from ./overlay.nix applied to a known-good nixpkgs version
 with rec {
-  # Implementation details
-  pkgs = import ./nix-support args;
+  helpersSrc = import ./nix-support/helpers.nix {
+    inherit (import <nixpkgs> {}) fetchFromGitHub;
+  };
 
-  # Used for general performance testing, as well as formal evaluation
-  benchmarkEnv    = import ./benchmarkEnv.nix;
-  benchmarkRunner = import ./benchmarks { inherit pkgs; };
-
-  # Provides our exploration scripts
-  inherit (pkgs) package;
+  helpers = import <nixpkgs> {
+    overlays = [ (import "${helpersSrc}/overlay.nix") ];
+  };
 };
-if bypassPublicApi
-   then { inherit benchmarkEnv benchmarkRunner package pkgs; }
-   else package
+import helpers.repo1803 { overlays = [ (import ./overlay.nix) ]; }
