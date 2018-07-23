@@ -1,4 +1,4 @@
-with import ./.. {};
+with import ./. {};
 stdenv.mkDerivation {
   name         = "haskell-te-benchmark-env";
   src          = ./benchmarkEnv.nix;
