@@ -9,9 +9,9 @@ with rec {
   };
 
   warn = args: if args == {}
-                  then builtins.trace
-                         "Warning: Ignoring args to haskell-te default.nix"
-                  else (x: x);
+                  then (x: x)
+                  else builtins.trace
+                         "Warning: Ignoring args to haskell-te default.nix";
 };
 args: warn args
   (import helpers.repo1803 { overlays = [ (import ./overlay.nix) ]; })
