@@ -5,8 +5,9 @@ with rec {
   path = tryElse <te-benchmarks> (latestGit {
     url    = http://chriswarbo.net/git/theory-exploration-benchmarks.git;
     stable = {
-      rev    = "e993b2f";
-      sha256 = "1c09m8040p9wvv25l12xckpmpvjhlhr3jwq5bm22d0947pc8fgdi";
+      rev        = "e993b2f";
+      sha256     = "1c09m8040p9wvv25l12xckpmpvjhlhr3jwq5bm22d0947pc8fgdi";
+      unsafeSkip = false;
     };
   });
 

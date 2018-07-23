@@ -1,4 +1,4 @@
-{ callHackage, latestGit, lib, nixedHsPkg, stable }:
+{ callHackage, latestGit, lib, nixedHsPkg }:
 
 with builtins;
 with lib;
@@ -96,7 +96,7 @@ extra: self: super: hsPkgs {
   get = { path ? null, url ? null, owner ? "Warbo", repo ? null, rev, sha256}:
     assert url == null -> repo != null || abort "Need URL or repo (${sha256})";
     with rec {
-      stable  = { inherit rev sha256; };
+      stable  = { inherit rev sha256; unsafeSkip = false; };
       fullUrl = if url == null
                    then "https://github.com/${owner}/${repo}.git"
                    else url;
