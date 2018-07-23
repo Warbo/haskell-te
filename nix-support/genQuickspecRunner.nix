@@ -105,7 +105,7 @@ with rec {
         assert getEnv "NIXENV"   != "" || abort "No NIXENV set";
         assert getEnv "OUT_DIRS" != "" || abort "No OUT_DIRS set";
         assert getEnv "CMD"      != "" || abort "No CMD set";
-        (import ${toString ../nix-support} {}).wrap {
+        (import ${toString ./..} {}).wrap {
           name  = "quickspec-runner";
           paths = [ (import (toFile "env.nix" (getEnv "NIXENV"))) ];
           vars  = {

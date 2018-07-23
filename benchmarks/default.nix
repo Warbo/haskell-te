@@ -2,7 +2,7 @@
 args:
 
 with builtins;
-with import ../nix-support {};
+with import ./.. {};
 with lib;
 with rec {
   noCompiling = writeScript "noCompilingDuringBenchmarking.nix" ''

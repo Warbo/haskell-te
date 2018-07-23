@@ -1,8 +1,7 @@
 # Provides a set of Haskell packages for use by nix-eval.
 { hsDirs }:
 
-# We use "./.." so that all of our dependencies get included
-with import ../nix-support {};
+with import ./.. {};
 with builtins;
 with rec {
   hsDrvs  = self: listToAttrs (map (dir:

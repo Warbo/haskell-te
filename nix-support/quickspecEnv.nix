@@ -2,7 +2,7 @@
 # to use during exploration
 with builtins;
 with rec {
-  support = import ./. {};
+  support = import ./.. {};
   hs      = if getEnv "HASKELL_PACKAGES" == ""
                then support.haskellPackages
                else import (getEnv "HASKELL_PACKAGES");

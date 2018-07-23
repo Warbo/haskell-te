@@ -7,5 +7,11 @@ with rec {
   helpers = import <nixpkgs> {
     overlays = [ (import "${helpersSrc}/overlay.nix") ];
   };
+
+  warn = args: if args == {}
+                  then builtins.trace
+                         "Warning: Ignoring args to haskell-te default.nix"
+                  else (x: x);
 };
-import helpers.repo1803 { overlays = [ (import ./overlay.nix) ]; }
+args: warn args
+  (import helpers.repo1803 { overlays = [ (import ./overlay.nix) ]; })

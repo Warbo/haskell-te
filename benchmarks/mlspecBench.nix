@@ -28,7 +28,7 @@ rec {
   };
 
   ourEnv = writeScript "our-env.nix" ''
-    with import ${./..}/nix-support {};
+    with import ${./..} {};
     buildEnv {
       name  = "mlspecbench-env";
       paths = [
@@ -141,7 +141,7 @@ rec {
       NIX_EVAL_HASKELL_PKGS = ../nix-support/customHs.nix;
       NIX_PATH              = concatStringsSep ":" [
         "nixpkgs=${toString <nixpkgs>}"
-        "support=${toString ../nix-support}"
+        "support=${toString ./..}"
       ];
     };
     paths  = [ bash haskellPkgToAsts hashspecBench.env ];

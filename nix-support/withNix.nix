@@ -14,7 +14,7 @@ with rec {
   # Override NIX_PATH to take into account recursion using <real>
 
   NIX_PATH = concatStringsSep ":" [
-    "nixpkgs=${toString ./.}"
+    "nixpkgs=${./..}"
     "real=${toString pathReal}"
     (getEnv "NIX_PATH")
   ];
@@ -44,8 +44,8 @@ with rec {
 
       echo "Checking <nixpkgs> gets overridden" 1>&2
       RESULT=$(go '<nixpkgs>')
-      echo "$RESULT" | grep "nix-support" > /dev/null ||
-        fail "Didn't see 'nix-support' in <nixpkgs> ($RESULT)"
+      F="$RESULT/nix-support/withNix.nix"
+      [[ -e "$F" ]] || fail "No such file '$F' (<nixpkgs> = '$RESULT')"
 
       echo "Checking <nixpkgs> isn't polluted by ~/.nixpkgs/config.nix" 1>&2
       go 'assert !(x                 ? warbo-utilities); true'
