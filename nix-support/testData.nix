@@ -53,7 +53,7 @@ rec {
 
     finalEqs = { name, pkg, script ? null }: runCommand "test-quickspec-${name}"
       (nixEnv // {
-        inherit pkg;
+        p            = pkg;
         buildInputs  = [ (if script == null then quickspec else script) ];
         IN_SELF_TEST = "1";
         MAX_SECS     = "180";
@@ -62,7 +62,7 @@ rec {
       })
       ''
         set -e
-        quickspec "$pkg" > "$out"
+        quickspec "$p" > "$out"
       '';
 
     haskellDrv = { dir, name, script ? null }: haskellPackages.callPackage
