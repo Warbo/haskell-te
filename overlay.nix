@@ -108,5 +108,4 @@ with {
   # Used for general performance testing, as well as formal evaluation
   benchmarkEnv    = import ./benchmarkEnv.nix;
   benchmarkRunner = import ./benchmarks { inherit (self) pkgs; };
-
 }

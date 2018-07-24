@@ -199,9 +199,11 @@ with rec {
         inherit f;
         buildInputs           = mkBuildInputs {};
         nixed                 = [(getAttr name (testData.haskellNixed {}))];
-        NIX_EVAL_HASKELL_PKGS = attrsToDirs {
-                                  nix-support = ./.;
-                                } + "/nix-support/customHs.nix";  # Relativity
+        NIX_EVAL_HASKELL_PKGS = (filterSource
+          (path: type: hasSuffix ".nix" path || elem (baseNameOf path) [
+            "benchmarks" "nix-support"
+          ])
+          ./..) + "/nix-support/customHs.nix";
       }
       ''
         set -e
