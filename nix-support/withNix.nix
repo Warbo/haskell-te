@@ -9,7 +9,9 @@ with rec {
   };
 
   # We include these for historical reasons
-  commonDeps = [ bash coreutils jq nixPkg perl procps utillinux ];
+  commonDeps = [
+    bash coreutils jq (nixPkg.out or nixPkg) perl procps utillinux
+  ];
 
   # Override NIX_PATH to take into account recursion using <real>
 
