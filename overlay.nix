@@ -102,6 +102,7 @@ with {
   tipBenchmarks         = self.callPackage ./nix-support/tipBenchmarks.nix         {};
   tipToHaskellPkg       = self.callPackage ./nix-support/tipToHaskellPkg.nix       {};
   tryTip                = self.callPackage ./nix-support/tryTip.nix                {};
+  warbo-packages        = self.callPackage ./nix-support/warbo-packages.nix        {};
   withNix               = self.callPackage ./nix-support/withNix.nix               {};
 
   # Used for general performance testing, as well as formal evaluation
