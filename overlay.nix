@@ -42,10 +42,10 @@ with {
   inherit (self.nix-helpers)
     allDrvsIn attrsToDirs backtrace fail inNixedDir latestGit mkBin
     nixListToBashArray nothing pipeToNix reverse sanitiseName stableHackageDb
-    stripOverrides timeout tryElse unlines unpack withDeps wrap;
+    stripOverrides tryElse unlines unpack withDeps wrap;
 
   inherit (self.warbo-packages)
-    asv;
+    asv timeout;
 
   # Cases where we want both the attribute set and its attributes available
   inherit (self.callPackage ./nix-support/annotate.nix {})
