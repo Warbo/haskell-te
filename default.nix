@@ -4,7 +4,9 @@ with rec {
     inherit (import <nixpkgs> {}) fetchFromGitHub;
   };
 
-  helpers = import <nixpkgs> {
+  path = import ./nix-support/path.nix {};
+
+  helpers = import path {
     overlays = [ (import "${helpersSrc}/overlay.nix") ];
   };
 
