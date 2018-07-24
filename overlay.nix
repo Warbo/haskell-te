@@ -7,7 +7,7 @@ with builtins;
 #with super.lib;
 with {
   helpersSrc = import ./nix-support/helpers.nix {
-    inherit (import <nixpkgs> {}) fetchFromGitHub;
+    inherit (import (import ./nix-support/path.nix {}) {}) fetchFromGitHub;
   };
 };
 (import "${helpersSrc}/overlay.nix" self super) // {
