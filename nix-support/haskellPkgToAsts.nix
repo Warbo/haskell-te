@@ -42,18 +42,18 @@ with rec {
     '';
   };
 
-  check = n: pkg: runCommand "test-haskellPkgToAsts-example"
+  check = n: p: runCommand "test-haskellPkgToAsts-example"
     (withNix {
-      inherit pkg;
+      inherit p;
       buildInputs = [ fail haskellPkgToAsts jq (extractedEnv {
-        standalone = pkg;
+        standalone = p;
       }) ];
       IN_SELF_TEST = "1";
       SKIP_NIX     = "1";
     })
     ''
       set -e
-      ASTS=$(haskellPkgToAsts "$pkg" ) || fail "Command failed"
+      ASTS=$(haskellPkgToAsts "$p" ) || fail "Command failed"
 
       T=$(echo "$ASTS" | jq -r 'type') || fail "Couldn't parse ASTs"
       [[ "x$T" = "xarray" ]] || fail "Expected array, got '$T'"
