@@ -3,6 +3,6 @@
 fetchFromGitHub {
   owner  = "Warbo";
   repo   = "nix-helpers";
-  rev    = "4f50621";
-  sha256 = "1c90yk10jrwx7g475i06jwc8xq92008x82zlldkbli8hb9gbl45n";
+  rev    = "35797e2";
+  sha256 = "0mj1q72sjbdalcvaqk3pk1ik9k1bgqmd5igv20ks2miwg5hr2bic";
 }
