@@ -11,6 +11,10 @@ with {
   };
 };
 (import "${helpersSrc}/overlay.nix" self super) // {
+  tePath = import ./nix-support/path.nix {};
+
+  inherit helpersSrc;
+
   # Various versions of nixpkgs from which to get our packages
   inherit (import ./nix-support/nixpkgs.nix)
     # Whichever nixpkgs we're using by default
