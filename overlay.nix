@@ -71,6 +71,37 @@ with {
   inherit (self.runTypesScriptData)
     runTypesScript;
 
+  # We take Nix from the system. This is impure, but unavoidable since different
+  # Nix versions will behave differently anyway (e.g. when using 'withNix')
+  inherit (import self.tePath {}) nix;
+
+  # A bug in nixpkgs 18.03 seems to prevent libuv building on i686. We can use
+  # pre-built packages from a binary cache (which were presumably cross-compiled
+  # on x86-64 machines).
+  # This is a pretty core library, which makes this project unusable on that
+  # OS+CPU combo; which, notably, is what the author uses for development...
+  # To mitigate this we check if that OS+CPU is in use, and if so we replace
+  # some pinned packages which are known to be broken with packages taken
+  # impurely from the running system. Note that Nix is such a package, but it's
+  # always taken from the running system anyway (see above).
+  inherit (with rec {
+            versionFile = self.path + "/.version";
+            version     = if pathExists versionFile
+                             then replaceStrings [ "\n" "" ] [ "" "" ]
+                                                 (readFile versionFile)
+                             else "0";
+            libuvBug    = currentSystem == "i686-linux" && version == "18.03";
+            warn        = ''
+              WARNING: Detected nixpkgs 18.03 on i686. This has a known
+              problem with libuv, so we're taking the 'jq' package from
+              <nixpkgs> instead of using the pinned version. Hopefully
+              the system's version isn't broken too...
+            '';
+          };
+          if libuvBug
+             then trace warn import self.tePath {}
+             else super)
+    jq;
 
   analysis              = self.callPackage ./nix-support/analysis.nix              {};
   asv-nix               = self.callPackage ./nix-support/asv-nix.nix               {};
