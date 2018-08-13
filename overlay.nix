@@ -57,12 +57,6 @@ with {
   inherit (self.runTypesScriptData)
     runTypesScript;
 
-  # Imports a file and calls the function it contains, automatically looking up
-  # argument values from the 'self' attrset.
-  callPackage = import ./nix-support/callPackage.nix {
-    inherit self;
-    inherit (super) newScope;
-  };
 
   analysis              = self.callPackage ./nix-support/analysis.nix              {};
   asv-nix               = self.callPackage ./nix-support/asv-nix.nix               {};
