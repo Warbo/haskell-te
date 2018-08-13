@@ -1,7 +1,5 @@
-# Env vars required for using Nix commands inside builders
+# Env vars required for using Nix commands inside builders. Note that
+# 'callPackage' will pollute the result, so use 'import'.
 { withNix }:
 
-{
-  value           = { inherit (withNix {}) NIX_REMOTE NIX_PATH; };
-  removeOverrides = true;  # Since they can't be serialised into an environment
-}
+{ inherit (withNix {}) NIX_REMOTE NIX_PATH; }

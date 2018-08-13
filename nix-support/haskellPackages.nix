@@ -1,3 +1,4 @@
+# Note that 'callPackage' will pollute the result, so use 'import'.
 { hsOverride, nixpkgs }:
 
 with builtins // {
@@ -8,9 +9,4 @@ with builtins // {
 assert ghcVersion == reqVersion ||
        abort "We require GHC ${reqVersion}, using GHC ${ghcVersion}";
 
-{
-  value = nixpkgs.haskellPackages.override {
-            overrides = hsOverride (_: _: {});
-          };
-  removeOverrides = true;  # Otherwise they'd mess up the Haskell overrides
-}
+nixpkgs.haskellPackages.override { overrides = hsOverride (_: _: {}); }

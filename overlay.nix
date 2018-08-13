@@ -79,7 +79,8 @@ with {
   format                = self.callPackage ./nix-support/format.nix                {};
   genQuickspecRunner    = self.callPackage ./nix-support/genQuickspecRunner.nix    {};
   getDepsScript         = self.callPackage ./nix-support/getDepsScript.nix         {};
-  haskellPackages       = self.callPackage ./nix-support/haskellPackages.nix       {};
+  haskellPackages       = import ./nix-support/haskellPackages.nix
+                            { inherit (self) hsOverride nixpkgs; };
   haskellPkgNameVersion = self.callPackage ./nix-support/haskellPkgNameVersion.nix {};
   haskellPkgToAsts      = self.callPackage ./nix-support/haskellPkgToAsts.nix      {};
   haskellPkgToRawAsts   = self.callPackage ./nix-support/haskellPkgToRawAsts.nix   {};
@@ -89,7 +90,7 @@ with {
   makeHaskellPkgNixable = self.callPackage ./nix-support/makeHaskellPkgNixable.nix {};
   ML4HSFE               = self.callPackage ./nix-support/ML4HSFE.nix               {};
   nixedHsPkg            = self.callPackage ./nix-support/nixedHsPkg.nix            {};
-  nixEnv                = self.callPackage ./nix-support/nixEnv.nix                {};
+  nixEnv                = import ./nix-support/nixEnv.nix { inherit (self) withNix; };
   package               = self.callPackage ./nix-support/package.nix               {};
   pkgName               = self.callPackage ./nix-support/pkgName.nix               {};
   quickspec             = self.callPackage ./nix-support/quickspec.nix             {};
