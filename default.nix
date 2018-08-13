@@ -1,12 +1,12 @@
 # The definitions from ./overlay.nix applied to a known-good nixpkgs version
 with rec {
   helpersSrc = import ./nix-support/helpers.nix {
-    inherit (import path {}) fetchFromGitHub;
+    inherit (import tePath {}) fetchFromGitHub;
   };
 
-  path = import ./nix-support/path.nix {};
+  tePath = import ./nix-support/path.nix {};
 
-  helpers = import path {
+  helpers = import tePath {
     overlays = [ (import "${helpersSrc}/overlay.nix") ];
   };
 
