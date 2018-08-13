@@ -1,4 +1,4 @@
-{ bash, fail, haskellPkgToAsts, jq, lib, makeHaskellPkgNixable, mkBin, nixEnv,
+{ bash, fail, haskellPkgToAsts, jq, lib, makeHaskellPkgNixable, mkBin,
   quickspecAsts, runCommand, testData, unpack, withDeps, writeScript }:
 
 with lib;

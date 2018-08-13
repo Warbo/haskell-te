@@ -1,5 +1,5 @@
 { analysis, annotated, bash, fail, genQuickspecRunner, glibcLocales,
-  jq, lib, makeHaskellPkgNixable, mkBin, nixEnv, runCommand, testData, unpack,
+  jq, lib, makeHaskellPkgNixable, mkBin, runCommand, testData, unpack,
   withDeps, withNix }:
 
 with lib;
