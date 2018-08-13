@@ -1,16 +1,21 @@
-{ bash, coreutils, fail, jq, lib, nix, nix-helpers, nixpkgs1803, perl, procps,
+{ bash, callPackage, coreutils, fail, helpersSrc, jq, lib, nix, perl, procps,
   runCommand, utillinux }:
 
 with builtins;
 with rec {
+  # Force nix-helpers version to use the same Nix package as us
+  withNix' =
+    with callPackage "${helpersSrc}/helpers/withNix.nix" {};
+    def;
+
   # Allow given env to override us, but we must override buildInputs
-  go = env: nix-helpers.withNix ({ inherit NIX_PATH; } // env) // {
+  go = env: withNix' ({ inherit NIX_PATH; } // env) // {
     buildInputs = (env.buildInputs or []) ++ commonDeps;
   };
 
   # We include these for historical reasons
   commonDeps = [
-    bash coreutils jq (nixPkg.out or nixPkg) perl procps utillinux
+    bash coreutils jq (nix.out or nix) perl procps utillinux
   ];
 
   # Override NIX_PATH to take into account recursion using <real>
@@ -24,12 +29,6 @@ with rec {
   # If we don't have <real> yet, use <nixpkgs>
   pathReal = with tryEval <real>;
              if success then value else <nixpkgs>;
-
-  # Make sure we use a Nix package which corresponds to the system's
-
-  nixV1 = compareVersions builtins.nixVersion "2" == -1;
-
-  nixPkg = if nixV1 then nix else nixpkgs1803.nix;
 
   # Tests
 
@@ -64,14 +63,5 @@ with rec {
     '';
 };
 
-assert nixV1 -> compareVersions nixPkg.version "2" == -1 || die {
-  inherit (nixPkg) version;
-  error = "Nix package doesn't have version 1.x";
-};
-assert nixV1 || compareVersions nix.version "2" == 1 || die {
-  inherit (nixPkg) version;
-  error = "Nix package should be higher than 2.0.0";
-};
 assert import checkPath;
-
 go
