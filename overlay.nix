@@ -10,8 +10,17 @@ with {
     inherit (import (import ./nix-support/path.nix {}) {}) fetchFromGitHub;
   };
 };
-(import "${helpersSrc}/overlay.nix" self super) // {
+{
   tePath = import ./nix-support/path.nix {};
+
+  helpers =
+    with import self.tePath {
+      overlays = [
+        (import "${helpersSrc}/overlay.nix")
+        (import ./overlay.nix)
+      ];
+    };
+    nix-helpers;
 
   inherit helpersSrc;
 
@@ -43,9 +52,10 @@ with {
     racket;
 
   # Helper functions, etc.
-  inherit (self.nix-helpers)
-    allDrvsIn attrsToDirs backtrace fail inNixedDir latestGit mkBin
-    nixListToBashArray nothing pipeToNix reverse sanitiseName stableHackageDb
+  inherit (self.helpers)
+    allDrvsIn attrsToDirs backtrace fail inNixedDir isBroken latestGit mkBin
+    nixListToBashArray nixpkgs1803 nothing pipeToNix reverse sanitiseName
+    stableHackageDb
     stripOverrides tryElse unlines unpack withDeps wrap;
 
   inherit (self.warbo-packages)
