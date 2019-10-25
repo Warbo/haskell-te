@@ -40,7 +40,7 @@ with rec {
       UNIQUIFY = ". | unique | map(del(.qname))";
     };
     script = ''
-      #!/usr/bin/env bash
+      #!${bash}/bin/bash
       set -e
 
       # Keep lines which look like JSON objects
@@ -54,7 +54,7 @@ with rec {
     name   = "getTypes";
     paths  = [ bash jq utillinux ];
     script = ''
-      #!/usr/bin/env bash
+      #!${bash}/bin/bash
       set -e
 
       # Monomorphic types come in via stdin
@@ -104,7 +104,7 @@ with rec {
       ACTION = ". + $this";
     };
     script = ''
-      #!/usr/bin/env bash
+      #!${bash}/bin/bash
 
       # Given JSON objects on stdin, and a file descriptor containing JSON objects
       # as $1, combines those elements of each with matching pkg/mod/name. If no
@@ -154,7 +154,7 @@ with rec {
       '';
     };
     script = ''
-      #!/usr/bin/env bash
+      #!${bash}/bin/bash
       set -e
 
       function msg {
@@ -197,7 +197,7 @@ with rec {
     name   = "annotateDb";
     paths  = [ annotateAsts bash getDepsScript ];
     script = ''
-      #!/usr/bin/env bash
+      #!${bash}/bin/bash
       set -e
       set -o pipefail
 
@@ -216,7 +216,7 @@ with rec {
     paths  = [ bash checkStderr fail ];
     vars   = { annotateDb = annotateDbScript; };
     script = ''
-      #!/usr/bin/env bash
+      #!${bash}/bin/bash
       [[ -n "$typesScript" ]] || fail "No typesScript set"
       "$annotateDb" 2> >(checkStderr)
 
@@ -444,7 +444,7 @@ rec {
     paths  = [ annotateScript bash ];
     vars   = { typesScript = runTypesScriptData.script; };
     script = ''
-      #!/usr/bin/env bash
+      #!${bash}/bin/bash
       set -e
       pkgSrc=$(readlink -f "$1")
       export pkgSrc

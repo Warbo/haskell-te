@@ -45,7 +45,7 @@ with rec {
       '';
     };
     script = ''
-      #!/usr/bin/env bash
+      #!${bash}/bin/bash
       jq 'map(select(.quickspecable))' | runhaskell "$code"
     '';
   };
@@ -54,7 +54,7 @@ with rec {
     name   = "keepJson";
     paths  = [ bash gnugrep jq ];
     script = ''
-      #!/usr/bin/env bash
+      #!${bash}/bin/bash
       set -e
 
       # Strip out cruft that QuickSpec puts on stdout. Since this is just a
@@ -73,7 +73,7 @@ with rec {
     paths  = [ bash checkStderr haveVar keepJson timeout ];
     vars   = { NIX_EVAL_HASKELL_PKGS = toString ./quickspecEnv.nix; };
     script = ''
-      #!/usr/bin/env bash
+      #!${bash}/bin/bash
       set -e
       set -o pipefail
 
@@ -118,7 +118,7 @@ with rec {
       '';
     };
     script = ''
-      #!/usr/bin/env bash
+      #!${bash}/bin/bash
       set -e
       set -o pipefail
 

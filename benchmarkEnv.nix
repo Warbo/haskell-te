@@ -9,7 +9,7 @@ stdenv.mkDerivation {
       name   = "unzipBenchmarks";
       paths  = [ fail nixpkgs.lzip ];
       script = ''
-        #!/usr/bin/env bash
+        #!${bash}/bin/bash
         set   -e
         shopt -s nullglob
 

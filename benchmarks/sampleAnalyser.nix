@@ -32,7 +32,7 @@ wrap {
               then { inherit SAMPLED_NAMES; }
               else { inherit sampleFile;    };
   script = ''
-    #!/usr/bin/env bash
+    #!${bash}/bin/bash
     set -e
     set -o pipefail
 

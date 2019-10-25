@@ -97,7 +97,7 @@ mkBin {
     };
   };
   script = ''
-    #!/usr/bin/env bash
+    #!${bash}/bin/bash
     exec python "$@"
   '';
 }

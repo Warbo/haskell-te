@@ -1,5 +1,5 @@
 # Check that the required Haskell packages are found in the environment
-{ extraHaskellPackages, fail, haskellPackages, jq, runCommand, unlines,
+{ bash, extraHaskellPackages, fail, haskellPackages, jq, runCommand, unlines,
   withDeps, wrap, writeScript }:
 
 with builtins;
@@ -11,7 +11,7 @@ with rec {
                      (unlines (builtins.attrNames haskellPackages));
 
       extractionScript = writeScript "find-references" ''
-        #!/usr/bin/env bash
+        #!${bash}/bin/bash
         set -e
 
         # Allow package names to be given directly, one per line (limit to
@@ -51,7 +51,7 @@ with rec {
       allGiven = unlines (extra ++ extraHaskellPackages);
     };
     script = ''
-      #!/usr/bin/env bash
+      #!${bash}/bin/bash
       set -e
       set -o pipefail
 
@@ -110,7 +110,7 @@ with rec {
       ];
     }
     ''
-      #!/usr/bin/env bash
+      #!${bash}/bin/bash
       set -e
 
       "${go [                                    ]}" || fail "Empty"

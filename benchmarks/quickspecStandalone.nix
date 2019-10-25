@@ -36,7 +36,7 @@ with rec {
         TRUTH_SOURCE = GROUND_TRUTH;
       };
       script = ''
-        #!/usr/bin/env bash
+        #!${bash}/bin/bash
         set -e
         set -o pipefail
         precision_recall_eqs

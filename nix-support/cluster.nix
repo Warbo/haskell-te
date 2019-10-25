@@ -8,7 +8,7 @@ with rec {
     name   = "cluster";
     paths  = [ bash ML4HSFE runWeka ];
     script = ''
-      #!/usr/bin/env bash
+      #!${bash}/bin/bash
       set -e
 
       [[ -n "$WIDTH"  ]] ||  WIDTH=30

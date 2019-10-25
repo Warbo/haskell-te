@@ -4,7 +4,7 @@ mkBin {
   name   = "haskellPkgNameVersion";
   paths  = [ bash fail gnugrep gnused jq ];
   script = ''
-    #!/usr/bin/env bash
+    #!${bash}/bin/bash
     set   -e
     shopt -s nullglob
 

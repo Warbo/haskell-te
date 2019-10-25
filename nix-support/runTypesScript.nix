@@ -22,7 +22,7 @@ with rec {
         '';
     };
     script = ''
-      #!/usr/bin/env bash
+      #!${bash}/bin/bash
       set -e
       set -o pipefail
       nix-shell --show-trace --pure -p "$pkg" --run "$cmd" | replLines
@@ -34,7 +34,7 @@ with rec {
     name   = "checkMods";
     paths  = [ repl ];
     script = ''
-      #!/usr/bin/env bash
+      #!${bash}/bin/bash
       set -e
       set -o pipefail
 
@@ -71,7 +71,7 @@ with rec {
       ];
     };
     script = ''
-      #!/usr/bin/env bash
+      #!${bash}/bin/bash
       # The name of the value we're trying to send through QuickSpec
       GIVEN="$1"
 
@@ -213,7 +213,7 @@ with rec {
   replLines = mkBin {
     name   = "replLines";
     script = ''
-      #!/usr/bin/env bash
+      #!${bash}/bin/bash
       while IFS= read -r LINE
       do
         if echo "$LINE" | grep '^ ' > /dev/null
@@ -242,7 +242,7 @@ rec {
       ];
     };
     script = ''
-      #!/usr/bin/env bash
+      #!${bash}/bin/bash
       set -e
       set -o pipefail
 

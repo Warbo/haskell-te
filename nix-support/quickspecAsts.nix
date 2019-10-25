@@ -13,7 +13,7 @@ with rec {
       NIX_EVAL_HASKELL_PKGS = builtins.toString ./quickspecEnv.nix;
     };
     script = ''
-      #!/usr/bin/env bash
+      #!${bash}/bin/bash
       set   -e
       set   -o pipefail
 

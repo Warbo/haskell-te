@@ -4,7 +4,7 @@ mkBin {
   name   = "hsNameVersion";
   paths  = [ bash jq utillinux ];
   script = ''
-    #!/usr/bin/env bash
+    #!${bash}/bin/bash
 
     # Takes a string containing a Haskell package name, returns JSON with
     # the version (if found) and the package name (with version stripped, if

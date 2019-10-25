@@ -8,7 +8,7 @@ with rec {
     paths  = [ bash fail (haskellPkgToAsts {}) jq makeHaskellPkgNixable
                quickspecAsts ];
     script = ''
-      #!/usr/bin/env bash
+      #!${bash}/bin/bash
       set -e
       set -o pipefail
 

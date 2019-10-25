@@ -9,7 +9,7 @@ with rec {
     paths  = [ dumpToNixScripts.main nix ];
     vars   = { EXPR = toString ./dumpEnv.nix; };
     script = ''
-      #!/usr/bin/env bash
+      #!${bash}/bin/bash
       set -e
 
       nix-shell --show-trace -p "import $EXPR" \
@@ -24,7 +24,7 @@ with rec {
       makeHaskellPkgNixable
     ];
     script = ''
-      #!/usr/bin/env bash
+      #!${bash}/bin/bash
       set -e
 
       [[ -n "$1" ]] || fail "haskellPkgToRawAsts needs an arg"

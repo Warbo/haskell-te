@@ -16,7 +16,7 @@ mkBin {
     '';
   };
   script = ''
-    #!/usr/bin/env bash
+    #!${bash}/bin/bash
     set -e
 
     ERR=""

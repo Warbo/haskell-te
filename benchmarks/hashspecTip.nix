@@ -1,10 +1,10 @@
-{ mkBin, tryTip, withDeps }:
+{ bash, mkBin, tryTip, withDeps }:
 
 with rec {
   hashspecTip = mkBin {
     name = "hashspecTip";
     script = ''
-      #!/usr/bin/env bash
+      #!${bash}/bin/bash
       set -e
       set -o pipefail
 

@@ -1,4 +1,4 @@
-{ allDrvsIn, attrsToDirs, cabal-install, coreutils, extractedEnv,
+{ allDrvsIn, attrsToDirs, bash, cabal-install, coreutils, extractedEnv,
   extraHaskellPackages, fail, haskellPackages, jq, lib, makeHaskellPkgNixable,
   mkBin, nix, nixEnv, runCommand, testData, timeout, utillinux, withDeps, wrap,
   writeScript }:
@@ -15,7 +15,7 @@ with rec {
                    timeout ];
         vars   = nixEnv;
         script = ''
-          #!/usr/bin/env bash
+          #!${bash}/bin/bash
           set -e
           set -o pipefail
 
@@ -70,7 +70,7 @@ with rec {
       };
     };
     script = ''
-      #!/usr/bin/env bash
+      #!${bash}/bin/bash
       set -e
       if [[ -n "$MAX_SECS" ]]
       then

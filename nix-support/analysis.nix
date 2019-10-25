@@ -1,6 +1,6 @@
 # Scripts, mostly from tipBenchmarks, which are useful for analysing output
-{ attrsToDirs, fail, filterToSampled, genQuickspecRunner, jq, lib, runCommand,
-  testData, tipBenchmarks, withDeps, wrap }:
+{ attrsToDirs, bash, fail, filterToSampled, genQuickspecRunner, jq, lib,
+  runCommand, testData, tipBenchmarks, withDeps, wrap }:
 
 with builtins;
 with rec {
@@ -15,7 +15,7 @@ with rec {
         name = "conjectures_for_sample";
         paths  = [ tipBenchmarks.tools ];
         script = ''
-          #!/usr/bin/env bash
+          #!${bash}/bin/bash
           decode | conjectures_for_sample
         '';
       };

@@ -10,7 +10,7 @@ with rec {
     paths  = [ bash bc ghc jq ];
     vars   = { SIMPLE = "1"; };
     script = ''
-      #!/usr/bin/env bash
+      #!${bash}/bin/bash
       set -e
       set -o pipefail
 
@@ -89,7 +89,7 @@ with rec {
     paths  = [ bash jq runWeka ];
     vars   = { SIMPLE = "1"; };
     script = ''
-      #!/usr/bin/env bash
+      #!${bash}/bin/bash
       set -e
       set -o pipefail
 

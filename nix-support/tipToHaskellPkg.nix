@@ -8,7 +8,7 @@ with rec {
     name  = "genPkgHere";
     paths = [ bash tipBenchmarks.tools ];
     script = ''
-      #!/usr/bin/env bash
+      #!${bash}/bin/bash
       OUT_DIR="$PWD" full_haskell_package
     '';
   };
@@ -19,7 +19,7 @@ with rec {
     name   = "tipToHaskellPkg";
     paths  = [ bash genPkgHere inNixedDir ];
     script = ''
-      #!/usr/bin/env bash
+      #!${bash}/bin/bash
       inNixedDir genPkgHere "${dirName}"
     '';
   };

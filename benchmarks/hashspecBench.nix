@@ -25,7 +25,7 @@ rec {
           NIX_EVAL_EXTRA_IMPORTS = ''[("tip-benchmark-sig", "A")]'';
         };
         script = ''
-          #!/usr/bin/env bash
+          #!${bash}/bin/bash
           set -e
           [[ -n "$TEMPDIR" ]] || fail "No TEMPDIR given"
 
@@ -59,7 +59,7 @@ rec {
           '';
         };
         script = ''
-          #!/usr/bin/env bash
+          #!${bash}/bin/bash
           set -e
           set -o pipefail
 
@@ -101,7 +101,7 @@ rec {
       };
     };
     script = ''
-      #!/usr/bin/env bash
+      #!${bash}/bin/bash
       set -e
       [[ -n "$INPUT_TIP" ]] || fail "No INPUT_TIP given, aborting"
 
@@ -132,7 +132,7 @@ rec {
           NIX_EVAL_EXTRA_IMPORTS = ''[("tip-benchmark-sig", "A")]'';
         };
         script = ''
-          #!/usr/bin/env bash
+          #!${bash}/bin/bash
 
           if [[ -n "$EXPLORATION_MEM" ]]
           then
@@ -155,7 +155,7 @@ rec {
       ];
     };
     script = ''
-      #!/usr/bin/env bash
+      #!${bash}/bin/bash
       set -e
 
       ${setUpDir}

@@ -7,7 +7,7 @@ with rec {
     name   = "filterToSampled";
     paths  = [ python ];
     script = ''
-      #!/usr/bin/env python
+      #!${python}/bin/python
       import json
       import os
       import sys
@@ -108,7 +108,7 @@ with rec {
       ];
     };
     script = ''
-      #!/usr/bin/env python
+      #!${python}/bin/python
       from os         import getenv
       from json       import loads
       from subprocess import PIPE, Popen

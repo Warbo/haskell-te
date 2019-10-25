@@ -11,7 +11,7 @@
         buildInputs = [ tipBenchmarks.tools ];
       }
       ''
-        #!/usr/bin/env bash
+        #!${bash}/bin/bash
         set -e
         choose_sample "$SIZE" "$REP" > "$out"
       '';
@@ -27,7 +27,7 @@
         buildInputs = [ filterToSampled genQuickspecRunner jq ];
       }
       ''
-        #!/usr/bin/env bash
+        #!${bash}/bin/bash
         set -e
         set -o pipefail
 

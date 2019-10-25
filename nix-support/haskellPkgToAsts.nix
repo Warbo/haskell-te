@@ -21,7 +21,7 @@ with rec {
       '';
     };
     script = ''
-      #!/usr/bin/env bash
+      #!${bash}/bin/bash
       set   -e
       set   -o pipefail
       shopt -s nullglob

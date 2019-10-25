@@ -8,7 +8,7 @@ with rec {
     name   = "hasCabalFile";
     paths  = [ bash fail ];
     script = ''
-      #!/usr/bin/env bash
+      #!${bash}/bin/bash
       set   -e
       shopt -s nullglob
 
@@ -51,7 +51,7 @@ with rec {
     name   = "addNixFile";
     paths  = [ bash cabal2nix ];
     script = ''
-      #!/usr/bin/env bash
+      #!${bash}/bin/bash
       set -e
       shopt -s nullglob
       shopt -s dotglob
@@ -67,7 +67,7 @@ with rec {
     name   = "makeHaskellPkgNixable";
     paths  = [ addNixFile cabal2nix fail hasCabalFile inNixedDir pipeToNix ];
     script = ''
-      #!/usr/bin/env bash
+      #!${bash}/bin/bash
       set -e
       set -o pipefail
 

@@ -13,7 +13,7 @@ with rec {
     name   = "runAstPluginRaw";
     paths  = [ bash ];
     script = ''
-      #!/usr/bin/env bash
+      #!${bash}/bin/bash
       set -e
 
       OPTS="-package-db=$GHC_PKG -package AstPlugin -fplugin=AstPlugin.Plugin"
@@ -49,9 +49,10 @@ with rec {
 
   testGetJson = runCommand "testGetJson"
     {
+      __noChroot  = true;
       buildInputs = [ fail getJson ];
       script1     = writeScript "script1" ''
-        #!/usr/bin/env bash
+        #!${bash}/bin/bash
         set -e
         echo   stdout1
         echo   stderr1   1>&2
@@ -76,7 +77,7 @@ with rec {
     paths  = [ getJson haveVar jq runAstPluginRaw ];
     vars   = { CMD = "runAstPluginRaw"; };
     script = ''
-      #!/usr/bin/env bash
+      #!${bash}/bin/bash
       set -e
       set -o pipefail
 
@@ -91,7 +92,7 @@ with rec {
     paths  = [ bash cabal-install checkStderr fail haskellPkgNameVersion
                runAstPlugin ];
     script = ''
-      #!/usr/bin/env bash
+      #!${bash}/bin/bash
       set -e
       set -o pipefail
 

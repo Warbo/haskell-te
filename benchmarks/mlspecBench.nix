@@ -49,7 +49,7 @@ rec {
       SIMPLE                 = "1";
     };
     script =  ''
-      #!/usr/bin/env bash
+      #!${bash}/bin/bash
       set -e
       set -o pipefail
 
@@ -90,7 +90,7 @@ rec {
       '';
     };
     script = ''
-      #!/usr/bin/env bash
+      #!${bash}/bin/bash
       set -e
       set -o pipefail
 
@@ -113,7 +113,7 @@ rec {
     name   = "all-input";
     paths  = [ fail ];
     script = ''
-      #!/usr/bin/env bash
+      #!${bash}/bin/bash
       set -e
 
       [[ -n "$ANNOTATED" ]] || fail "Got no ANNOTATED"
