@@ -45,7 +45,11 @@ with rec {
                  do
                    echo "import $MOD"
                  done |
-                 repl 2>&1)
+                 repl 2>&1) || {
+        echo "$IMPORTS" 1>&2
+        echo "Unknown error while checking modules" 1>&2
+        exit 1
+      }
 
       if echo "$IMPORTS" | grep "Could not find module"
       then
