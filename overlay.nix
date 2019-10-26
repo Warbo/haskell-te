@@ -55,7 +55,6 @@ with {
   inherit (self.helpers)
     allDrvsIn attrsToDirs backtrace fail inNixedDir isBroken latestGit mkBin
     nixListToBashArray nixpkgs1803 nothing pipeToNix reverse sanitiseName
-    stableHackageDb
     stripOverrides tryElse unlines unpack withDeps wrap;
 
   inherit (self.warbo-packages)
@@ -138,6 +137,7 @@ with {
   renderEqs             = self.callPackage ./nix-support/renderEqs.nix             {};
   runTypesScriptData    = self.callPackage ./nix-support/runTypesScript.nix        {};
   runWeka               = self.callPackage ./nix-support/runWeka.nix               {};
+  stableHackageDb       = self.callPackage ./nix-support/stableHackageDb.nix       {};
   testData              = self.callPackage ./nix-support/testData.nix              {};
   tipBenchmarks         = self.callPackage ./nix-support/tipBenchmarks.nix         {};
   tipToHaskellPkg       = self.callPackage ./nix-support/tipToHaskellPkg.nix       {};
