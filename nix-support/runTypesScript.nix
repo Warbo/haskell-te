@@ -38,7 +38,8 @@ with rec {
       set -e
       set -o pipefail
 
-      ALL_MODS=$(echo -e "$MODS\nData.Serialize\nData.Digest.Murmur32")
+      ALL_MODS=$(echo -e "$MODS\nData.Serialize\nData.Digest.Murmur32" |
+                 sort -u)
        IMPORTS=$(echo "$ALL_MODS" |
                  while read -r MOD
                  do
