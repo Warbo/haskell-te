@@ -53,6 +53,7 @@ with rec {
 
       if echo "$IMPORTS" | grep "Could not find module"
       then
+        echo "$IMPORTS" 1>&2
         exit 1
       fi
       exit 0
