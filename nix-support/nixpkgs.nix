@@ -5,11 +5,16 @@ with rec {
   # prevent an infinite loop. Otherwise use <nixpkgs> as normal.
   path = import ./path.nix {};
 
-  # nix-config defines a bunch of stable package sets we can use
-  inherit ((import path {}).callPackage ./nix-config.nix { inherit path; })
-    nix-config;
+  # nix-helpers defines a bunch of stable package sets we can use
+  helpersSrc = (import path {}).callPackage ./helpers.nix {};
 
-  pkgs = nix-config { unstablePath = path; };
+  helpersOverlay = import "${helpersSrc}/overlay.nix";
+
+  pkgs = import path { overlays = [ helpersOverlay ]; };
+
+  # nix-config defines a bunch of stable package sets we can use
+  #inherit ((import path {}).callPackage ./nix-config.nix { inherit path; })
+  #  nix-config;
 };
 assert pkgs ? nixpkgs1603 || abort "No nixpkgs1603 found";
 assert pkgs ? nixpkgs1609 || abort "No nixpkgs1609 found";
@@ -18,5 +23,8 @@ rec {
   nixpkgs-2016-03  = pkgs.nixpkgs1603;
   nixpkgs-2016-09  = pkgs.nixpkgs1609;
   nixpkgs          = nixpkgs-2016-03;
-  nix-config       = pkgs.customised.nixpkgs1603;
+  nix-config       = import (pkgs.backportOverlays {
+                              name = "nixpkgs1603-with-helpers";
+                              repo = pkgs.repo1603;
+                            }) { overlays = [ helpersOverlay ]; };
 }
