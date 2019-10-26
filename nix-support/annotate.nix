@@ -427,6 +427,7 @@ with rec {
     runCommand "annotate"
       ({
         inherit f;
+        __noChroot  = true;
         buildInputs = env ++ [ annotateScript ];
         typesScript = runTypesScript { inherit pkgSrc; };
       } // extras)
